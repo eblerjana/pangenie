@@ -12,7 +12,8 @@
 ## Installing into a conda environment
 `` git clone https://jana_ebler@bitbucket.org/jana_ebler/pgg-typer.git``  
 `` cd pgg-typer``  
-`` conda env create -f environments.yml``  
+`` conda env create -f environment.yml``  
+`` conda activate pgg-typer``  
 ``export CFLAGS="-I/MMCI/TM/scratch/jebler/miniconda3/envs/pgg-typer/include"``  
 ``export LDFLAGS="-L/MMCI/TM/scratch/jebler/miniconda3/envs/pgg-typer/lib"``  
 ``export CPPFLAGS="-I/MMCI/TM/scratch/jebler/miniconda3/envs/pgg-typer/include"``  
