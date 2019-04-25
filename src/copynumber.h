@@ -9,6 +9,8 @@ public:
 	CopyNumber(double cn_0, double cn_1, double cn_2);
 	int get_copynumber();
 	double get_probability_of(int cn);
+	bool operator==(const CopyNumber &other) const;
+	bool operator!=(const CopyNumber &other) const;
 private:
 	std::vector<double> probabilities;
 };

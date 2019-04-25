@@ -16,7 +16,7 @@ CopyNumber::CopyNumber(double cn_0, double cn_1, double cn_2)
 	int best_index = 0;
 	double best = 0.0;
 	for (size_t i = 0; i < 3; ++i){
-		if (tmp[0] > best){
+		if (tmp[i] > best){
 			best = tmp[i];
 			best_index = i;
 		}
@@ -35,4 +35,17 @@ double CopyNumber::get_probability_of(int cn){
 		throw runtime_error(oss.str());
 	}
 	return probabilities[cn];
+}
+
+bool CopyNumber::operator==(const CopyNumber &other) const{
+	for (size_t i = 0; i < 3; ++i){
+		if (this->probabilities[i] != other.probabilities[i]){
+			return false;
+		}
+	}
+	return true;
+}
+
+bool CopyNumber::operator!=(const CopyNumber &other) const {
+	return !(*this == other);
 }
