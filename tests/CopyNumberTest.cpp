@@ -1,17 +1,18 @@
 #include "catch.hpp"
-#include "../src/copynumber.h"
+#include "utils.hpp"
+#include "../src/copynumber.hpp"
 #include <vector>
 #include <string>
 
 using namespace std;
 
-TEST_CASE("CopyNumber simple example", "[CopyNumber simple]"){
+TEST_CASE("CopyNumber get_probability_of", "[CopyNumber get_probability_of]"){
 	CopyNumber c(0.9,0.1,0.0);
-	REQUIRE(c.get_copynumber() == 0);
+	REQUIRE(doubles_equal(c.get_probability_of(0), 0.9));
 	CopyNumber c2(0.4,0.5,0.1);
-	REQUIRE(c2.get_copynumber() == 1);
+	REQUIRE(doubles_equal(c2.get_probability_of(1), 0.5));
 	CopyNumber c3(0.0,0.0,1.0);
-	REQUIRE(c3.get_copynumber() == 2);
+	REQUIRE(doubles_equal(c3.get_probability_of(2), 1.0));
 }
 
 TEST_CASE("CopyNumber operators", "[CopyNumber operators]"){

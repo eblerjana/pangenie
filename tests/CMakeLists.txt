@@ -1,3 +1,5 @@
-add_executable(tests tests.cpp EmissionProbabilityComputerTest.cpp CopyNumberTest.cpp)
-
-target_link_libraries(tests PGGTyperLib)
+set (CMAKE_CXX_STANDARD 11)
+set (PROGRAM_SOURCE_DIR ${PROJECT_SOURCE_DIR}/src)
+include_directories (${PROGRAM_SOURCE_DIR})
+file (GLOB_RECURSE  ProjectFiles  ${PROGRAM_SOURCE_DIR}/emissionprobabilitycomputer.cpp ${PROGRAM_SOURCE_DIR}/copynumber.cpp ${PROGRAM_SOURCE_DIR}/copynumberassignment.cpp ${PROGRAM_SOURCE_DIR}/kmerpath.cpp ${PROGRAM_SOURCE_DIR}/uniquekmers.cpp ${PROGRAM_SOURCE_DIR}/variant.cpp ${PROGRAM_SOURCE_DIR}/variantreader.cpp ${PROGRAM_SOURCE_DIR}/probabilitycomputer.cpp ${PROGRAM_SOURCE_DIR}/transitionprobabilitycomputer.cpp ${PROGRAM_SOURCE_DIR}/hmm.cpp ${PROGRAM_SOURCE_DIR}/columnindexer.cpp ${PROGRAM_SOURCE_DIR}/columnindexer.cpp ${PROGRAM_SOURCE_DIR}/genotypingresult.cpp ${PROGRAM_SOURCE_DIR}/dnasequence.cpp ${PROGRAM_SOURCE_DIR}/fastareader.cpp)
+add_executable(tests tests.cpp utils.cpp EmissionProbabilityComputerTest.cpp CopyNumberTest.cpp UniqueKmersTest.cpp CopyNumberAssignmentTest.cpp VariantTest.cpp VariantReaderTest.cpp ProbabilityComputerTest.cpp TransitionProbabilityComputerTest.cpp HMMTest.cpp ColumnIndexerTest.cpp GenotypingResultTest.cpp DnaSequenceTest.cpp FastaReaderTest.cpp ${ProjectFiles})
