@@ -1,4 +1,4 @@
-name: pgg-typer
+name: jellyfish-pgg
 channels:
   - anaconda
   - conda-forge
@@ -9,7 +9,7 @@ dependencies:
   - binutils_impl_linux-64=2.31.1=h6176602_1
   - binutils_linux-64=2.31.1=h6176602_6
   - bzip2=1.0.6=h14c3975_1002
-  - ca-certificates=2019.1.23=0
+  - ca-certificates=2019.6.16=hecc5488_0
   - cmake=3.14.0=h52cb24c_0
   - curl=7.64.1=hf8cf82a_0
   - expat=2.2.6=he6710b0_0
@@ -17,9 +17,12 @@ dependencies:
   - gcc_linux-64=7.3.0=h553295d_6
   - gxx_impl_linux-64=7.3.0=hdf63c60_1
   - gxx_linux-64=7.3.0=h553295d_6
+  - jellyfish=2.2.10=h6bb024c_1
+  - jemalloc=4.5.0=0
   - krb5=1.16.3=h05b26f9_1001
   - libcurl=7.64.1=hda55be3_0
   - libedit=3.1.20170329=hf8c457e_1001
+  - libgcc=7.2.0=h69d50b8_2
   - libgcc-ng=8.2.0=hdf63c60_1
   - libssh2=1.8.2=h22169c7_2
   - libstdcxx-ng=8.2.0=hdf63c60_1
@@ -30,5 +33,5 @@ dependencies:
   - tk=8.6.9=h84994c4_1001
   - xz=5.2.4=h14c3975_1001
   - zlib=1.2.11=h7b6447c_3
-prefix: /MMCI/TM/scratch/jebler/miniconda3/envs/pgg-typer
+prefix: /MMCI/TM/scratch/jebler/miniconda3/envs/jellyfish-pgg
 
