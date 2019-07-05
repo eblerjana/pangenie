@@ -64,7 +64,7 @@ string CommandLineParser::get_argument(char name) {
 	if (it != this->arg_to_parameter.end()) {
 		return this->arg_to_parameter.at(name);
 	} else {
-		this->optional[name];
+		return this->optional[name];
 	}
 }
 
@@ -74,5 +74,11 @@ void CommandLineParser::usage() {
 	cerr << "Options:" << endl;
 	for (auto it = this->arg_to_string.begin(); it != this->arg_to_string.end(); ++it) {
 		cerr << "\t-" << it->first << "=VAL\t" << it->second << endl;
+	}
+}
+
+void CommandLineParser::info() {
+	for (auto it = this->arg_to_string.begin(); it != this->arg_to_string.end(); ++it) {
+		cerr << "-" << (it->first) << "\t" << get_argument(it->first) << endl;
 	}
 }

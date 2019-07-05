@@ -14,6 +14,7 @@ public:
 	void parse(int argc, char* argv[]);
 	std::string get_argument(char name);
 	void usage();
+	void info();
 private:
 	std::string command;
 	std::string parser_string;

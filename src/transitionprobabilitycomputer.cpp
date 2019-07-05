@@ -7,7 +7,7 @@ using namespace std;
 
 TransitionProbabilityComputer::TransitionProbabilityComputer(size_t from_variant, size_t to_variant, double recomb_rate)
 {
-	assert(from_variant < to_variant );
+	assert(from_variant <= to_variant );
 	// using same formula as in WhatsHap
 	long double distance = (to_variant - from_variant) * pow(10.0L, -6.0L) * (long double) recomb_rate;
 	// using formula from: https://en.wikipedia.org/wiki/Centimorgan

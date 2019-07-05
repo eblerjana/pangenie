@@ -37,16 +37,25 @@ KmerCounter::KmerCounter (string readfile, size_t kmer_size)
 
 	// delete the char**
 	for(size_t i = 0; i < args.size(); i++)
-  delete[] args[i];
+		delete[] args[i];
 
 }
 
 size_t KmerCounter::getKmerAbundance(string kmer){
 
 	jellyfish::mer_dna jelly_kmer(kmer);
+	jelly_kmer.canonicalize();
 	uint64_t val = 0;
 	const auto jf_ary = this->jellyfish_hash->ary();
 	jf_ary->get_val_for_key(jelly_kmer, &val);
+
+
+	const auto end = jf_ary->end();
+/**	for(auto it = jf_ary->begin(); it !=end; ++it) {
+		auto& key_val = *it;
+		cout << key_val.first << " " << key_val.second << endl;
+	}
+**/
 	return val;
 }
 
