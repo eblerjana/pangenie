@@ -5,7 +5,7 @@ set (CMAKE_CXX_STANDARD 11)
 
 enable_testing()
 
-#find_package(Boost 1.36 COMPONENTS program_options iostreams unit_test_framework REQUIRED)
+#find_package(Boost COMPONENTS program_options REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(JELLYFISH REQUIRED jellyfish-2.0)
 

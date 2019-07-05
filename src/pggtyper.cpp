@@ -1,25 +1,51 @@
 #include <iostream>
+#include <sstream>
 #include "kmercounter.hpp"
 #include "emissionprobabilitycomputer.hpp"
 #include "copynumber.hpp"
 #include "variantreader.hpp"
 #include "uniquekmercomputer.hpp"
 #include "hmm.hpp"
+#include "commandlineparser.hpp"
 
 using namespace std;
 
 int main (int argc, char* argv[])
 {
-	// TODO: parse command line to get the parameters
 
 	clock_t clock_start = clock();
 	cerr << "This is PGGTyper." << endl;
-	string readfile;
-	string reffile;
-	string vcffile;
-	size_t kmersize;
-	string outname;
-	string sample_name;
+	string readfile = "";
+	string reffile = "";
+	string vcffile = "";
+	size_t kmersize = 31;
+	string outname = "result";
+	string sample_name = "sample";
+
+	// get command line parameters
+	CommandLineParser argument_parser;
+	argument_parser.add_command("PGGTyper [options] -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf>");
+	argument_parser.add_mandatory_argument('i', "sequencing reads in FASTA/FASTQ format.");
+	argument_parser.add_mandatory_argument('r', "reference genome in FASTA format.");
+	argument_parser.add_mandatory_argument('v', "variants in VCF format.");
+	argument_parser.add_optional_argument('o', "result", "prefix of the output files.");
+	argument_parser.add_optional_argument('k', "31", "kmer size.");
+	argument_parser.add_optional_argument('s', "sample", "name of the sample (will be used in the output VCFs).");
+	
+	try {
+		argument_parser.parse(argc, argv);
+	} catch (const runtime_error& e) {
+		argument_parser.usage();
+		cout << e.what() << endl;
+		return 1;
+	}
+
+	readfile = argument_parser.get_argument('i');
+	reffile = argument_parser.get_argument('r');
+	vcffile = argument_parser.get_argument('v');
+//	kmersize = (size_t) 
+	outname = argument_parser.get_argument('o');
+	sample_name = argument_parser.get_argument('s');
 
 	// read allele sequences and unitigs inbetween, write them into file
 	cerr << "Determine allele sequences ..." << endl;
@@ -84,6 +110,7 @@ int main (int argc, char* argv[])
 	double cpu_time = (double)(clock() - clock_start) / CLOCKS_PER_SEC;
 	cerr << "Total CPU time: " << cpu_time << " sec" << endl;
 
+	return 0;
 }
 
 

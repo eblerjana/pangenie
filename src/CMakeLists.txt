@@ -1,6 +1,7 @@
 add_library(PGGTyperLib SHARED 
 	emissionprobabilitycomputer.cpp
 	copynumber.cpp
+	commandlineparser.cpp
 	columnindexer.cpp
 	copynumberassignment.cpp
 	dnasequence.cpp
