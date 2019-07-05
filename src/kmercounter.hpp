@@ -53,7 +53,7 @@ public:
 	* @param *params parameters for GATB-Kmercounter
 	* @param name of the output file
 	**/
-	KmerCounter(std::string readfile, std::string outfile, size_t kmer_size);
+	KmerCounter(std::string readfile, size_t kmer_size);
 
 	~KmerCounter();
 	

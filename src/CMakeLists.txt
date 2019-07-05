@@ -16,7 +16,7 @@ add_library(PGGTyperLib SHARED
 	variant.cpp
 	variantreader.cpp)
 
-add_executable(PGGTyper main.cpp)
+add_executable(PGGTyper pggtyper.cpp)
 
 target_link_libraries(PGGTyper PGGTyperLib ${JELLYFISH_LDFLAGS_OTHER})
-target_link_libraries(PGGTyper PGGTyperLib ${JELLYFISH_LIBRARY})
+target_link_libraries(PGGTyper PGGTyperLib ${JELLYFISH_LIBRARIES})

@@ -7,7 +7,7 @@
 using namespace std;
 
 
-KmerCounter::KmerCounter (string readfile, std::string outname, size_t kmer_size)
+KmerCounter::KmerCounter (string readfile, size_t kmer_size)
 {
 	jellyfish::mer_dna::k(kmer_size); // Set length of mers
 	const uint64_t hash_size    = 10000000; // Initial size of hash.
@@ -43,9 +43,10 @@ KmerCounter::KmerCounter (string readfile, std::string outname, size_t kmer_size
 
 size_t KmerCounter::getKmerAbundance(string kmer){
 
+	jellyfish::mer_dna jelly_kmer(kmer);
 	uint64_t val = 0;
 	const auto jf_ary = this->jellyfish_hash->ary();
-	jf_ary->get_val_for_key(kmer, &val);
+	jf_ary->get_val_for_key(jelly_kmer, &val);
 	return val;
 }
 
