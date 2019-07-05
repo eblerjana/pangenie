@@ -3,6 +3,7 @@
 ## Requirements
 * gcc 4.7+
 * cmake
+* boost
 * jellyfish
 
 ## Installation
@@ -19,6 +20,6 @@
 ``export LDFLAGS="-L/MMCI/TM/scratch/jebler/miniconda3/envs/jellyfish-pgg/lib"``  
 ``export CPPFLAGS="-I/MMCI/TM/scratch/jebler/miniconda3/envs/jellyfish-pgg/include"``  
 ``export CPATH="/MMCI/TM/scratch/jebler/miniconda3/envs/jellyfish-pgg/include"`` 
-``export PKG_CONFIG_PATH="/MMCI/TM/scratch/jebler/miniconda3/envs/jellyfish-pgg/lib/pkgconfig``
+``export PKG_CONFIG_PATH="/MMCI/TM/scratch/jebler/miniconda3/envs/jellyfish-pgg/lib/pkgconfig"``
 ``mkdir build; cd build; cmake .. ; make``
 
