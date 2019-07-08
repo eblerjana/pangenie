@@ -231,6 +231,69 @@ TEST_CASE("Variant separate_variants_single", "[Variants separate_variants_singl
 	REQUIRE(single_variants[0] == v);
 }
 
+TEST_CASE("Variant uncovered_alleles", "[Variant uncovered_alleles]") {
+	Variant v1("AAA", "TCA", "chr1", 4, 5, {"A", "T", "G"}, {0,0});
+	Variant v2("AAT", "AAG", "chr1", 6, 7, {"C", "T"}, {0,0});
+	Variant v3("CAA", "CCC", "chr1", 9, 10, {"G", "A"}, {0,0});
+	Variant v4("AAA", "TCA", "chr1", 4, 5, {"A", "T", "G"}, {0,0});
+
+	REQUIRE(v1.nr_of_alleles() == 3);
+	REQUIRE(v2.nr_of_alleles() == 2);
+	REQUIRE(v3.nr_of_alleles() == 2);
+
+	// combine variants
+	v1.combine_variants(v2);
+	v1.combine_variants(v3);
+	REQUIRE(v1.nr_of_alleles() == 1);
+	REQUIRE(v1.get_allele_sequence(0) == "ATCAAG");
+
+	// separate variants
+	vector<Variant> single_vars;
+	v1.separate_variants(&single_vars);
+
+	REQUIRE(single_vars.size() == 3);
+	REQUIRE(single_vars[0].nr_of_alleles() == 3);
+	REQUIRE(single_vars[1].nr_of_alleles() == 2);
+	REQUIRE(single_vars[2].nr_of_alleles() == 2);
+
+	REQUIRE(single_vars[0] == v4);
+	REQUIRE(single_vars[1] == v2);
+	REQUIRE(single_vars[2] == v3);
+}
+
+TEST_CASE("Variant uncovered_single", "[Variant uncovered_single]") {
+	Variant v1("AAA", "TTT", "chr1", 5, 6, {"A", "G", "T"}, {0,0,1,0});
+	Variant v2("AAA", "TTT", "chr1", 5, 6, {"A", "G", "T"}, {0,0,1,0});
+	vector<Variant> single_vars;
+	v1.separate_variants(&single_vars);
+	REQUIRE(single_vars[0] == v2);
+}
+
+TEST_CASE("Variant combine_combined", "[Variant combine_combined]") {
+	Variant v1("AAA", "TCA", "chr1", 4, 5, {"A", "T", "G"}, {0,0});
+	Variant v2("AAT", "AAG", "chr1", 6, 7, {"C", "T"}, {0,1});
+	Variant v3("CAA", "CCC", "chr1", 9, 10, {"G", "A"}, {0,0});
+	Variant v4("AAA", "TCA", "chr1", 4, 5, {"A", "T", "G"}, {0,0});
+	Variant v5("AAT", "AAG", "chr1", 6, 7, {"C", "T"}, {0,1});
+
+	// combine v2 and v3 first
+	v2.combine_variants(v3);
+	// combine_variants it with v1
+	v1.combine_variants(v2);
+
+	REQUIRE(v1.nr_of_alleles() == 2);
+	REQUIRE(v1.get_allele_sequence(0) == "ATCAAG");
+	REQUIRE(v1.get_allele_sequence(1) == "ATTAAG");
+
+	// separate variants again
+	vector<Variant> single_vars;
+	v1.separate_variants(&single_vars);
+	REQUIRE(single_vars.size() == 3);
+	REQUIRE(single_vars[0] == v4);
+	REQUIRE(single_vars[1] == v5);
+	REQUIRE(single_vars[2] == v3);
+}
+
 TEST_CASE("Variant get_paths_of_allele", "[Variant get_paths_of_allele]") {
 	Variant v1("AAA", "TTA", "chr1", 10, 14, {"ATGC", "ATT", "TT"}, {0,1,2});
 	vector<size_t> result;

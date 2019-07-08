@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <set>
 #include <map>
+#include <cassert>
 #include "variant.hpp"
 
 using namespace std;
@@ -64,6 +65,16 @@ Variant::Variant(string left_flank, string right_flank, string chromosome, size_
 	for (auto a : alleles) {
 		this->alleles.push_back({a});
 	}
+
+	// find out which alleles are not covered by any paths
+	vector<string> uncovered;
+	for (size_t i = 0; i < this->alleles.size(); ++i) {
+		if (find(this->paths.begin(), this->paths.end(), i) == this->paths.end()) {
+			// allele not covered
+			uncovered.push_back(alleles[i]);
+		}
+	}
+	this->uncovered_alleles = {uncovered};
 
 	// check if flanks have same length
 	if (left_flank.size() != right_flank.size()){
@@ -207,16 +218,18 @@ void Variant::combine_variants (Variant const &v2){
 	}
 
 	// update variant
-	this->start_positions.push_back(v2.get_start_position());
+	this->start_positions.insert(this->start_positions.end(), v2.start_positions.begin(), v2.start_positions.end());
 	this->right_flank = v2.right_flank;
-	this->end_positions.push_back(v2.get_end_position());
+	this->end_positions.insert(this->end_positions.end(), v2.end_positions.begin(), v2.end_positions.end());
 	this->alleles = new_alleles;
+	this->uncovered_alleles.insert(this->uncovered_alleles.end(), v2.uncovered_alleles.begin(), v2.uncovered_alleles.end());
 	this->paths = new_paths;
 
 }
 
 void Variant::separate_variants (vector<Variant>* resulting_variants, const GenotypingResult* input_genotyping, vector<GenotypingResult>* resulting_genotyping) const {
 	size_t nr_variants = this->start_positions.size();
+	assert (this->uncovered_alleles.size() == nr_variants);
 	// collect the allele sequences for all variants 
 	vector<vector<string>> alleles_per_variant (nr_variants);
 	for (size_t i = 0; i < this->alleles.size(); ++i) {
@@ -265,7 +278,17 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 		string right = construct_right_flank(reference_allele, i*2 + 1, this->right_flank.size());
 
 		// construct variant
-		Variant v(left, right, this->chromosome, this->start_positions.at(i), this->end_positions.at(i), alleles_per_variant.at(i), paths_per_variant.at(i));
+		vector<string> uncovered = this->uncovered_alleles[i];
+		// add uncovered alleles to list of alleles
+		vector<string> new_alleles = alleles_per_variant.at(i);
+		for (auto allele : uncovered) {
+			// only add allele if it is not yet in list of alleles
+			if (find(new_alleles.begin(), new_alleles.end(), allele) == new_alleles.end()) {
+				new_alleles.push_back(allele);
+			}
+		}
+		// construct new variant object
+		Variant v(left, right, this->chromosome, this->start_positions.at(i), this->end_positions.at(i), new_alleles, paths_per_variant.at(i));
 		resulting_variants->push_back(v);
 
 		if (input_genotyping != nullptr) {
@@ -320,6 +343,15 @@ ostream& operator<<(ostream& os, const Variant& var) {
 		}
 		os << endl;
 	}
+	os << "alleles not covered by any path:" << endl;
+	for (size_t i = 0; i < var.uncovered_alleles.size(); ++i) {
+		os << "{";
+		for (size_t j = 0; j < var.uncovered_alleles[i].size(); ++j) {
+			if (j > 0) os << ",";
+			os << var.uncovered_alleles[i][j];
+		}
+		os << "}" << endl;
+	}
 	os << "paths:" << endl;
 	for (size_t i = 0; i < var.paths.size(); ++i) {
 		os << var.paths[i] << "\t";
@@ -341,6 +373,9 @@ bool operator==(const Variant& v1, const Variant& v2) {
 
 	// check alleles
 	if (v1.alleles != v2.alleles) return false;
+
+	// check uncovered alleles
+	if (v1.uncovered_alleles != v2.uncovered_alleles) return false;
 
 	// check paths
 	if (v1.paths != v2.paths) return false;

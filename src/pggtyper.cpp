@@ -24,18 +24,20 @@ int main (int argc, char* argv[])
 	// parse the command line arguments
 	CommandLineParser argument_parser;
 	argument_parser.add_command("PGGTyper [options] -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf>");
-	argument_parser.add_mandatory_argument('i', "sequencing reads in FASTA/FASTQ format.");
-	argument_parser.add_mandatory_argument('r', "reference genome in FASTA format.");
-	argument_parser.add_mandatory_argument('v', "variants in VCF format.");
-	argument_parser.add_optional_argument('o', "result", "prefix of the output files.");
-	argument_parser.add_optional_argument('k', "31", "kmer size.");
-	argument_parser.add_optional_argument('s', "sample", "name of the sample (will be used in the output VCFs).");
+	argument_parser.add_mandatory_argument('i', "sequencing reads in FASTA/FASTQ format");
+	argument_parser.add_mandatory_argument('r', "reference genome in FASTA format");
+	argument_parser.add_mandatory_argument('v', "variants in VCF format");
+	argument_parser.add_optional_argument('o', "result", "prefix of the output files");
+	argument_parser.add_optional_argument('k', "31", "kmer size");
+	argument_parser.add_optional_argument('s', "sample", "name of the sample (will be used in the output VCFs)");
 	try {
 		argument_parser.parse(argc, argv);
 	} catch (const runtime_error& e) {
 		argument_parser.usage();
 		cerr << e.what() << endl;
 		return 1;
+	} catch (const exception& e) {
+		return 0;
 	}
 	readfile = argument_parser.get_argument('i');
 	reffile = argument_parser.get_argument('r');

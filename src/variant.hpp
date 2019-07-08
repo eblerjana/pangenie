@@ -43,6 +43,8 @@ private:
 	std::vector<size_t> start_positions;
 	std::vector<size_t> end_positions;
 	std::vector<std::vector<std::string>> alleles;
+	/** alleles not covered by any paths **/
+	std::vector<std::vector<std::string>> uncovered_alleles;
 	std::vector<size_t> paths;
 	bool flanks_added;
 	

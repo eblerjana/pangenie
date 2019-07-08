@@ -8,7 +8,7 @@ using namespace std;
 
 CommandLineParser::CommandLineParser ()
 	:command(""),
-	 parser_string(":")
+	 parser_string(":h")
 {}
 
 void CommandLineParser::add_command(string command) {
@@ -37,6 +37,10 @@ void CommandLineParser::parse(int argc, char* argv[]) {
 			// valid option
 			this->arg_to_parameter[c] = string(optarg);
 		} else {
+			if (c == 'h') {
+				usage();
+				throw exception();
+			}
 			if (c == ':') {
 				ostringstream oss;
 				oss << "Error: no argument given for option -" << (char) optopt << "."  << endl;
@@ -69,12 +73,20 @@ string CommandLineParser::get_argument(char name) {
 }
 
 void CommandLineParser::usage() {
-	cerr << "Usage: " << this->command << endl;
+	cerr << "usage: " << this->command << endl;
 	cerr << endl;
-	cerr << "Options:" << endl;
+	cerr << "options:" << endl;
 	for (auto it = this->arg_to_string.begin(); it != this->arg_to_string.end(); ++it) {
-		cerr << "\t-" << it->first << "=VAL\t" << it->second << endl;
+		// if there is a default value, get it
+		string default_val = "";
+		auto d = this->optional.find(it->first);
+		if (d != this->optional.end()) {
+			cerr << "\t-" << it->first << "=VAL\t" << it->second << " (default: " << d->second << ")." << endl;
+		} else {
+			cerr << "\t-" << it->first << "=VAL\t" << it->second << " (required)." << endl;
+		}
 	}
+	cerr << endl;
 }
 
 void CommandLineParser::info() {
