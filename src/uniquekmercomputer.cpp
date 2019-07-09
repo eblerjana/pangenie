@@ -71,7 +71,7 @@ vector<UniqueKmers>* UniqueKmerComputer::compute_unique_kmers() const {
 
 				// skip kmers with "too extreme" counts
 				// TODO: value ok?
-				if (read_kmercount > (this->kmer_coverage)) {
+				if (read_kmercount > (2*this->kmer_coverage)) {
 					continue;
 				}
 

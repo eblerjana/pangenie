@@ -66,6 +66,11 @@ int main (int argc, char* argv[])
 	variant_reader.get_chromosomes(&chromosomes);
 	cerr << "Found " << chromosomes.size() << " chromosome(s) in the VCF." << endl;
 
+	// TODO: only for analysis
+	struct rusage r_usage0;
+	getrusage(RUSAGE_SELF, &r_usage0);
+	cerr << "#### Memory usage until now: " << (r_usage0.ru_maxrss / 1E6) << " GB ####" << endl;
+
 	// determine kmer copynumbers in reads
 	cerr << "Count kmers in reads ..." << endl;
 	KmerCounter read_kmer_counts (readfile, kmersize);
@@ -76,6 +81,11 @@ int main (int argc, char* argv[])
 	// count kmers in allele + reference sequence
 	cerr << "Count kmers in genome ..." << endl;
 	KmerCounter genomic_kmer_counts (segment_file, kmersize);
+
+	// TODO: only for analysis
+	struct rusage r_usage1;
+	getrusage(RUSAGE_SELF, &r_usage1);
+	cerr << "#### Memory usage until now: " << (r_usage1.ru_maxrss / 1E6) << " GB ####" << endl;
 
 	// prepare output files
 	variant_reader.open_genotyping_outfile(outname + "_genotyping.vcf");
@@ -110,6 +120,7 @@ int main (int argc, char* argv[])
 	variant_reader.close_genotyping_outfile();
 	variant_reader.close_phasing_outfile();
 
+	cerr << endl << "###### Summary ######" << endl;
 	// total time
 	double cpu_time = (double)(clock() - clock_start) / CLOCKS_PER_SEC;
 	cerr << "Total CPU time: " << cpu_time << " sec" << endl;
@@ -117,7 +128,7 @@ int main (int argc, char* argv[])
 	// memory usage
 	struct rusage r_usage;
 	getrusage(RUSAGE_SELF, &r_usage);
-	cerr << "Maximum memory usage: " << (r_usage.ru_maxrss / 1E6) << " GB" << endl;
+	cerr << "Total maximum memory usage: " << (r_usage.ru_maxrss / 1E6) << " GB" << endl;
 
 	return 0;
 }
