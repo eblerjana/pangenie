@@ -18,7 +18,7 @@ public:
 	**/
 	void set_position(size_t index, unsigned int value);
 	/** return assigned copy number at index. **/
-	unsigned int get_position(size_t index);
+	unsigned int get_position(size_t index) const;
 	friend std::ostream& operator<< (std::ostream& stream, const CopyNumberAssignment& cna);
 	std::string convert_to_string() const;
 

@@ -14,7 +14,7 @@ TEST_CASE("EmissionProbabilityComputer get_emission_probability", "EmissionProba
 	vector<CopyNumber> cns = { CopyNumber(0.01, 0.2, 0.0), CopyNumber(0.001,0.5,0.001), CopyNumber(0.0,0.3,0.02), CopyNumber(0.05,0.6,0.0), CopyNumber(0.01,0.2,0.01)};
 	UniqueKmers unique_kmers(0, 1000);
 	for (unsigned int i = 0; i < kmers.size(); ++i) {
-		unique_kmers.insert_kmer(kmers[i], cns[i],  paths[i]);
+		unique_kmers.insert_kmer(cns[i],  paths[i]);
 	}
 
 	// construct EmissionProbabilityComputer

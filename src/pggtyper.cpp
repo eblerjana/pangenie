@@ -1,5 +1,6 @@
 #include <iostream>
 #include <sstream>
+#include <sys/resource.h>
 #include "kmercounter.hpp"
 #include "emissionprobabilitycomputer.hpp"
 #include "copynumber.hpp"
@@ -112,6 +113,11 @@ int main (int argc, char* argv[])
 	// total time
 	double cpu_time = (double)(clock() - clock_start) / CLOCKS_PER_SEC;
 	cerr << "Total CPU time: " << cpu_time << " sec" << endl;
+
+	// memory usage
+	struct rusage r_usage;
+	getrusage(RUSAGE_SELF, &r_usage);
+	cerr << "Maximum memory usage: " << (r_usage.ru_maxrss / 1E6) << " GB" << endl;
 
 	return 0;
 }

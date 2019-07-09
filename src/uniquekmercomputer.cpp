@@ -84,7 +84,7 @@ vector<UniqueKmers>* UniqueKmerComputer::compute_unique_kmers() const {
 				if ( (p_cn0 > 0) || (p_cn1 > 0) || (p_cn2 > 0) ) {
 					CopyNumber cn(p_cn0, p_cn1, p_cn2);
 					// construct UniqueKmers object
-					u.insert_kmer(kmer.first, cn, paths);
+					u.insert_kmer(cn, paths);
 				}
 			}
 		}

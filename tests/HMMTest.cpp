@@ -17,7 +17,7 @@ TEST_CASE("HMM simple example", "HMM [simple]"){
 	vector< vector<size_t> > paths = { {0}, {0}, {0}, {1,2}, {1,2}, {1,2} };
 	UniqueKmers u1(0, 1000);
 	for (size_t i = 0; i < 6; ++i){
-		u1.insert_kmer(kmers[i], cns[i], paths[i]);
+		u1.insert_kmer(cns[i], paths[i]);
 	}
 
 	// second variant position
@@ -43,12 +43,12 @@ TEST_CASE("HMM get_genotyping_result", "[HMM get_genotyping_result]") {
 	UniqueKmers u1(0,2000);
 	vector<size_t> p1 = {0};
 	vector<size_t> p2 = {1};
-	u1.insert_kmer("AAT", CopyNumber(0.1,0.9,0.1), p1);
-	u1.insert_kmer("ATT", CopyNumber(0.1,0.9,0.1), p2);
+	u1.insert_kmer(CopyNumber(0.1,0.9,0.1), p1);
+	u1.insert_kmer(CopyNumber(0.1,0.9,0.1), p2);
 
 	UniqueKmers u2(1,3000);
-	u2.insert_kmer("CCC" , CopyNumber(0.01,0.01,0.9), p1);
-	u2.insert_kmer("CGC" , CopyNumber(0.9,0.3,0.1), p2);
+	u2.insert_kmer(CopyNumber(0.01,0.01,0.9), p1);
+	u2.insert_kmer(CopyNumber(0.9,0.3,0.1), p2);
 
 	vector<UniqueKmers> unique_kmers = {u1,u2};
 	vector<Variant> variants;
@@ -82,8 +82,8 @@ TEST_CASE("HMM no_alt_allele", "[HMM no_alt_allele]") {
 	UniqueKmers u(0,2000);
 	vector<size_t> p1 = {0,1,2};
 	vector<size_t> p2 = {};
-	u.insert_kmer("AAT", CopyNumber(0.1,0.2,0.9), p1);
-	u.insert_kmer("ATT", CopyNumber(0.3,0.4,0.1), p2);
+	u.insert_kmer(CopyNumber(0.1,0.2,0.9), p1);
+	u.insert_kmer(CopyNumber(0.3,0.4,0.1), p2);
 
 	vector<UniqueKmers> unique_kmers = {u};
 	vector<Variant> variants;
@@ -173,8 +173,8 @@ TEST_CASE("HMM no_unique_kmers3", "[HMM no_unique_kmers3]") {
 	UniqueKmers u1(0,2000);
 	vector<size_t> p1 = {0};
 	vector<size_t> p2 = {1};
-	u1.insert_kmer("AGG", CopyNumber(0.1,0.9,0.1), p1);
-	u1.insert_kmer("ATG", CopyNumber(0.1,0.9,0.1), p2);
+	u1.insert_kmer(CopyNumber(0.1,0.9,0.1), p1);
+	u1.insert_kmer(CopyNumber(0.1,0.9,0.1), p2);
 
 	// no unique kmers for second variant
 	UniqueKmers u2(1,3000);
@@ -182,8 +182,8 @@ TEST_CASE("HMM no_unique_kmers3", "[HMM no_unique_kmers3]") {
 	u2.insert_empty_path(1);
 
 	UniqueKmers u3(2,4000);
-	u3.insert_kmer("CAT" , CopyNumber(0.1,0.9,0.1), p1);
-	u3.insert_kmer("CGT" , CopyNumber(0.1,0.8,0.1), p2);
+	u3.insert_kmer(CopyNumber(0.1,0.9,0.1), p1);
+	u3.insert_kmer(CopyNumber(0.1,0.8,0.1), p2);
 
 	vector<UniqueKmers> unique_kmers = {u1,u2,u3};
 	vector<Variant> variants;

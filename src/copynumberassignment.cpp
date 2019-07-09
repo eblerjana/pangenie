@@ -31,7 +31,7 @@ void CopyNumberAssignment::set_position(size_t index, unsigned int value){
 	this->kmers[block] = tmp + value * factor;
 }
 
-unsigned int CopyNumberAssignment::get_position(size_t index){
+unsigned int CopyNumberAssignment::get_position(size_t index) const {
 	size_t max_index = (this->kmers.size())*20 -1;
 	if (index > max_index) {
 		return 0;
