@@ -95,6 +95,23 @@ TEST_CASE("HMM no_alt_allele", "[HMM no_alt_allele]") {
 	REQUIRE(doubles_equal(hmm.get_genotyping_result()[0].get_genotype_likelihood(1,1), 0.0));
 }
 
+TEST_CASE("HMM no_ref_allele", "[HMM no_ref_allele]") {
+	UniqueKmers u (0,2000);
+	vector<size_t> p1 = {0,1,2};
+	vector<size_t> p2 = {};
+	u.insert_kmer(CopyNumber(0.1,0.2,0.9), p1);
+	u.insert_kmer(CopyNumber(0.3,0.4,0.1), p2);
+
+	vector<UniqueKmers> unique_kmers = {u};
+	vector<Variant> variants;
+	variants.push_back(Variant("ATGC", "TGGG", "chr1", 2000, 2003, {"AAT", "ATT"}, {1,1,1}));
+	HMM hmm (&unique_kmers, variants);
+	// since only alt allele is covered by paths, 1/1 should have genotype 1/1
+	REQUIRE(doubles_equal(hmm.get_genotyping_result()[0].get_genotype_likelihood(1,1), 1.0));
+	REQUIRE(doubles_equal(hmm.get_genotyping_result()[0].get_genotype_likelihood(0,1), 0.0));
+	REQUIRE(doubles_equal(hmm.get_genotyping_result()[0].get_genotype_likelihood(0,0), 0.0));
+}
+
 TEST_CASE("HMM no_unique_kmers", "[HMM no_unique_kmers]") {
 	UniqueKmers u1(0, 2000);
 	u1.insert_empty_path(0);

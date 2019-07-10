@@ -65,7 +65,11 @@ ostream& operator<< (ostream& stream, const UniqueKmers& uk) {
 	stream << "UniqueKmers for variant: " << uk.variant_id << endl;
 	for (size_t i = 0; i < uk.size(); ++i) {
 		CopyNumber cn = uk.kmer_to_copynumber[i];
-		stream << i << ": " << cn.get_probability_of(0) << " " << cn.get_probability_of(1) << cn.get_probability_of(2) << endl;
+		stream << i << ": " << cn.get_probability_of(0) << " " << cn.get_probability_of(1) <<  " " << cn.get_probability_of(2) << endl;
+	}
+	stream << "paths:" << endl;
+	for (auto it = uk.paths.begin(); it != uk.paths.end(); ++it) {
+		stream << it->second.convert_to_string() << endl;
 	}
 	return stream;
 }

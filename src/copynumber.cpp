@@ -8,11 +8,11 @@ CopyNumber::CopyNumber()
 :probabilities({1.0,0.0,0.0})
 {}
 
-CopyNumber::CopyNumber(double cn_0, double cn_1, double cn_2)
+CopyNumber::CopyNumber(long double cn_0, long double cn_1, long double cn_2)
 	:probabilities({cn_0, cn_1, cn_2})
 {}
 
-double CopyNumber::get_probability_of(int cn){
+long double CopyNumber::get_probability_of(int cn){
 	if( (cn < 0) || (cn > 2) ){
 		ostringstream oss;
 		oss << "CopyNumber::get_probability_of: Invalid copy number: " << cn;

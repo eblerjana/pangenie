@@ -45,7 +45,7 @@ HMM::HMM(vector<UniqueKmers>* unique_kmers, const vector<Variant>& variants, dou
 	cerr << "Computing forward probabilities ..." << endl;
 	compute_forward_prob();
 //	for(size_t i = 0; i < this->forward_columns.size(); ++i) {
-//		cout << "forward " << i << endl;
+//		cout << "forward " << variants.at(i).get_start_position() << endl;
 //		if (this->forward_columns.at(i) == nullptr) {
 //			cout << "NULL" << endl;
 //			continue;

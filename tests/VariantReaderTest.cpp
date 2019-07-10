@@ -24,7 +24,7 @@ TEST_CASE("VariantReader get_allele_sequence", "[VariantReader get_allele_sequen
 	REQUIRE(v.get_variant("chrA", 2).get_allele_sequence(0) == "GAAGCCAGTGCCCCGAGACGGCCAAA");
 	REQUIRE(v.get_variant("chrA", 2).get_allele_sequence(1) == "GAAGCCAGTTCCCCGAGACGGCCAAA");
 	REQUIRE(v.get_variant("chrA", 2).get_allele_sequence(2) == "GAAGCCAGTTCCCCTACGGCCAAA");
-	REQUIRE(v.get_variant("chrA", 2).nr_of_paths() == 5);
+	REQUIRE(v.get_variant("chrA", 2).nr_of_paths() == 4);
 
 	REQUIRE(v.get_variant("chrA", 3).get_allele_sequence(0) == "ACGTCCGTTCAGCCTTAGC");
 	REQUIRE(v.get_variant("chrA", 3).get_allele_sequence(1) == "ACGTCCGTTTAGCCTTAGC");

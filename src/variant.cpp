@@ -201,6 +201,11 @@ void Variant::combine_variants (Variant const &v2){
 		path_to_index[make_pair(left_allele,right_allele)].push_back(p);
 	}
 
+	// add REF-REF allele
+	pair<size_t,size_t> ref_path = make_pair(0,0);
+	if (path_to_index.find(ref_path) == path_to_index.end()) {
+		path_to_index[ref_path] = {};
+	}
 	vector<size_t> new_paths(this->paths.size());
 	vector<vector<string>> new_alleles;
 	size_t allele_index = 0;

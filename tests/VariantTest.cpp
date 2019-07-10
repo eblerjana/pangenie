@@ -23,18 +23,21 @@ TEST_CASE("Variant testcase 1", "[Variant testcase 1]"){
 	REQUIRE(v2.allele_on_path(0,1));
 
 	v1.combine_variants(v2);
-	REQUIRE(v1.get_allele_sequence(0) == "ATGCTG");
-	REQUIRE(v1.get_allele_sequence(1) == "ATTTA");
-	REQUIRE(v1.nr_of_alleles() == 2);
+	REQUIRE(v1.get_allele_sequence(0) == "ATGCTA");
+	REQUIRE(v1.get_allele_sequence(1) == "ATGCTG");
+	REQUIRE(v1.get_allele_sequence(2) == "ATTTA");
+	REQUIRE(v1.nr_of_alleles() == 3);
 	REQUIRE(v1.is_combined());
 	
 	v1.add_flanking_sequence();
-	REQUIRE(v1.get_allele_sequence(0) == "AAAATGCTGCCC");
-	REQUIRE(v1.get_allele_sequence(1) == "AAAATTTACCC");
+	REQUIRE(v1.get_allele_sequence(0) == "AAAATGCTACCC");
+	REQUIRE(v1.get_allele_sequence(1) == "AAAATGCTGCCC");
+	REQUIRE(v1.get_allele_sequence(2) == "AAAATTTACCC");
 
 	v1.remove_flanking_sequence();
-	REQUIRE(v1.get_allele_sequence(0) == "ATGCTG");
-	REQUIRE(v1.get_allele_sequence(1) == "ATTTA");
+	REQUIRE(v1.get_allele_sequence(0) == "ATGCTA");
+	REQUIRE(v1.get_allele_sequence(1) == "ATGCTG");
+	REQUIRE(v1.get_allele_sequence(2) == "ATTTA");
 }
 
 TEST_CASE("Variant operator==", "[Variant operator==]") {
@@ -205,6 +208,34 @@ TEST_CASE("Variant separate_variants_likelihoods", "Variant separate_variants_li
 
 TEST_CASE("Variant separate_variants_single", "[Variants separate_variants_single]") {
 	Variant v ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,0,1,1});
+	GenotypingResult g;
+	g.add_to_likelihood(0,0,0.1);
+	g.add_to_likelihood(0,1,0.7);
+	g.add_to_likelihood(1,1,0.2);
+
+	// separate single variant
+	vector<Variant> single_variants;
+	vector<GenotypingResult> single_genotypes;
+	v.separate_variants(&single_variants, &g, &single_genotypes);
+
+	REQUIRE(single_variants.size() == 1);
+	REQUIRE(single_genotypes.size() == 1);
+	REQUIRE(single_variants[0] == v);
+
+	// same with flanks added
+	v.add_flanking_sequence();
+	single_variants.clear();
+	single_genotypes.clear();
+	v.separate_variants(&single_variants, &g, &single_genotypes);
+
+	REQUIRE(single_variants.size() == 1);
+	REQUIRE(single_genotypes.size() == 1);
+	v.remove_flanking_sequence();
+	REQUIRE(single_variants[0] == v);
+}
+
+TEST_CASE("Variant separate_variants_single2", "[Variants separate_variants_single]") {
+	Variant v ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {1,1});
 	GenotypingResult g;
 	g.add_to_likelihood(0,0,0.1);
 	g.add_to_likelihood(0,1,0.7);

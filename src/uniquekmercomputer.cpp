@@ -69,6 +69,11 @@ vector<UniqueKmers>* UniqueKmerComputer::compute_unique_kmers() const {
 					variant.get_paths_of_allele(allele, paths);
 				}
 
+				// skip kmer that does not occur on any path (uncovered allele)
+				if (paths.size() == 0) {
+					continue;
+				}
+
 				// skip kmers with "too extreme" counts
 				// TODO: value ok?
 				if (read_kmercount > (2*this->kmer_coverage)) {

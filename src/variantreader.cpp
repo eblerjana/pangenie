@@ -84,8 +84,9 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 		// get ALT alleles
 		vector<string> alleles = {ref};
 		parse_line(alleles, tokens[4], ',');
-		// paths (add one path representing reference sequence)
-		vector<size_t> paths = {0};
+//		// paths (add one path representing reference sequence)
+//		vector<size_t> paths = {0};
+		vector<size_t> paths = {};
 		for (size_t i = 9; i < tokens.size(); ++i) {
 			// make sure all genotypes are phased
 			if (tokens[i].find('/') != string::npos) {
