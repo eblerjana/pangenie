@@ -96,7 +96,8 @@ int main (int argc, char* argv[])
 		cerr << "Determine unique kmers ..." << endl;
 		// determine sets of kmers unique to each variant region
 		UniqueKmerComputer kmer_computer(&genomic_kmer_counts, &read_kmer_counts, &variant_reader, chromosome, kmer_coverage);
-		std::vector<UniqueKmers>* unique_kmers = kmer_computer.compute_unique_kmers();
+		std::vector<UniqueKmers> unique_kmers;
+		kmer_computer.compute_unique_kmers(&unique_kmers);
 
 		// TESTING
 //		for (size_t i = 0; i < unique_kmers->size(); ++i) {
@@ -106,7 +107,7 @@ int main (int argc, char* argv[])
 
 		// get variants on this chromosome
 		cerr << "Construct HMM" << endl;
-		HMM hmm(unique_kmers, variant_reader.get_variants_on_chromosome(chromosome));
+		HMM hmm(&unique_kmers, move(variant_reader.get_variants_on_chromosome(chromosome)));
 
 		// output the genotyping results
 		cerr << "Write genotyping output ..." << endl;

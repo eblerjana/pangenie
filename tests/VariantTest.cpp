@@ -325,6 +325,45 @@ TEST_CASE("Variant combine_combined", "[Variant combine_combined]") {
 	REQUIRE(single_vars[2] == v3);
 }
 
+TEST_CASE("Variant combine_combined2", "[Variant combine_combined]") {
+	Variant v1 ("AAA", "TGC", "chr1", 4, 5, {"A", "G"}, {0,0,0,0,0,0,1,0,0,0});
+	Variant v2 ("AAT", "CCG", "chr1", 6, 7, {"G", "C"},  {0,0,0,0,0,0,1,0,0,0});
+	Variant v3 ("GCC", "GGG", "chr1", 9, 10, {"G", "C"}, {0,0,0,0,0,0,0,1,0,0});
+	Variant v4 ("AAA", "TGC", "chr1", 4, 5, {"A", "G"}, {0,0,0,0,0,0,1,0,0,0});
+
+	v1.combine_variants(v2);
+	v1.combine_variants(v3);
+
+	REQUIRE(v1.nr_of_alleles() == 3);
+	REQUIRE(v1.get_allele_sequence(0) == "ATGCCG");
+	REQUIRE(v1.get_allele_sequence(1) == "ATGCCC");
+	REQUIRE(v1.get_allele_sequence(2) == "GTCCCG");
+
+	GenotypingResult g;
+	g.add_to_likelihood(0,0,0.9);
+	g.add_to_likelihood(0,1,0.05);
+	g.add_to_likelihood(0,2,0.05);
+	g.add_first_haplotype_allele(0);
+	g.add_second_haplotype_allele(2);
+
+	vector<Variant> single_vars;
+	vector<GenotypingResult> single_genotypes;
+	v1.separate_variants(&single_vars, &g, &single_genotypes);
+	REQUIRE(single_vars.size() == 3);
+	REQUIRE(single_vars[0] == v4);
+	REQUIRE(single_vars[1] == v2);
+	REQUIRE(single_vars[2] == v3);
+
+	REQUIRE(single_genotypes.size() == 3);
+	REQUIRE(doubles_equal(single_genotypes[0].get_genotype_likelihood(0,0), 0.95));
+	REQUIRE(doubles_equal(single_genotypes[0].get_genotype_likelihood(0,1), 0.05));
+	REQUIRE(doubles_equal(single_genotypes[0].get_genotype_likelihood(1,1), 0.0));
+
+	REQUIRE(single_genotypes[0].get_haplotype() == pair<size_t,size_t>(0,1));
+	REQUIRE(single_genotypes[1].get_haplotype() == pair<size_t,size_t>(0,1));
+	REQUIRE(single_genotypes[2].get_haplotype() == pair<size_t,size_t>(0,0));
+}
+
 TEST_CASE("Variant get_paths_of_allele", "[Variant get_paths_of_allele]") {
 	Variant v1("AAA", "TTA", "chr1", 10, 14, {"ATGC", "ATT", "TT"}, {0,1,2});
 	vector<size_t> result;
