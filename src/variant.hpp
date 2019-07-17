@@ -5,6 +5,7 @@
 #include <string>
 #include <iostream>
 #include "genotypingresult.hpp"
+#include "dnasequence.hpp"
 
 /** 
 * Represents a variant.
@@ -19,6 +20,7 @@ public:
 	* @param paths vector containing the allele each path covers (i-th path covers allele at paths[i])
 	**/
 	Variant(std::string left_flank, std::string right_flank, std::string chromosome, size_t start_position, size_t end_position, std::vector<std::string> alleles, std::vector<size_t> paths);
+	Variant(DnaSequence& left_flank, DnaSequence& right_flank, std::string chromosome, size_t start_position, size_t end_position, std::vector<DnaSequence>& alleles, std::vector<size_t>& paths);
 	void add_flanking_sequence();
 	void remove_flanking_sequence();
 	void combine_variants (Variant const &v2);
@@ -37,16 +39,17 @@ public:
 	friend bool operator==(const Variant& v1, const Variant& v2);
 	friend bool operator!=(const Variant& v1, const Variant& v2);
 private:
-	std::string left_flank;
-	std::string right_flank;
+	DnaSequence left_flank;
+	DnaSequence right_flank;
 	std::string chromosome;
 	std::vector<size_t> start_positions;
 	std::vector<size_t> end_positions;
-	std::vector<std::vector<std::string>> alleles;
+	std::vector<std::vector<DnaSequence>> alleles;
 	/** alleles not covered by any paths **/
-	std::vector<std::vector<std::string>> uncovered_alleles;
+	std::vector<std::vector<DnaSequence>> uncovered_alleles;
 	std::vector<size_t> paths;
 	bool flanks_added;
+	void set_values();
 	
 };
 

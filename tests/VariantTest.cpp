@@ -110,6 +110,7 @@ TEST_CASE("Variant combine_variants", "[Variant combine_variants]") {
 
 	v1.combine_variants(v2);
 	v1.combine_variants(v3);
+
 	REQUIRE(v1.nr_of_alleles() == 3);
 	REQUIRE(v1.nr_of_paths() == 4);
 	REQUIRE(v1.get_allele_sequence(0) == "ACTGAGACTG");

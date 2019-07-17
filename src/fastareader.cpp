@@ -57,7 +57,7 @@ bool FastaReader::contains_name(string name) const {
 
 size_t FastaReader::get_size_of(string name) const {
 	if (this->contains_name(name)) {
-		return this->name_to_sequence.at(name)->length();
+		return this->name_to_sequence.at(name)->size();
 	} else {
 		throw runtime_error("FastaReader::get_size_of: chromosome " + name + " is not present in FASTA-file.");
 	}

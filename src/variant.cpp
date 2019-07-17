@@ -8,37 +8,34 @@
 
 using namespace std;
 
-string construct_left_flank(vector<string>& alleles, size_t position, size_t length) {
+DnaSequence construct_left_flank(vector<DnaSequence>& alleles, size_t position, size_t length) {
 	if ((alleles.size()-1) < position) {
 		throw runtime_error("Variant::construct_left_flank: position too large.");
 	}
-
-	string flank = "";
-
+	DnaSequence flank;
 	for (int i = position-1; i >= 0; --i) {
-		string sequence = alleles.at(i);
+		DnaSequence sequence = alleles.at(i);
 		for (int j = sequence.size()-1; j >= 0; --j) {
-			flank += sequence[j];
+			flank.append(sequence.base_at(j));
 			if (flank.size() == length) break;
 		}
 		if (flank.size() == length) {
 			break;
 		}
 	}
-	reverse(flank.begin(), flank.end());
+	flank.reverse();
 	return flank;
 }
 
-string construct_right_flank(vector<string>& alleles, size_t position, size_t length) {
+DnaSequence construct_right_flank(vector<DnaSequence>& alleles, size_t position, size_t length) {
 	if ((alleles.size()-1) < position) {
 		throw runtime_error("Variant::construct_right_flank: position too large.");
 	}
-
-	string flank = "";
+	DnaSequence flank;
 	for (size_t i = position+1; i < alleles.size(); ++i) {
-		string sequence = alleles.at(i);
+		DnaSequence sequence = alleles.at(i);
 		for (size_t j = 0; j < sequence.size(); ++j) {
-			flank += sequence[j];
+			flank.append(sequence.base_at(j));
 			if (flank.size() == length) break;
 		}
 		if (flank.size() == length) {
@@ -49,7 +46,6 @@ string construct_right_flank(vector<string>& alleles, size_t position, size_t le
 	if (flank.size() != length) {
 		throw runtime_error("Variant::construct_right_flank: not enough bases given at right side.");
 	}
-
 	return flank;
 }
 
@@ -63,21 +59,41 @@ Variant::Variant(string left_flank, string right_flank, string chromosome, size_
 	 flanks_added(false)
 {
 	for (auto a : alleles) {
+		this->alleles.push_back({DnaSequence(a)});
+	}
+	this->set_values();
+}
+
+Variant::Variant(DnaSequence& left_flank, DnaSequence& right_flank, string chromosome, size_t start_position, size_t end_position, vector<DnaSequence>& alleles, vector<size_t>& paths)
+	:left_flank(left_flank),
+	 right_flank(right_flank),
+	 chromosome(chromosome),
+	 start_positions({start_position}),
+	 end_positions({end_position}),
+	 paths(paths),
+	 flanks_added(false)
+{
+	for (auto a : alleles) {
 		this->alleles.push_back({a});
 	}
+	this->set_values();
+}
 
+void Variant::set_values() {
 	// find out which alleles are not covered by any paths
-	vector<string> uncovered;
+	vector<DnaSequence> uncovered;
 	for (size_t i = 0; i < this->alleles.size(); ++i) {
 		if (find(this->paths.begin(), this->paths.end(), i) == this->paths.end()) {
 			// allele not covered
-			uncovered.push_back(alleles[i]);
+			uncovered.push_back(this->alleles[i][0]);
 		}
 	}
-	this->uncovered_alleles = {uncovered};
+	this->uncovered_alleles.push_back(uncovered);
+	size_t start_position = this->start_positions[0];
+	size_t end_position = this->end_positions[0];
 
 	// check if flanks have same length
-	if (left_flank.size() != right_flank.size()){
+	if (this->left_flank.size() != this->right_flank.size()){
 		throw runtime_error("Variant::Variant: left and right flanks have different sizes.");
 	}
 
@@ -87,19 +103,18 @@ Variant::Variant(string left_flank, string right_flank, string chromosome, size_
 	}
 
 	// check if length of ref allele matches end position
-	size_t ref_len = alleles[0].size();
+	size_t ref_len = this->alleles[0][0].size();
 	if (ref_len != (end_position-start_position)) {
 		throw runtime_error("Variant::Variant: end position does not match length of reference allele.");
 	}
 
 	// check if paths are valid
-	size_t nr_alleles = alleles.size();
-	for (auto p : paths) {
+	size_t nr_alleles = this->alleles.size();
+	for (auto p : this->paths) {
 		if (p >= nr_alleles) {
 			throw runtime_error("Variant::Variant: allele ids given in paths are invalid.");
 		}
 	}
-	
 }
 
 void Variant::add_flanking_sequence(){
@@ -114,7 +129,7 @@ void Variant::add_flanking_sequence(){
 void Variant::remove_flanking_sequence() {
 	if (!this->flanks_added) return;
 	for (size_t i = 0; i < this->alleles.size(); ++i) {
-		vector<string> allele = this->alleles[i];
+		vector<DnaSequence> allele = this->alleles[i];
 		allele.erase(allele.begin());
 		allele.erase(allele.end()-1);
 		this->alleles[i] = allele;
@@ -132,11 +147,11 @@ size_t Variant::nr_of_paths() const {
 
 string Variant::get_allele_sequence(size_t index) const {
 	if (index < this->alleles.size()) {
-		string result;
+		DnaSequence result;
 		for(auto s : this->alleles.at(index)) {
-			result += s;
+			result.append(s);
 		}
-		return result;
+		return result.to_string();
 	} else {
 		throw runtime_error("Variant::get_allele: Index out of bounds.");
 	}
@@ -207,15 +222,16 @@ void Variant::combine_variants (Variant const &v2){
 		path_to_index[ref_path] = {};
 	}
 	vector<size_t> new_paths(this->paths.size());
-	vector<vector<string>> new_alleles;
+	vector<vector<DnaSequence>> new_alleles;
 	size_t allele_index = 0;
 	for (auto it = path_to_index.begin(); it != path_to_index.end(); ++it) {
 		for (auto e : it->second) {
 			new_paths[e] = allele_index;
 		}
-		vector<string> left_allele = this->alleles.at(it->first.first);
-		vector<string> right_allele = v2.alleles.at(it->first.second);
-		string flank = this->right_flank.substr(0, v2.get_start_position() - this->get_end_position());
+		vector<DnaSequence> left_allele = this->alleles.at(it->first.first);
+		vector<DnaSequence> right_allele = v2.alleles.at(it->first.second);
+		DnaSequence flank;
+		this->right_flank.substr(0, v2.get_start_position() - this->get_end_position(), flank);
 		left_allele.push_back(flank);
 		left_allele.insert(left_allele.end(), right_allele.begin(), right_allele.end());
 		new_alleles.push_back(left_allele);
@@ -229,21 +245,20 @@ void Variant::combine_variants (Variant const &v2){
 	this->alleles = new_alleles;
 	this->uncovered_alleles.insert(this->uncovered_alleles.end(), v2.uncovered_alleles.begin(), v2.uncovered_alleles.end());
 	this->paths = new_paths;
-
 }
 
 void Variant::separate_variants (vector<Variant>* resulting_variants, const GenotypingResult* input_genotyping, vector<GenotypingResult>* resulting_genotyping) const {
 	size_t nr_variants = this->start_positions.size();
 	assert (this->uncovered_alleles.size() == nr_variants);
 	// collect the allele sequences for all variants 
-	vector<vector<string>> alleles_per_variant (nr_variants);
+	vector<vector<DnaSequence>> alleles_per_variant (nr_variants);
 	for (size_t i = 0; i < this->alleles.size(); ++i) {
-		vector<string> allele = this->alleles.at(i);
+		vector<DnaSequence> allele = this->alleles.at(i);
 		size_t start_index = 0;
 		if (this->flanks_added) start_index = 1;
 		for (size_t a = 0; a < nr_variants; a++) {
 			size_t index = a*2 + start_index;
-			string sequence = allele.at(index);
+			DnaSequence sequence = allele.at(index);
 			auto it = find(alleles_per_variant.at(a).begin(), alleles_per_variant.at(a).end(), sequence);
 			if (it == alleles_per_variant.at(a).end()) {
 				alleles_per_variant.at(a).push_back(sequence);
@@ -255,13 +270,13 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 	vector<vector<size_t>> paths_per_variant (nr_variants);
 	for (size_t i = 0; i < this->paths.size(); ++i) {
 		size_t a = this->get_allele_on_path(i);
-		vector<string> allele = this->alleles.at(a);
+		vector<DnaSequence> allele = this->alleles.at(a);
 		size_t start_index = 0;
 		if (this->flanks_added) start_index = 1;
 		for (size_t v = 0; v < nr_variants; v++) {
 			// get allele at this position
 			size_t index = v*2 + start_index;
-			string sequence = allele.at(index);
+			DnaSequence sequence = allele.at(index);
 			// get index of this allele
 			auto it = find(alleles_per_variant.at(v).begin(), alleles_per_variant.at(v).end(), sequence);
 			size_t allele_id = distance(alleles_per_variant.at(v).begin(), it);
@@ -270,7 +285,7 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 	}
 
 	// use reference allele to construct flanking sequences for each variant
-	vector<string> reference_allele = this->alleles.at(0);
+	vector<DnaSequence> reference_allele = this->alleles.at(0);
 	if (!this->flanks_added) {
 		reference_allele.insert(reference_allele.begin(), this->left_flank);
 		reference_allele.push_back(this->right_flank);
@@ -279,13 +294,13 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 	for (size_t i = 0; i < nr_variants; ++i) {
 		size_t index = i*2;
 		if (this->flanks_added) index += 1;
-		string left = construct_left_flank(reference_allele, i*2 + 1, this->left_flank.size());
-		string right = construct_right_flank(reference_allele, i*2 + 1, this->right_flank.size());
+		DnaSequence left = construct_left_flank(reference_allele, i*2 + 1, this->left_flank.size());
+		DnaSequence right = construct_right_flank(reference_allele, i*2 + 1, this->right_flank.size());
 
 		// construct variant
-		vector<string> uncovered = this->uncovered_alleles[i];
+		vector<DnaSequence> uncovered = this->uncovered_alleles[i];
 		// add uncovered alleles to list of alleles
-		vector<string> new_alleles = alleles_per_variant.at(i);
+		vector<DnaSequence> new_alleles = alleles_per_variant.at(i);
 		for (auto allele : uncovered) {
 			// only add allele if it is not yet in list of alleles
 			if (find(new_alleles.begin(), new_alleles.end(), allele) == new_alleles.end()) {
@@ -303,8 +318,8 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 			for (size_t a0 = 0; a0 < this->nr_of_alleles(); ++a0) {
 				for (size_t a1 = a0; a1 < this->nr_of_alleles(); ++a1) {
 					// determine alleles genotype corresponds to
-					vector<string> allele0 = this->alleles.at(a0);
-					vector<string> allele1 = this->alleles.at(a1);
+					vector<DnaSequence> allele0 = this->alleles.at(a0);
+					vector<DnaSequence> allele1 = this->alleles.at(a1);
 					// determine alleles for current variant
 					auto it0 = find(alleles_per_variant.at(i).begin(), alleles_per_variant.at(i).end(), allele0.at(index));
 					size_t single_allele0 = distance(alleles_per_variant.at(i).begin(), it0);
@@ -318,8 +333,8 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 			// get the haplotype alleles of the combined variant
 			pair<size_t,size_t> haplotype = input_genotyping->get_haplotype();
 			// get corresponding alleles for current variant
-			vector<string> allele0 = this->alleles.at(haplotype.first);
-			vector<string> allele1 = this->alleles.at(haplotype.second);
+			vector<DnaSequence> allele0 = this->alleles.at(haplotype.first);
+			vector<DnaSequence> allele1 = this->alleles.at(haplotype.second);
 			auto it0 = find(alleles_per_variant.at(i).begin(), alleles_per_variant.at(i).end(), allele0.at(index));
 			size_t single_haplotype0 = distance(alleles_per_variant.at(i).begin(), it0);
 			auto it1 = find(alleles_per_variant.at(i).begin(), alleles_per_variant.at(i).end(), allele1.at(index));
@@ -337,14 +352,14 @@ bool Variant::is_combined() const {
 }
 
 ostream& operator<<(ostream& os, const Variant& var) {
-	os << "left flank:\t" << var.left_flank << endl;
-	os << "right flank:\t" << var.right_flank << endl;
+	os << "left flank:\t" << var.left_flank.to_string() << endl;
+	os << "right flank:\t" << var.right_flank.to_string() << endl;
 	os << "position:\t" << var.chromosome << ":" << var.start_positions[0] << "-" << var.end_positions[0] << endl;
 	os << "alleles:" << endl;
 	for (size_t i = 0; i < var.alleles.size(); ++i) {
 		os << i << ":\t";
 		for (auto s : var.alleles[i]) {
-			os << s;
+			os << s.to_string();
 		}
 		os << endl;
 	}
@@ -353,7 +368,7 @@ ostream& operator<<(ostream& os, const Variant& var) {
 		os << "{";
 		for (size_t j = 0; j < var.uncovered_alleles[i].size(); ++j) {
 			if (j > 0) os << ",";
-			os << var.uncovered_alleles[i][j];
+			os << var.uncovered_alleles[i][j].to_string();
 		}
 		os << "}" << endl;
 	}
