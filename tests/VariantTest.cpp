@@ -193,7 +193,7 @@ TEST_CASE("Variant separate_variants_likelihoods", "Variant separate_variants_li
 
 	// expected genotype likelihoods
 	vector<vector<double>> expected = { {0.05,0.35,0.6}, {0.05,0.35,0.6}, {0.1,0.8,0.1} };
-	pair<size_t,size_t> expected_haplotype = make_pair(0,1);
+	pair<unsigned char,unsigned char> expected_haplotype = make_pair(0,1);
 
 	// computed genotype likelihoods
 	for (size_t i = 0; i < 3; ++i) {
@@ -360,9 +360,9 @@ TEST_CASE("Variant combine_combined2", "[Variant combine_combined]") {
 	REQUIRE(doubles_equal(single_genotypes[0].get_genotype_likelihood(0,1), 0.05));
 	REQUIRE(doubles_equal(single_genotypes[0].get_genotype_likelihood(1,1), 0.0));
 
-	REQUIRE(single_genotypes[0].get_haplotype() == pair<size_t,size_t>(0,1));
-	REQUIRE(single_genotypes[1].get_haplotype() == pair<size_t,size_t>(0,1));
-	REQUIRE(single_genotypes[2].get_haplotype() == pair<size_t,size_t>(0,0));
+	REQUIRE(single_genotypes[0].get_haplotype() == pair<unsigned char,unsigned char>(0,1));
+	REQUIRE(single_genotypes[1].get_haplotype() == pair<unsigned char,unsigned char>(0,1));
+	REQUIRE(single_genotypes[2].get_haplotype() == pair<unsigned char,unsigned char>(0,0));
 }
 
 TEST_CASE("Variant get_paths_of_allele", "[Variant get_paths_of_allele]") {

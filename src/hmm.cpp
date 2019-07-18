@@ -21,23 +21,20 @@ void print_column(vector<long double>* column, ColumnIndexer* indexer) {
 }
 
 
-HMM::HMM(vector<UniqueKmers>* unique_kmers, const vector<Variant>& variants, double recombrate)
-	:unique_kmers(unique_kmers)
+HMM::HMM(vector<UniqueKmers*>* unique_kmers, const vector<Variant>& variants, double recombrate)
+	:unique_kmers(unique_kmers),
+	 genotyping_result(unique_kmers->size())
 {
 	size_t size = this->unique_kmers->size();
-
-	// construct vector to hold results
-	this->genotyping_result = vector<GenotypingResult>(size);
 
 	// construct TransitionProbabilityComputers
 	init(this->transition_prob_computers, size-1);	
 	for (size_t i = 1; i < size; ++i) {
-		size_t prev_pos = this->unique_kmers->at(i-1).get_variant_position();
-		size_t cur_pos = this->unique_kmers->at(i).get_variant_position();
+		size_t prev_pos = this->unique_kmers->at(i-1)->get_variant_position();
+		size_t cur_pos = this->unique_kmers->at(i)->get_variant_position();
 		TransitionProbabilityComputer* t = new TransitionProbabilityComputer(prev_pos, cur_pos, recombrate);
 		this->transition_prob_computers.at(i-1) = t;
 	}
-
 	this->previous_backward_column = nullptr;
 
 	cerr << "Indexing the columns ..." << endl;
@@ -81,10 +78,9 @@ void HMM::index_columns() {
 	init(column_indexers, column_count);
 	// do one forward pass to compute ColumnIndexers
 	for (size_t column_index = 0; column_index < column_count; ++ column_index) {
-
 		// get path ids of current column
 		vector<size_t> current_path_ids;
-		this->unique_kmers->at(column_index).get_path_ids(current_path_ids);
+		this->unique_kmers->at(column_index)->get_path_ids(current_path_ids);
 		size_t nr_paths = current_path_ids.size();
 
 		if (nr_paths == 0) {
@@ -184,8 +180,8 @@ void HMM::compute_viterbi_path(const vector<Variant>& variants) {
 		}
 
 		// get alleles these paths correspond to
-		size_t allele1 = variants.at(column_index).get_allele_on_path(path_ids.first);
-		size_t allele2 = variants.at(column_index).get_allele_on_path(path_ids.second);
+		unsigned char allele1 = variants.at(column_index).get_allele_on_path(path_ids.first);
+		unsigned char allele2 = variants.at(column_index).get_allele_on_path(path_ids.second);
 		this->genotyping_result.at(column_index).add_first_haplotype_allele(allele1);
 		this->genotyping_result.at(column_index).add_second_haplotype_allele(allele2);
 
@@ -217,7 +213,7 @@ void HMM::compute_forward_column(size_t column_index) {
 	vector<long double>* current_column = new vector<long double>();
 
 	// emission probability computer
-	EmissionProbabilityComputer emission_probability_computer(&this->unique_kmers->at(column_index));
+	EmissionProbabilityComputer emission_probability_computer(this->unique_kmers->at(column_index));
 
 	// get ColumnIndexer
 	ColumnIndexer* column_indexer = column_indexers.at(column_index);
@@ -277,7 +273,7 @@ void HMM::compute_backward_column(size_t column_index, const vector<Variant>& va
 		assert (this->previous_backward_column != nullptr);
 		transition_probability_computer = this->transition_prob_computers.at(column_index);
 		previous_indexer = this->column_indexers.at(column_index+1);
-		emission_probability_computer = new EmissionProbabilityComputer(&this->unique_kmers->at(column_index+1));
+		emission_probability_computer = new EmissionProbabilityComputer(this->unique_kmers->at(column_index+1));
 
 		// get forward probabilities (needed for computing posteriors
 		if (forward_column == nullptr) {
@@ -333,8 +329,8 @@ void HMM::compute_backward_column(size_t column_index, const vector<Variant>& va
 		normalization_f_b += forward_backward_prob;
 
 		// get alleles corresponding to paths
-		size_t allele1 = variants.at(column_index).get_allele_on_path(path_ids.first);
-		size_t allele2 = variants.at(column_index).get_allele_on_path(path_ids.second);
+		unsigned char allele1 = variants.at(column_index).get_allele_on_path(path_ids.first);
+		unsigned char allele2 = variants.at(column_index).get_allele_on_path(path_ids.second);
 		this->genotyping_result.at(column_index).add_to_likelihood(allele1, allele2, forward_backward_prob);
 	}
 
@@ -378,7 +374,7 @@ void HMM::compute_viterbi_column(size_t column_index) {
 	vector<long double>* current_column = new vector<long double>();
 
 	// emission probability computer
-	EmissionProbabilityComputer emission_probability_computer(&this->unique_kmers->at(column_index));
+	EmissionProbabilityComputer emission_probability_computer(this->unique_kmers->at(column_index));
 
 	// get ColumnIndexer
 	ColumnIndexer* column_indexer = this->column_indexers.at(column_index);

@@ -23,7 +23,7 @@ TEST_CASE("GenotypingResult get_genotype_likelihood", "[GenotypingResult get_gen
 	r.add_first_haplotype_allele(0);
 	r.add_second_haplotype_allele(1);
 
-	REQUIRE(r.get_haplotype() == pair<size_t, size_t>(0,1));
+	REQUIRE(r.get_haplotype() == pair<unsigned char, unsigned char>(0,1));
 	REQUIRE(r.get_likeliest_genotype() == pair<int, int>(1,1));
 }
 

@@ -50,7 +50,7 @@ TEST_CASE("HMM get_genotyping_result", "[HMM get_genotyping_result]") {
 	u2.insert_kmer(CopyNumber(0.01,0.01,0.9), p1);
 	u2.insert_kmer(CopyNumber(0.9,0.3,0.1), p2);
 
-	vector<UniqueKmers> unique_kmers = {u1,u2};
+	vector<UniqueKmers*> unique_kmers = {&u1,&u2};
 	vector<Variant> variants;
 	variants.push_back(Variant("NNN", "NNN", "chr1", 2000, 2003, {"AAT", "ATT"}, {0,1}));
 	variants.push_back(Variant("NNN", "NNN", "chr1", 3000, 3003, {"CCC", "CGC"}, {0,1}));
@@ -85,7 +85,7 @@ TEST_CASE("HMM no_alt_allele", "[HMM no_alt_allele]") {
 	u.insert_kmer(CopyNumber(0.1,0.2,0.9), p1);
 	u.insert_kmer(CopyNumber(0.3,0.4,0.1), p2);
 
-	vector<UniqueKmers> unique_kmers = {u};
+	vector<UniqueKmers*> unique_kmers = {&u};
 	vector<Variant> variants;
 	variants.push_back(Variant("ATGC", "TGGG", "chr1", 2000, 2003, {"AAT", "ATT"}, {0,0,0}));
 	HMM hmm (&unique_kmers, variants);
@@ -102,7 +102,7 @@ TEST_CASE("HMM no_ref_allele", "[HMM no_ref_allele]") {
 	u.insert_kmer(CopyNumber(0.1,0.2,0.9), p1);
 	u.insert_kmer(CopyNumber(0.3,0.4,0.1), p2);
 
-	vector<UniqueKmers> unique_kmers = {u};
+	vector<UniqueKmers*> unique_kmers = {&u};
 	vector<Variant> variants;
 	variants.push_back(Variant("ATGC", "TGGG", "chr1", 2000, 2003, {"AAT", "ATT"}, {1,1,1}));
 	HMM hmm (&unique_kmers, variants);
@@ -120,7 +120,7 @@ TEST_CASE("HMM no_unique_kmers", "[HMM no_unique_kmers]") {
 	u2.insert_empty_path(0);
 	u2.insert_empty_path(1);
 
-	vector<UniqueKmers> unique_kmers = {u1, u2};
+	vector<UniqueKmers*> unique_kmers = {&u1, &u2};
 	vector<Variant> variants;
 	variants.push_back(Variant("AAA", "TTT", "chr1", 2000, 2003, {"ATA", "AAA"}, {0,1}));
 	variants.push_back(Variant("CCC", "GGG", "chr1", 3000, 3003, {"CTC", "CGC"}, {0,1}));
@@ -158,7 +158,7 @@ TEST_CASE("HMM no_unique_kmers2", "[HMM no_unique_kmers2]") {
 	u2.insert_empty_path(1);
 	u2.insert_empty_path(2);
 
-	vector<UniqueKmers> unique_kmers = {u1, u2};
+	vector<UniqueKmers*> unique_kmers = {&u1, &u2};
 	vector<Variant> variants;
 	variants.push_back(Variant("AAA", "TTT", "chr1", 2000, 2003, {"ATA", "AAA"}, {0,0,1}));
 	variants.push_back(Variant("CCC", "GGG", "chr1", 3000, 3003, {"CTC", "CGC"}, {0,1,1}));
@@ -202,7 +202,7 @@ TEST_CASE("HMM no_unique_kmers3", "[HMM no_unique_kmers3]") {
 	u3.insert_kmer(CopyNumber(0.1,0.9,0.1), p1);
 	u3.insert_kmer(CopyNumber(0.1,0.8,0.1), p2);
 
-	vector<UniqueKmers> unique_kmers = {u1,u2,u3};
+	vector<UniqueKmers*> unique_kmers = {&u1,&u2,&u3};
 	vector<Variant> variants;
 	variants.push_back(Variant("AAA", "CCC", "chr1", 2000, 2003, {"AGG", "ATG"}, {0,1}));
 	variants.push_back(Variant("GGG", "TCT", "chr1", 3000, 3003, {"TTT", "TGT"}, {0,1}));
@@ -213,16 +213,16 @@ TEST_CASE("HMM no_unique_kmers3", "[HMM no_unique_kmers3]") {
 	
 	// expected likelihoods, as computed by hand
 	vector<double> expected_likelihoods = {0.00264169937, 0.99471660125, 0.00264169937, 0.02552917716, 0.94894164567, 0.02552917716, 0.002961313333, 0.99407737333, 0.002961313333};
-	vector<size_t> expected_haplotype1 = {0,0,0};
-	vector<size_t> expected_haplotype2 = {1,1,1};
+	vector<unsigned char> expected_haplotype1 = {0,0,0};
+	vector<unsigned char> expected_haplotype2 = {1,1,1};
 	vector<double> computed_likelihoods;
-	vector<size_t> computed_haplotype1;
-	vector<size_t> computed_haplotype2;
+	vector<unsigned char> computed_haplotype1;
+	vector<unsigned char> computed_haplotype2;
 	for (auto result : hmm.get_genotyping_result()) {
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,0));
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,1));
 		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
-		pair<size_t,size_t> ht = result.get_haplotype();
+		pair<unsigned char,unsigned char> ht = result.get_haplotype();
 		computed_haplotype1.push_back(ht.first);
 		computed_haplotype2.push_back(ht.second);
 	}

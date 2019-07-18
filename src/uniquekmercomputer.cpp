@@ -35,17 +35,17 @@ UniqueKmerComputer::UniqueKmerComputer (KmerCounter* genomic_kmers, KmerCounter*
 
 
 // need to know which kmer is on which allele to be able to identify which kmer is on which path
-void UniqueKmerComputer::compute_unique_kmers(vector<UniqueKmers>* result) const {
+void UniqueKmerComputer::compute_unique_kmers(vector<UniqueKmers*>* result) const {
 	size_t nr_variants = this->variants->size_of(this->chromosome);
 	for (size_t v = 0; v < nr_variants; ++v) {
 		map <string, vector<size_t>> occurences;
 		const Variant& variant = this->variants->get_variant(this->chromosome, v);
-		UniqueKmers u (v, variant.get_start_position());
+		UniqueKmers* u = new UniqueKmers(v, variant.get_start_position());
 		size_t nr_alleles = variant.nr_of_alleles();
 
 		// insert empty paths (to also capture paths for which no unique kmers exist)
 		for (size_t p = 0; p < variant.nr_of_paths(); ++p) {
-			u.insert_empty_path(p);
+			u->insert_empty_path(p);
 		}
 		for (size_t a = 0; a < nr_alleles; ++a) {
 			// enumerate kmers and identify those with copynumber 1
@@ -91,18 +91,10 @@ void UniqueKmerComputer::compute_unique_kmers(vector<UniqueKmers>* result) const
 				if ( (p_cn0 > 0) || (p_cn1 > 0) || (p_cn2 > 0) ) {
 					CopyNumber cn(p_cn0, p_cn1, p_cn2);
 					// construct UniqueKmers object
-					u.insert_kmer(cn, paths);
-					if ((variant.get_start_position() == 19252931) || (variant.get_start_position() == 19252930) || (variant.get_start_position() == 19252932)) {
-						cout << kmer.first << " " << read_kmercount << " " << genomic_count << " " << local_count << endl;
-					}
+					u->insert_kmer(cn, paths);
 				}
 			}
 		}
-
-		if ((variant.get_start_position() == 19252931) || (variant.get_start_position() == 19252930) || (variant.get_start_position() == 19252932)) {
-			cout << u << endl;
-		}
-
 		result->push_back(u);
 	}
 }

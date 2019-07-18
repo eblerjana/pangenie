@@ -9,10 +9,11 @@ TransitionProbabilityComputer::TransitionProbabilityComputer(size_t from_variant
 {
 	assert(from_variant <= to_variant );
 	// using same formula as in WhatsHap
-	long double distance = (to_variant - from_variant) * pow(10.0L, -6.0L) * (long double) recomb_rate;
+	long double distance = (to_variant - from_variant) * 0.000001 * (long double) recomb_rate;
 	// using formula from: https://en.wikipedia.org/wiki/Centimorgan
 	long double recomb_prob = (1.0L - exp(-(2.0L*distance)/100)) / 2.0L;
-	this->probabilities = {(1.0L - recomb_prob)*(1.0L - recomb_prob), (1.0L - recomb_prob)*recomb_prob, recomb_prob*recomb_prob};
+	long double no_recomb_prob = 1.0L - recomb_prob;
+	this->probabilities = {no_recomb_prob*no_recomb_prob, no_recomb_prob*recomb_prob, recomb_prob*recomb_prob};
 }
 
 long double TransitionProbabilityComputer::compute_transition_prob(size_t path_id1, size_t path_id2, size_t path_id3, size_t path_id4){

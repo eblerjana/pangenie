@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cassert>
 #include <math.h>
 #include "genotypingresult.hpp"
 
@@ -9,9 +10,9 @@ GenotypingResult::GenotypingResult()
 	 haplotype_2(0)
 {}
 
-pair<size_t, size_t> genotype_from_alleles (size_t allele1, size_t allele2) {
+pair<unsigned char, unsigned char> genotype_from_alleles (unsigned char allele1, unsigned char allele2) {
 	// always put allele with smaller index first
-	pair<size_t,size_t> genotype;
+	pair<unsigned char,unsigned char> genotype;
 	if (allele1 < allele2) {
 		genotype = make_pair(allele1, allele2);
 	} else {
@@ -20,21 +21,21 @@ pair<size_t, size_t> genotype_from_alleles (size_t allele1, size_t allele2) {
 	return genotype;
 }
 
-void GenotypingResult::add_to_likelihood(size_t allele1, size_t allele2, long double value) {
-	pair<size_t, size_t> genotype = genotype_from_alleles(allele1, allele2);
+void GenotypingResult::add_to_likelihood(unsigned char allele1, unsigned char allele2, long double value) {
+	pair<unsigned char, unsigned char> genotype = genotype_from_alleles(allele1, allele2);
 	this->genotype_to_likelihood[genotype] += value;
 }
 
-void GenotypingResult::add_first_haplotype_allele(size_t allele) {
+void GenotypingResult::add_first_haplotype_allele(unsigned char allele) {
 	this->haplotype_1 = allele;
 }
 
-void GenotypingResult::add_second_haplotype_allele(size_t allele) {
+void GenotypingResult::add_second_haplotype_allele(unsigned char allele) {
 	this->haplotype_2 = allele;
 }
 
-long double GenotypingResult::get_genotype_likelihood (size_t allele1, size_t allele2) const {
-	pair<size_t, size_t> genotype = genotype_from_alleles(allele1, allele2);
+long double GenotypingResult::get_genotype_likelihood (unsigned char allele1, unsigned char allele2) const {
+	pair<unsigned char, unsigned char> genotype = genotype_from_alleles(allele1, allele2);
 	auto it = this->genotype_to_likelihood.find(genotype);
 	if (it != this->genotype_to_likelihood.end()) {
 		return this->genotype_to_likelihood.at(genotype);
@@ -44,12 +45,13 @@ long double GenotypingResult::get_genotype_likelihood (size_t allele1, size_t al
 }
 
 vector<long double> GenotypingResult::get_all_likelihoods (size_t nr_alleles) const {
+	assert (nr_alleles < 256);
 	// determine number of possible genotypes
 	size_t nr_genotypes = (nr_alleles * (nr_alleles + 1)) / 2;
 	vector<long double> result(nr_genotypes, 0.0L);
 	for (auto const& l : this->genotype_to_likelihood) {
-		size_t allele1 = l.first.first;
-		size_t allele2 = l.first.second;
+		unsigned char allele1 = l.first.first;
+		unsigned char allele2 = l.first.second;
 
 		// determine index (according to VCF-specification)
 		size_t index = ((allele2 * (allele2 + 1)) / 2) + allele1;
@@ -61,7 +63,7 @@ vector<long double> GenotypingResult::get_all_likelihoods (size_t nr_alleles) co
 	return result;
 }
 
-size_t GenotypingResult::get_genotype_quality (size_t allele1, size_t allele2) const {
+size_t GenotypingResult::get_genotype_quality (unsigned char allele1, unsigned char allele2) const {
 	// check if likelihoods are normalized
 	long double sum = 0.0;
 	for (const auto& l : this->genotype_to_likelihood) {
@@ -82,7 +84,7 @@ size_t GenotypingResult::get_genotype_quality (size_t allele1, size_t allele2) c
 	}
 }
 
-pair<size_t, size_t> GenotypingResult::get_haplotype() const {
+pair<unsigned char, unsigned char> GenotypingResult::get_haplotype() const {
 	return make_pair(this->haplotype_1, this->haplotype_2);
 }
 
@@ -94,7 +96,7 @@ void GenotypingResult::divide_likelihoods_by(long double value) {
 
 pair<int, int> GenotypingResult::get_likeliest_genotype() const {
 	long double best_value = 0.0L;
-	pair<size_t,size_t> best_genotype = make_pair(0,0); 
+	pair<unsigned char, unsigned char> best_genotype = make_pair(0,0); 
 	for (auto const& l : this->genotype_to_likelihood) {
 		if (l.second >= best_value) {
 			best_value = l.second;

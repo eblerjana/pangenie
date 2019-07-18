@@ -36,8 +36,9 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 	}
 	ifstream file(filename);
 	string line;
-	string previous_chrom = "";
+	string previous_chrom("");
 	size_t previous_end_pos = 0;
+	map<unsigned int, string> fields = { {0, "#CHROM"}, {1, "POS"}, {2, "ID"}, {3, "REF"}, {4, "ALT"}, {5, "QUAL"}, {6, "FILTER"}, {7, "INFO"}, {8, "FORMAT"} };
 	vector<Variant> variant_cluster;
 	// read VCF-file line by line
 	while (getline(file, line)) {
@@ -55,7 +56,6 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 				throw runtime_error("VariantReader::VariantReader: no haplotype paths given.");
 			}
 			// validate header line
-			map<unsigned int, string> fields = { {0, "#CHROM"}, {1, "POS"}, {2, "ID"}, {3, "REF"}, {4, "ALT"}, {5, "QUAL"}, {6, "FILTER"}, {7, "INFO"}, {8, "FORMAT"} };
 			for (unsigned int i = 0; i < 9; ++i) {
 				if (tokens[i] != fields[i]) {
 					throw runtime_error("VariantReader::VariantReader: VCF header line is malformed.");
@@ -93,7 +93,7 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 		vector<DnaSequence> alleles = {ref};
 		parse_line(alleles, tokens[4], ',');
 		// construct paths
-		vector<size_t> paths = {};
+		vector<unsigned char> paths;
 		for (size_t i = 9; i < tokens.size(); ++i) {
 			// make sure all genotypes are phased
 			if (tokens[i].find('/') != string::npos) {
@@ -102,7 +102,7 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 			vector<string> p;
 			parse_line(p, tokens[i], '|');
 			for (string& s : p){
-				paths.push_back( (size_t) atoi(s.c_str()));
+				paths.push_back( (unsigned char) atoi(s.c_str()));
 			}
 		}
 		// determine left and right flanks
@@ -366,7 +366,7 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 			this->phasing_outfile << "GT" << "\t"; // FORMAT
 
 			// determine phasing
-			pair<size_t,size_t> haplotype = singleton_likelihoods.at(j).get_haplotype();
+			pair<unsigned char,unsigned char> haplotype = singleton_likelihoods.at(j).get_haplotype();
 			this->phasing_outfile << haplotype.first << "|" << haplotype.second << endl; // GT (phased)
 		}
 	}
