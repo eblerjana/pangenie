@@ -22,7 +22,9 @@ public:
 	size_t get_size_of(std::string name) const;
 	/** compute total numbers of kmers in the sequences **/
 	size_t get_total_kmers(size_t kmer_size) const;
+	/** get a subsequence **/
 	void get_subsequence(std::string name, size_t start, size_t end, std::string& result) const;
+	void get_subsequence(std::string name, size_t start, size_t end, DnaSequence& result) const; 
 private:
 	void parse_file(std::string filename);
 	std::map<std::string, DnaSequence*> name_to_sequence;

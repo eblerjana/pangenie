@@ -75,6 +75,14 @@ void FastaReader::get_subsequence(string name, size_t start, size_t end, string&
 	if (this->contains_name(name)) {
 		this->name_to_sequence.at(name)->substr(start, end, result);
 	} else {
-		throw runtime_error("FastaReader::get_subsequence: chromosome " + name + " is not present in FASTA-file.");
+		throw runtime_error("FastaReader::get_subsequence (string): chromosome " + name + " is not present in FASTA-file.");
+	}
+}
+
+void FastaReader::get_subsequence(std::string name, size_t start, size_t end, DnaSequence& result) const {
+	if (this->contains_name(name)) {
+		this->name_to_sequence.at(name)->substr(start, end, result);
+	} else {
+		throw runtime_error("FastaReader::get_subsequence (DnaSequence): chromosome " + name + " is not present in FASTA-file.");
 	}
 }

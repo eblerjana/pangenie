@@ -7,6 +7,14 @@
 
 using namespace std;
 
+void parse_line(vector<DnaSequence>& result, string line, char sep) {
+	string token;
+	istringstream iss (line);
+	while (getline(iss, token, sep)) {
+		result.push_back(DnaSequence(token));
+	}
+}
+
 void parse_line(vector<string>& result, string line, char sep) {
 	string token;
 	istringstream iss (line);
@@ -74,18 +82,17 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 			variant_cluster.clear();
 		}
 		// get REF allele
-		string ref = tokens[3];
-		string observed_allele;
+		DnaSequence ref(tokens[3]);
+		DnaSequence observed_allele;
 		this->fasta_reader.get_subsequence(current_chrom, current_start_pos, current_start_pos + ref.size(), observed_allele);
 		if (ref != observed_allele) {
 			throw runtime_error("VariantReader::VariantReader: reference allele given in VCF does not match allele in reference fasta file at that position.");
 		}
-		size_t current_end_pos = current_start_pos + ref.length();
+		size_t current_end_pos = current_start_pos + ref.size();
 		// get ALT alleles
-		vector<string> alleles = {ref};
+		vector<DnaSequence> alleles = {ref};
 		parse_line(alleles, tokens[4], ',');
-//		// paths (add one path representing reference sequence)
-//		vector<size_t> paths = {0};
+		// construct paths
 		vector<size_t> paths = {};
 		for (size_t i = 9; i < tokens.size(); ++i) {
 			// make sure all genotypes are phased
@@ -99,9 +106,9 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 			}
 		}
 		// determine left and right flanks
-		string left_flank;
+		DnaSequence left_flank;
 		this->fasta_reader.get_subsequence(current_chrom, current_start_pos - kmer_size + 1, current_start_pos, left_flank);
-		string right_flank;
+		DnaSequence right_flank;
 		this->fasta_reader.get_subsequence(current_chrom, current_end_pos, current_end_pos + kmer_size - 1, right_flank);
 		// add Variant to variant_cluster
 		Variant variant (left_flank, right_flank, current_chrom, current_start_pos, current_end_pos, alleles, paths);
