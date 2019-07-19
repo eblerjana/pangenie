@@ -21,7 +21,7 @@ void print_column(vector<long double>* column, ColumnIndexer* indexer) {
 }
 
 
-HMM::HMM(vector<UniqueKmers*>* unique_kmers, const vector<Variant>& variants, double recombrate)
+HMM::HMM(vector<UniqueKmers*>* unique_kmers, double recombrate)
 	:unique_kmers(unique_kmers),
 	 genotyping_result(unique_kmers->size())
 {
@@ -50,7 +50,7 @@ HMM::HMM(vector<UniqueKmers*>* unique_kmers, const vector<Variant>& variants, do
 //		print_column(this->forward_columns.at(i), this->column_indexers.at(i));
 //	}
 	cerr << "Computing backward probabilities ..." << endl;
-	compute_backward_prob(variants);
+	compute_backward_prob();
 
 //	cout << "genotype likelihoods" << endl;
 //	for (size_t i = 0; i < this->genotyping_result.size(); ++i) {
@@ -58,7 +58,7 @@ HMM::HMM(vector<UniqueKmers*>* unique_kmers, const vector<Variant>& variants, do
 //	}
 
 	cerr << "Computing Viterbi path ..." << endl;
-	compute_viterbi_path(variants);
+	compute_viterbi_path();
 //	for(size_t i = 0; i < this->viterbi_columns.size(); ++i){
 //		print_column(this->viterbi_columns.at(i), this->column_indexers.at(i));
 //	}
@@ -124,7 +124,7 @@ void HMM::compute_forward_prob() {
 	}
 }
 
-void HMM::compute_backward_prob(const vector<Variant>& variants) {
+void HMM::compute_backward_prob() {
 	size_t column_count = this->unique_kmers->size();
 	if (this->previous_backward_column != nullptr) {
 		delete this->previous_backward_column;
@@ -133,11 +133,11 @@ void HMM::compute_backward_prob(const vector<Variant>& variants) {
 
 	// backward pass
 	for (int column_index = column_count-1; column_index >= 0; --column_index) {
-		compute_backward_column(column_index, variants);
+		compute_backward_column(column_index);
 	}
 }
 
-void HMM::compute_viterbi_path(const vector<Variant>& variants) {
+void HMM::compute_viterbi_path() {
 	size_t column_count = this->unique_kmers->size();
 	init(this->viterbi_columns, column_count);
 	init(this->viterbi_backtrace_columns, column_count);
@@ -172,6 +172,7 @@ void HMM::compute_viterbi_path(const vector<Variant>& variants) {
 	size_t column_index = column_count - 1;
 	while (true) {
 		pair<size_t, size_t> path_ids = this->column_indexers.at(column_index)->get_paths(best_index);
+		pair<unsigned char, unsigned char> alleles = this->column_indexers.at(column_index)->get_alleles(best_index);
 
 		// columns might have to be re-computed
 		if (this->viterbi_backtrace_columns[column_index] == nullptr) {
@@ -182,11 +183,9 @@ void HMM::compute_viterbi_path(const vector<Variant>& variants) {
 			}
 		}
 
-		// get alleles these paths correspond to
-		unsigned char allele1 = variants.at(column_index).get_allele_on_path(path_ids.first);
-		unsigned char allele2 = variants.at(column_index).get_allele_on_path(path_ids.second);
-		this->genotyping_result.at(column_index).add_first_haplotype_allele(allele1);
-		this->genotyping_result.at(column_index).add_second_haplotype_allele(allele2);
+		// store resulting haplotypes
+		this->genotyping_result.at(column_index).add_first_haplotype_allele(alleles.first);
+		this->genotyping_result.at(column_index).add_second_haplotype_allele(alleles.second);
 
 		if (column_index == 0) break;
 
@@ -262,7 +261,7 @@ void HMM::compute_forward_column(size_t column_index) {
 	this->forward_columns.at(column_index) = current_column;
 }
 
-void HMM::compute_backward_column(size_t column_index, const vector<Variant>& variants) {
+void HMM::compute_backward_column(size_t column_index) {
 	size_t column_count = this->unique_kmers->size();
 	assert(column_index < column_count);
 
@@ -308,6 +307,7 @@ void HMM::compute_backward_column(size_t column_index, const vector<Variant>& va
 	// iterate over all pairs of current paths
 	for (size_t i = 0; i < column_indexer->get_size(); ++i) {
 		pair<size_t, size_t> path_ids = column_indexer->get_paths(i);
+		pair<unsigned char, unsigned char> alleles = column_indexer->get_alleles(i);
 		long double current_cell = 0.0L;
 		if (column_index < column_count - 1) {
 			// iterate over previous column (ahead of this)
@@ -331,10 +331,8 @@ void HMM::compute_backward_column(size_t column_index, const vector<Variant>& va
 		long double forward_backward_prob = forward_column->at(i) * current_cell;
 		normalization_f_b += forward_backward_prob;
 
-		// get alleles corresponding to paths
-		unsigned char allele1 = variants.at(column_index).get_allele_on_path(path_ids.first);
-		unsigned char allele2 = variants.at(column_index).get_allele_on_path(path_ids.second);
-		this->genotyping_result.at(column_index).add_to_likelihood(allele1, allele2, forward_backward_prob);
+		// update genotype likelihood
+		this->genotyping_result.at(column_index).add_to_likelihood(alleles.first, alleles.second, forward_backward_prob);
 	}
 
 	transform(current_column->begin(), current_column->end(), current_column->begin(), bind(divides<long double>(), placeholders::_1, normalization_sum));

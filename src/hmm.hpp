@@ -14,10 +14,9 @@ class HMM {
 public:
 	/** 
 	* @param unique_kmers stores the set of unique kmers for each variant position.
-	* @param variants list of all variants to consider
 	* @param recombrate recombination rate
 	**/
-	HMM(std::vector<UniqueKmers*>* unique_kmers, const std::vector<Variant>& variants, double recombrate = 1.26);
+	HMM(std::vector<UniqueKmers*>* unique_kmers, double recombrate = 1.26);
 	const std::vector<GenotypingResult>& get_genotyping_result() const;
 	~HMM();
 
@@ -31,11 +30,11 @@ private:
 	std::vector< std::vector<size_t>* > viterbi_backtrace_columns;
 	std::vector< GenotypingResult > genotyping_result;
 	void compute_forward_prob();
-	void compute_backward_prob(const std::vector<Variant>& variants);
-	void compute_viterbi_path(const std::vector<Variant>& variants);
+	void compute_backward_prob();
+	void compute_viterbi_path();
 	void index_columns();
 	void compute_forward_column(size_t column_index);
-	void compute_backward_column(size_t column_index, const std::vector<Variant>& variants);
+	void compute_backward_column(size_t column_index);
 	void compute_viterbi_column(size_t column_index);
 
 	template<class T>

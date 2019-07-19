@@ -107,7 +107,7 @@ int main (int argc, char* argv[])
 
 		// get variants on this chromosome
 		cerr << "Construct HMM" << endl;
-		HMM hmm(&unique_kmers, variant_reader.get_variants_on_chromosome(chromosome));
+		HMM hmm(&unique_kmers);
 
 		// output the genotyping results
 		cerr << "Write genotyping output ..." << endl;
