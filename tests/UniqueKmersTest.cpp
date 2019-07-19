@@ -7,12 +7,18 @@
 using namespace std;
 
 TEST_CASE("UniqueKmers testcase 1", "[UniqueKmers testcase 1]"){
-	vector<string> kmers = {"ATGCA", "TTGAC", "GGTGA"};
 	vector<CopyNumber> cns = {CopyNumber(0.05,0.9,0.05),CopyNumber(0.8,0.1,0.1),CopyNumber(0.1,0.2,0.7)};
-	vector< vector<size_t> > paths = { {0,1,2}, {0,1}, {2} };
-	UniqueKmers u(0, 1000);
+	vector<vector<size_t>> paths = {{0,1,2}, {0,1}, {2}};
+	UniqueKmers u(0,1000);
+
+	// insert paths
+	u.insert_path(0,0);
+	u.insert_path(1,0);
+	u.insert_path(2,1);
+
+	vector< vector<unsigned char> > alleles = { {0,1}, {0}, {1} };
 	for (size_t i = 0; i < 3; ++i){
-		u.insert_kmer(cns[i], paths[i]);
+		u.insert_kmer(cns[i], alleles[i]);
 		for (auto& p : paths[i]){
 			REQUIRE(u.kmer_on_path(i, p));
 		}
@@ -26,38 +32,51 @@ TEST_CASE("UniqueKmers testcase 1", "[UniqueKmers testcase 1]"){
 
 TEST_CASE("UniqueKmers get_copynumber_of", "[UniqueKmers get_copynumber_of]"){
 	UniqueKmers u(1, 2000);
-	vector<string> kmers = {"ATGCA", "TTGAC", "GGTGA"};
 	for (size_t i = 0; i < 3; ++i){
 		CHECK_THROWS(u.get_copynumber_of(i));
 	}
+	CopyNumber cn(0.05, 0.9, 0.05);
+	vector<unsigned char> alleles = {0};
+	u.insert_kmer(cn, alleles);
+	REQUIRE(u.get_copynumber_of(0) == cn);
 }
 
 TEST_CASE("UniqueKmers insert_empty_path", "[UniqueKmers insert_empty_path]") {
 	UniqueKmers u(0, 1000);
-	vector<string> kmers = {"ATAG", "CTCG", "GGGG"};
 	vector<CopyNumber> cns = { CopyNumber(0.001, 0.5, 0.001), CopyNumber(1.0, 0.0, 0.0), CopyNumber(0.001,0.001, 0.6) };
 	vector<vector<size_t>> paths = { {0}, {0}, {2} };
+	vector<vector<unsigned char>> alleles = {{0}, {0}, {1}};
+
+	u.insert_path(0,0);
+	u.insert_path(2,1);
 
 	// insert the kmers
 	for (size_t i = 0; i < 3; ++i) {
-		u.insert_kmer(cns[i], paths[i]);
+		u.insert_kmer(cns[i], alleles[i]);
 		for (auto& p : paths[i]) {
 			REQUIRE(u.kmer_on_path(i, p));
 		}
 	}
 
 	vector<size_t> path_ids;
-	u.get_path_ids(path_ids);
+	vector<unsigned char> allele_ids;
+	u.get_path_ids(path_ids, allele_ids);
 	REQUIRE(u.size() == 3);
 
 	REQUIRE(path_ids.size() == 2);
 	REQUIRE(path_ids[0] == 0);
 	REQUIRE(path_ids[1] == 2);
 
+	REQUIRE(allele_ids.size() == 2);
+	REQUIRE(allele_ids[0] == 0);
+	REQUIRE(allele_ids[1] == 1);
+
 	// insert an empty path
-	u.insert_empty_path(1);
+	u.insert_empty_allele(2);
+	u.insert_path(1,2);
 	path_ids.clear();
-	u.get_path_ids(path_ids);
+	allele_ids.clear();
+	u.get_path_ids(path_ids, allele_ids);
 	REQUIRE(u.size() == 3);
 
 	REQUIRE(path_ids.size() == 3);
@@ -65,40 +84,50 @@ TEST_CASE("UniqueKmers insert_empty_path", "[UniqueKmers insert_empty_path]") {
 	REQUIRE(path_ids[1] == 1);
 	REQUIRE(path_ids[2] == 2);
 
+	REQUIRE(allele_ids.size() == 3);
+	REQUIRE(allele_ids[0] == 0);
+	REQUIRE(allele_ids[1] == 2);
+	REQUIRE(allele_ids[2] == 1);
+
 	// make sure path is indeed empty
 	for (size_t i = 0; i < 3; ++i) {
 		REQUIRE(! u.kmer_on_path(i, 1));
 	}
 
 	// add kmer to the empty path
-	vector<size_t> path = {1};
-	u.insert_kmer(CopyNumber(0.01, 0.8, 0.01), path);
+	vector<unsigned char> allele = {2};
+	u.insert_kmer(CopyNumber(0.01, 0.8, 0.01), allele);
 	REQUIRE(u.size() == 4);
 	REQUIRE(u.kmer_on_path(3, 1));
 }
 
 TEST_CASE("UniqueKmers insert_empty_path2", "[UniqueKmers insert_empty_path2]") {
 	UniqueKmers u(0, 1000);
-	string kmer = "AAAAA";
 	CopyNumber cn(0.9, 0.1, 0.2);
-	vector<size_t> path = {1};
+	vector<unsigned char> allele = {1};
 
-	u.insert_kmer(cn, path);
+	u.insert_kmer(cn, allele);
+	u.insert_path(1,1);
 	REQUIRE(u.size() == 1);
 	REQUIRE(u.kmer_on_path(0, 1));
 
 	vector<size_t> path_ids;
-	u.get_path_ids(path_ids);
+	vector<unsigned char> allele_ids;
+	u.get_path_ids(path_ids, allele_ids);
 	REQUIRE(path_ids.size() == 1);
 	REQUIRE(path_ids[0] == 1);
+	REQUIRE(allele_ids.size() == 1);
+	REQUIRE(allele_ids[0] == 1);
 
-	// insert path 1 as an empty path (should no longer contain previously inserted path)
-	u.insert_empty_path(1);
+	// insert allele 1 as an empty allele (should no longer contain previously inserted kmers)
+	u.insert_empty_allele(1);
 	REQUIRE(!u.kmer_on_path(0,1));
 	REQUIRE(u.size() == 1);
 	path_ids.clear();
-	u.get_path_ids(path_ids);
+	allele_ids.clear();
+	u.get_path_ids(path_ids, allele_ids);
 	REQUIRE(path_ids.size() == 1);
 	REQUIRE(path_ids[0] == 1);
-
+	REQUIRE(allele_ids.size() == 1);
+	REQUIRE(allele_ids[0] == 1);
 }

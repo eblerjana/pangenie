@@ -80,7 +80,8 @@ void HMM::index_columns() {
 	for (size_t column_index = 0; column_index < column_count; ++ column_index) {
 		// get path ids of current column
 		vector<size_t> current_path_ids;
-		this->unique_kmers->at(column_index)->get_path_ids(current_path_ids);
+		vector<unsigned char> current_allele_ids;
+		this->unique_kmers->at(column_index)->get_path_ids(current_path_ids, current_allele_ids);
 		size_t nr_paths = current_path_ids.size();
 
 		if (nr_paths == 0) {
@@ -97,7 +98,9 @@ void HMM::index_columns() {
 			for (size_t p2 = 0; p2 < nr_paths; ++p2) {
 				size_t path_id1 = current_path_ids[p1];
 				size_t path_id2 = current_path_ids[p2];
-				column_indexer->insert(make_pair(path_id1,path_id2));
+				unsigned char allele_id1 = current_allele_ids[p1];
+				unsigned char allele_id2 = current_allele_ids[p2];
+				column_indexer->insert(make_pair(path_id1,path_id2), make_pair(allele_id1,allele_id2));
 			}
 		}
 		// store the ColummIndexer
@@ -212,12 +215,12 @@ void HMM::compute_forward_column(size_t column_index) {
 	// construct new column
 	vector<long double>* current_column = new vector<long double>();
 
-	// emission probability computer
-	EmissionProbabilityComputer emission_probability_computer(this->unique_kmers->at(column_index));
-
 	// get ColumnIndexer
 	ColumnIndexer* column_indexer = column_indexers.at(column_index);
 	assert (column_indexer != nullptr);
+
+	// emission probability computer
+	EmissionProbabilityComputer emission_probability_computer(this->unique_kmers->at(column_index), column_indexer);
 
 	// normalization
 	long double normalization_sum = 0.0L;
@@ -244,7 +247,7 @@ void HMM::compute_forward_column(size_t column_index) {
 			previous_cell = 1.0L;
 		}
 		// determine emission probability
-		long double emission_prob = emission_probability_computer.get_emission_probability(path_ids.first, path_ids.second);
+		long double emission_prob = emission_probability_computer.get_emission_probability(i);
 
 		// set entry of current column
 		long double current_cell = previous_cell * emission_prob;
@@ -273,7 +276,7 @@ void HMM::compute_backward_column(size_t column_index, const vector<Variant>& va
 		assert (this->previous_backward_column != nullptr);
 		transition_probability_computer = this->transition_prob_computers.at(column_index);
 		previous_indexer = this->column_indexers.at(column_index+1);
-		emission_probability_computer = new EmissionProbabilityComputer(this->unique_kmers->at(column_index+1));
+		emission_probability_computer = new EmissionProbabilityComputer(this->unique_kmers->at(column_index+1), previous_indexer);
 
 		// get forward probabilities (needed for computing posteriors
 		if (forward_column == nullptr) {
@@ -314,7 +317,7 @@ void HMM::compute_backward_column(size_t column_index, const vector<Variant>& va
 				pair<size_t,size_t> prev_path_ids = previous_indexer->get_paths(j);
 				// determine transition probability
 				long double transition_prob = transition_probability_computer->compute_transition_prob(path_ids.first, path_ids.second, prev_path_ids.first, prev_path_ids.second);
-				current_cell += prev_backward * transition_prob * emission_probability_computer->get_emission_probability(prev_path_ids.first, prev_path_ids.second);
+				current_cell += prev_backward * transition_prob * emission_probability_computer->get_emission_probability(j);
 			}
 		} else {
 			current_cell = 1.0L;
@@ -373,12 +376,12 @@ void HMM::compute_viterbi_column(size_t column_index) {
 	// construct new column
 	vector<long double>* current_column = new vector<long double>();
 
-	// emission probability computer
-	EmissionProbabilityComputer emission_probability_computer(this->unique_kmers->at(column_index));
-
 	// get ColumnIndexer
 	ColumnIndexer* column_indexer = this->column_indexers.at(column_index);
 	assert (column_indexer != nullptr);
+
+	// emission probability computer
+	EmissionProbabilityComputer emission_probability_computer(this->unique_kmers->at(column_index), column_indexer);
 
 	// normalization 
 	long double normalization_sum = 0.0L;
@@ -417,7 +420,7 @@ void HMM::compute_viterbi_column(size_t column_index) {
 		}
 
 		// determine emission probability
-		long double emission_prob = emission_probability_computer.get_emission_probability(path_ids.first, path_ids.second);
+		long double emission_prob = emission_probability_computer.get_emission_probability(i);
 
 		// set entry of current column
 		long double current_cell = previous_cell * emission_prob;

@@ -6,31 +6,28 @@
 #include <unordered_map>
 #include "uniquekmers.hpp"
 #include "copynumber.hpp"
+#include "columnindexer.hpp"
 
 /** 
 * Computes the emission probabilities for a variant position.
 **/
 
-
-struct pair_hash {
-	size_t operator() (const std::pair<size_t,size_t> &p) const {
-		return ((p.first + p.second) * (p.first + p.second + 1) / 2 + p.second);
-	}
-};
-
+typedef std::vector<std::vector<long double>> ProbabilityMatrix;
 
 class EmissionProbabilityComputer {
 public:
 	/**
 	* @param uniquekmers all unique kmers for this position
+	* @param columnindexer for this position
 	 **/
-	EmissionProbabilityComputer(UniqueKmers* uniquekmers);
-	/** get emission probability for a pair of paths (state in HMM) **/
-	long double get_emission_probability(int path1, int path2) const;
+	EmissionProbabilityComputer(UniqueKmers* uniquekmers, ColumnIndexer* columnindexer);
+	/** get emission probability for a state in the HMM **/
+	long double get_emission_probability(size_t state) const;
 
 private:
 	UniqueKmers* uniquekmers;
-	std::unordered_map< std::pair<size_t,size_t>, long double, pair_hash> paths_to_prob;
-	long double compute_emission_probability(int path1, int path2);
+	ColumnIndexer* columnindexer;
+	ProbabilityMatrix state_to_prob;
+	long double compute_emission_probability(unsigned char allele1, unsigned char allele2);
 };
 # endif // EMISSIONPROBABILITYCOMPUTER_H

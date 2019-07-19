@@ -1,5 +1,6 @@
 #include <stdexcept>
 #include <sstream>
+#include <algorithm>
 #include "emissionprobabilitycomputer.hpp"
 
 using namespace std;
@@ -12,40 +13,31 @@ pair<size_t,size_t> sorted_paths(size_t p1, size_t p2) {
 	}
 }
 
-EmissionProbabilityComputer::EmissionProbabilityComputer(UniqueKmers* uniquekmers)
-	:uniquekmers(uniquekmers)
+EmissionProbabilityComputer::EmissionProbabilityComputer(UniqueKmers* uniquekmers, ColumnIndexer* columnindexer)
+	:uniquekmers(uniquekmers),
+	 columnindexer(columnindexer)
 {
-	// precompute all probabilities
-	vector<size_t> path_ids;
-	this->uniquekmers->get_path_ids(path_ids);
-	size_t nr_paths = path_ids.size();
-	for (size_t i = 0; i < nr_paths; ++i) {
-		for (size_t j = i; j < nr_paths; ++j) {
-			size_t path_id1 = path_ids[i];
-			size_t path_id2 = path_ids[j];
-			long double emission_prob = compute_emission_probability(path_id1, path_id2);
+	vector<unsigned char> unique_alleles;
+	uniquekmers->get_allele_ids(unique_alleles);
+	unsigned char max_allele = *max_element(std::begin(unique_alleles), std::end(unique_alleles));
+	this->state_to_prob = vector< vector<long double>>(max_allele+1, vector<long double>(max_allele+1));
 
-			// store probability (sort path ids numerically, to store each combination only once
-			pair<size_t,size_t> paths = sorted_paths(path_id1, path_id2);
-			this->paths_to_prob[paths] = emission_prob;
+	for (auto a1 : unique_alleles) {
+		for (auto a2 : unique_alleles) {
+			this->state_to_prob[a1][a2] = compute_emission_probability(a1, a2);
 		}
 	}
 }
 
-long double EmissionProbabilityComputer::get_emission_probability(int path_id1, int path_id2) const {
-	pair<size_t,size_t> paths = sorted_paths(path_id1, path_id2);
-	auto it = this->paths_to_prob.find(paths);
-	if (it != this->paths_to_prob.end()) {
-		return this->paths_to_prob.at(paths);
-	} else {
-		throw runtime_error("EmissionProbabilityComputer::get_emission_probability: invalid path ids given.");
-	}
+long double EmissionProbabilityComputer::get_emission_probability(size_t state_id) const {
+	pair<unsigned char, unsigned char>  a = this->columnindexer->get_alleles(state_id);
+	return this->state_to_prob[a.first][a.second];
 }
 
-long double EmissionProbabilityComputer::compute_emission_probability(int path_id1, int path_id2){
+long double EmissionProbabilityComputer::compute_emission_probability(unsigned char allele_id1, unsigned char allele_id2){
 	long double result = 1.0L;
 	// combine the two paths to get expected kmer copy numbers
-	CopyNumberAssignment cna = this->uniquekmers->combine_paths(path_id1, path_id2);
+	CopyNumberAssignment cna = this->uniquekmers->combine_paths(allele_id1, allele_id2);
 	for (size_t i = 0; i < this->uniquekmers->size(); ++i){
 		unsigned int expected_kmer_count = cna.get_position(i);
 		// multiply result by probability of expected kmer count

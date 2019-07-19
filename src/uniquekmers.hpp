@@ -14,23 +14,30 @@
 
 class UniqueKmers {
 public:
-	UniqueKmers(size_t variant_id, size_t variant_position);
-	/** insert a path that does not contain any unique kmers **/
-	void insert_empty_path(size_t path);
-	/** insert a kmer 
-	* @param kmer sequence of kmer
-	* @param cn copy number probabilities of kmer
-	* @param paths Vector of paths this kmer occurs on
+	/**
+	* @param variant_id variant identifier
+	* @param variant_position genomic variant position
 	**/
-	void insert_kmer(CopyNumber cn, std::vector<size_t>& paths);
-	bool kmer_on_path(size_t kmer_index, size_t path_id) const;
+	UniqueKmers(size_t variant_id, size_t variant_position);
 	size_t get_variant_index();
 	size_t get_variant_position();
+	/** insert empty allele (no kmers) **/
+	void insert_empty_allele(unsigned char allele_id);
+	/** insert a path covering the given allele **/
+	void insert_path(size_t path_id, unsigned char allele_id);
+	/** insert a kmer
+	* @param cn copy number probabilities of kmer
+	* @param allele_ids on which alleles this kmer occurs
+	**/
+	void insert_kmer(CopyNumber cn, std::vector<unsigned char>& allele_ids);
+	bool kmer_on_path(size_t kmer_index, size_t path_id) const;
 	CopyNumber get_copynumber_of(size_t kmer_index);
 	/** number of unique kmers **/
 	size_t size() const;
-	/** get all paths covering this position **/
-	void get_path_ids(std::vector<size_t>& result);
+	/** get all paths and alleles covering this position **/
+	void get_path_ids(std::vector<size_t>& paths, std::vector<unsigned char>& alleles);
+	/** get all unique alleles covered at this position **/
+	void get_allele_ids(std::vector<unsigned char>& a);
 	friend std::ostream& operator<< (std::ostream& stream, const UniqueKmers& uk);
 
 private:
@@ -38,8 +45,9 @@ private:
 	size_t variant_pos;
 	size_t current_index;
 	std::vector<CopyNumber> kmer_to_copynumber;
-	std::map<size_t, KmerPath> paths;
-	CopyNumberAssignment combine_paths(size_t path_id1, size_t path_id2);
+	std::map<unsigned char, KmerPath> alleles;
+	std::map<size_t, unsigned char> path_to_allele;
+	CopyNumberAssignment combine_paths(unsigned char allele_id1, unsigned char allele_id2);
 	friend class EmissionProbabilityComputer;
 };
 # endif // UNIQUEKMERS_HPP

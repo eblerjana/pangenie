@@ -4,7 +4,7 @@
 
 using namespace std;
 
-void unique_kmers(string allele, size_t index, size_t kmer_size, map<string, vector<size_t>>& occurences) {
+void unique_kmers(string allele, unsigned char index, size_t kmer_size, map<string, vector<unsigned char>>& occurences) {
 	// enumerate kmers
 	map <string, size_t> counts;
 	for (size_t i = 0; i <= (allele.length() - kmer_size); ++i) {
@@ -38,16 +38,18 @@ UniqueKmerComputer::UniqueKmerComputer (KmerCounter* genomic_kmers, KmerCounter*
 void UniqueKmerComputer::compute_unique_kmers(vector<UniqueKmers*>* result) const {
 	size_t nr_variants = this->variants->size_of(this->chromosome);
 	for (size_t v = 0; v < nr_variants; ++v) {
-		map <string, vector<size_t>> occurences;
+		map <string, vector<unsigned char>> occurences;
 		const Variant& variant = this->variants->get_variant(this->chromosome, v);
 		UniqueKmers* u = new UniqueKmers(v, variant.get_start_position());
 		size_t nr_alleles = variant.nr_of_alleles();
 
-		// insert empty paths (to also capture paths for which no unique kmers exist)
+		// insert empty alleles (to also capture paths for which no unique kmers exist)
 		for (size_t p = 0; p < variant.nr_of_paths(); ++p) {
-			u->insert_empty_path(p);
+			unsigned char a = variant.get_allele_on_path(p);
+			u->insert_empty_allele(a);
+			u->insert_path(p,a);
 		}
-		for (size_t a = 0; a < nr_alleles; ++a) {
+		for (unsigned char a = 0; a < nr_alleles; ++a) {
 			// enumerate kmers and identify those with copynumber 1
 			string allele = variant.get_allele_sequence(a);
 			size_t kmer_size = this->variants->get_kmer_size();
@@ -91,7 +93,7 @@ void UniqueKmerComputer::compute_unique_kmers(vector<UniqueKmers*>* result) cons
 				if ( (p_cn0 > 0) || (p_cn1 > 0) || (p_cn2 > 0) ) {
 					CopyNumber cn(p_cn0, p_cn1, p_cn2);
 					// construct UniqueKmers object
-					u->insert_kmer(cn, paths);
+					u->insert_kmer(cn, kmer.second);
 				}
 			}
 		}
