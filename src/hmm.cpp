@@ -350,6 +350,12 @@ void HMM::compute_backward_column(size_t column_index) {
 	this->previous_backward_column = current_column;
 	if (emission_probability_computer != nullptr) delete emission_probability_computer;
 
+	// delete forward column as it's not needed any more
+	if (this->forward_columns.at(column_index) != nullptr) {
+		delete this->forward_columns.at(column_index);
+		this->forward_columns.at(column_index) = nullptr;
+	}
+
 	// normalize the GenotypingResults likelihoods 
 	this->genotyping_result.at(column_index).divide_likelihoods_by(normalization_f_b);
 }

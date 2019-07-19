@@ -263,6 +263,16 @@ TEST_CASE("Variant separate_variants_single2", "[Variants separate_variants_sing
 	REQUIRE(single_variants[0] == v);
 }
 
+TEST_CASE("Variant separate_variants_single3", "[Variants separate_variants_single2]") {
+	Variant v ("AAAAAAAAAAAGCCTTTTAACTACTGAAAG", "AAAAAAAAAAAAAAGCACAAGGAAGAAATT", "chr16", 45143, 45144, {"T", "TA"}, {0,0,1,0,0,0,0,0,0,0});
+	vector<Variant> single_variants;
+	v.add_flanking_sequence();
+	v.separate_variants(&single_variants);
+	REQUIRE(single_variants.size() == 1);
+	v.remove_flanking_sequence();
+	REQUIRE(single_variants[0] == v);
+}
+
 TEST_CASE("Variant uncovered_alleles", "[Variant uncovered_alleles]") {
 	Variant v1("AAA", "TCA", "chr1", 4, 5, {"A", "T", "G"}, {0,0});
 	Variant v2("AAT", "AAG", "chr1", 6, 7, {"C", "T"}, {0,0});
