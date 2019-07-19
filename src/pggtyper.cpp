@@ -105,6 +105,10 @@ int main (int argc, char* argv[])
 //		}
 		// 
 
+		struct rusage r_usagei;
+		getrusage(RUSAGE_SELF, &r_usagei);
+		cerr << "#### Memory usage until now: " << (r_usagei.ru_maxrss / 1E6) << " GB ####" << endl;
+
 		// get variants on this chromosome
 		cerr << "Construct HMM" << endl;
 		HMM hmm(&unique_kmers);

@@ -209,7 +209,7 @@ bool DnaSequence::operator<(const DnaSequence& dna) const {
 }
 
 bool operator==(const DnaSequence& dna1, const DnaSequence& dna2) {
-	return (dna1.sequence == dna2.sequence);
+	return (dna1.sequence == dna2.sequence) && (dna1.length == dna2.length);
 }
 
 bool operator!=(const DnaSequence& dna1, const DnaSequence& dna2) {

@@ -367,7 +367,7 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 
 			// determine phasing
 			pair<unsigned char,unsigned char> haplotype = singleton_likelihoods.at(j).get_haplotype();
-			this->phasing_outfile << haplotype.first << "|" << haplotype.second << endl; // GT (phased)
+			this->phasing_outfile << (unsigned int) haplotype.first << "|" << (unsigned int) haplotype.second << endl; // GT (phased)
 		}
 	}
 }

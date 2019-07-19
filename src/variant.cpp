@@ -376,7 +376,7 @@ ostream& operator<<(ostream& os, const Variant& var) {
 	}
 	os << "paths:" << endl;
 	for (size_t i = 0; i < var.paths.size(); ++i) {
-		os << var.paths[i] << "\t";
+		os << (size_t) var.paths[i] << "\t";
 	}
 	return os;
 }

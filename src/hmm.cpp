@@ -92,7 +92,6 @@ void HMM::index_columns() {
 
 		// the ColumnIndexer to be filled
 		ColumnIndexer* column_indexer = new ColumnIndexer(column_index, nr_paths*nr_paths);
-
 		// iterate over all cells
 		for (size_t p1 = 0; p1 < nr_paths; ++p1) {
 			for (size_t p2 = 0; p2 < nr_paths; ++p2) {
