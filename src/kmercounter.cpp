@@ -3,9 +3,10 @@
 #include <fstream>
 #include <stdexcept>
 #include <math.h>
+#include <fstream>
+#include "histogram.hpp"
 
 using namespace std;
-
 
 KmerCounter::KmerCounter (string readfile, size_t kmer_size)
 {
@@ -49,13 +50,7 @@ size_t KmerCounter::getKmerAbundance(string kmer){
 	const auto jf_ary = this->jellyfish_hash->ary();
 	jf_ary->get_val_for_key(jelly_kmer, &val);
 
-
 	const auto end = jf_ary->end();
-/**	for(auto it = jf_ary->begin(); it !=end; ++it) {
-		auto& key_val = *it;
-		cout << key_val.first << " " << key_val.second << endl;
-	}
-**/
 	return val;
 }
 
@@ -70,6 +65,61 @@ size_t KmerCounter::computeKmerCoverage(size_t genome_kmers) const {
 		result += (count/genome);
 	}
 	return (size_t) ceil(result);
+}
+
+size_t KmerCounter::computeHistogram(size_t max_count, string filename) const {
+	Histogram histogram(max_count);
+	const auto jf_ary = this->jellyfish_hash->ary();
+	const auto end = jf_ary->end();
+	for (auto it = jf_ary->begin(); it != end; ++it) {
+		auto& key_val = *it;
+		histogram.add_value(key_val.second);
+	}
+	// write histogram values to file
+	if (filename != "") {
+		histogram.write_to_file(filename);
+	}
+	// smooth the histogram
+	histogram.smooth_histogram();
+	// find peaks
+	vector<size_t> peak_ids;
+	vector<size_t> peak_values;
+	histogram.find_peaks(peak_ids, peak_values);
+	// identify the two largest peaks and return rightmost one
+	if (peak_ids.size() < 2) {
+		throw runtime_error("KmerCounter: less than 2 peaks found.");
+	}
+	size_t largest, second, largest_id, second_id;
+	if (peak_values[0] < peak_values[1]){
+		largest = peak_values[1];
+		largest_id = peak_ids[1];
+		second = peak_values[0];
+		second_id = peak_ids[0];
+	} else {
+		largest = peak_values[0];
+		largest_id = peak_ids[0];
+		second = peak_values[1];
+		second_id = peak_ids[1];
+	}
+	for (size_t i = 0; i < peak_values.size(); ++i) {
+		if (peak_values[i] > largest) {
+			second = largest;
+			second_id = largest_id;
+			largest = peak_values[i];
+		} else if ((peak_values[i] > second) && (peak_values[i] != largest)) {
+			second = peak_values[i];
+			second_id = peak_ids[i];
+		}
+	}
+	cerr << "Histogram peaks: " << largest_id << " (" << largest << "), " << second_id << " (" << second << ")" << endl;
+	// add expected abundance counts to end of hist file
+	if (filename != "") {
+		ofstream histofile;
+		histofile.open(filename, ios::app);
+		histofile << "parameters\t" << 0.1 << '\t' << second_id/2.0 << '\t' << second_id << endl;
+		histofile.close();
+	}
+	return second_id;
 }
 
 KmerCounter::~KmerCounter() {

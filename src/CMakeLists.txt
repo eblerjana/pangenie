@@ -7,6 +7,7 @@ add_library(PGGTyperLib SHARED
 	dnasequence.cpp
 	fastareader.cpp
 	genotypingresult.cpp
+	histogram.cpp
 	hmm.cpp
 	kmercounter.cpp
 	kmerpath.cpp

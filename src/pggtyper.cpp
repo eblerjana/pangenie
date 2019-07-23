@@ -58,8 +58,8 @@ int main (int argc, char* argv[])
 	cerr << "Write path segments to file: " << segment_file << " ..." << endl;
 	variant_reader.write_path_segments(segment_file);
 
-	// determine total genome size
-	size_t genome_kmers = variant_reader.nr_of_genomic_kmers();
+//	// determine total genome size
+//	size_t genome_kmers = variant_reader.nr_of_genomic_kmers();
 
 	// determine chromosomes present in VCF
 	vector<string> chromosomes;
@@ -74,9 +74,10 @@ int main (int argc, char* argv[])
 	// determine kmer copynumbers in reads
 	cerr << "Count kmers in reads ..." << endl;
 	KmerCounter read_kmer_counts (readfile, kmersize);
-	cerr << "Compute kmer-coverage ..." << endl;
-	size_t kmer_coverage = read_kmer_counts.computeKmerCoverage(genome_kmers);
-	cerr << "Computed kmer-coverage: " << kmer_coverage << endl;
+//	cerr << "Compute kmer-coverage ..." << endl;
+//	size_t kmer_coverage = read_kmer_counts.computeKmerCoverage(genome_kmers);
+	size_t kmer_abundance_peak = read_kmer_counts.computeHistogram(10000, outname + "_histogram.histo");
+	cerr << "Computed kmer abundance peak: " << kmer_abundance_peak << endl;
 
 	// count kmers in allele + reference sequence
 	cerr << "Count kmers in genome ..." << endl;
@@ -95,15 +96,9 @@ int main (int argc, char* argv[])
 		cerr << "Processing chromosome " << chromosome << "." << endl;
 		cerr << "Determine unique kmers ..." << endl;
 		// determine sets of kmers unique to each variant region
-		UniqueKmerComputer kmer_computer(&genomic_kmer_counts, &read_kmer_counts, &variant_reader, chromosome, kmer_coverage);
+		UniqueKmerComputer kmer_computer(&genomic_kmer_counts, &read_kmer_counts, &variant_reader, chromosome, kmer_abundance_peak);
 		std::vector<UniqueKmers*> unique_kmers;
 		kmer_computer.compute_unique_kmers(&unique_kmers);
-
-		// TESTING
-//		for (size_t i = 0; i < unique_kmers->size(); ++i) {
-//			cout << unique_kmers->at(i) << endl;
-//		}
-		// 
 
 		struct rusage r_usagei;
 		getrusage(RUSAGE_SELF, &r_usagei);
@@ -143,5 +138,3 @@ int main (int argc, char* argv[])
 
 	return 0;
 }
-
-

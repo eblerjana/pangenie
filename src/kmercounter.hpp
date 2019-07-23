@@ -3,6 +3,8 @@
 
 //#include <gatb/gatb_core.hpp>
 #include <map>
+#include <vector>
+#include <string>
 #include <jellyfish/mer_dna.hpp>
 #include <jellyfish/thread_exec.hpp>
 #include <jellyfish/hash_counter.hpp>
@@ -62,6 +64,9 @@ public:
 
 	/** compute the kmer coverage relative to the number of kmers in the genome **/
 	size_t computeKmerCoverage(size_t genome_kmers) const;
+
+	/** computes kmer abundance histogram and returns the three highest peaks **/
+	size_t computeHistogram(size_t max_count, std::string filename = "") const;
 
 private:
 	mer_hash_type* jellyfish_hash;
