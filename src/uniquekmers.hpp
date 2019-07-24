@@ -34,6 +34,8 @@ public:
 	CopyNumber get_copynumber_of(size_t kmer_index);
 	/** number of unique kmers **/
 	size_t size() const;
+	/** return number of paths **/
+	size_t get_nr_paths() const;
 	/** get all paths and alleles covering this position **/
 	void get_path_ids(std::vector<size_t>& paths, std::vector<unsigned char>& alleles);
 	/** get all unique alleles covered at this position **/

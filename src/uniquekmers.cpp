@@ -65,6 +65,10 @@ size_t UniqueKmers::size() const {
 	return this->current_index;
 }
 
+size_t UniqueKmers::get_nr_paths() const {
+	return this->path_to_allele.size();
+}
+
 void UniqueKmers::get_path_ids(vector<size_t>& p, vector<unsigned char>& a) {
 	for (auto it = this->path_to_allele.begin(); it != this->path_to_allele.end(); ++it) {
 		p.push_back(it->first);

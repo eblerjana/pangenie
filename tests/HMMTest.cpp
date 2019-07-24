@@ -60,7 +60,7 @@ TEST_CASE("HMM get_genotyping_result", "[HMM get_genotyping_result]") {
 //	variants.push_back(Variant("NNN", "NNN", "chr1", 3000, 3003, {"CCC", "CGC"}, {0,1}));
 
 	// recombination rate leads to recombination probability of 0.1
-	HMM hmm (&unique_kmers, 11157.1775657);
+	HMM hmm (&unique_kmers, 210.721031316);
 	
 	// expected likelihoods, as computed by hand
 	vector<double> expected_likelihoods = { 0.0509465435, 0.9483202731, 0.0007331832, 0.9678020017, 0.031003181, 0.0011948172 };
@@ -142,7 +142,7 @@ TEST_CASE("HMM no_unique_kmers", "[HMM no_unique_kmers]") {
 //	variants.push_back(Variant("CCC", "GGG", "chr1", 3000, 3003, {"CTC", "CGC"}, {0,1}));
 
 	// recombination rate leads to recombination probability of 0.1
-	HMM hmm (&unique_kmers, 11157.1775657);
+	HMM hmm (&unique_kmers, 210.721031316);
 
 	// each path combination should be equally likely here
 	vector<double> expected_likelihoods = {0.25, 0.5, 0.25, 0.25, 0.5, 0.25};
@@ -184,7 +184,7 @@ TEST_CASE("HMM no_unique_kmers2", "[HMM no_unique_kmers2]") {
 //	variants.push_back(Variant("CCC", "GGG", "chr1", 3000, 3003, {"CTC", "CGC"}, {0,1,1}));
 
 	// recombination rate leads to recombination probability of 0.1
-	HMM hmm (&unique_kmers, 11157.1775657);
+	HMM hmm (&unique_kmers, 316.081546973);
 
 	// each path combination should be equally likely here
 	vector<double> expected_likelihoods = {4.0/9.0, 4.0/9.0, 1.0/9.0, 1.0/9.0, 4.0/9.0, 4.0/9.0};
@@ -235,7 +235,7 @@ TEST_CASE("HMM no_unique_kmers3", "[HMM no_unique_kmers3]") {
 //	variants.push_back(Variant("ATT", "TTC", "chr1", 4000, 4003, {"CAT", "CGT"}, {0,1}));
 
 	// recombination rate leads to recombination probability of 0.1
-	HMM hmm (&unique_kmers, 11157.1775657);
+	HMM hmm (&unique_kmers, 210.721031316);
 	
 	// expected likelihoods, as computed by hand
 	vector<double> expected_likelihoods = {0.00264169937, 0.99471660125, 0.00264169937, 0.02552917716, 0.94894164567, 0.02552917716, 0.002961313333, 0.99407737333, 0.002961313333};

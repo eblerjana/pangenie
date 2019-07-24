@@ -28,11 +28,12 @@ HMM::HMM(vector<UniqueKmers*>* unique_kmers, double recombrate)
 	size_t size = this->unique_kmers->size();
 
 	// construct TransitionProbabilityComputers
-	init(this->transition_prob_computers, size-1);	
+	init(this->transition_prob_computers, size-1);
 	for (size_t i = 1; i < size; ++i) {
 		size_t prev_pos = this->unique_kmers->at(i-1)->get_variant_position();
 		size_t cur_pos = this->unique_kmers->at(i)->get_variant_position();
-		TransitionProbabilityComputer* t = new TransitionProbabilityComputer(prev_pos, cur_pos, recombrate);
+		size_t nr_paths = this->unique_kmers->at(i)->get_nr_paths();
+		TransitionProbabilityComputer* t = new TransitionProbabilityComputer(prev_pos, cur_pos, recombrate, nr_paths);
 		this->transition_prob_computers.at(i-1) = t;
 	}
 	this->previous_backward_column = nullptr;
