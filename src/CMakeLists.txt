@@ -19,6 +19,15 @@ add_library(PGGTyperLib SHARED
 	variantreader.cpp)
 
 add_executable(PGGTyper pggtyper.cpp)
+add_executable(PGGTyper-kmers pggtyper-kmers.cpp)
+add_executable(PGGTyper-paths pggtyper-paths.cpp)
 
 target_link_libraries(PGGTyper PGGTyperLib ${JELLYFISH_LDFLAGS_OTHER})
 target_link_libraries(PGGTyper PGGTyperLib ${JELLYFISH_LIBRARIES})
+
+target_link_libraries(PGGTyper-kmers PGGTyperLib ${JELLYFISH_LDFLAGS_OTHER})
+target_link_libraries(PGGTyper-kmers PGGTyperLib ${JELLYFISH_LIBRARIES})
+
+# TODO: remove Jellyfish dependencies
+target_link_libraries(PGGTyper-paths PGGTyperLib ${JELLYFISH_LDFLAGS_OTHER})
+target_link_libraries(PGGTyper-paths PGGTyperLib ${JELLYFISH_LIBRARIES})
