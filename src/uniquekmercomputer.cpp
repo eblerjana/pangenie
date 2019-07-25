@@ -33,8 +33,6 @@ UniqueKmerComputer::UniqueKmerComputer (KmerCounter* genomic_kmers, KmerCounter*
 	this->probability.set_parameters(cn0, cn1 , cn2);
 }
 
-
-// need to know which kmer is on which allele to be able to identify which kmer is on which path
 void UniqueKmerComputer::compute_unique_kmers(vector<UniqueKmers*>* result) const {
 	size_t nr_variants = this->variants->size_of(this->chromosome);
 	for (size_t v = 0; v < nr_variants; ++v) {
@@ -96,6 +94,23 @@ void UniqueKmerComputer::compute_unique_kmers(vector<UniqueKmers*>* result) cons
 					u->insert_kmer(cn, kmer.second);
 				}
 			}
+		}
+		result->push_back(u);
+	}
+}
+
+void UniqueKmerComputer::compute_empty(vector<UniqueKmers*>* result) const {
+	size_t nr_variants = this->variants->size_of(this->chromosome);
+	for (size_t v = 0; v < nr_variants; ++v) {
+		const Variant& variant = this->variants->get_variant(this->chromosome, v);
+		UniqueKmers* u = new UniqueKmers(v, variant.get_start_position());
+		size_t nr_alleles = variant.nr_of_alleles();
+
+		// insert empty alleles and paths
+		for (size_t p = 0; p < variant.nr_of_paths(); ++p) {
+			unsigned char a = variant.get_allele_on_path(p);
+			u->insert_empty_allele(a);
+			u->insert_path(p,a);
 		}
 		result->push_back(u);
 	}

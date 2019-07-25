@@ -61,9 +61,6 @@ int main (int argc, char* argv[])
 	cerr << "Write path segments to file: " << segment_file << " ..." << endl;
 	variant_reader.write_path_segments(segment_file);
 
-//	// determine total genome size
-//	size_t genome_kmers = variant_reader.nr_of_genomic_kmers();
-
 	// determine chromosomes present in VCF
 	vector<string> chromosomes;
 	variant_reader.get_chromosomes(&chromosomes);
@@ -77,8 +74,6 @@ int main (int argc, char* argv[])
 	// determine kmer copynumbers in reads
 	cerr << "Count kmers in reads ..." << endl;
 	KmerCounter read_kmer_counts (readfile, kmersize);
-//	cerr << "Compute kmer-coverage ..." << endl;
-//	size_t kmer_coverage = read_kmer_counts.computeKmerCoverage(genome_kmers);
 	size_t kmer_abundance_peak = read_kmer_counts.computeHistogram(10000, outname + "_histogram.histo");
 	cerr << "Computed kmer abundance peak: " << kmer_abundance_peak << endl;
 
@@ -109,7 +104,7 @@ int main (int argc, char* argv[])
 
 		// get variants on this chromosome
 		cerr << "Construct HMM" << endl;
-		HMM hmm(&unique_kmers);
+		HMM hmm(&unique_kmers, true);
 
 		// output the genotyping results
 		cerr << "Write genotyping output ..." << endl;

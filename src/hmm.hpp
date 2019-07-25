@@ -15,8 +15,9 @@ public:
 	/** 
 	* @param unique_kmers stores the set of unique kmers for each variant position.
 	* @param recombrate recombination rate
+	* @param uniform use uniform transition probabilities
 	**/
-	HMM(std::vector<UniqueKmers*>* unique_kmers, double recombrate = 1.26);
+	HMM(std::vector<UniqueKmers*>* unique_kmers, double recombrate = 1.26, bool uniform = false);
 	const std::vector<GenotypingResult>& get_genotyping_result() const;
 	~HMM();
 

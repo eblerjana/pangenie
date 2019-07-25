@@ -28,6 +28,5 @@ target_link_libraries(PGGTyper PGGTyperLib ${JELLYFISH_LIBRARIES})
 target_link_libraries(PGGTyper-kmers PGGTyperLib ${JELLYFISH_LDFLAGS_OTHER})
 target_link_libraries(PGGTyper-kmers PGGTyperLib ${JELLYFISH_LIBRARIES})
 
-# TODO: remove Jellyfish dependencies
 target_link_libraries(PGGTyper-paths PGGTyperLib ${JELLYFISH_LDFLAGS_OTHER})
 target_link_libraries(PGGTyper-paths PGGTyperLib ${JELLYFISH_LIBRARIES})
