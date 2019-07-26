@@ -13,7 +13,7 @@ public:
 	@param cn_1 probability of copy number 1
 	@param cn_2 probability of copy number 2
 	 **/
-	CopyNumber(long double cn_0, long double cn_1, long double cn_2);
+	CopyNumber(long double cn_0, long double cn_1, long double cn_2, long double scaling_factor = 1.0L);
 	/** get probability of copy number cn **/
 	long double get_probability_of(int cn);
 	bool operator==(const CopyNumber &other) const;

@@ -10,7 +10,7 @@ using namespace std;
 TEST_CASE ("ProbabilityComputer get_probability", "[ProbabilityComputer get_probability]") {
 	ProbabilityComputer p(0.1, 10, 50);
 	REQUIRE(doubles_equal(p.get_probability(2,70), 0.00136386));
-	REQUIRE(doubles_equal(p.get_probability(0,2), 0.00452419));
+	REQUIRE(doubles_equal(p.get_probability(0,2), 0.081));
 	REQUIRE(doubles_equal(p.get_probability(1,10), 0.12511));
 }
 

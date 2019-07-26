@@ -25,10 +25,21 @@ long double ProbabilityComputer::get_probability(size_t cn, unsigned int value) 
 	if (cn > 2) {
 		throw runtime_error("ProbabilityComputer::get_probability: only copynumbers 0, 1 and 2 allowed.");
 	}
-	long double mean = means[cn];
+	if (cn > 0) {
+		return poisson(means[cn], value);
+	} else {
+		return geometric(means[cn], value);
+	}
+}
+
+long double ProbabilityComputer::poisson(long double mean, unsigned int value) const {
 	long double sum = 0.0L;
 	int v = (int) value;
 	for (size_t i = 1; i <= value; ++i) sum += log(i);
 	long double log_val = -mean + v * log(mean) - sum;
 	return exp(log_val);
+}
+
+long double ProbabilityComputer::geometric(long double p, unsigned int value) const {
+	return pow(1.0L - p, value)*p;
 }

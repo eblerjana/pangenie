@@ -67,7 +67,7 @@ for record in vcf.Reader(open(args.baseline, 'r')):
 	pos, gt, binary, gl = extract_call(record)
 	# if same position occurs multiple times, ignore all calls at this position
 	if pos in all_SNPs:
-		print('Waring: position ' + str(pos[0]) + ' ' + str(pos[1]) + ' occures more than once and will be skipped.')
+		print('Warning: position ' + str(pos[0]) + ' ' + str(pos[1]) + ' occurs more than once and will be skipped.')
 		duplicated_positions.append(pos)
 		continue
 	all_SNPs[pos] = [gt, binary]

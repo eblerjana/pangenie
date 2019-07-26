@@ -81,6 +81,48 @@ TEST_CASE("HMM get_genotyping_result", "[HMM get_genotyping_result]") {
 	}
 }
 
+TEST_CASE("HMM get_genotyping_result_normalized", "[HMM get_genotyping_result_normalized]") {
+	UniqueKmers u1(0,2000);
+	vector<unsigned char> a1 = {0};
+	vector<unsigned char> a2 = {1};
+	u1.insert_path(0,0);
+	u1.insert_path(1,1);
+	u1.insert_kmer(CopyNumber(0.1,0.9,0.1,1.1), a1);
+	u1.insert_kmer(CopyNumber(0.1,0.9,0.1,1.1), a2);
+
+	UniqueKmers u2(1,3000);
+	u2.insert_path(0,0);
+	u2.insert_path(1,1);
+	u2.insert_kmer(CopyNumber(0.01,0.01,0.9,0.92), a1);
+	u2.insert_kmer(CopyNumber(0.9,0.3,0.1,1.3), a2);
+
+	vector<UniqueKmers*> unique_kmers = {&u1,&u2};
+//	vector<Variant> variants;
+//	variants.push_back(Variant("NNN", "NNN", "chr1", 2000, 2003, {"AAT", "ATT"}, {0,1}));
+//	variants.push_back(Variant("NNN", "NNN", "chr1", 3000, 3003, {"CCC", "CGC"}, {0,1}));
+
+	// recombination rate leads to recombination probability of 0.1
+	HMM hmm (&unique_kmers, 446.287102628);
+	
+	// expected likelihoods, as computed by hand
+	vector<double> expected_likelihoods = { 0.0509465435, 0.9483202731, 0.0007331832, 0.9678020017, 0.031003181, 0.0011948172 };
+	vector<double> computed_likelihoods;
+	for (auto result : hmm.get_genotyping_result()) {
+		computed_likelihoods.push_back(result.get_genotype_likelihood(0,0));
+		computed_likelihoods.push_back(result.get_genotype_likelihood(0,1));
+		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
+	}
+
+	REQUIRE(expected_likelihoods.size() == computed_likelihoods.size());
+
+	// compare expected and computed likelihoods
+	for (size_t i = 0; i < expected_likelihoods.size(); ++i) {
+		double expected = expected_likelihoods[i];
+		double computed = computed_likelihoods[i];
+		REQUIRE(doubles_equal(expected, computed));
+	}
+}
+
 
 TEST_CASE("HMM no_alt_allele", "[HMM no_alt_allele]") {
 	UniqueKmers u(0,2000);

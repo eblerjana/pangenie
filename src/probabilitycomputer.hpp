@@ -15,5 +15,7 @@ public:
 	long double get_probability (size_t cn, unsigned int value) const;
 private:
 	std::vector<long double> means;
+	long double poisson(long double mean, unsigned int value) const;
+	long double geometric(long double p, unsigned int value) const;
 };
 #endif // PROBABILITYCOMPUTER_HPP
