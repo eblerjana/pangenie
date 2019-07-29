@@ -71,14 +71,7 @@ TEST_CASE("HMM get_genotyping_result", "[HMM get_genotyping_result]") {
 		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
 	}
 
-	REQUIRE(expected_likelihoods.size() == computed_likelihoods.size());
-
-	// compare expected and computed likelihoods
-	for (size_t i = 0; i < expected_likelihoods.size(); ++i) {
-		double expected = expected_likelihoods[i];
-		double computed = computed_likelihoods[i];
-		REQUIRE(doubles_equal(expected, computed));
-	}
+	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
 }
 
 TEST_CASE("HMM get_genotyping_result_normalized", "[HMM get_genotyping_result_normalized]") {
@@ -113,14 +106,7 @@ TEST_CASE("HMM get_genotyping_result_normalized", "[HMM get_genotyping_result_no
 		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
 	}
 
-	REQUIRE(expected_likelihoods.size() == computed_likelihoods.size());
-
-	// compare expected and computed likelihoods
-	for (size_t i = 0; i < expected_likelihoods.size(); ++i) {
-		double expected = expected_likelihoods[i];
-		double computed = computed_likelihoods[i];
-		REQUIRE(doubles_equal(expected, computed));
-	}
+	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
 }
 
 
@@ -196,14 +182,7 @@ TEST_CASE("HMM no_unique_kmers", "[HMM no_unique_kmers]") {
 		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
 	}
 
-	REQUIRE(expected_likelihoods.size() == computed_likelihoods.size());
-
-	// compare expected and computed likelihoods
-	for (size_t i = 0; i < expected_likelihoods.size(); ++i) {
-		double expected = expected_likelihoods[i];
-		double computed = computed_likelihoods[i];
-		REQUIRE(doubles_equal(expected, computed));
-	}
+	REQUIRE( compare_vectors(computed_likelihoods, expected_likelihoods) );
 }
 
 TEST_CASE("HMM no_unique_kmers2", "[HMM no_unique_kmers2]") {
@@ -238,14 +217,7 @@ TEST_CASE("HMM no_unique_kmers2", "[HMM no_unique_kmers2]") {
 		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
 	}
 
-	REQUIRE(expected_likelihoods.size() == computed_likelihoods.size());
-
-	// compare expected and computed likelihoods
-	for (size_t i = 0; i < expected_likelihoods.size(); ++i) {
-		double expected = expected_likelihoods[i];
-		double computed = computed_likelihoods[i];
-		REQUIRE(doubles_equal(expected, computed));
-	}
+	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
 }
 
 TEST_CASE("HMM no_unique_kmers3", "[HMM no_unique_kmers3]") {
@@ -295,16 +267,10 @@ TEST_CASE("HMM no_unique_kmers3", "[HMM no_unique_kmers3]") {
 		computed_haplotype2.push_back(ht.second);
 	}
 
-	REQUIRE(expected_likelihoods.size() == computed_likelihoods.size());
+	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods));
+
 	// order of haplotype sequences can be different
 	REQUIRE( ( ((expected_haplotype1 == computed_haplotype1) && (expected_haplotype2 == computed_haplotype2)) || ((expected_haplotype1 == computed_haplotype2) && (expected_haplotype2 == computed_haplotype1))) );
-
-	// compare expected and computed likelihoods
-	for (size_t i = 0; i < expected_likelihoods.size(); ++i) {
-		double expected = expected_likelihoods[i];
-		double computed = computed_likelihoods[i];
-		REQUIRE(doubles_equal(expected, computed));
-	}
 }
 
 TEST_CASE("HMM no_unique_kmers_uniform", "[HMM no_unique_kmers_uniorm]") {
@@ -323,8 +289,8 @@ TEST_CASE("HMM no_unique_kmers_uniform", "[HMM no_unique_kmers_uniorm]") {
 	u2.insert_empty_allele(1);
 
 	vector<UniqueKmers*> unique_kmers = {&u1, &u2};
-	// enable uniform transition probabilities
-	HMM hmm (&unique_kmers, true);
+	// switch on uniform transition probabilities
+	HMM hmm (&unique_kmers, 1.26, true);
 
 	vector<double> expected_likelihoods = {1/9.0, 4/9.0, 4/9.0, 4/9.0, 4/9.0, 1/9.0};
 	vector<double> computed_likelihoods;
@@ -334,5 +300,43 @@ TEST_CASE("HMM no_unique_kmers_uniform", "[HMM no_unique_kmers_uniorm]") {
 		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
 	}
 
-	REQUIRE(expected_likelihoods == computed_likelihoods);
+	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
+}
+
+TEST_CASE("HMM only_kmers", "[HMM only_kmers]") {
+	/** PGGTyper-kmers: insert one ref and one alt path and allow uniform transitions between paths **/
+	UniqueKmers u1 (0,2000);
+	u1.insert_path(0,0);
+	u1.insert_path(1,1);
+	vector<unsigned char> a1 = {0};
+	vector<unsigned char> a2 = {1};
+	u1.insert_kmer(CopyNumber(0.05,0.9,0.05), a1);
+	u1.insert_kmer(CopyNumber(0.1,0.7,0.2), a2);
+
+	UniqueKmers u2 (1,3000);
+	u2.insert_path(0,0);
+	u2.insert_path(1,1);
+	u2.insert_kmer(CopyNumber(0.9,0.07,0.03), a1);
+	u2.insert_kmer(CopyNumber(0.1,0.2,0.7), a2);
+
+	UniqueKmers u3 (2, 4000);
+	u3.insert_path(0,0);
+	u3.insert_path(1,1);
+	u3.insert_kmer(CopyNumber(0.6,0.3,0.1), a1);
+	u3.insert_kmer(CopyNumber(0.3,0.4,0.3), a2);
+
+	vector<UniqueKmers*> unique_kmers = {&u1, &u2, &u3};
+	// switch on uniform transition probabilities
+	HMM hmm (&unique_kmers, 1.26, true);
+
+	vector<double> expected_likelihoods = {0.00392156862745098, 0.988235294117647, 0.00784313725490196, 0.0045385779122541605, 0.02118003025718608, 0.9531013615733737, 0.06666666666666667, 0.5333333333333333, 0.39999999999999997};
+	vector<double> computed_likelihoods;
+
+	for (auto result : hmm.get_genotyping_result()) {
+		computed_likelihoods.push_back(result.get_genotype_likelihood(0,0));
+		computed_likelihoods.push_back(result.get_genotype_likelihood(0,1));
+		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
+	}
+
+	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
 }

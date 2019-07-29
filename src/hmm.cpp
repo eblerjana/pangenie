@@ -337,10 +337,10 @@ void HMM::compute_backward_column(size_t column_index) {
 
 	transform(current_column->begin(), current_column->end(), current_column->begin(), bind(divides<long double>(), placeholders::_1, normalization_sum));
 
-//	cout << "FORWARD COLUMN: " << variants.at(column_index).get_start_position() << endl;
+//	cout << "FORWARD COLUMN: " << endl;
 //	print_column(forward_column, column_indexer);
 
-//	cout << "BACKWARD COLUMN: " << variants.at(column_index).get_start_position() << endl;
+//	cout << "BACKWARD COLUMN: "  << endl;
 //	print_column(current_column, column_indexer);
 
 	// store computed column (needed for next step)
