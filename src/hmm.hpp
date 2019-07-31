@@ -14,10 +14,12 @@ class HMM {
 public:
 	/** 
 	* @param unique_kmers stores the set of unique kmers for each variant position.
+	* @param run_genotyping run genotyping (Forward backward)
+	* @param run_phasing run phasing (Viterbi)
 	* @param recombrate recombination rate
 	* @param uniform use uniform transition probabilities
 	**/
-	HMM(std::vector<UniqueKmers*>* unique_kmers, double recombrate = 1.26, bool uniform = false);
+	HMM(std::vector<UniqueKmers*>* unique_kmers, bool run_genotyping, bool run_phasing, double recombrate = 1.26, bool uniform = false);
 	const std::vector<GenotypingResult>& get_genotyping_result() const;
 	~HMM();
 

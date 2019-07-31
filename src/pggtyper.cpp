@@ -14,13 +14,17 @@ using namespace std;
 int main (int argc, char* argv[])
 {
 	clock_t clock_start = clock();
-	cerr << "This is PGGTyper." << endl;
+	cerr << endl;
+	cerr << "program: PGGTyper - genotyping and phasing based on kmer-counting and known haplotype sequences." << endl;
+	cerr << "author: Jana Ebler" << endl << endl;
 	string readfile = "";
 	string reffile = "";
 	string vcffile = "";
 	size_t kmersize = 31;
 	string outname = "result";
 	string sample_name = "sample";
+	bool only_genotyping = false;
+	bool only_phasing = false;
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
@@ -31,6 +35,8 @@ int main (int argc, char* argv[])
 	argument_parser.add_optional_argument('o', "result", "prefix of the output files");
 	argument_parser.add_optional_argument('k', "31", "kmer size");
 	argument_parser.add_optional_argument('s', "sample", "name of the sample (will be used in the output VCFs)");
+	argument_parser.add_flag_argument('g', "only run genotyping (Forward backward algorithm).");
+	argument_parser.add_flag_argument('p', "only run phasing (Viterbi algorithm).");
 	try {
 		argument_parser.parse(argc, argv);
 	} catch (const runtime_error& e) {
@@ -46,6 +52,8 @@ int main (int argc, char* argv[])
 	kmersize = stoi(argument_parser.get_argument('k'));
 	outname = argument_parser.get_argument('o');
 	sample_name = argument_parser.get_argument('s');
+	only_genotyping = argument_parser.get_flag('g');
+	only_phasing = argument_parser.get_flag('p');
 
 	// print info
 	cout << "Files and parameters used:" << endl;
@@ -89,8 +97,8 @@ int main (int argc, char* argv[])
 	cerr << "#### Memory usage until now: " << (r_usage1.ru_maxrss / 1E6) << " GB ####" << endl;
 
 	// prepare output files
-	variant_reader.open_genotyping_outfile(outname + "_genotyping.vcf");
-	variant_reader.open_phasing_outfile(outname + "_phasing.vcf");
+	if (! only_phasing) variant_reader.open_genotyping_outfile(outname + "_genotyping.vcf");
+	if (! only_genotyping) variant_reader.open_phasing_outfile(outname + "_phasing.vcf");
 
 	for (auto& chromosome : chromosomes) {
 		cerr << "Processing chromosome " << chromosome << "." << endl;
@@ -106,15 +114,19 @@ int main (int argc, char* argv[])
 
 		// get variants on this chromosome
 		cerr << "Construct HMM" << endl;
-		HMM hmm(&unique_kmers);
+		HMM hmm(&unique_kmers, !only_phasing, !only_genotyping);
 
-		// output the genotyping results
-		cerr << "Write genotyping output ..." << endl;
-		variant_reader.write_genotypes_of(chromosome, hmm.get_genotyping_result());
+		if (! only_phasing) {
+			// output the genotyping results
+			cerr << "Write genotyping output ..." << endl;
+			variant_reader.write_genotypes_of(chromosome, hmm.get_genotyping_result());
+		}
 
-		// output the phasing results
-		cerr << "Write phasing output ..." << endl;
-		variant_reader.write_phasing_of(chromosome, hmm.get_genotyping_result());
+		if (! only_genotyping) {
+			// output the phasing results
+			cerr << "Write phasing output ..." << endl;
+			variant_reader.write_phasing_of(chromosome, hmm.get_genotyping_result());
+		}
 
 		// destroy unique kmers
 		for (size_t i = 0; i < unique_kmers.size(); ++i) {
@@ -123,8 +135,8 @@ int main (int argc, char* argv[])
 		}
 	}
 
-	variant_reader.close_genotyping_outfile();
-	variant_reader.close_phasing_outfile();
+	if (! only_phasing) variant_reader.close_genotyping_outfile();
+	if (! only_genotyping) variant_reader.close_phasing_outfile();
 
 	cerr << endl << "###### Summary ######" << endl;
 	// total time

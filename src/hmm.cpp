@@ -21,7 +21,7 @@ void print_column(vector<long double>* column, ColumnIndexer* indexer) {
 }
 
 
-HMM::HMM(vector<UniqueKmers*>* unique_kmers, double recombrate, bool uniform)
+HMM::HMM(vector<UniqueKmers*>* unique_kmers, bool run_genotyping, bool run_phasing, double recombrate, bool uniform)
 	:unique_kmers(unique_kmers),
 	 genotyping_result(unique_kmers->size())
 {
@@ -37,32 +37,19 @@ HMM::HMM(vector<UniqueKmers*>* unique_kmers, double recombrate, bool uniform)
 		this->transition_prob_computers.at(i-1) = t;
 	}
 	this->previous_backward_column = nullptr;
-
 	cerr << "Indexing the columns ..." << endl;
 	index_columns();
-	cerr << "Computing forward probabilities ..." << endl;
-	compute_forward_prob();
-//	for(size_t i = 0; i < this->forward_columns.size(); ++i) {
-//		cout << "forward " << variants.at(i).get_start_position() << endl;
-//		if (this->forward_columns.at(i) == nullptr) {
-//			cout << "NULL" << endl;
-//			continue;
-//		}
-//		print_column(this->forward_columns.at(i), this->column_indexers.at(i));
-//	}
-	cerr << "Computing backward probabilities ..." << endl;
-	compute_backward_prob();
+	if (run_genotyping) {
+		cerr << "Computing forward probabilities ..." << endl;
+		compute_forward_prob();
+		cerr << "Computing backward probabilities ..." << endl;
+		compute_backward_prob();
+	}
 
-//	cout << "genotype likelihoods" << endl;
-//	for (size_t i = 0; i < this->genotyping_result.size(); ++i) {
-//		cout << genotyping_result[i] << endl;
-//	}
-
-	cerr << "Computing Viterbi path ..." << endl;
-	compute_viterbi_path();
-//	for(size_t i = 0; i < this->viterbi_columns.size(); ++i){
-//		print_column(this->viterbi_columns.at(i), this->column_indexers.at(i));
-//	}
+	if (run_phasing) {
+		cerr << "Computing Viterbi path ..." << endl;
+		compute_viterbi_path();
+	}
 }
 
 HMM::~HMM(){

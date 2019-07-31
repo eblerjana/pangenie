@@ -29,13 +29,23 @@ void CommandLineParser::add_optional_argument(char name, string default_val, str
 	this->optional[name] = default_val;
 }
 
+void CommandLineParser::add_flag_argument(char name, string description) {
+	this->arg_to_string[name] = description;
+	this->parser_string += name;
+	this->flag_to_parameter[name] = false;
+}
+
 void CommandLineParser::parse(int argc, char* argv[]) {
 	int c;
 	while ((c = getopt(argc, argv, this->parser_string.c_str())) != -1) {
 		// check if option exists
 		if (this->arg_to_string.find(c) != this->arg_to_string.end()) {
-			// valid option
-			this->arg_to_parameter[c] = string(optarg);
+			if (this->flag_to_parameter.find(c) != this->flag_to_parameter.end()) {
+				// argument is a flag, set it to true
+				this->flag_to_parameter[c] = true;
+			} else {
+				this->arg_to_parameter[c] = string(optarg);
+			}
 		} else {
 			if (c == 'h') {
 				usage();
@@ -72,18 +82,26 @@ string CommandLineParser::get_argument(char name) {
 	}
 }
 
+bool CommandLineParser::get_flag(char name) {
+	return this->flag_to_parameter.at(name);
+}
+
 void CommandLineParser::usage() {
 	cerr << "usage: " << this->command << endl;
 	cerr << endl;
 	cerr << "options:" << endl;
 	for (auto it = this->arg_to_string.begin(); it != this->arg_to_string.end(); ++it) {
+		// check if flag
+		if (this->flag_to_parameter.find(it->first) != this->flag_to_parameter.end()) {
+			cerr << "\t-" << it->first << "\t" << it->second << endl;
+			continue;
+		} 
 		// if there is a default value, get it
-		string default_val = "";
 		auto d = this->optional.find(it->first);
 		if (d != this->optional.end()) {
-			cerr << "\t-" << it->first << "=VAL\t" << it->second << " (default: " << d->second << ")." << endl;
+			cerr << "\t-" << it->first << " VAL\t" << it->second << " (default: " << d->second << ")." << endl;
 		} else {
-			cerr << "\t-" << it->first << "=VAL\t" << it->second << " (required)." << endl;
+			cerr << "\t-" << it->first << " VAL\t" << it->second << " (required)." << endl;
 		}
 	}
 	cerr << endl;
@@ -91,6 +109,10 @@ void CommandLineParser::usage() {
 
 void CommandLineParser::info() {
 	for (auto it = this->arg_to_string.begin(); it != this->arg_to_string.end(); ++it) {
-		cerr << "-" << (it->first) << "\t" << get_argument(it->first) << endl;
+		if (this->flag_to_parameter.find(it->first) != this->flag_to_parameter.end()) {
+			cerr << "-" << (it->first) << "\t" << get_flag(it->first) << endl;
+		} else {
+			cerr << "-" << (it->first) << "\t" << get_argument(it->first) << endl;
+		}
 	}
 }
