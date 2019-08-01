@@ -20,7 +20,9 @@ def extract_call(record, read_gl=False, read_qual=False):
 	binary_gt = 3
 	likelihood = 0
 	if (record.samples[0]['GT'][0] != '.') and (record.samples[0]['GT'][-1] != '.'):
-		gt = (int(record.samples[0]['GT'][0]), int(record.samples[0]['GT'][2]))
+		genotype_string = record.samples[0]['GT'].replace('/', '|')
+		allele_list = genotype_string.split('|')
+		gt = (int(allele_list[0]), int(allele_list[1]))
 		alleles = [record.REF] + record.ALT
 		final_gt = set([str(alleles[gt[0]]), str(alleles[gt[1]])])
 
@@ -49,6 +51,7 @@ parser.add_argument('callset', metavar='CALLSET', help='callset VCF (genotyped v
 parser.add_argument('--thresholds', default='0', metavar='GQ-THRESHOLDS', help='comma separated list of GQ-thresholds to consider (default: consider all variants regardless of quality).')
 parser.add_argument('--use-qual', default=False, action='store_true', help='use qualities in QUAL field instead of GQ fields (default: use GQ field).')
 parser.add_argument('--snps', default=False, action='store_true', help='only consider SNPs.')
+parser.add_argument('--indels', default=False, action='store_true', help='only consider Indels.')
 args = parser.parse_args()
 
 all_SNPs = defaultdict(list)
@@ -62,7 +65,11 @@ for record in vcf.Reader(open(args.baseline, 'r')):
 		# check if record is a SNP
 		if not record.is_snp:
 			continue
-	total_baseline += 1
+	if args.indels:
+		# check if record is an Indel
+#		if not record.is_indel:
+		if record.is_snp:
+			continue
 	# extract position and genotype
 	pos, gt, binary, gl = extract_call(record)
 	# if same position occurs multiple times, ignore all calls at this position
@@ -70,6 +77,7 @@ for record in vcf.Reader(open(args.baseline, 'r')):
 		print('Warning: position ' + str(pos[0]) + ' ' + str(pos[1]) + ' occurs more than once and will be skipped.')
 		duplicated_positions.append(pos)
 		continue
+	total_baseline += 1
 	all_SNPs[pos] = [gt, binary]
 
 all_callset_SNPs = []
@@ -78,6 +86,11 @@ for record in vcf.Reader(open(args.callset, 'r')):
 	if args.snps:
 		# check if record is a SNP
 		if not record.is_snp:
+			continue
+	if args.indels:
+		# check if record is an Indel
+#		if not record.is_indel:
+		if record.is_snp:
 			continue
 	if args.use_qual:
 		pos, gt, binary, gl = extract_call(record, read_qual=True)
@@ -140,8 +153,8 @@ for threshold in thresholds:
 	print('total ' + args.callset + ': ' + str(total_callset))
 	print('intersection: ' + str(total_intersection))
 	print('')
-	print('total number of SNPs biallelic in both sets: ' + str(biallelic_snps))
-	print('CONFUSION MATRIX FOR BIALLELIC SNPS (vertical: ' + args.baseline + ' horizontal: ' + args.callset)
+	print('total number of variants biallelic in both sets: ' + str(biallelic_snps))
+	print('CONFUSION MATRIX FOR BIALLELIC VARIANTS (vertical: ' + args.baseline + ' horizontal: ' + args.callset)
 	print_matrix(confusion_matrix)
 	print('')
 	print('TODO: validate this script!')

@@ -26,6 +26,7 @@ public:
 
 private:
 	UniqueKmers* uniquekmers;
+	bool all_zeros;
 	ColumnIndexer* columnindexer;
 	ProbabilityMatrix state_to_prob;
 	long double compute_emission_probability(unsigned char allele1, unsigned char allele2);

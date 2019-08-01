@@ -322,6 +322,7 @@ void HMM::compute_backward_column(size_t column_index) {
 		this->genotyping_result.at(column_index).add_to_likelihood(alleles.first, alleles.second, forward_backward_prob);
 	}
 
+	if (normalization_sum == 0.0) cout << this->unique_kmers->at(column_index)->get_variant_position() << endl;
 	transform(current_column->begin(), current_column->end(), current_column->begin(), bind(divides<long double>(), placeholders::_1, normalization_sum));
 
 //	cout << "FORWARD COLUMN: " << endl;

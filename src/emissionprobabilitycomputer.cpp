@@ -15,6 +15,7 @@ pair<size_t,size_t> sorted_paths(size_t p1, size_t p2) {
 
 EmissionProbabilityComputer::EmissionProbabilityComputer(UniqueKmers* uniquekmers, ColumnIndexer* columnindexer)
 	:uniquekmers(uniquekmers),
+	 all_zeros(true),
 	 columnindexer(columnindexer)
 {
 	vector<unsigned char> unique_alleles;
@@ -25,11 +26,13 @@ EmissionProbabilityComputer::EmissionProbabilityComputer(UniqueKmers* uniquekmer
 	for (auto a1 : unique_alleles) {
 		for (auto a2 : unique_alleles) {
 			this->state_to_prob[a1][a2] = compute_emission_probability(a1, a2);
+			if (this->state_to_prob[a1][a2] > 0) this->all_zeros = false;
 		}
 	}
 }
 
 long double EmissionProbabilityComputer::get_emission_probability(size_t state_id) const {
+	if (this->all_zeros) return 1.0L;
 	pair<unsigned char, unsigned char>  a = this->columnindexer->get_alleles(state_id);
 	return this->state_to_prob[a.first][a.second];
 }

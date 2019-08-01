@@ -96,7 +96,7 @@ void GenotypingResult::divide_likelihoods_by(long double value) {
 
 pair<int, int> GenotypingResult::get_likeliest_genotype() const {
 	long double best_value = 0.0L;
-	pair<unsigned char, unsigned char> best_genotype = make_pair(-1,-1); 
+	pair<unsigned char, unsigned char> best_genotype = make_pair(0,0); 
 	for (auto const& l : this->genotype_to_likelihood) {
 		if (l.second >= best_value) {
 			best_value = l.second;
