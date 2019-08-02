@@ -156,5 +156,14 @@ for threshold in thresholds:
 	print('total number of variants biallelic in both sets: ' + str(biallelic_snps))
 	print('CONFUSION MATRIX FOR BIALLELIC VARIANTS (vertical: ' + args.baseline + ' horizontal: ' + args.callset)
 	print_matrix(confusion_matrix)
-	print('')
+	typed_biallelic = 0
+	for i in range(0,3):
+		for j in range(0,3):
+			typed_biallelic += confusion_matrix[i][j]
+	correct_biallelic = confusion_matrix[0][0] + confusion_matrix[1][1] + confusion_matrix[2][2]
+	wrong_biallelic = typed_biallelic - correct_biallelic
+	no_prediction_biallelic = biallelic_snps - correct_biallelic - wrong_biallelic
+	print('matching biallelic genotypes (among all typed): ' + str(correct_biallelic/ float(typed_biallelic if typed_biallelic != 0 else 1)) + ' (' + str(correct_biallelic) + '/' + str(typed_biallelic) + ')')
+	print('non-matching (among all typed):' + str(wrong_biallelic/ float(typed_biallelic if typed_biallelic != 0 else 1)) + ' (' + str(wrong_biallelic) + '/' + str(typed_biallelic) + ')')
+	print('biallelic variants genotyped as ./. in callset (among all variants in intersection): ' + str(no_prediction_biallelic/float(biallelic_snps)) + ' ('+str(no_prediction_biallelic)+'/'+str(biallelic_snps)+')')
 	print('TODO: validate this script!')
