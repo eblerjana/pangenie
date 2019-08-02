@@ -241,8 +241,14 @@ void HMM::compute_forward_column(size_t column_index) {
 		normalization_sum += current_cell;
 	}
 
-	// normalize the entries in current column to sum up to 1
-	transform(current_column->begin(), current_column->end(), current_column->begin(), bind(divides<long double>(), placeholders::_1, normalization_sum));
+	if (normalization_sum > 0.0L) {
+		// normalize the entries in current column to sum up to 1
+		transform(current_column->begin(), current_column->end(), current_column->begin(), bind(divides<long double>(), placeholders::_1, normalization_sum));
+	} else {
+		long double uniform = 1.0L / (long double) current_column->size();
+		transform(current_column->begin(), current_column->end(), current_column->begin(),  [uniform](long double c) -> long double {return uniform;});
+		cerr << "Underflow in Forward pass at position: " << this->unique_kmers->at(column_index)->get_variant_position() << ". Column set to uniform." << endl;
+	}
 
 	// store the column
 	this->forward_columns.at(column_index) = current_column;
@@ -322,8 +328,13 @@ void HMM::compute_backward_column(size_t column_index) {
 		this->genotyping_result.at(column_index).add_to_likelihood(alleles.first, alleles.second, forward_backward_prob);
 	}
 
-	if (normalization_sum == 0.0) cout << this->unique_kmers->at(column_index)->get_variant_position() << endl;
-	transform(current_column->begin(), current_column->end(), current_column->begin(), bind(divides<long double>(), placeholders::_1, normalization_sum));
+	if (normalization_sum > 0.0L) {
+		transform(current_column->begin(), current_column->end(), current_column->begin(), bind(divides<long double>(), placeholders::_1, normalization_sum));
+	} else {
+		long double uniform = 1.0L / (long double) current_column->size();
+		transform(current_column->begin(), current_column->end(), current_column->begin(), [uniform](long double c) -> long double {return uniform;});
+		cerr << "Underflow in Backward pass at position: " << this->unique_kmers->at(column_index)->get_variant_position() << ". Column set to uniform." << endl;
+	}
 
 //	cout << "FORWARD COLUMN: " << endl;
 //	print_column(forward_column, column_indexer);
@@ -345,8 +356,10 @@ void HMM::compute_backward_column(size_t column_index) {
 		this->forward_columns.at(column_index) = nullptr;
 	}
 
-	// normalize the GenotypingResults likelihoods 
-	this->genotyping_result.at(column_index).divide_likelihoods_by(normalization_f_b);
+	if (normalization_f_b > 0.0L) {
+		// normalize the GenotypingResults likelihoods 
+		this->genotyping_result.at(column_index).divide_likelihoods_by(normalization_f_b);
+	}
 }
 
 void HMM::compute_viterbi_column(size_t column_index) {
@@ -420,8 +433,14 @@ void HMM::compute_viterbi_column(size_t column_index) {
 		normalization_sum += current_cell;
 	}
 
-	// normalize the entries in current column
-	transform(current_column->begin(), current_column->end(), current_column->begin(), bind(divides<long double>(), placeholders::_1, normalization_sum));
+	if (normalization_sum > 0.0L) {
+		// normalize the entries in current column to sum up to 1 
+		transform(current_column->begin(), current_column->end(), current_column->begin(), bind(divides<long double>(), placeholders::_1, normalization_sum));
+	} else {
+		long double uniform = 1.0L / (long double) current_column->size();
+		transform(current_column->begin(), current_column->end(), current_column->begin(),  [uniform](long double c) -> long double {return uniform;});
+		cerr << "Underflow in Viterbi pass at position: " << this->unique_kmers->at(column_index)->get_variant_position() << ". Column set to uniform." << endl;
+	}
 
 	// store the column
 	this->viterbi_columns.at(column_index) = current_column;

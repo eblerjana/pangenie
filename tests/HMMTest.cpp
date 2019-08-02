@@ -340,3 +340,73 @@ TEST_CASE("HMM only_kmers", "[HMM only_kmers]") {
 
 	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
 }
+
+TEST_CASE("HMM emissions_zero", "[HMM emissions_zero]") {
+	UniqueKmers u1 (0,1000);
+	u1.insert_path(0,0);
+	u1.insert_path(1,1);
+	vector<unsigned char> a1 = {0};
+	vector<unsigned char> a2 = {1};
+	u1.insert_kmer(CopyNumber(0.0,1.0,0.0), a1);
+	u1.insert_kmer(CopyNumber(0.0,1.0,0.0), a2);
+
+	UniqueKmers u2(0,2000);
+	u2.insert_path(0,0);
+	u2.insert_path(1,0);
+	u2.insert_kmer(CopyNumber(1.0,0.0,0.0), a1);
+	u2.insert_kmer(CopyNumber(1.0,0.0,0.0), a1);
+
+	UniqueKmers u3(0,3000);
+	u3.insert_path(0,0);
+	u3.insert_path(1,1);
+	u3.insert_kmer(CopyNumber(0.0,1.0,0.0), a1);
+	u3.insert_kmer(CopyNumber(0.0,1.0,0.0), a2);
+
+	vector<UniqueKmers*> unique_kmers = {&u1, &u2, &u3};
+	HMM hmm (&unique_kmers, true, true, 446.287102628);
+	vector<double> expected_likelihoods = {0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0};
+	vector<double> computed_likelihoods;
+
+	for (auto result : hmm.get_genotyping_result()) {
+		computed_likelihoods.push_back(result.get_genotype_likelihood(0,0));
+		computed_likelihoods.push_back(result.get_genotype_likelihood(0,1));
+		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
+	}
+
+	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
+}
+
+TEST_CASE("HMM underflow", "[HMM underflow]") {
+	UniqueKmers u1 (0,1000);
+	u1.insert_path(0,0);
+	u1.insert_path(1,1);
+	vector<unsigned char> a1 = {0};
+	vector<unsigned char> a2 = {1};
+	u1.insert_kmer(CopyNumber(0.0,1.0,0.0), a1);
+	u1.insert_kmer(CopyNumber(0.0,1.0,0.0), a2);
+
+	UniqueKmers u2 (0,2000);
+	u2.insert_path(0,0);
+	u2.insert_path(1,1);
+	u2.insert_kmer(CopyNumber(0.0,0.0,1.0), a1);
+	u2.insert_kmer(CopyNumber(1.0,0.0,0.0), a2);
+
+	UniqueKmers u3 (0,3000);
+	u3.insert_path(0,0);
+	u3.insert_path(1,1);
+	u3.insert_kmer(CopyNumber(0.0,1.0,0.0), a1);
+	u3.insert_kmer(CopyNumber(0.0,1.0,0.0), a2);
+
+	vector<UniqueKmers*> unique_kmers = {&u1, &u2, &u3};
+	HMM hmm (&unique_kmers, true, true, 0.0);
+	vector<double> expected_likelihoods = {0.0,1.0,0.0,0.25,0.5,0.25,0.0,1.0,0.0};
+	vector<double> computed_likelihoods;
+
+	for (auto result : hmm.get_genotyping_result()) {
+		computed_likelihoods.push_back(result.get_genotype_likelihood(0,0));
+		computed_likelihoods.push_back(result.get_genotype_likelihood(0,1));
+		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
+	}
+
+	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
+}
