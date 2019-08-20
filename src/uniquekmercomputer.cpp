@@ -51,7 +51,6 @@ void UniqueKmerComputer::compute_unique_kmers(vector<UniqueKmers*>* result) cons
 			// enumerate kmers and identify those with copynumber 1
 			string allele = variant.get_allele_sequence(a);
 			size_t kmer_size = this->variants->get_kmer_size();
-			// TODO: handle reverse complement!!!
 			unique_kmers(allele, a, kmer_size, occurences);
 		}
 
