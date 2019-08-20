@@ -141,7 +141,7 @@ void VariantReader::write_path_segments(std::string filename) const {
 			for (size_t allele = 0; allele < variant.nr_of_alleles(); ++allele) {
 				// sequence name
 				outfile << ">" << element.first << "_" << start_pos << "_" << allele << endl;
-				outfile << variant.get_allele_sequence(allele) << endl;
+				outfile << variant.get_allele_string(allele) << endl;
 			}
 			prev_end = variant.get_end_position();
 		}
@@ -269,7 +269,7 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 			this->genotyping_outfile << v.get_chromosome() << "\t"; // CHROM
 			this->genotyping_outfile << (v.get_start_position() + 1) << "\t"; // POS
 			this->genotyping_outfile << ".\t"; // ID
-			this->genotyping_outfile << v.get_allele_sequence(0) << "\t"; // REF
+			this->genotyping_outfile << v.get_allele_string(0) << "\t"; // REF
 
 			// get alternative alleles
 			size_t nr_alleles = v.nr_of_alleles();
@@ -279,9 +279,9 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 				throw runtime_error(oss.str());
 			}
 
-			string alt_alleles = v.get_allele_sequence(1);
+			string alt_alleles = v.get_allele_string(1);
 			for (size_t i = 2; i < nr_alleles; ++i) {
-				alt_alleles += "," + v.get_allele_sequence(i);
+				alt_alleles += "," + v.get_allele_string(i);
 			}
 			this->genotyping_outfile << alt_alleles << "\t"; // ALT
 			this->genotyping_outfile << ".\t"; // QUAL
@@ -344,7 +344,7 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 			this->phasing_outfile << v.get_chromosome() << "\t"; // CHROM
 			this->phasing_outfile << (v.get_start_position() + 1) << "\t"; // POS
 			this->phasing_outfile << ".\t"; // ID
-			this->phasing_outfile << v.get_allele_sequence(0) << "\t"; // REF
+			this->phasing_outfile << v.get_allele_string(0) << "\t"; // REF
 
 			// get alternative alleles
 			size_t nr_alleles = v.nr_of_alleles();
@@ -354,9 +354,9 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 				throw runtime_error(oss.str());
 			}
 
-			string alt_alleles = v.get_allele_sequence(1);
+			string alt_alleles = v.get_allele_string(1);
 			for (size_t i = 2; i < nr_alleles; ++i) {
-				alt_alleles += "," + v.get_allele_sequence(i);
+				alt_alleles += "," + v.get_allele_string(i);
 			}
 
 			this->phasing_outfile << alt_alleles << "\t"; // ALT

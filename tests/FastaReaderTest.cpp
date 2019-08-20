@@ -7,14 +7,14 @@
 using namespace std;
 
 TEST_CASE("FastaReader contains_name", "[FastaReader contains_name]") {
-	FastaReader f("/MMCI/TM/scratch/jebler/pgg-typer/pggtyper/pggtyper/tests/data/simple-fasta.fa");
+	FastaReader f("../tests/data/simple-fasta.fa");
 	REQUIRE(f.contains_name("chr01"));
 	REQUIRE(f.contains_name("chr02"));
 	REQUIRE(!f.contains_name("chr03"));
 }
 
 TEST_CASE("FastaReader get_size_of", "[FastaReader get_size_of]") {
-	FastaReader f("/MMCI/TM/scratch/jebler/pgg-typer/pggtyper/pggtyper/tests/data/simple-fasta.fa");
+	FastaReader f("../tests/data/simple-fasta.fa");
 	REQUIRE(f.get_size_of("chr01") == 1688);
 	REQUIRE(f.get_size_of("chr02") == 2135);
 	REQUIRE_THROWS(f.get_size_of("chrNone"));
@@ -22,7 +22,7 @@ TEST_CASE("FastaReader get_size_of", "[FastaReader get_size_of]") {
 }
 
 TEST_CASE("FastaReader get_subsequence", "[FastaReader get_subsequence]") {
-	FastaReader f("/MMCI/TM/scratch/jebler/pgg-typer/pggtyper/pggtyper/tests/data/simple-fasta.fa");
+	FastaReader f("../tests/data/simple-fasta.fa");
 	string sequence;
 	f.get_subsequence("chr01", 0, 10, sequence);
 	REQUIRE(sequence == "CATTTTAAAG");
@@ -44,5 +44,5 @@ TEST_CASE("FastaReader get_subsequence", "[FastaReader get_subsequence]") {
 }
 
 TEST_CASE("FastaReader invalid", "[FastaReader invalid]") {
-	REQUIRE_THROWS(FastaReader("/MMCI/TM/scratch/jebler/pgg-typer/pggtyper/pggtyper/tests/data/broken-fasta.fa"));
+	REQUIRE_THROWS(FastaReader("../tests/data/broken-fasta.fa"));
 }

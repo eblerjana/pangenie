@@ -27,7 +27,8 @@ public:
 	void separate_variants (std::vector<Variant>* resulting_variants, const GenotypingResult* input_genotyping = nullptr, std::vector<GenotypingResult>* resulting_genotyping = nullptr) const;
 	size_t nr_of_alleles() const;
 	size_t nr_of_paths() const;
-	std::string get_allele_sequence(size_t index) const;
+	std::string get_allele_string(size_t index) const;
+	DnaSequence get_allele_sequence(size_t index) const;
 	size_t get_start_position() const;
 	size_t get_end_position() const;
 	std::string get_chromosome() const;

@@ -146,7 +146,7 @@ size_t Variant::nr_of_paths() const {
 	return this->paths.size();
 }
 
-string Variant::get_allele_sequence(size_t index) const {
+string Variant::get_allele_string(size_t index) const {
 	if (index < this->alleles.size()) {
 		DnaSequence result;
 		for(auto s : this->alleles.at(index)) {
@@ -154,7 +154,19 @@ string Variant::get_allele_sequence(size_t index) const {
 		}
 		return result.to_string();
 	} else {
-		throw runtime_error("Variant::get_allele: Index out of bounds.");
+		throw runtime_error("Variant::get_allele_string: Index out of bounds.");
+	}
+}
+
+DnaSequence Variant::get_allele_sequence(size_t index) const {
+	if (index < this->alleles.size()) {
+		DnaSequence result;
+		for(auto s : this->alleles.at(index)) {
+			result.append(s);
+		}
+		return result;
+	} else {
+		throw runtime_error("Variant::get_allele_sequence: Index out of bounds.");
 	}
 }
 

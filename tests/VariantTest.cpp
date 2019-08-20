@@ -14,8 +14,8 @@ TEST_CASE("Variant testcase 1", "[Variant testcase 1]"){
 	REQUIRE(v2.nr_of_alleles() == 2);
 	REQUIRE(v1.nr_of_paths() == 2);
 	REQUIRE(v2.nr_of_paths() == 2);
-	REQUIRE(v1.get_allele_sequence(0) == "ATGC");
-	REQUIRE(v2.get_allele_sequence(1) == "G");
+	REQUIRE(v1.get_allele_string(0) == "ATGC");
+	REQUIRE(v2.get_allele_string(1) == "G");
 
 	REQUIRE(v1.allele_on_path(0,0));
 	REQUIRE(! v1.allele_on_path(1,0));
@@ -23,21 +23,21 @@ TEST_CASE("Variant testcase 1", "[Variant testcase 1]"){
 	REQUIRE(v2.allele_on_path(0,1));
 
 	v1.combine_variants(v2);
-	REQUIRE(v1.get_allele_sequence(0) == "ATGCTA");
-	REQUIRE(v1.get_allele_sequence(1) == "ATGCTG");
-	REQUIRE(v1.get_allele_sequence(2) == "ATTTA");
+	REQUIRE(v1.get_allele_string(0) == "ATGCTA");
+	REQUIRE(v1.get_allele_string(1) == "ATGCTG");
+	REQUIRE(v1.get_allele_string(2) == "ATTTA");
 	REQUIRE(v1.nr_of_alleles() == 3);
 	REQUIRE(v1.is_combined());
 	
 	v1.add_flanking_sequence();
-	REQUIRE(v1.get_allele_sequence(0) == "AAAATGCTACCC");
-	REQUIRE(v1.get_allele_sequence(1) == "AAAATGCTGCCC");
-	REQUIRE(v1.get_allele_sequence(2) == "AAAATTTACCC");
+	REQUIRE(v1.get_allele_string(0) == "AAAATGCTACCC");
+	REQUIRE(v1.get_allele_string(1) == "AAAATGCTGCCC");
+	REQUIRE(v1.get_allele_string(2) == "AAAATTTACCC");
 
 	v1.remove_flanking_sequence();
-	REQUIRE(v1.get_allele_sequence(0) == "ATGCTA");
-	REQUIRE(v1.get_allele_sequence(1) == "ATGCTG");
-	REQUIRE(v1.get_allele_sequence(2) == "ATTTA");
+	REQUIRE(v1.get_allele_string(0) == "ATGCTA");
+	REQUIRE(v1.get_allele_string(1) == "ATGCTG");
+	REQUIRE(v1.get_allele_string(2) == "ATTTA");
 }
 
 TEST_CASE("Variant operator==", "[Variant operator==]") {
@@ -113,9 +113,9 @@ TEST_CASE("Variant combine_variants", "[Variant combine_variants]") {
 
 	REQUIRE(v1.nr_of_alleles() == 3);
 	REQUIRE(v1.nr_of_paths() == 4);
-	REQUIRE(v1.get_allele_sequence(0) == "ACTGAGACTG");
-	REQUIRE(v1.get_allele_sequence(1) == "TCTACCACTG");
-	REQUIRE(v1.get_allele_sequence(2) == "TCTACCACTGTC");
+	REQUIRE(v1.get_allele_string(0) == "ACTGAGACTG");
+	REQUIRE(v1.get_allele_string(1) == "TCTACCACTG");
+	REQUIRE(v1.get_allele_string(2) == "TCTACCACTGTC");
 	REQUIRE(v1.get_chromosome() == "chr2");
 	REQUIRE(v1.get_start_position() == 4);
 	REQUIRE(v1.get_end_position() == 14);
@@ -287,7 +287,7 @@ TEST_CASE("Variant uncovered_alleles", "[Variant uncovered_alleles]") {
 	v1.combine_variants(v2);
 	v1.combine_variants(v3);
 	REQUIRE(v1.nr_of_alleles() == 1);
-	REQUIRE(v1.get_allele_sequence(0) == "ATCAAG");
+	REQUIRE(v1.get_allele_string(0) == "ATCAAG");
 
 	// separate variants
 	vector<Variant> single_vars;
@@ -324,8 +324,8 @@ TEST_CASE("Variant combine_combined", "[Variant combine_combined]") {
 	v1.combine_variants(v2);
 
 	REQUIRE(v1.nr_of_alleles() == 2);
-	REQUIRE(v1.get_allele_sequence(0) == "ATCAAG");
-	REQUIRE(v1.get_allele_sequence(1) == "ATTAAG");
+	REQUIRE(v1.get_allele_string(0) == "ATCAAG");
+	REQUIRE(v1.get_allele_string(1) == "ATTAAG");
 
 	// separate variants again
 	vector<Variant> single_vars;
@@ -346,9 +346,9 @@ TEST_CASE("Variant combine_combined2", "[Variant combine_combined]") {
 	v1.combine_variants(v3);
 
 	REQUIRE(v1.nr_of_alleles() == 3);
-	REQUIRE(v1.get_allele_sequence(0) == "ATGCCG");
-	REQUIRE(v1.get_allele_sequence(1) == "ATGCCC");
-	REQUIRE(v1.get_allele_sequence(2) == "GTCCCG");
+	REQUIRE(v1.get_allele_string(0) == "ATGCCG");
+	REQUIRE(v1.get_allele_string(1) == "ATGCCC");
+	REQUIRE(v1.get_allele_string(2) == "GTCCCG");
 
 	GenotypingResult g;
 	g.add_to_likelihood(0,0,0.9);

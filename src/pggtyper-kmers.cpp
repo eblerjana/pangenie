@@ -58,7 +58,7 @@ int main (int argc, char* argv[])
 	only_phasing = argument_parser.get_flag('p');
 
 	// print info
-	cout << "Files and parameters used:" << endl;
+	cerr << "Files and parameters used:" << endl;
 	argument_parser.info();
 
 	// read allele sequences and unitigs inbetween, write them into file

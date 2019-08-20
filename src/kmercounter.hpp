@@ -59,8 +59,11 @@ public:
 
 	~KmerCounter();
 	
-	/** get the abundance of given kmer **/
+	/** get the abundance of given kmer (string) **/
 	size_t getKmerAbundance(std::string kmer);
+
+	/** get the abundance of given kmer (jellyfish kmer) **/
+	size_t getKmerAbundance(jellyfish::mer_dna jelly_kmer);
 
 	/** compute the kmer coverage relative to the number of kmers in the genome **/
 	size_t computeKmerCoverage(size_t genome_kmers) const;

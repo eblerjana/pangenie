@@ -54,6 +54,17 @@ size_t KmerCounter::getKmerAbundance(string kmer){
 	return val;
 }
 
+size_t KmerCounter::getKmerAbundance(jellyfish::mer_dna jelly_kmer){
+
+	jelly_kmer.canonicalize();
+	uint64_t val = 0;
+	const auto jf_ary = this->jellyfish_hash->ary();
+	jf_ary->get_val_for_key(jelly_kmer, &val);
+
+	const auto end = jf_ary->end();
+	return val;
+}
+
 size_t KmerCounter::computeKmerCoverage(size_t genome_kmers) const {
 	const auto jf_ary = this->jellyfish_hash->ary();
 	const auto end = jf_ary->end();
