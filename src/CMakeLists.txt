@@ -12,6 +12,7 @@ add_library(PGGTyperLib SHARED
 	kmercounter.cpp
 	kmerpath.cpp
 	probabilitycomputer.cpp
+	sequenceutils.cpp
 	transitionprobabilitycomputer.cpp
 	uniquekmercomputer.cpp
 	uniquekmers.cpp
