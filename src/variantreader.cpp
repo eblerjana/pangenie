@@ -3,6 +3,7 @@
 #include <cassert>
 #include <iomanip>
 #include <math.h>
+#include <regex>
 #include "variantreader.hpp"
 
 using namespace std;
@@ -91,6 +92,13 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 		size_t current_end_pos = current_start_pos + ref.size();
 		// get ALT alleles
 		vector<DnaSequence> alleles = {ref};
+		// make sure alt alleles are given explicitly
+		regex r("^[CAGTNcagtn,]+$");
+		if (!regex_match(tokens[4], r)) {
+			// skip this position
+			cerr << "VariantReader: skip position " << current_start_pos << " with alternative alleles " << tokens[4] << endl;
+			continue;
+		}
 		parse_line(alleles, tokens[4], ',');
 		// construct paths
 		vector<unsigned char> paths;
