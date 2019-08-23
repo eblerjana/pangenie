@@ -74,6 +74,11 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 		size_t current_start_pos;
 		stringstream sstream(tokens[1]);
 		sstream >> current_start_pos;
+		// if variant is contained in previous one, skip it
+		if ((previous_chrom == current_chrom) && (current_start_pos < previous_end_pos)) {
+			cerr << "VariantReader: skip variant at " << current_chrom << ":" << current_start_pos << " since it is contained in a previous one."  << endl;
+			continue;
+		}
 		// VCF positions are 1-based
 		current_start_pos -= 1;
 		// if distance to next variant is larger than kmer_size, start a new cluster
@@ -96,7 +101,7 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 		regex r("^[CAGTNcagtn,]+$");
 		if (!regex_match(tokens[4], r)) {
 			// skip this position
-			cerr << "VariantReader: skip position " << current_start_pos << " with alternative alleles " << tokens[4] << endl;
+			cerr << "VariantReader: skip variant at " << current_chrom << ":" << current_start_pos << " with alternative alleles " << tokens[4] << endl;
 			continue;
 		}
 		parse_line(alleles, tokens[4], ',');

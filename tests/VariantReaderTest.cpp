@@ -166,7 +166,14 @@ TEST_CASE("VariantReader no-alt-alleles", "[VariantReader no-alt-alleles]") {
 
 	VariantReader v (vcf, fasta, 10);
 	// should have skipped variant for which no alt alleles are given
-	REQUIRE(v.get_variants_on_chromosome("chrA").size() == 1);
+	REQUIRE(v.get_variants_on_chromosome("chrA").size() == 1);	
+}
 
-	
+TEST_CASE("VariantReader overlapping variants", "[VariantReader overlapping variants]") {
+	string vcf = "../tests/data/overlapping-variants.vcf";
+	string fasta = "../tests/data/small1.fa";
+
+	VariantReader v (vcf, fasta, 10);
+	// should have skipped variant that is contained in another
+	REQUIRE(v.get_variants_on_chromosome("chrA").size() == 1);
 }
