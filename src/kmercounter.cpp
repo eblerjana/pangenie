@@ -8,12 +8,12 @@
 
 using namespace std;
 
-KmerCounter::KmerCounter (string readfile, size_t kmer_size)
+KmerCounter::KmerCounter (string readfile, size_t kmer_size, size_t nr_threads)
 {
 	jellyfish::mer_dna::k(kmer_size); // Set length of mers
 	const uint64_t hash_size    = 10000000; // Initial size of hash.
 	const uint32_t num_reprobes = 126;
-	const uint32_t num_threads  = 1; // TODO Number of concurrent threads
+	const uint32_t num_threads  = nr_threads; // TODO Number of concurrent threads
 	const uint32_t counter_len  = 7;  // Minimum length of counting field
 	const bool canonical = true; // Use canonical representation
 

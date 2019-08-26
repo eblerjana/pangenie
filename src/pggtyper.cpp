@@ -27,7 +27,7 @@ void run_genotyping(string chromosome, KmerCounter* genomic_kmer_counts, KmerCou
 	HMM hmm(&unique_kmers, !only_phasing, !only_genotyping);
 	// store the results
 	lock_guard<mutex> lock (results->m);
-	results->result[chromosome] = hmm.get_genotyping_result();
+	results->result.insert(pair<string, vector<GenotypingResult>> (chromosome, move(hmm.get_genotyping_result())));
 	// destroy unique kmers
 	for (size_t i = 0; i < unique_kmers.size(); ++i) {
 		delete unique_kmers[i];
@@ -39,7 +39,7 @@ int main (int argc, char* argv[])
 {
 	clock_t clock_start = clock();
 	cerr << endl;
-	cerr << "program: PGGTyper - genotyping and phasing based on kmer-counting and known haplotype sequences." << endl;
+	cerr << "program: PGGTyper (parallel) - genotyping and phasing based on kmer-counting and known haplotype sequences." << endl;
 	cerr << "author: Jana Ebler" << endl << endl;
 	string readfile = "";
 	string reffile = "";
@@ -47,6 +47,7 @@ int main (int argc, char* argv[])
 	size_t kmersize = 31;
 	string outname = "result";
 	string sample_name = "sample";
+	size_t nr_threads = 1;
 	bool only_genotyping = false;
 	bool only_phasing = false;
 
@@ -59,6 +60,7 @@ int main (int argc, char* argv[])
 	argument_parser.add_optional_argument('o', "result", "prefix of the output files");
 	argument_parser.add_optional_argument('k', "31", "kmer size");
 	argument_parser.add_optional_argument('s', "sample", "name of the sample (will be used in the output VCFs)");
+	argument_parser.add_optional_argument('t', "1", "number of threads to use for kmer-counting");
 	argument_parser.add_flag_argument('g', "only run genotyping (Forward backward algorithm).");
 	argument_parser.add_flag_argument('p', "only run phasing (Viterbi algorithm).");
 	try {
@@ -76,6 +78,7 @@ int main (int argc, char* argv[])
 	kmersize = stoi(argument_parser.get_argument('k'));
 	outname = argument_parser.get_argument('o');
 	sample_name = argument_parser.get_argument('s');
+	nr_threads = stoi(argument_parser.get_argument('t'));
 	only_genotyping = argument_parser.get_flag('g');
 	only_phasing = argument_parser.get_flag('p');
 
@@ -105,7 +108,7 @@ int main (int argc, char* argv[])
 
 	// determine kmer copynumbers in reads
 	cerr << "Count kmers in reads ..." << endl;
-	KmerCounter read_kmer_counts (readfile, kmersize);
+	KmerCounter read_kmer_counts (readfile, kmersize, nr_threads);
 //	cerr << "Compute kmer-coverage ..." << endl;
 //	size_t kmer_coverage = read_kmer_counts.computeKmerCoverage(genome_kmers);
 	size_t kmer_abundance_peak = read_kmer_counts.computeHistogram(10000, outname + "_histogram.histo");
@@ -113,7 +116,7 @@ int main (int argc, char* argv[])
 
 	// count kmers in allele + reference sequence
 	cerr << "Count kmers in genome ..." << endl;
-	KmerCounter genomic_kmer_counts (segment_file, kmersize);
+	KmerCounter genomic_kmer_counts (segment_file, kmersize, nr_threads);
 
 	// TODO: only for analysis
 	struct rusage r_usage1;
@@ -124,45 +127,16 @@ int main (int argc, char* argv[])
 	if (! only_phasing) variant_reader.open_genotyping_outfile(outname + "_genotyping.vcf");
 	if (! only_genotyping) variant_reader.open_phasing_outfile(outname + "_phasing.vcf");
 
+	cerr << "Construct HMM and run core algorithm ..." << endl;
 	// one thread per chromosome
 	vector<thread> threads;
 	Results results;
 	for (auto& chromosome : chromosomes) {
 		threads.push_back(thread(run_genotyping, chromosome, &genomic_kmer_counts, &read_kmer_counts, &variant_reader, kmer_abundance_peak, only_genotyping, only_phasing, &results));
-
-	/**	cerr << "Processing chromosome " << chromosome << "." << endl;
-		cerr << "Determine unique kmers ..." << endl;
-		// determine sets of kmers unique to each variant region
-		UniqueKmerComputer kmer_computer(&genomic_kmer_counts, &read_kmer_counts, &variant_reader, chromosome, kmer_abundance_peak);
-		std::vector<UniqueKmers*> unique_kmers;
-		kmer_computer.compute_unique_kmers(&unique_kmers);
-
-		struct rusage r_usagei;
-		getrusage(RUSAGE_SELF, &r_usagei);
-		cerr << "#### Memory usage until now: " << (r_usagei.ru_maxrss / 1E6) << " GB ####" << endl;
-
-		// get variants on this chromosome
-		cerr << "Construct HMM" << endl;
-		HMM hmm(&unique_kmers, !only_phasing, !only_genotyping);
-
-		if (! only_phasing) {
-			// output the genotyping results
-			cerr << "Write genotyping output ..." << endl;
-			variant_reader.write_genotypes_of(chromosome, hmm.get_genotyping_result());
-		}
-
-		if (! only_genotyping) {
-			// output the phasing results
-			cerr << "Write phasing output ..." << endl;
-			variant_reader.write_phasing_of(chromosome, hmm.get_genotyping_result());
-		}
-
-		// destroy unique kmers
-		for (size_t i = 0; i < unique_kmers.size(); ++i) {
-			delete unique_kmers[i];
-			unique_kmers[i] = nullptr;
-		}
-	**/
+	}
+	
+	for (auto && t : threads) {
+		t.join();
 	}
 
 	cerr << "Write results to VCF ..." << endl;
@@ -175,7 +149,7 @@ int main (int argc, char* argv[])
 		}
 		if (!only_genotyping) {
 			// output phasing results
-			variant_reader.write_genotypes_of(it->first, it->second);
+			variant_reader.write_phasing_of(it->first, it->second);
 		}
 	}
 

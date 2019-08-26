@@ -54,8 +54,9 @@ public:
 	* @param readfile name of the FASTQ-files containing reads
 	* @param *params parameters for GATB-Kmercounter
 	* @param name of the output file
+	* @param nr_threads number of theads used for counting
 	**/
-	KmerCounter(std::string readfile, size_t kmer_size);
+	KmerCounter(std::string readfile, size_t kmer_size, size_t nr_threads = 1);
 
 	~KmerCounter();
 	
