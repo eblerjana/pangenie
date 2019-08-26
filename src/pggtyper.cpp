@@ -1,6 +1,8 @@
 #include <iostream>
 #include <sstream>
 #include <sys/resource.h>
+#include <mutex>
+#include <thread>
 #include "kmercounter.hpp"
 #include "emissionprobabilitycomputer.hpp"
 #include "copynumber.hpp"
@@ -10,6 +12,28 @@
 #include "commandlineparser.hpp"
 
 using namespace std;
+
+struct Results {
+	mutex m;
+	map<string, vector<GenotypingResult>> result;	
+};
+
+void run_genotyping(string chromosome, KmerCounter* genomic_kmer_counts, KmerCounter* read_kmer_counts, VariantReader* variant_reader, size_t kmer_abundance_peak, bool only_genotyping, bool only_phasing, Results* results) {
+	// determine sets of kmers unique to each variant region
+	UniqueKmerComputer kmer_computer(genomic_kmer_counts, read_kmer_counts, variant_reader, chromosome, kmer_abundance_peak);
+	std::vector<UniqueKmers*> unique_kmers;
+	kmer_computer.compute_unique_kmers(&unique_kmers);
+	// construct HMM and run genotyping/phasing
+	HMM hmm(&unique_kmers, !only_phasing, !only_genotyping);
+	// store the results
+	lock_guard<mutex> lock (results->m);
+	results->result[chromosome] = hmm.get_genotyping_result();
+	// destroy unique kmers
+	for (size_t i = 0; i < unique_kmers.size(); ++i) {
+		delete unique_kmers[i];
+		unique_kmers[i] = nullptr;
+	}
+}
 
 int main (int argc, char* argv[])
 {
@@ -100,8 +124,13 @@ int main (int argc, char* argv[])
 	if (! only_phasing) variant_reader.open_genotyping_outfile(outname + "_genotyping.vcf");
 	if (! only_genotyping) variant_reader.open_phasing_outfile(outname + "_phasing.vcf");
 
+	// one thread per chromosome
+	vector<thread> threads;
+	Results results;
 	for (auto& chromosome : chromosomes) {
-		cerr << "Processing chromosome " << chromosome << "." << endl;
+		threads.push_back(thread(run_genotyping, chromosome, &genomic_kmer_counts, &read_kmer_counts, &variant_reader, kmer_abundance_peak, only_genotyping, only_phasing, &results));
+
+	/**	cerr << "Processing chromosome " << chromosome << "." << endl;
 		cerr << "Determine unique kmers ..." << endl;
 		// determine sets of kmers unique to each variant region
 		UniqueKmerComputer kmer_computer(&genomic_kmer_counts, &read_kmer_counts, &variant_reader, chromosome, kmer_abundance_peak);
@@ -132,6 +161,21 @@ int main (int argc, char* argv[])
 		for (size_t i = 0; i < unique_kmers.size(); ++i) {
 			delete unique_kmers[i];
 			unique_kmers[i] = nullptr;
+		}
+	**/
+	}
+
+	cerr << "Write results to VCF ..." << endl;
+	assert (results.result.size() == chromosomes.size());
+	// write VCF
+	for (auto it = results.result.begin(); it != results.result.end(); ++it) {
+		if (!only_phasing) {
+			// output genotyping results
+			variant_reader.write_genotypes_of(it->first, it->second);
+		}
+		if (!only_genotyping) {
+			// output phasing results
+			variant_reader.write_genotypes_of(it->first, it->second);
 		}
 	}
 

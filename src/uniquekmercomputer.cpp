@@ -42,7 +42,7 @@ UniqueKmerComputer::UniqueKmerComputer (KmerCounter* genomic_kmers, KmerCounter*
 	double cn0 = 0.9;
 	double cn1 = kmer_coverage / 2.0;
 	double cn2 = kmer_coverage;
-	cerr << "Using Poisson distributions with parameters: " << cn0 << " " << cn1 << " " << cn2 << endl;
+//	cerr << "Using Poisson distributions with parameters: " << cn0 << " " << cn1 << " " << cn2 << endl;
 	this->probability.set_parameters(cn0, cn1 , cn2);
 	jellyfish::mer_dna::k(this->variants->get_kmer_size());
 }

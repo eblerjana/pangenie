@@ -20,7 +20,7 @@ public:
 	* @param uniform use uniform transition probabilities
 	**/
 	HMM(std::vector<UniqueKmers*>* unique_kmers, bool run_genotyping, bool run_phasing, double recombrate = 1.26, bool uniform = false);
-	const std::vector<GenotypingResult>& get_genotyping_result() const;
+	std::vector<GenotypingResult> get_genotyping_result() const;
 	~HMM();
 
 private:

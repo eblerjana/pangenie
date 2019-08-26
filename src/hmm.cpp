@@ -37,17 +37,17 @@ HMM::HMM(vector<UniqueKmers*>* unique_kmers, bool run_genotyping, bool run_phasi
 		this->transition_prob_computers.at(i-1) = t;
 	}
 	this->previous_backward_column = nullptr;
-	cerr << "Indexing the columns ..." << endl;
+//	cerr << "Indexing the columns ..." << endl;
 	index_columns();
 	if (run_genotyping) {
-		cerr << "Computing forward probabilities ..." << endl;
+//		cerr << "Computing forward probabilities ..." << endl;
 		compute_forward_prob();
-		cerr << "Computing backward probabilities ..." << endl;
+//		cerr << "Computing backward probabilities ..." << endl;
 		compute_backward_prob();
 	}
 
 	if (run_phasing) {
-		cerr << "Computing Viterbi path ..." << endl;
+//		cerr << "Computing Viterbi path ..." << endl;
 		compute_viterbi_path();
 	}
 }
@@ -247,7 +247,7 @@ void HMM::compute_forward_column(size_t column_index) {
 	} else {
 		long double uniform = 1.0L / (long double) current_column->size();
 		transform(current_column->begin(), current_column->end(), current_column->begin(),  [uniform](long double c) -> long double {return uniform;});
-		cerr << "Underflow in Forward pass at position: " << this->unique_kmers->at(column_index)->get_variant_position() << ". Column set to uniform." << endl;
+//		cerr << "Underflow in Forward pass at position: " << this->unique_kmers->at(column_index)->get_variant_position() << ". Column set to uniform." << endl;
 	}
 
 	// store the column
@@ -333,7 +333,7 @@ void HMM::compute_backward_column(size_t column_index) {
 	} else {
 		long double uniform = 1.0L / (long double) current_column->size();
 		transform(current_column->begin(), current_column->end(), current_column->begin(), [uniform](long double c) -> long double {return uniform;});
-		cerr << "Underflow in Backward pass at position: " << this->unique_kmers->at(column_index)->get_variant_position() << ". Column set to uniform." << endl;
+//		cerr << "Underflow in Backward pass at position: " << this->unique_kmers->at(column_index)->get_variant_position() << ". Column set to uniform." << endl;
 	}
 
 //	cout << "FORWARD COLUMN: " << endl;
@@ -439,7 +439,7 @@ void HMM::compute_viterbi_column(size_t column_index) {
 	} else {
 		long double uniform = 1.0L / (long double) current_column->size();
 		transform(current_column->begin(), current_column->end(), current_column->begin(),  [uniform](long double c) -> long double {return uniform;});
-		cerr << "Underflow in Viterbi pass at position: " << this->unique_kmers->at(column_index)->get_variant_position() << ". Column set to uniform." << endl;
+//		cerr << "Underflow in Viterbi pass at position: " << this->unique_kmers->at(column_index)->get_variant_position() << ". Column set to uniform." << endl;
 	}
 
 	// store the column
@@ -448,6 +448,6 @@ void HMM::compute_viterbi_column(size_t column_index) {
 	this->viterbi_backtrace_columns.at(column_index) = backtrace_column;
 }
 
-const vector<GenotypingResult>& HMM::get_genotyping_result() const {
+vector<GenotypingResult> HMM::get_genotyping_result() const {
 	return this->genotyping_result;
 }
