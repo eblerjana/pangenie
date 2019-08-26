@@ -74,13 +74,13 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 		size_t current_start_pos;
 		stringstream sstream(tokens[1]);
 		sstream >> current_start_pos;
+		// VCF positions are 1-based
+		current_start_pos -= 1;
 		// if variant is contained in previous one, skip it
 		if ((previous_chrom == current_chrom) && (current_start_pos < previous_end_pos)) {
 			cerr << "VariantReader: skip variant at " << current_chrom << ":" << current_start_pos << " since it is contained in a previous one."  << endl;
 			continue;
 		}
-		// VCF positions are 1-based
-		current_start_pos -= 1;
 		// if distance to next variant is larger than kmer_size, start a new cluster
 		if ( (previous_chrom != current_chrom) || (current_start_pos - previous_end_pos) >= (kmer_size-1) ) {
 			// merge all variants currently in cluster and store them
