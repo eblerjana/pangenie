@@ -26,7 +26,7 @@ void run_genotyping_kmers(string chromosome, KmerCounter* genomic_kmer_counts, K
 	std::vector<UniqueKmers*> unique_kmers;
 	kmer_computer.compute_unique_kmers(&unique_kmers);
 	// construct HMM and run genotyping/phasing
-	HMM hmm(&unique_kmers, !only_phasing, !only_genotyping);
+	HMM hmm(&unique_kmers, !only_phasing, !only_genotyping, 1.26, true);
 	// store the results
 	lock_guard<mutex> lock (results->m);
 	results->result.insert(pair<string, vector<GenotypingResult>> (chromosome, move(hmm.get_genotyping_result())));
