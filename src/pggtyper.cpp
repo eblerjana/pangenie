@@ -3,6 +3,10 @@
 #include <sys/resource.h>
 #include <mutex>
 #include <thread>
+#include <algorithm>
+#include <boost/asio/thread_pool.hpp>
+#include <boost/asio/post.hpp>
+#include <boost/bind.hpp>
 #include "kmercounter.hpp"
 #include "emissionprobabilitycomputer.hpp"
 #include "copynumber.hpp"
@@ -47,7 +51,8 @@ int main (int argc, char* argv[])
 	size_t kmersize = 31;
 	string outname = "result";
 	string sample_name = "sample";
-	size_t nr_threads = 1;
+	size_t nr_jellyfish_threads = 1;
+	size_t nr_core_threads = 1;
 	bool only_genotyping = false;
 	bool only_phasing = false;
 
@@ -60,7 +65,8 @@ int main (int argc, char* argv[])
 	argument_parser.add_optional_argument('o', "result", "prefix of the output files");
 	argument_parser.add_optional_argument('k', "31", "kmer size");
 	argument_parser.add_optional_argument('s', "sample", "name of the sample (will be used in the output VCFs)");
-	argument_parser.add_optional_argument('t', "1", "number of threads to use for kmer-counting");
+	argument_parser.add_optional_argument('j', "1", "number of threads to use for kmer-counting");
+	argument_parser.add_optional_argument('t', "1", "number of threads to use for core algorithm. Largest number of threads possible is the number of chromosomes given in the VCF.");
 	argument_parser.add_flag_argument('g', "only run genotyping (Forward backward algorithm).");
 	argument_parser.add_flag_argument('p', "only run phasing (Viterbi algorithm).");
 	try {
@@ -78,7 +84,8 @@ int main (int argc, char* argv[])
 	kmersize = stoi(argument_parser.get_argument('k'));
 	outname = argument_parser.get_argument('o');
 	sample_name = argument_parser.get_argument('s');
-	nr_threads = stoi(argument_parser.get_argument('t'));
+	nr_jellyfish_threads = stoi(argument_parser.get_argument('j'));
+	nr_core_threads = stoi(argument_parser.get_argument('t'));
 	only_genotyping = argument_parser.get_flag('g');
 	only_phasing = argument_parser.get_flag('p');
 
@@ -108,7 +115,7 @@ int main (int argc, char* argv[])
 
 	// determine kmer copynumbers in reads
 	cerr << "Count kmers in reads ..." << endl;
-	KmerCounter read_kmer_counts (readfile, kmersize, nr_threads);
+	KmerCounter read_kmer_counts (readfile, kmersize, nr_jellyfish_threads);
 //	cerr << "Compute kmer-coverage ..." << endl;
 //	size_t kmer_coverage = read_kmer_counts.computeKmerCoverage(genome_kmers);
 	size_t kmer_abundance_peak = read_kmer_counts.computeHistogram(10000, outname + "_histogram.histo");
@@ -116,7 +123,7 @@ int main (int argc, char* argv[])
 
 	// count kmers in allele + reference sequence
 	cerr << "Count kmers in genome ..." << endl;
-	KmerCounter genomic_kmer_counts (segment_file, kmersize, nr_threads);
+	KmerCounter genomic_kmer_counts (segment_file, kmersize, nr_jellyfish_threads);
 
 	// TODO: only for analysis
 	struct rusage r_usage1;
@@ -128,6 +135,8 @@ int main (int argc, char* argv[])
 	if (! only_genotyping) variant_reader.open_phasing_outfile(outname + "_phasing.vcf");
 
 	cerr << "Construct HMM and run core algorithm ..." << endl;
+
+/**
 	// one thread per chromosome
 	vector<thread> threads;
 	Results results;
@@ -138,7 +147,22 @@ int main (int argc, char* argv[])
 	for (auto && t : threads) {
 		t.join();
 	}
+**/
+	// determine max number of available threads (at most one thread per chromosome possible)
+	size_t available_threads = min(thread::hardware_concurrency(), (unsigned int) chromosomes.size());
+	if (nr_core_threads > available_threads) {
+		cerr << "Warning: set nr_core_threads to " << available_threads << "." << endl;
+		nr_core_threads = available_threads;
+	}
+	Results results;
+	// create thread pool
+	boost::asio::thread_pool threadPool(nr_core_threads);
+	for (auto chromosome : chromosomes) {
+		boost::asio::post(threadPool, boost::bind(run_genotyping, chromosome, &genomic_kmer_counts, &read_kmer_counts, &variant_reader, kmer_abundance_peak, only_genotyping, only_phasing, &results));
+	} 
+	threadPool.join();
 
+	// output VCF
 	cerr << "Write results to VCF ..." << endl;
 	assert (results.result.size() == chromosomes.size());
 	// write VCF

@@ -16,6 +16,6 @@
 `` cd pgg-typer``  
 `` conda env create -f environment.yml``  
 `` conda activate jellyfish-pgg``  
-``export PKG_CONFIG_PATH="/MMCI/TM/scratch/jebler/miniconda3/envs/jellyfish-pgg/lib/pkgconfig"``  
-``mkdir build; cd build; cmake .. ; make``
+``export PKG_CONFIG_PATH="/MMCI/TM/scratch/jebler/miniconda3/envs/pggtyper/lib/pkgconfig"``  
+``mkdir build; cd build; cmake .. -DBoost_NO_SYSTEM_PATHS=TRUE -DBOOST_ROOT=/MMCI/TM/scratch/jebler/miniconda3/envs/pggtyper/ ; make``
 

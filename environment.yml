@@ -1,4 +1,4 @@
-name: jellyfish-pgg
+name: pggtyper
 channels:
   - anaconda
   - conda-forge
