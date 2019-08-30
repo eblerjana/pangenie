@@ -19,11 +19,13 @@
 using namespace std;
 
 struct Results {
-	mutex m;
-	map<string, vector<GenotypingResult>> result;	
+	mutex result_mutex;
+	map<string, vector<GenotypingResult>> result;
+	map<string, double> runtimes;
 };
 
 void run_genotyping(string chromosome, KmerCounter* genomic_kmer_counts, KmerCounter* read_kmer_counts, VariantReader* variant_reader, size_t kmer_abundance_peak, bool only_genotyping, bool only_phasing, Results* results) {
+	Timer timer;
 	// determine sets of kmers unique to each variant region
 	UniqueKmerComputer kmer_computer(genomic_kmer_counts, read_kmer_counts, variant_reader, chromosome, kmer_abundance_peak);
 	std::vector<UniqueKmers*> unique_kmers;
@@ -31,13 +33,18 @@ void run_genotyping(string chromosome, KmerCounter* genomic_kmer_counts, KmerCou
 	// construct HMM and run genotyping/phasing
 	HMM hmm(&unique_kmers, !only_phasing, !only_genotyping);
 	// store the results
-	lock_guard<mutex> lock (results->m);
-	results->result.insert(pair<string, vector<GenotypingResult>> (chromosome, move(hmm.get_genotyping_result())));
+	{
+		lock_guard<mutex> lock_result (results->result_mutex);
+		results->result.insert(pair<string, vector<GenotypingResult>> (chromosome, move(hmm.get_genotyping_result())));
+	}
 	// destroy unique kmers
 	for (size_t i = 0; i < unique_kmers.size(); ++i) {
 		delete unique_kmers[i];
 		unique_kmers[i] = nullptr;
 	}
+	// store runtime
+	lock_guard<mutex> lock_result (results->result_mutex);
+	results->runtimes.insert(pair<string,double>(chromosome, timer.get_total_time()));
 }
 
 int main (int argc, char* argv[])
@@ -45,7 +52,7 @@ int main (int argc, char* argv[])
 	Timer timer;
 	double time_preprocessing;
 	double time_kmer_counting;
-	double time_hmm;
+	double time_writing;
 	double time_total;
 
 	cerr << endl;
@@ -158,6 +165,7 @@ int main (int argc, char* argv[])
 		boost::asio::post(threadPool, boost::bind(run_genotyping, chromosome, &genomic_kmer_counts, &read_kmer_counts, &variant_reader, kmer_abundance_peak, only_genotyping, only_phasing, &results));
 	} 
 	threadPool.join();
+	timer.get_interval_time();
 
 	// output VCF
 	cerr << "Write results to VCF ..." << endl;
@@ -177,15 +185,22 @@ int main (int argc, char* argv[])
 	if (! only_phasing) variant_reader.close_genotyping_outfile();
 	if (! only_genotyping) variant_reader.close_phasing_outfile();
 
-	time_hmm = timer.get_interval_time();
+	time_writing = timer.get_interval_time();
 	time_total = timer.get_total_time();
 
 	cerr << endl << "###### Summary ######" << endl;
 	// output times
 	cerr << "time spent reading input files:\t" << time_preprocessing << " sec" << endl;
 	cerr << "time spent counting kmers: \t" << time_kmer_counting << " sec" << endl;
-	cerr << "time spent genotyping/phasing:\t" << time_hmm << " sec" << endl;
-	cerr << "total time: " << time_total  << " sec" << endl;
+	// output per chromosome time
+	double time_hmm = time_writing;
+	for (auto chromosome : chromosomes) {
+		double time_chrom = results.runtimes.at(chromosome);
+		cerr << "time spent genotyping chromosome " << chromosome << ":\t" << time_chrom << endl;
+		time_hmm += time_chrom;
+	}
+	cerr << "total running time:\t" << time_preprocessing + time_kmer_counting + time_hmm << " sec"<< endl;
+	cerr << "total wallclock time: " << time_total  << " sec" << endl;
 
 	// memory usage
 	struct rusage r_usage;
