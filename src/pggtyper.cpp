@@ -8,12 +8,18 @@
 #include "uniquekmercomputer.hpp"
 #include "hmm.hpp"
 #include "commandlineparser.hpp"
+#include "timer.hpp"
 
 using namespace std;
 
 int main (int argc, char* argv[])
 {
-	clock_t clock_start = clock();
+	Timer timer;
+	double time_preprocessing;
+	double time_kmer_counting;
+	double time_hmm;
+	double time_total;
+
 	cerr << endl;
 	cerr << "program: PGGTyper - genotyping and phasing based on kmer-counting and known haplotype sequences." << endl;
 	cerr << "author: Jana Ebler" << endl << endl;
@@ -79,6 +85,8 @@ int main (int argc, char* argv[])
 	getrusage(RUSAGE_SELF, &r_usage0);
 	cerr << "#### Memory usage until now: " << (r_usage0.ru_maxrss / 1E6) << " GB ####" << endl;
 
+	time_preprocessing = timer.get_interval_time();
+
 	// determine kmer copynumbers in reads
 	cerr << "Count kmers in reads ..." << endl;
 	KmerCounter read_kmer_counts (readfile, kmersize);
@@ -99,6 +107,8 @@ int main (int argc, char* argv[])
 	// prepare output files
 	if (! only_phasing) variant_reader.open_genotyping_outfile(outname + "_genotyping.vcf");
 	if (! only_genotyping) variant_reader.open_phasing_outfile(outname + "_phasing.vcf");
+
+	time_kmer_counting = timer.get_interval_time();
 
 	for (auto& chromosome : chromosomes) {
 		cerr << "Processing chromosome " << chromosome << "." << endl;
@@ -138,10 +148,15 @@ int main (int argc, char* argv[])
 	if (! only_phasing) variant_reader.close_genotyping_outfile();
 	if (! only_genotyping) variant_reader.close_phasing_outfile();
 
+	time_hmm = timer.get_interval_time();
+	time_total = timer.get_total_time();
+
 	cerr << endl << "###### Summary ######" << endl;
-	// total time
-	double cpu_time = (double)(clock() - clock_start) / CLOCKS_PER_SEC;
-	cerr << "Total CPU time: " << cpu_time << " sec" << endl;
+	// output times
+	cerr << "time spent reading input files:\t" << time_preprocessing << " sec" << endl;
+	cerr << "time spent counting kmers: \t" << time_kmer_counting << " sec" << endl;
+	cerr << "time spent genotyping/phasing:\t" << time_hmm << " sec" << endl;
+	cerr << "total time: " << time_total  << " sec" << endl;
 
 	// memory usage
 	struct rusage r_usage;
