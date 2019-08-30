@@ -19,7 +19,6 @@ int main (int argc, char* argv[])
 	Timer timer;
 	double time_preprocessing;
 	double time_kmer_counting;
-	double time_hmm;
 	double time_total;
 	cerr << endl;
 	cerr << "program: PGGTyper-kmers - genotyping based on kmer-counting." << endl;
@@ -106,7 +105,9 @@ int main (int argc, char* argv[])
 
 	time_kmer_counting = timer.get_interval_time();
 
+	map<string,double> time_hmm;
 	for (auto& chromosome : chromosomes) {
+		Timer timer_chrom;
 		cerr << "Processing chromosome " << chromosome << "." << endl;
 		cerr << "Determine unique kmers ..." << endl;
 		// determine sets of kmers unique to each variant region
@@ -139,20 +140,23 @@ int main (int argc, char* argv[])
 			delete unique_kmers[i];
 			unique_kmers[i] = nullptr;
 		}
+		double time_chrom = timer_chrom.get_total_time();
+		time_hmm[chromosome] = time_chrom;
 	}
 
 	if (! only_phasing) variant_reader.close_genotyping_outfile();
 	if (! only_genotyping) variant_reader.close_phasing_outfile();
 
-	time_hmm = timer.get_interval_time();
 	time_total = timer.get_total_time();
 
 	cerr << endl << "###### Summary ######" << endl;
 	// output times
 	cerr << "time spent reading input files:\t" << time_preprocessing << " sec" << endl;
 	cerr << "time spent counting kmers: \t" << time_kmer_counting << " sec" << endl;
-	cerr << "time spent genotyping/phasing:\t" << time_hmm << " sec" << endl;
-	cerr << "total time: " << time_total  << " sec" << endl;
+	for (auto chromosome : chromosomes) {
+		cerr << "time spent genotyping chromosome " << chromosome << ": " << time_hmm.at(chromosome) << endl; 
+	}
+	cerr << "total wallclock time: " << time_total  << " sec" << endl;
 
 	// memory usage
 	struct rusage r_usage;
