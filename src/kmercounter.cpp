@@ -127,7 +127,7 @@ size_t KmerCounter::computeHistogram(size_t max_count, string filename) const {
 	if (filename != "") {
 		ofstream histofile;
 		histofile.open(filename, ios::app);
-		histofile << "parameters\t" << 0.1 << '\t' << second_id/2.0 << '\t' << second_id << endl;
+		histofile << "parameters\t" << 0.9 << '\t' << second_id/2.0 << '\t' << second_id << endl;
 		histofile.close();
 	}
 	return second_id;
