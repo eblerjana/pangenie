@@ -1,7 +1,7 @@
 #include <iostream>
 #include <sstream>
 #include <sys/resource.h>
-#include "kmercounter.hpp"
+#include "jellyfishcounter.hpp"
 #include "emissionprobabilitycomputer.hpp"
 #include "copynumber.hpp"
 #include "variantreader.hpp"
@@ -86,13 +86,13 @@ int main (int argc, char* argv[])
 
 	// determine kmer copynumbers in reads
 	cerr << "Count kmers in reads ..." << endl;
-	KmerCounter read_kmer_counts (readfile, kmersize);
+	JellyfishCounter read_kmer_counts (readfile, kmersize);
 	size_t kmer_abundance_peak = read_kmer_counts.computeHistogram(10000, outname + "_histogram.histo");
 	cerr << "Computed kmer abundance peak: " << kmer_abundance_peak << endl;
 
 	// count kmers in allele + reference sequence
 	cerr << "Count kmers in genome ..." << endl;
-	KmerCounter genomic_kmer_counts (segment_file, kmersize);
+	JellyfishCounter genomic_kmer_counts (segment_file, kmersize);
 
 	// TODO: only for analysis
 	struct rusage r_usage1;
