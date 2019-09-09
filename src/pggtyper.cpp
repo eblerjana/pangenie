@@ -97,7 +97,7 @@ int main (int argc, char* argv[])
 
 	KmerCounter* read_kmer_counts = nullptr;
 	// determine kmer copynumbers in reads
-	if (ends_with(readfile, ".jf")) {
+	if (readfile.substr(std::max(3, (int) readfile.size())-3) == std::string(".jf")) {
 		cerr << "Read pre-computed read kmer counts ..." << endl;
 		jellyfish::mer_dna::k(kmersize);
 		read_kmer_counts = new JellyfishReader(readfile, kmersize);

@@ -1,6 +1,7 @@
 #include <iostream>
 #include <sstream>
 #include <sys/resource.h>
+#include "jellyfishreader.hpp"
 #include "jellyfishcounter.hpp"
 #include "emissionprobabilitycomputer.hpp"
 #include "copynumber.hpp"
@@ -84,10 +85,18 @@ int main (int argc, char* argv[])
 
 	time_preprocessing = timer.get_interval_time();
 
+	KmerCounter* read_kmer_counts = nullptr;
 	// determine kmer copynumbers in reads
-	cerr << "Count kmers in reads ..." << endl;
-	JellyfishCounter read_kmer_counts (readfile, kmersize);
-	size_t kmer_abundance_peak = read_kmer_counts.computeHistogram(10000, outname + "_histogram.histo");
+	if (readfile.substr(std::max(3, (int) readfile.size())-3) == std::string(".jf")) {
+		cerr << "Read pre-computed read kmer counts ..." << endl;
+		jellyfish::mer_dna::k(kmersize);
+		read_kmer_counts = new JellyfishReader(readfile, kmersize);
+	} else {
+		cerr << "Count kmers in reads ..." << endl;
+		read_kmer_counts = new JellyfishCounter(readfile, kmersize);
+	}
+
+	size_t kmer_abundance_peak = read_kmer_counts->computeHistogram(10000, outname + "_histogram.histo");
 	cerr << "Computed kmer abundance peak: " << kmer_abundance_peak << endl;
 
 	// count kmers in allele + reference sequence
@@ -111,7 +120,7 @@ int main (int argc, char* argv[])
 		cerr << "Processing chromosome " << chromosome << "." << endl;
 		cerr << "Determine unique kmers ..." << endl;
 		// determine sets of kmers unique to each variant region
-		UniqueKmerComputer kmer_computer(&genomic_kmer_counts, &read_kmer_counts, &variant_reader, chromosome, kmer_abundance_peak);
+		UniqueKmerComputer kmer_computer(&genomic_kmer_counts, read_kmer_counts, &variant_reader, chromosome, kmer_abundance_peak);
 		std::vector<UniqueKmers*> unique_kmers;
 		kmer_computer.compute_unique_kmers(&unique_kmers);
 
@@ -163,5 +172,6 @@ int main (int argc, char* argv[])
 	getrusage(RUSAGE_SELF, &r_usage);
 	cerr << "Total maximum memory usage: " << (r_usage.ru_maxrss / 1E6) << " GB" << endl;
 
+	delete read_kmer_counts;
 	return 0;
 }
