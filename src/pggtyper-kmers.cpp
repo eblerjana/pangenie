@@ -196,7 +196,7 @@ int main (int argc, char* argv[])
 		cerr << "time spent genotyping chromosome " << chromosome << ":\t" << time_chrom << endl;
 		time_hmm += time_chrom;
 	}
-	cerr << "total running time:\t" << time_preprocessing + time_hmm << " sec"<< endl;
+	cerr << "total running time:\t" << time_preprocessing + time_kmer_counting + time_hmm << " sec"<< endl;
 	cerr << "total wallclock time: " << time_total  << " sec" << endl;
 
 	// memory usage
