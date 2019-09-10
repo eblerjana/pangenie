@@ -1,4 +1,4 @@
-#include "kmercounter.hpp"
+#include "jellyfishcounter.hpp"
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
@@ -8,7 +8,7 @@
 
 using namespace std;
 
-KmerCounter::KmerCounter (string readfile, size_t kmer_size, size_t nr_threads)
+JellyfishCounter::JellyfishCounter (string readfile, size_t kmer_size, size_t nr_threads)
 {
 	jellyfish::mer_dna::k(kmer_size); // Set length of mers
 	const uint64_t hash_size    = 10000000; // Initial size of hash.
@@ -42,7 +42,7 @@ KmerCounter::KmerCounter (string readfile, size_t kmer_size, size_t nr_threads)
 
 }
 
-size_t KmerCounter::getKmerAbundance(string kmer){
+size_t JellyfishCounter::getKmerAbundance(string kmer){
 
 	jellyfish::mer_dna jelly_kmer(kmer);
 	jelly_kmer.canonicalize();
@@ -54,7 +54,7 @@ size_t KmerCounter::getKmerAbundance(string kmer){
 	return val;
 }
 
-size_t KmerCounter::getKmerAbundance(jellyfish::mer_dna jelly_kmer){
+size_t JellyfishCounter::getKmerAbundance(jellyfish::mer_dna jelly_kmer){
 
 	jelly_kmer.canonicalize();
 	uint64_t val = 0;
@@ -65,7 +65,7 @@ size_t KmerCounter::getKmerAbundance(jellyfish::mer_dna jelly_kmer){
 	return val;
 }
 
-size_t KmerCounter::computeKmerCoverage(size_t genome_kmers) const {
+size_t JellyfishCounter::computeKmerCoverage(size_t genome_kmers) {
 	const auto jf_ary = this->jellyfish_hash->ary();
 	const auto end = jf_ary->end();
 	long double result = 0.0L;
@@ -78,7 +78,7 @@ size_t KmerCounter::computeKmerCoverage(size_t genome_kmers) const {
 	return (size_t) ceil(result);
 }
 
-size_t KmerCounter::computeHistogram(size_t max_count, string filename) const {
+size_t JellyfishCounter::computeHistogram(size_t max_count, string filename) {
 	Histogram histogram(max_count);
 	const auto jf_ary = this->jellyfish_hash->ary();
 	const auto end = jf_ary->end();
@@ -98,7 +98,7 @@ size_t KmerCounter::computeHistogram(size_t max_count, string filename) const {
 	histogram.find_peaks(peak_ids, peak_values);
 	// identify the two largest peaks and return rightmost one
 	if (peak_ids.size() < 2) {
-		throw runtime_error("KmerCounter: less than 2 peaks found.");
+		throw runtime_error("JellyfishCounter: less than 2 peaks found.");
 	}
 	size_t largest, second, largest_id, second_id;
 	if (peak_values[0] < peak_values[1]){
@@ -133,7 +133,7 @@ size_t KmerCounter::computeHistogram(size_t max_count, string filename) const {
 	return second_id;
 }
 
-KmerCounter::~KmerCounter() {
+JellyfishCounter::~JellyfishCounter() {
 	delete this->jellyfish_hash;
 	this->jellyfish_hash = nullptr;
 }

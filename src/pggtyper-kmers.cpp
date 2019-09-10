@@ -8,6 +8,8 @@
 #include <boost/bind.hpp>
 #include <mutex>
 #include "kmercounter.hpp"
+#include "jellyfishreader.hpp"
+#include "jellyfishcounter.hpp"
 #include "emissionprobabilitycomputer.hpp"
 #include "copynumber.hpp"
 #include "variantreader.hpp"
@@ -126,15 +128,24 @@ int main (int argc, char* argv[])
 
 	time_preprocessing = timer.get_interval_time();
 
+	KmerCounter* read_kmer_counts = nullptr;
 	// determine kmer copynumbers in reads
-	cerr << "Count kmers in reads ..." << endl;
-	KmerCounter read_kmer_counts (readfile, kmersize, nr_jellyfish_threads);
-	size_t kmer_abundance_peak = read_kmer_counts.computeHistogram(10000, outname + "_histogram.histo");
+	if (readfile.substr(std::max(3, (int) readfile.size())-3) == std::string(".jf")) {
+		cerr << "Read pre-computed read kmer counts ..." << endl;
+		jellyfish::mer_dna::k(kmersize);
+		read_kmer_counts = new JellyfishReader(readfile, kmersize);
+	} else {
+		cerr << "Count kmers in reads ..." << endl;
+		read_kmer_counts = new JellyfishCounter(readfile, kmersize, nr_jellyfish_threads);
+	}
+
+	size_t kmer_abundance_peak = read_kmer_counts->computeHistogram(10000, outname + "_histogram.histo");
 	cerr << "Computed kmer abundance peak: " << kmer_abundance_peak << endl;
 
 	// count kmers in allele + reference sequence
 	cerr << "Count kmers in genome ..." << endl;
-	KmerCounter genomic_kmer_counts (segment_file, kmersize, nr_jellyfish_threads);
+
+	JellyfishCounter genomic_kmer_counts (segment_file, kmersize, nr_jellyfish_threads);
 
 	// TODO: only for analysis
 	struct rusage r_usage1;
@@ -159,7 +170,7 @@ int main (int argc, char* argv[])
 	// create thread pool
 	boost::asio::thread_pool threadPool(nr_core_threads);
 	for (auto chromosome : chromosomes) {
-		boost::asio::post(threadPool, boost::bind(run_genotyping_kmers, chromosome, &genomic_kmer_counts, &read_kmer_counts, &variant_reader, kmer_abundance_peak, only_genotyping, only_phasing, &results));
+		boost::asio::post(threadPool, boost::bind(run_genotyping_kmers, chromosome, &genomic_kmer_counts, read_kmer_counts, &variant_reader, kmer_abundance_peak, only_genotyping, only_phasing, &results));
 	} 
 	threadPool.join();
 	timer.get_interval_time();
@@ -204,6 +215,7 @@ int main (int argc, char* argv[])
 	getrusage(RUSAGE_SELF, &r_usage);
 	cerr << "Total maximum memory usage: " << (r_usage.ru_maxrss / 1E6) << " GB" << endl;
 
+	delete read_kmer_counts;
 	return 0;
 }
 

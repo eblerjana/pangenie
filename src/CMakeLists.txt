@@ -9,7 +9,8 @@ add_library(PGGTyperLib SHARED
 	genotypingresult.cpp
 	histogram.cpp
 	hmm.cpp
-	kmercounter.cpp
+	jellyfishcounter.cpp
+	jellyfishreader.cpp
 	kmerpath.cpp
 	probabilitycomputer.cpp
 	sequenceutils.cpp
