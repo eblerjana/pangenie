@@ -8,7 +8,7 @@
 using namespace std;
 
 TEST_CASE("TransitionProbabilityComputer compute_transition_prob1", "[TransitionProbabilityComputer compute_transition_probability]") {
-	TransitionProbabilityComputer t (1000000, 2000000, 1.26, 5);
+	TransitionProbabilityComputer t (1000000, 2000000, 1.26, 5, false, 0.25);
 	double recomb_prob =  0.04455105238;
 	double no_recomb_prob = recomb_prob + 0.77724473806;
 
@@ -27,7 +27,7 @@ TEST_CASE("TransitionProbabilityComputer compute_transition_prob1", "[Transition
 }
 
 TEST_CASE("TransitionProbabilityComputer compute_transition_prob2", "[TransitionProbabilityComputer compute_transition_probability]") {
-	TransitionProbabilityComputer t (1000000, 2000000, 1.26, 10);
+	TransitionProbabilityComputer t (1000000, 2000000, 1.26, 10, false, 0.25);
 	double recomb_prob = 0.01183851532;
 	double no_recomb_prob = recomb_prob + 0.88161484678;
 

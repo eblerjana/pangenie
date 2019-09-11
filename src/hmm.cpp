@@ -21,7 +21,7 @@ void print_column(vector<long double>* column, ColumnIndexer* indexer) {
 }
 
 
-HMM::HMM(vector<UniqueKmers*>* unique_kmers, bool run_genotyping, bool run_phasing, double recombrate, bool uniform)
+HMM::HMM(vector<UniqueKmers*>* unique_kmers, bool run_genotyping, bool run_phasing, double recombrate, bool uniform, long double effective_N)
 	:unique_kmers(unique_kmers),
 	 genotyping_result(unique_kmers->size())
 {
@@ -33,7 +33,7 @@ HMM::HMM(vector<UniqueKmers*>* unique_kmers, bool run_genotyping, bool run_phasi
 		size_t prev_pos = this->unique_kmers->at(i-1)->get_variant_position();
 		size_t cur_pos = this->unique_kmers->at(i)->get_variant_position();
 		size_t nr_paths = this->unique_kmers->at(i)->get_nr_paths();
-		TransitionProbabilityComputer* t = new TransitionProbabilityComputer(prev_pos, cur_pos, recombrate, nr_paths, uniform);
+		TransitionProbabilityComputer* t = new TransitionProbabilityComputer(prev_pos, cur_pos, recombrate, nr_paths, uniform, effective_N);
 		this->transition_prob_computers.at(i-1) = t;
 	}
 	this->previous_backward_column = nullptr;
