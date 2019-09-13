@@ -27,7 +27,7 @@ struct Results {
 	map<string, double> runtimes;
 };
 
-void run_genotyping(string chromosome, KmerCounter* genomic_kmer_counts, KmerCounter* read_kmer_counts, VariantReader* variant_reader, size_t kmer_abundance_peak, bool only_genotyping, bool only_phasing, size_t effective_N, Results* results) {
+void run_genotyping(string chromosome, KmerCounter* genomic_kmer_counts, KmerCounter* read_kmer_counts, VariantReader* variant_reader, size_t kmer_abundance_peak, bool only_genotyping, bool only_phasing, double effective_N, Results* results) {
 	Timer timer;
 	// determine sets of kmers unique to each variant region
 	UniqueKmerComputer kmer_computer(genomic_kmer_counts, read_kmer_counts, variant_reader, chromosome, kmer_abundance_peak);
@@ -79,7 +79,7 @@ int main (int argc, char* argv[])
 	size_t nr_core_threads = 1;
 	bool only_genotyping = false;
 	bool only_phasing = false;
-	size_t effective_N = 25000;
+	long double effective_N = 25000.0;
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
@@ -114,7 +114,7 @@ int main (int argc, char* argv[])
 	nr_core_threads = stoi(argument_parser.get_argument('t'));
 	only_genotyping = argument_parser.get_flag('g');
 	only_phasing = argument_parser.get_flag('p');
-	effective_N = stoi(argument_parser.get_argument('n'));
+	effective_N = stod(argument_parser.get_argument('n'));
 
 	// print info
 	cerr << "Files and parameters used:" << endl;
@@ -198,8 +198,9 @@ int main (int argc, char* argv[])
 		boost::asio::post(threadPool, boost::bind(run_genotyping, chromosome, &genomic_kmer_counts, read_kmer_counts, &variant_reader, kmer_abundance_peak, only_genotyping, only_phasing, effective_N, &results));
 	} 
 	threadPool.join();
-	timer.get_interval_time();
 **/
+	timer.get_interval_time();
+
 	// output VCF
 	cerr << "Write results to VCF ..." << endl;
 	assert (results.result.size() == chromosomes.size());
