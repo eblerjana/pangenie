@@ -14,6 +14,8 @@ TEST_CASE("JellyfishCounter", "[JellyfishCounter]") {
 		string kmer = read.substr(i,10);
 		REQUIRE(counter.getKmerAbundance(kmer) == 1);
 	}
+	KmerCounter* t = new JellyfishCounter ("../tests/data/reads.fa", 10);
+	delete t;
 }
 
 TEST_CASE("JellyfishReader", "[JellyfishReader]") {

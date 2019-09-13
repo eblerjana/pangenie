@@ -17,6 +17,7 @@
 #include "hmm.hpp"
 #include "commandlineparser.hpp"
 #include "timer.hpp"
+#include "threadpool.hpp"
 
 using namespace std;
 
@@ -179,14 +180,26 @@ int main (int argc, char* argv[])
 		nr_core_threads = available_threads;
 	}
 	Results results;
-	// create thread pool
+	{
+		// create thread pool
+		ThreadPool threadPool (nr_core_threads);
+		for (auto chromosome : chromosomes) {
+			KmerCounter* genomic = &genomic_kmer_counts;
+			VariantReader* variants = &variant_reader;
+			Results* r = &results;
+			function<void()> f_genotyping = bind(run_genotyping, chromosome, genomic, read_kmer_counts, variants, kmer_abundance_peak, only_genotyping, only_phasing, effective_N, r);
+			threadPool.submit(f_genotyping);
+		}
+	}
+
+/**
 	boost::asio::thread_pool threadPool(nr_core_threads);
 	for (auto chromosome : chromosomes) {
 		boost::asio::post(threadPool, boost::bind(run_genotyping, chromosome, &genomic_kmer_counts, read_kmer_counts, &variant_reader, kmer_abundance_peak, only_genotyping, only_phasing, effective_N, &results));
 	} 
 	threadPool.join();
 	timer.get_interval_time();
-
+**/
 	// output VCF
 	cerr << "Write results to VCF ..." << endl;
 	assert (results.result.size() == chromosomes.size());

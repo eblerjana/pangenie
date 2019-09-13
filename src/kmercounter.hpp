@@ -19,5 +19,7 @@ public:
 
 	/** computes kmer abundance histogram and returns the three highest peaks **/
 	virtual size_t computeHistogram(size_t max_count, std::string filename = "") = 0;
+
+	virtual ~KmerCounter() {} ;
 };
 #endif // KMERCOUNTER_HPP

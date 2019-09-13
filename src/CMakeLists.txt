@@ -16,6 +16,7 @@ add_library(PGGTyperLib SHARED
 	sequenceutils.cpp
 	timer.cpp
 	transitionprobabilitycomputer.cpp
+	threadpool.cpp
 	uniquekmercomputer.cpp
 	uniquekmers.cpp
 	variant.cpp
