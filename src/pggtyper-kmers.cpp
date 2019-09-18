@@ -3,9 +3,9 @@
 #include <sys/resource.h>
 #include <thread>
 #include <algorithm>
-#include <boost/asio/thread_pool.hpp>
-#include <boost/asio/post.hpp>
-#include <boost/bind.hpp>
+//#include <boost/asio/thread_pool.hpp>
+//#include <boost/asio/post.hpp>
+//#include <boost/bind.hpp>
 #include <mutex>
 #include "kmercounter.hpp"
 #include "jellyfishreader.hpp"

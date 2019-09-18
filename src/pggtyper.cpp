@@ -4,9 +4,9 @@
 #include <mutex>
 #include <thread>
 #include <algorithm>
-#include <boost/asio/thread_pool.hpp>
-#include <boost/asio/post.hpp>
-#include <boost/bind.hpp>
+//#include <boost/asio/thread_pool.hpp>
+//#include <boost/asio/post.hpp>
+//#include <boost/bind.hpp>
 #include "kmercounter.hpp"
 #include "jellyfishreader.hpp"
 #include "jellyfishcounter.hpp"
