@@ -27,7 +27,7 @@ struct Results {
 	map<string, double> runtimes;
 };
 
-void run_genotyping(string chromosome, KmerCounter* genomic_kmer_counts, KmerCounter* read_kmer_counts, VariantReader* variant_reader, size_t kmer_abundance_peak, bool only_genotyping, bool only_phasing, double effective_N, Results* results) {
+void run_genotyping(string chromosome, KmerCounter* genomic_kmer_counts, KmerCounter* read_kmer_counts, VariantReader* variant_reader, size_t kmer_abundance_peak, bool only_genotyping, bool only_phasing, long double effective_N, Results* results) {
 	Timer timer;
 	// determine sets of kmers unique to each variant region
 	UniqueKmerComputer kmer_computer(genomic_kmer_counts, read_kmer_counts, variant_reader, chromosome, kmer_abundance_peak);
@@ -114,7 +114,7 @@ int main (int argc, char* argv[])
 	nr_core_threads = stoi(argument_parser.get_argument('t'));
 	only_genotyping = argument_parser.get_flag('g');
 	only_phasing = argument_parser.get_flag('p');
-	effective_N = stod(argument_parser.get_argument('n'));
+	effective_N = stold(argument_parser.get_argument('n'));
 
 	// print info
 	cerr << "Files and parameters used:" << endl;
