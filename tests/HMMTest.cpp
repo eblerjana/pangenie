@@ -2,6 +2,7 @@
 #include "../src/uniquekmers.hpp"
 #include "../src/copynumber.hpp"
 #include "../src/hmm.hpp"
+#include "../src/probabilitycomputer.hpp"
 #include "utils.hpp"
 #include <vector>
 #include <string>
@@ -80,14 +81,14 @@ TEST_CASE("HMM get_genotyping_result_normalized", "[HMM get_genotyping_result_no
 	vector<unsigned char> a2 = {1};
 	u1.insert_path(0,0);
 	u1.insert_path(1,1);
-	u1.insert_kmer(CopyNumber(0.1,0.9,0.1,1.1), a1);
-	u1.insert_kmer(CopyNumber(0.1,0.9,0.1,1.1), a2);
+	u1.insert_kmer(CopyNumber(0.1,0.9,0.1,0.0), a1);
+	u1.insert_kmer(CopyNumber(0.1,0.9,0.1,0.0), a2);
 
 	UniqueKmers u2(1,3000);
 	u2.insert_path(0,0);
 	u2.insert_path(1,1);
-	u2.insert_kmer(CopyNumber(0.01,0.01,0.9,0.92), a1);
-	u2.insert_kmer(CopyNumber(0.9,0.3,0.1,1.3), a2);
+	u2.insert_kmer(CopyNumber(0.01,0.01,0.9,0.0), a1);
+	u2.insert_kmer(CopyNumber(0.9,0.3,0.1,0.0), a2);
 
 	vector<UniqueKmers*> unique_kmers = {&u1,&u2};
 //	vector<Variant> variants;
