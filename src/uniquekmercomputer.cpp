@@ -47,7 +47,7 @@ UniqueKmerComputer::UniqueKmerComputer (KmerCounter* genomic_kmers, KmerCounter*
 	jellyfish::mer_dna::k(this->variants->get_kmer_size());
 }
 
-void UniqueKmerComputer::compute_unique_kmers(vector<UniqueKmers*>* result) const {
+void UniqueKmerComputer::compute_unique_kmers(vector<UniqueKmers*>* result, long double regularization_const) const {
 	size_t nr_variants = this->variants->size_of(this->chromosome);
 	for (size_t v = 0; v < nr_variants; ++v) {
 		
@@ -103,9 +103,14 @@ void UniqueKmerComputer::compute_unique_kmers(vector<UniqueKmers*>* result) cons
 
 				// skip kmers with only 0 probabilities
 				if ( (p_cn0 > 0) || (p_cn1 > 0) || (p_cn2 > 0) ) {
-					CopyNumber cn(p_cn0, p_cn1, p_cn2);
-					// construct UniqueKmers object
-					u->insert_kmer(cn, kmer.second);
+					if (regularization_const > 0) {
+						CopyNumber cn(p_cn0, p_cn1, p_cn2, regularization_const);
+						u->insert_kmer(cn, kmer.second);
+					} else {
+						// not normalizing seems to increase precision
+						CopyNumber cn(p_cn0, p_cn1, p_cn2);
+						u->insert_kmer(cn, kmer.second);
+					}
 				}
 			}
 		}
