@@ -70,7 +70,10 @@ void UniqueKmerComputer::compute_unique_kmers(vector<UniqueKmers*>* result, long
 		}
 
 		// check if kmers occur elsewhere in the genome
+		size_t nr_kmers_used = 0;
 		for (auto& kmer : occurences) {
+			if (nr_kmers_used > 100) break;
+
 			size_t genomic_count = this->genomic_kmers->getKmerAbundance(kmer.first);
 			size_t local_count = kmer.second.size();
 
@@ -103,6 +106,7 @@ void UniqueKmerComputer::compute_unique_kmers(vector<UniqueKmers*>* result, long
 
 				// skip kmers with only 0 probabilities
 				if ( (p_cn0 > 0) || (p_cn1 > 0) || (p_cn2 > 0) ) {
+					nr_kmers_used += 1;
 					if (regularization_const > 0) {
 						CopyNumber cn(p_cn0, p_cn1, p_cn2, regularization_const);
 						u->insert_kmer(cn, kmer.second);
