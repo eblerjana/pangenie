@@ -62,7 +62,7 @@ TEST_CASE("HMM get_genotyping_result", "[HMM get_genotyping_result]") {
 
 	// recombination rate leads to recombination probability of 0.1
 	HMM hmm (&unique_kmers, true, true, 446.287102628, false, 0.25);
-	
+
 	// expected likelihoods, as computed by hand
 	vector<double> expected_likelihoods = { 0.0509465435, 0.9483202731, 0.0007331832, 0.9678020017, 0.031003181, 0.0011948172 };
 	vector<double> computed_likelihoods;

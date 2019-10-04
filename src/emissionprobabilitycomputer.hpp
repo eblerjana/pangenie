@@ -18,16 +18,14 @@ class EmissionProbabilityComputer {
 public:
 	/**
 	* @param uniquekmers all unique kmers for this position
-	* @param columnindexer for this position
 	 **/
-	EmissionProbabilityComputer(UniqueKmers* uniquekmers, ColumnIndexer* columnindexer);
+	EmissionProbabilityComputer(UniqueKmers* uniquekmers);
 	/** get emission probability for a state in the HMM **/
-	long double get_emission_probability(size_t state) const;
+	long double get_emission_probability(unsigned char allele_id1, unsigned char allele_id2) const;
 
 private:
 	UniqueKmers* uniquekmers;
 	bool all_zeros;
-	ColumnIndexer* columnindexer;
 	ProbabilityMatrix state_to_prob;
 	long double compute_emission_probability(unsigned char allele1, unsigned char allele2);
 };

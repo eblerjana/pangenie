@@ -5,18 +5,9 @@
 
 using namespace std;
 
-pair<size_t,size_t> sorted_paths(size_t p1, size_t p2) {
-	if (p1 < p2) {
-		return make_pair(p1, p2);
-	} else {
-		return make_pair(p2, p1);
-	}
-}
-
-EmissionProbabilityComputer::EmissionProbabilityComputer(UniqueKmers* uniquekmers, ColumnIndexer* columnindexer)
+EmissionProbabilityComputer::EmissionProbabilityComputer(UniqueKmers* uniquekmers)
 	:uniquekmers(uniquekmers),
-	 all_zeros(true),
-	 columnindexer(columnindexer)
+	 all_zeros(true)
 {
 	vector<unsigned char> unique_alleles;
 	uniquekmers->get_allele_ids(unique_alleles);
@@ -33,10 +24,9 @@ EmissionProbabilityComputer::EmissionProbabilityComputer(UniqueKmers* uniquekmer
 //	if (this->all_zeros) cerr << "EmissionProbabilities at position " << uniquekmers->get_variant_position() << " are all zero. Set to uniform." << endl;
 }
 
-long double EmissionProbabilityComputer::get_emission_probability(size_t state_id) const {
+long double EmissionProbabilityComputer::get_emission_probability(unsigned char allele_id1, unsigned char allele_id2) const {
 	if (this->all_zeros) return 1.0L;
-	pair<unsigned char, unsigned char>  a = this->columnindexer->get_alleles(state_id);
-	return this->state_to_prob[a.first][a.second];
+	return this->state_to_prob[allele_id1][allele_id2];
 }
 
 long double EmissionProbabilityComputer::compute_emission_probability(unsigned char allele_id1, unsigned char allele_id2){

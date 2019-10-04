@@ -5,27 +5,28 @@
 #include <vector>
 
 /** 
-* Assign column index to pair of paths it represents.
+* Keep track of paths and alleles in a column
 **/
-
-typedef std::pair< std::pair<size_t,size_t>, std::pair<unsigned char, unsigned char> > State;
 
 class ColumnIndexer {
 public:
-	ColumnIndexer(size_t variant_id, size_t column_size);
-	/** insert a pair of paths and corresponding alleles (state in the HMM) **/
-	void insert(std::pair<size_t,size_t> p, std::pair<unsigned char, unsigned char> a);
-	/** get pair of path (state) an index corresponds to **/
-	std::pair<size_t, size_t> get_paths (size_t index);
-	/** get pair of alleles an index corresponds to **/
-	std::pair<unsigned char, unsigned char> get_alleles (size_t index);
-	/** get size of the column (number of states) **/
-	size_t get_size();
+	ColumnIndexer(size_t variant_id);
+	/** insert a path and the allele it covers **/
+	void insert_path(size_t path, unsigned char allele);
+	/** number of paths inserted **/
+	size_t nr_paths () const;
+	/** get path at index path_id **/
+	size_t get_path (size_t path_index) const;
+	/** get allele at index path_id **/
+	unsigned char get_allele (size_t path_index) const;
+	/** get column index a pair of states corresponds to **/
+	std::pair<size_t,size_t> get_path_ids_at (size_t column_index) const;
+
 private:
 	size_t variant_id;
 	size_t size;
-	/** maps index to state **/
-	std::vector<State> index_to_state;
+	std::vector<size_t> paths;
+	std::vector<unsigned char> alleles;
 };
 
 #endif // COLUMNINDEXER_HPP
