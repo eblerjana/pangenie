@@ -39,6 +39,7 @@ bool matches_pattern(string& sequence, regex& r) {
 		letters_seen += next_interval;
 	}
 	assert(control == sequence);
+	return true;
 }
 
 VariantReader::VariantReader(string filename, string reference_filename, size_t kmer_size, string sample)
