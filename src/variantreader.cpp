@@ -24,6 +24,23 @@ void parse_line(vector<string>& result, string line, char sep) {
 	}
 }
 
+bool matches_pattern(string& sequence, regex& r) {
+	size_t total_length = sequence.size();
+	string control = "";
+	auto begin = sequence.begin();
+	size_t length = 1000;
+	size_t letters_seen = 0;
+	while (begin + letters_seen != sequence.end()) {
+		size_t next_interval = min(length, total_length - letters_seen);
+		if (!regex_match(begin + letters_seen, begin + letters_seen + next_interval, r)) {
+			return false;
+		}
+		control += string(begin + letters_seen, begin + letters_seen + next_interval);
+		letters_seen += next_interval;
+	}
+	assert(control == sequence);
+}
+
 VariantReader::VariantReader(string filename, string reference_filename, size_t kmer_size, string sample)
 	:fasta_reader(reference_filename),
 	 kmer_size(kmer_size),
@@ -99,7 +116,8 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 		vector<DnaSequence> alleles = {ref};
 		// make sure alt alleles are given explicitly
 		regex r("^[CAGTNcagtn,]+$");
-		if (!regex_match(tokens[4], r)) {
+		if (!matches_pattern(tokens[4], r)) {
+//		if (!regex_match(tokens[4], r)) {
 			// skip this position
 			cerr << "VariantReader: skip variant at " << current_chrom << ":" << current_start_pos << " with alternative alleles " << tokens[4] << endl;
 			continue;
