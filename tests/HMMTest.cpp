@@ -70,6 +70,7 @@ TEST_CASE("HMM get_genotyping_result", "[HMM get_genotyping_result]") {
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,0));
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,1));
 		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
+		REQUIRE(result.get_nr_unique_kmers() == 2);
 	}
 
 	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
@@ -105,6 +106,7 @@ TEST_CASE("HMM get_genotyping_result_normalized", "[HMM get_genotyping_result_no
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,0));
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,1));
 		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
+		REQUIRE(result.get_nr_unique_kmers() == 2);
 	}
 
 	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
@@ -181,6 +183,7 @@ TEST_CASE("HMM no_unique_kmers", "[HMM no_unique_kmers]") {
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,0));
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,1));
 		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
+		REQUIRE(result.get_nr_unique_kmers() == 0);
 	}
 
 	REQUIRE( compare_vectors(computed_likelihoods, expected_likelihoods) );
@@ -216,6 +219,7 @@ TEST_CASE("HMM no_unique_kmers2", "[HMM no_unique_kmers2]") {
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,0));
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,1));
 		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
+		REQUIRE(result.get_nr_unique_kmers() == 0);
 	}
 
 	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
@@ -299,6 +303,7 @@ TEST_CASE("HMM no_unique_kmers_uniform", "[HMM no_unique_kmers_uniorm]") {
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,0));
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,1));
 		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
+		REQUIRE(result.get_nr_unique_kmers() == 0);
 	}
 
 	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
@@ -337,6 +342,7 @@ TEST_CASE("HMM only_kmers", "[HMM only_kmers]") {
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,0));
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,1));
 		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
+		REQUIRE(result.get_nr_unique_kmers() == 2);
 	}
 
 	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
@@ -372,6 +378,7 @@ TEST_CASE("HMM emissions_zero", "[HMM emissions_zero]") {
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,0));
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,1));
 		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
+		REQUIRE(result.get_nr_unique_kmers() == 2);
 	}
 
 	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
@@ -407,6 +414,7 @@ TEST_CASE("HMM underflow", "[HMM underflow]") {
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,0));
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,1));
 		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
+		REQUIRE(result.get_nr_unique_kmers() == 2);
 	}
 
 	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );

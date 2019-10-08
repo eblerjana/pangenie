@@ -253,6 +253,7 @@ void VariantReader::open_genotyping_outfile(string filename) {
 	this->genotyping_outfile << "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">" << endl;
 	this->genotyping_outfile << "##FORMAT=<ID=GQ,Number=1,Type=Integer,Description=\"Genotype quality: phred scaled probability that the genotype is wrong.\">" << endl;
 	this->genotyping_outfile << "##FORMAT=<ID=GL,Number=G,Type=Integer,Description=\"Comma-separated log10-scaled genotype likelihoods for absent, heterozygous, homozygous.\">" << endl;
+	this->genotyping_outfile << "##FORMAT=<ID=UK,Number=1,Type=Integer,Description=\"Number of unique kmers used for genotyping.\">" << endl;
 	this->genotyping_outfile << "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t" << this->sample << endl; 
 }
 
@@ -269,6 +270,7 @@ void VariantReader::open_phasing_outfile(string filename) {
 	this->phasing_outfile << "##fileDate=" << get_date() << endl;
 	// TODO output command line
 	this->phasing_outfile << "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">" << endl;
+	this->genotyping_outfile << "##FORMAT=<ID=UK,Number=1,Type=Integer,Description=\"Number of unique kmers used for genotyping.\">" << endl;
 	this->phasing_outfile << "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t" << this->sample << endl;
 }
 
@@ -319,7 +321,7 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 			this->genotyping_outfile << ".\t"; // QUAL
 			this->genotyping_outfile << "PASS" << "\t"; // FILTER
 			this->genotyping_outfile << "." << "\t"; // INFO
-			this->genotyping_outfile << "GT:GQ:GL" << "\t"; // FORMAT
+			this->genotyping_outfile << "GT:GQ:GL:UK" << "\t"; // FORMAT
 
 			// determine computed genotype
 			pair<int,int> genotype = singleton_likelihoods.at(j).get_likeliest_genotype();
@@ -348,7 +350,8 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 			for (size_t j = 1; j < likelihoods.size(); ++j) {
 				oss << "," << setprecision(4) << log10(likelihoods[j]);
 			}
-			this->genotyping_outfile << oss.str() << endl; // GL
+			this->genotyping_outfile << oss.str(); // GL
+			this->genotyping_outfile << ":" << singleton_likelihoods.at(j).get_nr_unique_kmers() << endl; // UK
 		}
 	}
 }
@@ -395,11 +398,12 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 			this->phasing_outfile << ".\t"; // QUAL
 			this->phasing_outfile << "PASS" << "\t"; // FILTER
 			this->phasing_outfile << "." << "\t"; // INFO
-			this->phasing_outfile << "GT" << "\t"; // FORMAT
+			this->phasing_outfile << "GT:UK" << "\t"; // FORMAT
 
 			// determine phasing
 			pair<unsigned char,unsigned char> haplotype = singleton_likelihoods.at(j).get_haplotype();
-			this->phasing_outfile << (unsigned int) haplotype.first << "|" << (unsigned int) haplotype.second << endl; // GT (phased)
+			this->phasing_outfile << (unsigned int) haplotype.first << "|" << (unsigned int) haplotype.second; // GT (phased)
+			this->phasing_outfile << ":" << singleton_likelihoods.at(j).get_nr_unique_kmers() << endl; // UK
 		}
 	}
 }

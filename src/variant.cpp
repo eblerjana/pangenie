@@ -356,6 +356,7 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 			// update result
 			g.add_first_haplotype_allele(single_haplotype0);
 			g.add_second_haplotype_allele(single_haplotype1);
+			g.set_nr_unique_kmers(input_genotyping->get_nr_unique_kmers());
 			resulting_genotyping->push_back(g);
 		}
 	}

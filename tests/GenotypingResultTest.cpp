@@ -117,3 +117,11 @@ TEST_CASE("GenotypingResult get_genotype_quality", "[GenotypingResult get_genoty
 	r.add_to_likelihood(1,1,1.0);
 	REQUIRE(r.get_genotype_quality(1,1) == 10000);
 }
+
+TEST_CASE("GenotypingResult get_nr_unique_kmers", "[GenotypingResult get_nr_unique_kmers]") {
+	GenotypingResult r;
+	r.set_nr_unique_kmers(4);
+	REQUIRE(r.get_nr_unique_kmers() == 4);
+	r.set_nr_unique_kmers(5);
+	REQUIRE(r.get_nr_unique_kmers() == 5);
+}
