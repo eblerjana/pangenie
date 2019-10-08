@@ -128,6 +128,7 @@ TEST_CASE("VariantReader write_genotypes_of", "[VariantReader write_genotypes_of
 	r.add_to_likelihood(2,2,0.1);
 	r.add_first_haplotype_allele(2);
 	r.add_second_haplotype_allele(1);
+	r.set_nr_unique_kmers(3);
 	genotypes_chrA[2] = r;
 
 	// generate a GenotypingResult for chrB

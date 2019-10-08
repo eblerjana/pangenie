@@ -7,7 +7,8 @@ using namespace std;
 
 GenotypingResult::GenotypingResult()
 	:haplotype_1(0),
-	 haplotype_2(0)
+	 haplotype_2(0),
+	 nr_unique_kmers(0)
 {}
 
 pair<unsigned char, unsigned char> genotype_from_alleles (unsigned char allele1, unsigned char allele2) {
@@ -115,6 +116,14 @@ pair<int, int> GenotypingResult::get_likeliest_genotype() const {
 	}
 
 	return best_genotype;
+}
+
+size_t GenotypingResult::get_nr_unique_kmers() const {
+	return this->nr_unique_kmers;
+}
+
+size_t GenotypingResult::set_nr_unique_kmers(size_t nr_unique) {
+	this->nr_unique_kmers = nr_unique;
 }
 
 ostream& operator<<(ostream& os, const GenotypingResult& res) {

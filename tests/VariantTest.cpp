@@ -179,6 +179,7 @@ TEST_CASE("Variant separate_variants_likelihoods", "Variant separate_variants_li
 	g.add_to_likelihood(2,2,0.1);
 	g.add_first_haplotype_allele(0);
 	g.add_second_haplotype_allele(2);
+	g.set_nr_unique_kmers(5);
 
 	v1.combine_variants(v2);
 	v1.combine_variants(v3);
@@ -204,6 +205,7 @@ TEST_CASE("Variant separate_variants_likelihoods", "Variant separate_variants_li
 		}
 		// here, all haplotypes should be 0|1
 		REQUIRE(single_genotypes[i].get_haplotype() == expected_haplotype);
+		REQUIRE(single_genotypes[i].get_nr_unique_kmers() == 5);
 	}
 }
 
@@ -213,6 +215,7 @@ TEST_CASE("Variant separate_variants_single", "[Variants separate_variants_singl
 	g.add_to_likelihood(0,0,0.1);
 	g.add_to_likelihood(0,1,0.7);
 	g.add_to_likelihood(1,1,0.2);
+	g.set_nr_unique_kmers(10);
 
 	// separate single variant
 	vector<Variant> single_variants;
@@ -233,6 +236,7 @@ TEST_CASE("Variant separate_variants_single", "[Variants separate_variants_singl
 	REQUIRE(single_genotypes.size() == 1);
 	v.remove_flanking_sequence();
 	REQUIRE(single_variants[0] == v);
+	REQUIRE(single_genotypes[0].get_nr_unique_kmers() == 10);
 }
 
 TEST_CASE("Variant separate_variants_single2", "[Variants separate_variants_single]") {
@@ -241,6 +245,7 @@ TEST_CASE("Variant separate_variants_single2", "[Variants separate_variants_sing
 	g.add_to_likelihood(0,0,0.1);
 	g.add_to_likelihood(0,1,0.7);
 	g.add_to_likelihood(1,1,0.2);
+	g.set_nr_unique_kmers(90);
 
 	// separate single variant
 	vector<Variant> single_variants;
@@ -250,6 +255,7 @@ TEST_CASE("Variant separate_variants_single2", "[Variants separate_variants_sing
 	REQUIRE(single_variants.size() == 1);
 	REQUIRE(single_genotypes.size() == 1);
 	REQUIRE(single_variants[0] == v);
+	REQUIRE(single_genotypes[0].get_nr_unique_kmers() == 90);
 
 	// same with flanks added
 	v.add_flanking_sequence();
@@ -261,6 +267,7 @@ TEST_CASE("Variant separate_variants_single2", "[Variants separate_variants_sing
 	REQUIRE(single_genotypes.size() == 1);
 	v.remove_flanking_sequence();
 	REQUIRE(single_variants[0] == v);
+	REQUIRE(single_genotypes[0].get_nr_unique_kmers() == 90);
 }
 
 TEST_CASE("Variant separate_variants_single3", "[Variants separate_variants_single2]") {
