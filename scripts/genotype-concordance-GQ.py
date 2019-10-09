@@ -152,12 +152,12 @@ for threshold in quality_thresholds:
 	assert(correct + wrong + no_prediction == total_intersection)
 	all_typed = correct + wrong #if (correct + wrong) != 0 else 1
 	no_prediction += not_in_callset
-	assert(correct + wrong + no_prediction == total_baseline)
+	total_non_duplicates_baseline = correct + wrong + no_prediction
 
 	print('###### STATISTICS for GQ-threshold: ' + str(threshold) +' ######')
 	print('matching genotypes (among all typed):\t' + str(correct/float(all_typed if all_typed != 0 else 1)) + ' ('+str(correct)+'/'+str(all_typed)+')')
 	print('non-matching (among all typed):\t' + str(wrong/float(all_typed if all_typed != 0 else 1)) + ' ('+str(wrong)+'/'+str(all_typed)+')')
-	print('variants genotyped as ./. in callset (among all variants in baseline):\t' + str(no_prediction/float(total_baseline)) + ' ('+str(no_prediction)+'/'+str(total_baseline)+')')
+	print('variants genotyped as ./. in callset (among all variants not duplicated in baseline):\t' + str(no_prediction/float(total_non_duplicates_baseline)) + ' ('+str(no_prediction)+'/'+str(total_non_duplicates_baseline)+')')
 	print('total ' + args.baseline + ':\t' + str(total_baseline))
 	print('total ' + args.callset + ':\t' + str(total_callset))
 	print('intersection:\t' + str(total_intersection))
