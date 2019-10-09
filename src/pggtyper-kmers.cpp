@@ -72,7 +72,7 @@ int main (int argc, char* argv[])
 	size_t nr_core_threads = 1;
 	bool only_genotyping = false;
 	bool only_phasing = false;
-	long double regularization = 0.0L;
+	long double regularization = 0.00001L;
 
 
 	// parse the command line arguments
@@ -85,10 +85,10 @@ int main (int argc, char* argv[])
 	argument_parser.add_optional_argument('k', "31", "kmer size");
 	argument_parser.add_optional_argument('s', "sample", "name of the sample (will be used in the output VCFs)");
 	argument_parser.add_optional_argument('j', "1", "number of threads to use for kmer-counting");
-	argument_parser.add_optional_argument('t', "1", "number of threads to use for core algorithm. Largest number of threads possible is the number of chromosomes given in the VCF.");
-	argument_parser.add_flag_argument('g', "only run genotyping (Forward backward algorithm).");
-	argument_parser.add_flag_argument('p', "only run phasing (Viterbi algorithm).");
-	argument_parser.add_optional_argument('m', "0", "regularization constant for copynumber probabilities.");
+	argument_parser.add_optional_argument('t', "1", "number of threads to use for core algorithm. Largest number of threads possible is the number of chromosomes given in the VCF");
+	argument_parser.add_flag_argument('g', "only run genotyping (Forward backward algorithm)");
+	argument_parser.add_flag_argument('p', "only run phasing (Viterbi algorithm)");
+	argument_parser.add_optional_argument('m', "0.00001", "regularization constant for copynumber probabilities");
 	try {
 		argument_parser.parse(argc, argv);
 	} catch (const runtime_error& e) {

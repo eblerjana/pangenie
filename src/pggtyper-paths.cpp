@@ -67,7 +67,7 @@ int main (int argc, char* argv[])
 	size_t nr_core_threads = 1;
 	bool only_genotyping = false;
 	bool only_phasing = false;
-	double effective_N = 25000.0;
+	double effective_N = 0.00001L;
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
@@ -76,10 +76,10 @@ int main (int argc, char* argv[])
 	argument_parser.add_mandatory_argument('v', "variants in VCF format");
 	argument_parser.add_optional_argument('o', "result", "prefix of the output files");
 	argument_parser.add_optional_argument('s', "sample", "name of the sample (will be used in the output VCFs)");
-	argument_parser.add_optional_argument('t', "1", "number of threads to use for core algorithm. Largest number of threads possible is the number of chromosomes given in the VCF.");
-	argument_parser.add_optional_argument('n', "25000", "effective population size.");
-	argument_parser.add_flag_argument('g', "only run genotyping (Forward backward algorithm).");
-	argument_parser.add_flag_argument('p', "only run phasing (Viterbi algorithm).");
+	argument_parser.add_optional_argument('t', "1", "number of threads to use for core algorithm. Largest number of threads possible is the number of chromosomes given in the VCF");
+	argument_parser.add_optional_argument('n', "0.00001", "effective population size");
+	argument_parser.add_flag_argument('g', "only run genotyping (Forward backward algorithm)");
+	argument_parser.add_flag_argument('p', "only run phasing (Viterbi algorithm)");
 	try {
 		argument_parser.parse(argc, argv);
 	} catch (const runtime_error& e) {
