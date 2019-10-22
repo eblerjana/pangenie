@@ -8,19 +8,7 @@
 
 using namespace std;
 
-JellyfishCounter::JellyfishCounter (string readfile, size_t kmer_size, size_t nr_threads)
-{
-	jellyfish::mer_dna::k(kmer_size); // Set length of mers
-	const uint64_t hash_size    = 10000000; // Initial size of hash.
-	const uint32_t num_reprobes = 126;
-	const uint32_t num_threads  = nr_threads; // TODO Number of concurrent threads
-	const uint32_t counter_len  = 7;  // Minimum length of counting field
-	const bool canonical = true; // Use canonical representation
-
-	// create the hash
-	this->jellyfish_hash = new mer_hash_type(hash_size, jellyfish::mer_dna::k()*2, counter_len, num_threads, num_reprobes);
-
-	// convert the string to char**
+vector<char*> to_args(string readfile) {
 	vector<char*> args;
 	istringstream iss (readfile);
 	string token;
@@ -31,14 +19,67 @@ JellyfishCounter::JellyfishCounter (string readfile, size_t kmer_size, size_t nr
 		args.push_back(arg);
 	}
 	args.push_back(0);
+	return args;
+}
+
+
+JellyfishCounter::JellyfishCounter (string readfiles, size_t kmer_size, size_t nr_threads)
+{
+	jellyfish::mer_dna::k(kmer_size); // Set length of mers
+	const uint64_t hash_size    = 10000000; // Initial size of hash.
+	const uint32_t num_reprobes = 126;
+	const uint32_t num_threads  = nr_threads; // Number of concurrent threads
+	const uint32_t counter_len  = 7;  // Minimum length of counting field
+	const bool canonical = true; // Use canonical representation
+
+	// create the hash
+	this->jellyfish_hash = new mer_hash_type(hash_size, jellyfish::mer_dna::k()*2, counter_len, num_threads, num_reprobes);
+
+	// convert the readfile to char**
+	vector<char*> args = to_args(readfile);
 
 	// count kmers
-	mer_counter jellyfish_counter(num_threads, (*jellyfish_hash), &args[0], (&args[0])+1, canonical);
+	mer_counter jellyfish_counter(num_threads, (*jellyfish_hash), &args[0], (&args[0])+1, canonical, COUNT);
 	jellyfish_counter.exec_join(num_threads);
 
-	// delete the char**
+	// delete the readfile char**
 	for(size_t i = 0; i < args.size(); i++)
 		delete[] args[i];
+
+}
+
+JellyfishCounter::JellyfishCounter (string readfile, string kmerfile, size_t kmer_size, size_t nr_threads)
+{
+	jellyfish::mer_dna::k(kmer_size); // Set length of mers
+	const uint64_t hash_size    = 10000000; // Initial size of hash.
+	const uint32_t num_reprobes = 126;
+	const uint32_t num_threads  = nr_threads; // Number of concurrent threads
+	const uint32_t counter_len  = 7;  // Minimum length of counting field
+	const bool canonical = true; // Use canonical representation
+
+	// create the hash
+	this->jellyfish_hash = new mer_hash_type(hash_size, jellyfish::mer_dna::k()*2, counter_len, num_threads, num_reprobes);
+
+	// convert the filenames to char**
+	vector<char*> reads_args = to_args(readfile);
+	vector<char*> kmer_args = to_args(kmerfile);
+
+	// process input kmers
+	{
+		mer_counter jellyfish_counter(num_threads, (*jellyfish_hash), &kmer_args[0], (&kmer_args[0])+1, canonical, PRIME);
+		jellyfish_counter.exec_join(num_threads);
+	}
+
+	// process read kmers
+	mer_counter jellyfish_counter(num_threads, (*jellyfish_hash), &reads_args[0], (&reads_args[0])+1, canonical, UPDATE);
+
+	// delete the kmerfile char**
+	for(size_t i = 0; i < kmer_args.size(); i++)
+		delete[] kmer_args[i];
+
+	// delete the readfile char**
+	for(size_t i = 0; i < reads_args.size(); i++)
+		delete[] reads_args[i];
 
 }
 

@@ -81,6 +81,7 @@ int main (int argc, char* argv[])
 	bool only_phasing = false;
 	long double effective_N = 0.00001L;
 	long double regularization = 0.00001L;
+	bool count_only_ref = false;
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
@@ -97,6 +98,8 @@ int main (int argc, char* argv[])
 	argument_parser.add_flag_argument('g', "only run genotyping (Forward backward algorithm)");
 	argument_parser.add_flag_argument('p', "only run phasing (Viterbi algorithm)");
 	argument_parser.add_optional_argument('m', "0.00001", "regularization constant for copynumber probabilities");
+	argument_parser.add_flag_argument('c', "only count those kmers located in diploid regions of the reference (i.e. between variants).")
+
 	try {
 		argument_parser.parse(argc, argv);
 	} catch (const runtime_error& e) {
@@ -118,6 +121,7 @@ int main (int argc, char* argv[])
 	only_phasing = argument_parser.get_flag('p');
 	effective_N = stold(argument_parser.get_argument('n'));
 	regularization = stold(argument_parser.get_argument('m'));
+	count_only_ref = argument_parser.get_flag('c');
 
 	// print info
 	cerr << "Files and parameters used:" << endl;
@@ -129,6 +133,9 @@ int main (int argc, char* argv[])
 	string segment_file = outname + "_path_segments.fasta";
 	cerr << "Write path segments to file: " << segment_file << " ..." << endl;
 	variant_reader.write_path_segments(segment_file);
+	// TODO generate file containing diploid regions (split segments file to two files: reference regions, variant regions)
+	// TODO give both files to kmer counter in order to count genomic kmers
+	// TODO for estimating kmer coverage, use reference regions only and count those kmers in reads (if -c is set)
 
 //	// determine total genome size
 //	size_t genome_kmers = variant_reader.nr_of_genomic_kmers();
@@ -153,7 +160,11 @@ int main (int argc, char* argv[])
 		read_kmer_counts = new JellyfishReader(readfile, kmersize);
 	} else {
 		cerr << "Count kmers in reads ..." << endl;
-		read_kmer_counts = new JellyfishCounter(readfile, kmersize, nr_jellyfish_threads);
+		if (count_only_ref) {
+			read_kmer_counts = new JellyfishCounter(readfile, kmerfile, kmersize, nr_jellyfish_threads);
+		} else {
+			read_kmer_counts = new JellyfishCounter(readfile, kmersize, nr_jellyfish_threads);
+		}
 	}
 //	cerr << "Compute kmer-coverage ..." << endl;
 //	size_t kmer_coverage = read_kmer_counts.computeKmerCoverage(genome_kmers);

@@ -17,6 +17,8 @@
  **/
 
 
+enum OPERATION { COUNT, PRIME, UPDATE };
+
 // using example from: Jellyfish-2/examples/jf_count_dump/jf_count_dump.cc
 typedef jellyfish::cooperative::hash_counter<jellyfish::mer_dna>	mer_hash_type;
 typedef jellyfish::mer_overlap_sequence_parser<jellyfish::stream_manager<char**>>	sequence_parser_type;
@@ -26,24 +28,42 @@ class mer_counter : public jellyfish::thread_exec {
 	mer_hash_type& mer_hash_;
 	jellyfish::stream_manager<char**> streams_;
 	sequence_parser_type parser_;
-  	const bool canonical_;
+  const bool canonical_;
+	OPERATION op_;
 
 public:
 	mer_counter(int nb_threads, mer_hash_type& mer_hash,
 	char** file_begin, char** file_end,
-	bool canonical)
+	bool canonical, OPERATION op)
 	: mer_hash_(mer_hash)
 	, streams_(file_begin, file_end)
 	, parser_(jellyfish::mer_dna::k(), streams_.nb_streams(), 3 * nb_threads, 4096, streams_)
 	, canonical_(canonical)
+	, op_(op)
 { }
 
 	virtual void start(int thid) {
-	mer_iterator_type mers(parser_, canonical_);
+		mer_iterator_type mers(parser_, canonical_);
 
-	for( ; mers; ++mers)
-		mer_hash_.add(*mers, 1);
-	mer_hash_.done();
+		switch(op_) {
+			case COUNT:
+				for( ; mers; ++mers)
+					mer_hash_.add(*mers, 1);
+				break;
+
+			case PRIME:
+				for( ; mers; ++mers)
+					mer_hash_.set(*mers);
+				break;
+
+			case UPDATE:
+				jellyfish::mer_dna tmp;
+				for( ; mers; ++mers)
+					mer_hash_.update_add(*mers, 1, tmp);
+				break;
+		}
+
+		mer_hash_.done();
 	}
 };
 
@@ -55,7 +75,15 @@ public:
 	* @param *params parameters for GATB-Kmercounter
 	* @param name of the output file
 	**/
-	JellyfishCounter(std::string readfile, size_t kmer_size, size_t nr_threads = 1);
+	JellyfishCounter(std::string readfiles, size_t kmer_size, size_t nr_threads = 1);
+
+	/** 
+	* @param readfile name of the FASTQ-files containing reads
+	* @param kmerfile only count kmers contained in sequences given in this FASTQ-file
+	* @param *params parameters for GATB-Kmercounter
+	* @param name of the output file
+	**/
+	JellyfishCounter (std::string readfiles, std::string kmerfile, size_t kmer_size, size_t nr_threads);
 
 	~JellyfishCounter();
 	
