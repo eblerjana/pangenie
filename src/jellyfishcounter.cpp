@@ -23,7 +23,7 @@ vector<char*> to_args(string readfile) {
 }
 
 
-JellyfishCounter::JellyfishCounter (string readfiles, size_t kmer_size, size_t nr_threads)
+JellyfishCounter::JellyfishCounter (string readfile, size_t kmer_size, size_t nr_threads)
 {
 	jellyfish::mer_dna::k(kmer_size); // Set length of mers
 	const uint64_t hash_size    = 10000000; // Initial size of hash.
@@ -72,6 +72,7 @@ JellyfishCounter::JellyfishCounter (string readfile, string kmerfile, size_t kme
 
 	// process read kmers
 	mer_counter jellyfish_counter(num_threads, (*jellyfish_hash), &reads_args[0], (&reads_args[0])+1, canonical, UPDATE);
+	jellyfish_counter.exec_join(num_threads);
 
 	// delete the kmerfile char**
 	for(size_t i = 0; i < kmer_args.size(); i++)

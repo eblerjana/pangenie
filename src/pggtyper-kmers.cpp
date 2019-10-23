@@ -73,7 +73,7 @@ int main (int argc, char* argv[])
 	bool only_genotyping = false;
 	bool only_phasing = false;
 	long double regularization = 0.00001L;
-
+	bool count_only_graph = false;
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
@@ -89,6 +89,8 @@ int main (int argc, char* argv[])
 	argument_parser.add_flag_argument('g', "only run genotyping (Forward backward algorithm)");
 	argument_parser.add_flag_argument('p', "only run phasing (Viterbi algorithm)");
 	argument_parser.add_optional_argument('m', "0.00001", "regularization constant for copynumber probabilities");
+	argument_parser.add_flag_argument('c', "only count those kmers located graph (i.e. reference + allele sequences).");
+
 	try {
 		argument_parser.parse(argc, argv);
 	} catch (const runtime_error& e) {
@@ -109,6 +111,7 @@ int main (int argc, char* argv[])
 	only_genotyping = argument_parser.get_flag('g');
 	only_phasing = argument_parser.get_flag('p');
 	regularization = stold(argument_parser.get_argument('m'));
+	count_only_graph = argument_parser.get_flag('c');
 
 	// print info
 	cerr << "Files and parameters used:" << endl;
@@ -141,7 +144,11 @@ int main (int argc, char* argv[])
 		read_kmer_counts = new JellyfishReader(readfile, kmersize);
 	} else {
 		cerr << "Count kmers in reads ..." << endl;
-		read_kmer_counts = new JellyfishCounter(readfile, kmersize, nr_jellyfish_threads);
+		if (count_only_graph) {
+			read_kmer_counts = new JellyfishCounter(readfile, segment_file, kmersize, nr_jellyfish_threads);
+		} else {
+			read_kmer_counts = new JellyfishCounter(readfile, kmersize, nr_jellyfish_threads);
+		}
 	}
 
 	size_t kmer_abundance_peak = read_kmer_counts->computeHistogram(10000, outname + "_histogram.histo");
