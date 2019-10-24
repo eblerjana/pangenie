@@ -83,7 +83,7 @@ public:
 	* @param *params parameters for GATB-Kmercounter
 	* @param name of the output file
 	**/
-	JellyfishCounter (std::string readfile, std::string kmerfile, size_t kmer_size, size_t nr_threads);
+	JellyfishCounter (std::string readfile, std::string kmerfile, size_t kmer_size, size_t nr_threads = 1);
 
 	~JellyfishCounter();
 	

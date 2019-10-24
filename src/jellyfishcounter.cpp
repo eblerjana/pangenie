@@ -138,41 +138,49 @@ size_t JellyfishCounter::computeHistogram(size_t max_count, string filename) {
 	vector<size_t> peak_ids;
 	vector<size_t> peak_values;
 	histogram.find_peaks(peak_ids, peak_values);
-	// identify the two largest peaks and return rightmost one
+
+	// identify the largest and second largest (if it exists)
+	if (peak_ids.size() == 0) {
+		throw runtime_error("JellyfishCounter: no peak found in kmer-count histogram.");
+	}
+	size_t kmer_coverage_estimate = -1;
 	if (peak_ids.size() < 2) {
-		throw runtime_error("JellyfishCounter: less than 2 peaks found.");
-	}
-	size_t largest, second, largest_id, second_id;
-	if (peak_values[0] < peak_values[1]){
-		largest = peak_values[1];
-		largest_id = peak_ids[1];
-		second = peak_values[0];
-		second_id = peak_ids[0];
+		cerr << "Histogram peak: " << peak_ids[0] << " (" << peak_values[0] << ")" << endl;
+		kmer_coverage_estimate = peak_ids[0];
 	} else {
-		largest = peak_values[0];
-		largest_id = peak_ids[0];
-		second = peak_values[1];
-		second_id = peak_ids[1];
-	}
-	for (size_t i = 0; i < peak_values.size(); ++i) {
-		if (peak_values[i] > largest) {
-			second = largest;
-			second_id = largest_id;
-			largest = peak_values[i];
-		} else if ((peak_values[i] > second) && (peak_values[i] != largest)) {
-			second = peak_values[i];
-			second_id = peak_ids[i];
+		size_t largest, second, largest_id, second_id;
+		if (peak_values[0] < peak_values[1]){
+			largest = peak_values[1];
+			largest_id = peak_ids[1];
+			second = peak_values[0];
+			second_id = peak_ids[0];
+		} else {
+			largest = peak_values[0];
+			largest_id = peak_ids[0];
+			second = peak_values[1];
+			second_id = peak_ids[1];
 		}
+		for (size_t i = 0; i < peak_values.size(); ++i) {
+			if (peak_values[i] > largest) {
+				second = largest;
+				second_id = largest_id;
+				largest = peak_values[i];
+			} else if ((peak_values[i] > second) && (peak_values[i] != largest)) {
+				second = peak_values[i];
+				second_id = peak_ids[i];
+			}
+		}
+		cerr << "Histogram peaks: " << largest_id << " (" << largest << "), " << second_id << " (" << second << ")" << endl;
+		kmer_coverage_estimate = second_id;
 	}
-	cerr << "Histogram peaks: " << largest_id << " (" << largest << "), " << second_id << " (" << second << ")" << endl;
 	// add expected abundance counts to end of hist file
 	if (filename != "") {
 		ofstream histofile;
 		histofile.open(filename, ios::app);
-		histofile << "parameters\t" << 0.9 << '\t' << second_id/2.0 << '\t' << second_id << endl;
+		histofile << "parameters\t" << 0.9 << '\t' << kmer_coverage_estimate/2.0 << '\t' << kmer_coverage_estimate << endl;
 		histofile.close();
 	}
-	return second_id;
+	return kmer_coverage_estimate;
 }
 
 JellyfishCounter::~JellyfishCounter() {
