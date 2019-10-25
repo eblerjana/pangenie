@@ -81,6 +81,7 @@ int main (int argc, char* argv[])
 	bool only_phasing = false;
 	long double effective_N = 0.00001L;
 	long double regularization = 0.00001L;
+	bool ignore_imputed = false;
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
@@ -97,6 +98,8 @@ int main (int argc, char* argv[])
 	argument_parser.add_flag_argument('g', "only run genotyping (Forward backward algorithm)");
 	argument_parser.add_flag_argument('p', "only run phasing (Viterbi algorithm)");
 	argument_parser.add_optional_argument('m', "0.00001", "regularization constant for copynumber probabilities");
+	argument_parser.add_flag_argument('u', "output genotype ./. for variants not covered by any unique kmers.");
+
 	try {
 		argument_parser.parse(argc, argv);
 	} catch (const runtime_error& e) {
@@ -118,6 +121,7 @@ int main (int argc, char* argv[])
 	only_phasing = argument_parser.get_flag('p');
 	effective_N = stold(argument_parser.get_argument('n'));
 	regularization = stold(argument_parser.get_argument('m'));
+	ignore_imputed = argument_parser.get_flag('u');
 
 	// print info
 	cerr << "Files and parameters used:" << endl;
@@ -211,11 +215,11 @@ int main (int argc, char* argv[])
 	for (auto it = results.result.begin(); it != results.result.end(); ++it) {
 		if (!only_phasing) {
 			// output genotyping results
-			variant_reader.write_genotypes_of(it->first, it->second);
+			variant_reader.write_genotypes_of(it->first, it->second, ignore_imputed);
 		}
 		if (!only_genotyping) {
 			// output phasing results
-			variant_reader.write_phasing_of(it->first, it->second);
+			variant_reader.write_phasing_of(it->first, it->second, ignore_imputed);
 		}
 	}
 

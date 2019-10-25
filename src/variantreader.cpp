@@ -274,7 +274,7 @@ void VariantReader::open_phasing_outfile(string filename) {
 	this->phasing_outfile << "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t" << this->sample << endl;
 }
 
-void VariantReader::write_genotypes_of(string chromosome, const vector<GenotypingResult>& genotyping_result) {
+void VariantReader::write_genotypes_of(string chromosome, const vector<GenotypingResult>& genotyping_result, bool ignore_imputed) {
 	// outfile needs to be open
 	if (!this->genotyping_outfile_open) {
 		throw runtime_error("VariantReader::write_genotypes_of: output file needs to be opened before writing.");
@@ -325,6 +325,7 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 
 			// determine computed genotype
 			pair<int,int> genotype = singleton_likelihoods.at(j).get_likeliest_genotype();
+			if (ignore_imputed && (singleton_likelihoods.at(j).get_nr_unique_kmers() == 0)) genotype = {-1,-1};
 			if ( (genotype.first != -1) && (genotype.second != -1)) {
 
 				// unique maximum and therefore a likeliest genotype exists
@@ -356,7 +357,7 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 	}
 }
 
-void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingResult>& genotyping_result) {
+void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingResult>& genotyping_result, bool ignore_imputed) {
 	// outfile needs to be open
 	if (! this->phasing_outfile_open) {
 		throw runtime_error("VariantReader::write_phasing_of: output file needs to be opened before writing.");
@@ -401,8 +402,12 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 			this->phasing_outfile << "GT:UK" << "\t"; // FORMAT
 
 			// determine phasing
-			pair<unsigned char,unsigned char> haplotype = singleton_likelihoods.at(j).get_haplotype();
-			this->phasing_outfile << (unsigned int) haplotype.first << "|" << (unsigned int) haplotype.second; // GT (phased)
+			if (ignore_imputed && (singleton_likelihoods.at(j).get_nr_unique_kmers()== 0)){
+				this->phasing_outfile << "./." ; // GT (phased)
+			} else {
+				pair<unsigned char,unsigned char> haplotype = singleton_likelihoods.at(j).get_haplotype();
+				this->phasing_outfile << (unsigned int) haplotype.first << "|" << (unsigned int) haplotype.second; // GT (phased)
+			}
 			this->phasing_outfile << ":" << singleton_likelihoods.at(j).get_nr_unique_kmers() << endl; // UK
 		}
 	}
