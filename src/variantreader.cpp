@@ -252,7 +252,7 @@ void VariantReader::open_genotyping_outfile(string filename) {
 	// TODO output command line
 	this->genotyping_outfile << "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">" << endl;
 	this->genotyping_outfile << "##FORMAT=<ID=GQ,Number=1,Type=Integer,Description=\"Genotype quality: phred scaled probability that the genotype is wrong.\">" << endl;
-	this->genotyping_outfile << "##FORMAT=<ID=GL,Number=G,Type=Integer,Description=\"Comma-separated log10-scaled genotype likelihoods for absent, heterozygous, homozygous.\">" << endl;
+	this->genotyping_outfile << "##FORMAT=<ID=GL,Number=G,Type=Float,Description=\"Comma-separated log10-scaled genotype likelihoods for absent, heterozygous, homozygous.\">" << endl;
 	this->genotyping_outfile << "##FORMAT=<ID=UK,Number=1,Type=Integer,Description=\"Number of unique kmers used for genotyping.\">" << endl;
 	this->genotyping_outfile << "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t" << this->sample << endl; 
 }
