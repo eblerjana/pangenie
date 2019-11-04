@@ -74,6 +74,7 @@ int main (int argc, char* argv[])
 	bool only_phasing = false;
 	long double regularization = 0.00001L;
 	bool count_only_graph = false;
+	bool ignore_imputed = false;
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
@@ -90,6 +91,7 @@ int main (int argc, char* argv[])
 	argument_parser.add_flag_argument('p', "only run phasing (Viterbi algorithm)");
 	argument_parser.add_optional_argument('m', "0.00001", "regularization constant for copynumber probabilities");
 	argument_parser.add_flag_argument('c', "only count those kmers located graph (i.e. reference + allele sequences).");
+	argument_parser.add_flag_argument('u', "output genotype ./. for variants not covered by any unique kmers.");
 
 	try {
 		argument_parser.parse(argc, argv);
@@ -112,6 +114,7 @@ int main (int argc, char* argv[])
 	only_phasing = argument_parser.get_flag('p');
 	regularization = stold(argument_parser.get_argument('m'));
 	count_only_graph = argument_parser.get_flag('c');
+	ignore_imputed = argument_parser.get_flag('u');
 
 	// print info
 	cerr << "Files and parameters used:" << endl;
@@ -209,11 +212,11 @@ int main (int argc, char* argv[])
 	for (auto it = results.result.begin(); it != results.result.end(); ++it) {
 		if (!only_phasing) {
 			// output genotyping results
-			variant_reader.write_genotypes_of(it->first, it->second);
+			variant_reader.write_genotypes_of(it->first, it->second, ignore_imputed);
 		}
 		if (!only_genotyping) {
 			// output phasing results
-			variant_reader.write_phasing_of(it->first, it->second);
+			variant_reader.write_phasing_of(it->first, it->second, ignore_imputed);
 		}
 	}
 
