@@ -18,7 +18,7 @@ public:
 	virtual size_t computeKmerCoverage(size_t genome_kmers) = 0;
 
 	/** computes kmer abundance histogram and returns the three highest peaks **/
-	virtual size_t computeHistogram(size_t max_count, std::string filename = "") = 0;
+	virtual size_t computeHistogram(size_t max_count, bool largest_peak, std::string filename = "") = 0;
 
 	virtual ~KmerCounter() {} ;
 };
