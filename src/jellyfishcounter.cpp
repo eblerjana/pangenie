@@ -126,7 +126,7 @@ size_t JellyfishCounter::computeHistogram(size_t max_count, string filename) {
 	const auto end = jf_ary->end();
 	for (auto it = jf_ary->begin(); it != end; ++it) {
 		auto& key_val = *it;
-		histogram.add_value(key_val.second);
+		if (key_val.second > 0) histogram.add_value(key_val.second);
 	}
 	// write histogram values to file
 	if (filename != "") {
@@ -171,7 +171,7 @@ size_t JellyfishCounter::computeHistogram(size_t max_count, string filename) {
 			}
 		}
 		cerr << "Histogram peaks: " << largest_id << " (" << largest << "), " << second_id << " (" << second << ")" << endl;
-		kmer_coverage_estimate = second_id;
+		kmer_coverage_estimate = largest_id;
 	}
 	// add expected abundance counts to end of hist file
 	if (filename != "") {
