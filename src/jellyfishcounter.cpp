@@ -120,7 +120,7 @@ size_t JellyfishCounter::computeKmerCoverage(size_t genome_kmers) {
 	return (size_t) ceil(result);
 }
 
-size_t JellyfishCounter::computeHistogram(size_t max_count, string filename) {
+size_t JellyfishCounter::computeHistogram(size_t max_count, bool largest_peak, string filename) {
 	Histogram histogram(max_count);
 	const auto jf_ary = this->jellyfish_hash->ary();
 	const auto end = jf_ary->end();
@@ -171,7 +171,11 @@ size_t JellyfishCounter::computeHistogram(size_t max_count, string filename) {
 			}
 		}
 		cerr << "Histogram peaks: " << largest_id << " (" << largest << "), " << second_id << " (" << second << ")" << endl;
-		kmer_coverage_estimate = largest_id;
+		if (largest_peak) {
+			kmer_coverage_estimate = largest_id;
+		}else {
+			kmer_coverage_estimate = second_id;
+		}
 	}
 	// add expected abundance counts to end of hist file
 	if (filename != "") {

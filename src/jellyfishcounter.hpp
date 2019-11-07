@@ -97,7 +97,7 @@ public:
 	size_t computeKmerCoverage(size_t genome_kmers);
 
 	/** computes kmer abundance histogram and returns the three highest peaks **/
-	size_t computeHistogram(size_t max_count, std::string filename = "");
+	size_t computeHistogram(size_t max_count, bool largest_peak, std::string filename = "");
 
 private:
 	mer_hash_type* jellyfish_hash;
