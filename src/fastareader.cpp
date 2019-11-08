@@ -6,6 +6,7 @@ using namespace std;
 
 FastaReader::FastaReader(string filename) {
 	parse_file(filename);
+	cerr << "Found " << this->name_to_sequence.size() << " chromosome(s) from the reference file." << endl;
 }
 
 
@@ -60,6 +61,12 @@ size_t FastaReader::get_size_of(string name) const {
 		return this->name_to_sequence.at(name)->size();
 	} else {
 		throw runtime_error("FastaReader::get_size_of: chromosome " + name + " is not present in FASTA-file.");
+	}
+}
+
+void FastaReader::get_sequence_names(vector<string>& names) const {
+	for (auto it = this->name_to_sequence.begin(); it != this->name_to_sequence.end(); ++it) {
+		names.push_back(it->first);
 	}
 }
 

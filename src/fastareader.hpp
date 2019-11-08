@@ -20,6 +20,8 @@ public:
 	bool contains_name(std::string name) const;
 	/** get length of sequence with name **/
 	size_t get_size_of(std::string name) const;
+	/** get names of seqences present in the file **/
+	void get_sequence_names(std::vector<std::string>& names) const;
 	/** compute total numbers of kmers in the sequences **/
 	size_t get_total_kmers(size_t kmer_size) const;
 	/** get a subsequence **/

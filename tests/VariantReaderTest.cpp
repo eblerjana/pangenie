@@ -2,6 +2,7 @@
 #include "../src/variantreader.hpp"
 #include <vector>
 #include <string>
+#include <algorithm> 
 
 using namespace std;
 
@@ -9,7 +10,7 @@ TEST_CASE("VariantReader get_allele_string", "[VariantReader get_allele_string]"
 	string vcf = "../tests/data/small1.vcf";
 	string fasta = "../tests/data/small1.fa";
 	VariantReader v(vcf, fasta, 10);
-	REQUIRE(v.nr_of_genomic_kmers() == 2440);
+	REQUIRE(v.nr_of_genomic_kmers() == 2516);
 	REQUIRE(v.get_kmer_size() == 10);
 	REQUIRE(v.size_of("chrA") == 7);
 	REQUIRE(v.size_of("chrB") == 2);
@@ -35,8 +36,8 @@ TEST_CASE("VariantReader get_allele_string", "[VariantReader get_allele_string]"
 	REQUIRE(v.get_variant("chrA", 5).get_allele_string(0) == "GGAGGGTATGAAGCCATCAC");
 	REQUIRE(v.get_variant("chrA", 5).get_allele_string(1) == "GGAGGGTATTCAGCCATCAC");
 
-        REQUIRE(v.get_variant("chrA", 6).get_allele_string(0) == "TGTGGACTTATTTGGCTAA");
-        REQUIRE(v.get_variant("chrA", 6).get_allele_string(1) == "TGTGGACTTGTTTGGCTAA");
+	REQUIRE(v.get_variant("chrA", 6).get_allele_string(0) == "TGTGGACTTATTTGGCTAA");
+	REQUIRE(v.get_variant("chrA", 6).get_allele_string(1) == "TGTGGACTTGTTTGGCTAA");
 
 	REQUIRE(v.get_variant("chrB", 0).get_allele_string(0) == "CCACTTCATCAAGACACAA");
 	REQUIRE(v.get_variant("chrB", 1).get_allele_string(0) == "GAGTATTTTGATCATAAAT");
@@ -90,6 +91,57 @@ TEST_CASE("VariantReader write_path_segments", "[VariantReader write_path_segmen
 		REQUIRE(expected[i] == computed[i]);
 	}
 
+}
+
+TEST_CASE("VariantReader write_path_segments_no_variants", "[VariantReader write_path_segments]") {
+	string vcf = "../tests/data/empty.vcf";
+	string fasta = "../tests/data/small1.fa";
+
+	// read variants from VCF
+	VariantReader v(vcf, fasta, 10);
+	v.write_path_segments("../tests/data/empty-segments.fa");
+	vector<string> computed = {};
+	vector<string> expected = {};
+
+	// since no variants are given, expected sequences are all those in fasta
+	string line;
+	ifstream expected_sequences(fasta);
+	string sequence = "";
+	while (getline(expected_sequences, line)) {
+		if (line.size() == 0) continue;
+		if (line[0] == '>') {
+			if (sequence != "") {
+				transform(sequence.begin(), sequence.end(), sequence.begin(), ::toupper);
+				expected.push_back(sequence);
+				sequence = "";
+			}
+			continue;
+		}
+		size_t start = line.find_first_not_of(" \t\r\n");
+		size_t end = line.find_last_not_of(" \t\r\n");
+		line = line.substr(start, end-start+1);
+		sequence += line;
+	}
+	expected.push_back(sequence);
+
+	// read computed reference segments from file
+	bool read_next = false;
+	ifstream computed_sequences("../tests/data/empty-segments.fa");
+	while (getline(computed_sequences, line)) {
+		if (line.size() == 0) continue;
+		if (line[0] == '>') {
+			continue;
+		}
+		size_t start = line.find_first_not_of(" \t\r\n");
+		size_t end = line.find_last_not_of(" \t\r\n");
+		line = line.substr(start, end-start+1);
+		computed.push_back(line);
+	}
+
+	REQUIRE(expected.size() == computed.size());
+	for (size_t i = 0; i < expected.size(); ++i) {
+		REQUIRE(expected[i] == computed[i]);
+	}
 }
 
 TEST_CASE("VariantReader write_genotypes_of", "[VariantReader write_genotypes_of]") {
