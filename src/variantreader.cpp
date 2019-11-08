@@ -256,6 +256,7 @@ void VariantReader::open_genotyping_outfile(string filename) {
 	this->genotyping_outfile << "##fileformat=VCFv4.2" << endl;
 	this->genotyping_outfile << "##fileDate=" << get_date() << endl;
 	// TODO output command line
+	this->genotyping_outfile << "##INFO=<ID=AF,Number=A,Type=Float,Description=\"Allele Frequency\">" << endl;
 	this->genotyping_outfile << "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">" << endl;
 	this->genotyping_outfile << "##FORMAT=<ID=GQ,Number=1,Type=Integer,Description=\"Genotype quality: phred scaled probability that the genotype is wrong.\">" << endl;
 	this->genotyping_outfile << "##FORMAT=<ID=GL,Number=G,Type=Float,Description=\"Comma-separated log10-scaled genotype likelihoods for absent, heterozygous, homozygous.\">" << endl;
@@ -275,6 +276,7 @@ void VariantReader::open_phasing_outfile(string filename) {
 	this->phasing_outfile << "##fileformat=VCFv4.2" << endl;
 	this->phasing_outfile << "##fileDate=" << get_date() << endl;
 	// TODO output command line
+	this->phasing_outfile << "##INFO=<ID=AF,Number=A,Type=Float,Description=\"Allele Frequency\">" << endl;
 	this->phasing_outfile << "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">" << endl;
 	this->phasing_outfile << "##FORMAT=<ID=UK,Number=1,Type=Integer,Description=\"Number of unique kmers used for genotyping.\">" << endl;
 	this->phasing_outfile << "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t" << this->sample << endl;
@@ -311,7 +313,7 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 			this->genotyping_outfile << ".\t"; // ID
 			this->genotyping_outfile << v.get_allele_string(0) << "\t"; // REF
 
-			// get alternative alleles
+			// get alternative allele
 			size_t nr_alleles = v.nr_of_alleles();
 			if (nr_alleles < 2) {
 				ostringstream oss;
@@ -326,7 +328,14 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 			this->genotyping_outfile << alt_alleles << "\t"; // ALT
 			this->genotyping_outfile << ".\t"; // QUAL
 			this->genotyping_outfile << "PASS" << "\t"; // FILTER
-			this->genotyping_outfile << "." << "\t"; // INFO
+			// output allele frequencies of all alleles
+			ostringstream info;
+			info << "AF=";
+			for (unsigned int a = 1; a < nr_alleles; ++a) {
+				if (a > 1) info << ",";
+				info << setprecision(6) << v.allele_frequency(a);				
+			}
+			this->genotyping_outfile << info.str() << "\t"; // INFO
 			this->genotyping_outfile << "GT:GQ:GL:UK" << "\t"; // FORMAT
 
 			// determine computed genotype
@@ -404,7 +413,14 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 			this->phasing_outfile << alt_alleles << "\t"; // ALT
 			this->phasing_outfile << ".\t"; // QUAL
 			this->phasing_outfile << "PASS" << "\t"; // FILTER
-			this->phasing_outfile << "." << "\t"; // INFO
+			// output allele frequencies of all alleles
+			ostringstream info;
+			info << "AF=";
+			for (unsigned int a = 1; a < nr_alleles; ++a) {
+				if (a > 1) info << ",";
+				info << setprecision(6) << v.allele_frequency(a);				
+			}
+			this->phasing_outfile << info.str() << "\t"; // INFO
 			this->phasing_outfile << "GT:UK" << "\t"; // FORMAT
 
 			// determine phasing

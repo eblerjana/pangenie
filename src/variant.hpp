@@ -39,6 +39,7 @@ public:
 	friend std::ostream& operator<<(std::ostream& os, const Variant& var);
 	friend bool operator==(const Variant& v1, const Variant& v2);
 	friend bool operator!=(const Variant& v1, const Variant& v2);
+	float allele_frequency(unsigned char allele_index) const;
 private:
 	DnaSequence left_flank;
 	DnaSequence right_flank;

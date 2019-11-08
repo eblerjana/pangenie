@@ -402,3 +402,19 @@ TEST_CASE("Variant get_paths_of_allele", "[Variant get_paths_of_allele]") {
 	v2.get_paths_of_allele(1, result);
 	REQUIRE(result == vector<size_t>({1,3,4}));
 }
+
+TEST_CASE("Variant allele_frequency", "Variant allele_frequency") {
+	Variant v1("AAA", "TTA", "chr1", 10, 14, {"ATGC", "ATT", "TT"}, {0,1,2});
+	REQUIRE ( doubles_equal(v1.allele_frequency(0), 1.0/3.0) );
+	REQUIRE ( doubles_equal(v1.allele_frequency(1), 1.0/3.0) );
+	REQUIRE ( doubles_equal(v1.allele_frequency(2), 1.0/3.0) );
+
+	Variant v2("AAA", "TGC", "chr1", 4, 5, {"A", "G"}, {0,0,0,0,0,0,1,0,0,0});
+	REQUIRE ( doubles_equal(v2.allele_frequency(0), 0.9) );
+	REQUIRE ( doubles_equal(v2.allele_frequency(1), 0.1) );
+
+	Variant v3("AAA", "TGC", "chr1", 4, 5, {"A", "G", "C"}, {0,0,1,0,2,0,1,0,0,0});
+	REQUIRE ( doubles_equal(v3.allele_frequency(0), 0.7) );
+	REQUIRE ( doubles_equal(v3.allele_frequency(1), 0.2) );
+	REQUIRE ( doubles_equal(v3.allele_frequency(2), 0.1) );
+}
