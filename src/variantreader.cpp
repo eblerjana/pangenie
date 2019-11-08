@@ -160,28 +160,34 @@ size_t VariantReader::get_kmer_size() const {
 void VariantReader::write_path_segments(std::string filename) const {
 	ofstream outfile;
 	outfile.open(filename);
-	for (auto element : this->variants_per_chromosome) {
-		assert(element.second.size() > 0);
+	// make sure to capture all chromosomes in the reference (including such for which no variants are given)
+	vector<string> chromosome_names;
+	this->fasta_reader.get_sequence_names(chromosome_names);
+	for (auto element : chromosome_names) {
 		size_t prev_end = 0;
-		for (auto variant : element.second) {
-			// generate reference unitig and write to file
-			size_t start_pos = variant.get_start_position();
-			outfile << ">" << element.first << "_reference_" << start_pos << endl;
-			string ref_segment;
-			this->fasta_reader.get_subsequence(element.first, prev_end, start_pos, ref_segment);
-			outfile << ref_segment << endl;
-			for (size_t allele = 0; allele < variant.nr_of_alleles(); ++allele) {
-				// sequence name
-				outfile << ">" << element.first << "_" << start_pos << "_" << allele << endl;
-				outfile << variant.get_allele_string(allele) << endl;
+		// check if chromosome was present in VCF and write allele sequences in this case
+		auto it = this->variants_per_chromosome.find(element);
+		if (it != this->variants_per_chromosome.end()) {
+			for (auto variant : this->variants_per_chromosome.at(element)) {
+				// generate reference unitig and write to file
+				size_t start_pos = variant.get_start_position();
+				outfile << ">" << element << "_reference_" << start_pos << endl;
+				string ref_segment;
+				this->fasta_reader.get_subsequence(element, prev_end, start_pos, ref_segment);
+				outfile << ref_segment << endl;
+				for (size_t allele = 0; allele < variant.nr_of_alleles(); ++allele) {
+					// sequence name
+					outfile << ">" << element << "_" << start_pos << "_" << allele << endl;
+					outfile << variant.get_allele_string(allele) << endl;
+				}
+				prev_end = variant.get_end_position();
 			}
-			prev_end = variant.get_end_position();
 		}
 		// output reference sequence after last position on chromosome
-		outfile << ">" << element.first << "_reference_end" << endl;
-		size_t chr_len = this->fasta_reader.get_size_of(element.first);
+		outfile << ">" << element << "_reference_end" << endl;
+		size_t chr_len = this->fasta_reader.get_size_of(element);
 		string ref_segment;
-		this->fasta_reader.get_subsequence(element.first, prev_end, chr_len, ref_segment);
+		this->fasta_reader.get_subsequence(element, prev_end, chr_len, ref_segment);
 		outfile << ref_segment << endl;
 	}
 	outfile.close();
