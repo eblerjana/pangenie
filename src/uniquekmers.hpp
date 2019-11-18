@@ -41,6 +41,8 @@ public:
 	void get_path_ids(std::vector<size_t>& paths, std::vector<unsigned char>& alleles);
 	/** get all unique alleles covered at this position **/
 	void get_allele_ids(std::vector<unsigned char>& a);
+	/** get a bitset that encodes all paths that cover the allele allele_id **/
+	DynamicBitset get_paths_of_allele(unsigned char allele_id);
 	friend std::ostream& operator<< (std::ostream& stream, const UniqueKmers& uk);
 
 private:
