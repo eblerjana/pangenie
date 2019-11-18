@@ -1,13 +1,16 @@
 #include <stdexcept>
 #include <sstream>
 #include "uniquekmers.hpp"
+#include <math.h>
 
 using namespace std;
 
 UniqueKmers::UniqueKmers(size_t variant_id, size_t variant_position)
 	:variant_id(variant_id),
 	 variant_pos(variant_position),
-	 current_index(0)
+	 current_index(0),
+	 nr_paths(0),
+	 max_path(0)
 {}
 
 size_t UniqueKmers::get_variant_index() {
@@ -20,10 +23,18 @@ size_t UniqueKmers::get_variant_position() {
 
 void UniqueKmers::insert_empty_allele(unsigned char allele_id) {
 	this->alleles[allele_id] = KmerPath(); 
+	this->allele_to_paths.insert(make_pair(allele_id,DynamicBitset()));
 }
 
 void UniqueKmers::insert_path(size_t path_id, unsigned char allele_id) {
-	this->path_to_allele[path_id] = allele_id;
+	// unset bits that might be set already
+	bool was_set = false;
+	for (auto it = this->allele_to_paths.begin(); it != allele_to_paths.end(); ++it) {
+		this->allele_to_paths[it->first].unset(path_id, was_set);
+	}
+	this->allele_to_paths[allele_id].set(path_id);
+	if (!was_set) this->nr_paths += 1;
+	this->max_path = max(this->max_path + 1, path_id + 1);
 }
 
 void UniqueKmers::insert_kmer(CopyNumber cn,  vector<unsigned char>& alleles){
@@ -37,12 +48,21 @@ void UniqueKmers::insert_kmer(CopyNumber cn,  vector<unsigned char>& alleles){
 
 bool UniqueKmers::kmer_on_path(size_t kmer_index, size_t path_index) const {
 	// check if path_id exists
-	if (this->path_to_allele.find(path_index) == this->path_to_allele.end()) {
+	bool path_exists = false;
+	unsigned char allele_id;
+	for (auto it = this->allele_to_paths.begin(); it != this->allele_to_paths.end(); ++it) {
+		if (it->second.is_set(path_index)) {
+			path_exists = true;
+			allele_id = it->first;
+			break;
+		}
+	}
+	if (!path_exists) {
 		throw runtime_error("UniqueKmers::kmer_on_path: path_index " + to_string(path_index) + " does not exist.");
 	}
+
 	// check if kmer_index is valid and look up position
 	if (kmer_index < this->current_index) {
-		unsigned char allele_id = this->path_to_allele.at(path_index);
 		return (this->alleles.at(allele_id).get_position(kmer_index) > 0);
 	} else {
 		throw runtime_error("UniqueKmers::kmer_on_path: requested kmer index: " + to_string(kmer_index) + " does not exist.");
@@ -66,13 +86,19 @@ size_t UniqueKmers::size() const {
 }
 
 size_t UniqueKmers::get_nr_paths() const {
-	return this->path_to_allele.size();
+	return this->nr_paths;
 }
 
 void UniqueKmers::get_path_ids(vector<size_t>& p, vector<unsigned char>& a) {
-	for (auto it = this->path_to_allele.begin(); it != this->path_to_allele.end(); ++it) {
-		p.push_back(it->first);
-		a.push_back(it->second);
+	for (size_t path_id = 0; path_id < this->max_path; ++path_id) {
+		for (auto it = this->allele_to_paths.begin(); it != this->allele_to_paths.end(); ++it) {
+			// check which allele is covered (if any)
+			if (it->second.is_set(path_id)) {
+				p.push_back(path_id);
+				a.push_back(it->first);
+				break;
+			}
+		}
 	}
 }
 
@@ -93,8 +119,10 @@ ostream& operator<< (ostream& stream, const UniqueKmers& uk) {
 		stream << it->first << "\t" << it->second.convert_to_string() << endl;
 	}
 	stream << "paths:" << endl;
-	for (auto it = uk.path_to_allele.begin(); it != uk.path_to_allele.end(); ++it) {
-		stream << it->first << " covers allele " << it->second << endl;
+	for (auto it = uk.allele_to_paths.begin(); it != uk.allele_to_paths.end(); ++it) {
+		for (size_t path_id = 0; path_id < uk.max_path; ++path_id) {
+			if (it->second.is_set(path_id)) stream << path_id << " covers allele " << it->first << endl;
+		}
 	}
 	return stream;
 }

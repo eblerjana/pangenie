@@ -6,6 +6,7 @@
 #include <map>
 #include "copynumber.hpp"
 #include "kmerpath.hpp"
+#include "dynamicbitset.hpp"
 
 /*
 * Represents the set of unique kmers for a variant position.
@@ -46,9 +47,13 @@ private:
 	size_t variant_id;
 	size_t variant_pos;
 	size_t current_index;
+	size_t nr_paths;
+	size_t max_path;
 	std::vector<CopyNumber> kmer_to_copynumber;
 	std::map<unsigned char, KmerPath> alleles;
-	std::map<size_t, unsigned char> path_to_allele;
+//	std::map<size_t, unsigned char> path_to_allele;
+	std::map<unsigned char, DynamicBitset> allele_to_paths;
+
 	CopyNumberAssignment combine_paths(unsigned char allele_id1, unsigned char allele_id2);
 	friend class EmissionProbabilityComputer;
 };

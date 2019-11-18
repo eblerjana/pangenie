@@ -7,6 +7,7 @@ add_library(PGGTyperLib SHARED
 	columnindexer.cpp
 	copynumberassignment.cpp
 	dnasequence.cpp
+	dynamicbitset.cpp
 	fastareader.cpp
 	genotypingresult.cpp
 	histogram.cpp
