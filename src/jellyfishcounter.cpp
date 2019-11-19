@@ -181,7 +181,7 @@ size_t JellyfishCounter::computeHistogram(size_t max_count, bool largest_peak, s
 	if (filename != "") {
 		ofstream histofile;
 		histofile.open(filename, ios::app);
-		histofile << "parameters\t" << 0.9 << '\t' << kmer_coverage_estimate/2.0 << '\t' << kmer_coverage_estimate << endl;
+		histofile << "parameters\t" << kmer_coverage_estimate/2.0 << '\t' << kmer_coverage_estimate << endl;
 		histofile.close();
 	}
 	return kmer_coverage_estimate;

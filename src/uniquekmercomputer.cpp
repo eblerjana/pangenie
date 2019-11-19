@@ -39,7 +39,17 @@ UniqueKmerComputer::UniqueKmerComputer (KmerCounter* genomic_kmers, KmerCounter*
 	 chromosome(chromosome),
 	 kmer_coverage(kmer_coverage)
 {
-	double cn0 = 0.9;
+	// TODO: find a proper way to adjust this parameter!
+	double cn0;
+	if (kmer_coverage < 10.0) {
+		cn0 = 0.99;
+	} else if (kmer_coverage < 20) {
+		cn0 = 0.95;
+	} else if (kmer_coverage < 40) {
+		cn0 = 0.9;
+	} else {
+		cn0 = 0.8;
+	}
 	double cn1 = kmer_coverage / 2.0;
 	double cn2 = kmer_coverage;
 //	cerr << "Using Poisson distributions with parameters: " << cn0 << " " << cn1 << " " << cn2 << endl;
