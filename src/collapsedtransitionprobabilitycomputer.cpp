@@ -30,3 +30,7 @@ long double CollapsedTransitionProbabilityComputer::compute_transition_prob(Dyna
 	size_t prod_hap2 = a_id2.count() * a_id4.count() - count_hap2;
 	return (count_hap1*count_hap2*this->probabilities[0])   +   ( (prod_hap1*count_hap2 + prod_hap2*count_hap1)*this->probabilities[1] )  +  (prod_hap1*prod_hap2*this->probabilities[2]);
 }
+
+long double CollapsedTransitionProbabilityComputer::compute_transition_start(DynamicBitset a_id1, DynamicBitset a_id2) {
+	return 1.0L * a_id1.count() * a_id2.count();
+}

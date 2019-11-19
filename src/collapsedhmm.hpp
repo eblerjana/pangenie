@@ -3,8 +3,8 @@
 
 #include <vector>
 #include "uniquekmers.hpp"
-#include "columnindexer.hpp"
-#include "transitionprobabilitycomputer.hpp"
+#include "collapsedcolumnindexer.hpp"
+#include "collapsedtransitionprobabilitycomputer.hpp"
 #include "variant.hpp"
 #include "genotypingresult.hpp"
 
@@ -24,12 +24,12 @@ public:
 	~CollapsedHMM();
 
 private:
-	std::vector<ColumnIndexer*> column_indexers;
+	std::vector<CollapsedColumnIndexer*> column_indexers;
 	std::vector< std::vector<long double>* > forward_columns;
 	std::vector<long double>* previous_backward_column;
 	std::vector< std::vector<long double>* > viterbi_columns;
 	std::vector<UniqueKmers*>* unique_kmers;
-	std::vector<TransitionProbabilityComputer*> transition_prob_computers;
+	std::vector<CollapsedTransitionProbabilityComputer*> transition_prob_computers;
 	std::vector< std::vector<size_t>* > viterbi_backtrace_columns;
 	std::vector< GenotypingResult > genotyping_result;
 	void compute_forward_prob();

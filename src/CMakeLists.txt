@@ -2,6 +2,7 @@ add_library(PGGTyperLib SHARED
 	emissionprobabilitycomputer.cpp
 	copynumber.cpp
 	commandlineparser.cpp
+	collapsedcolumnindexer.cpp
 	collapsedhmm.cpp
 	collapsedtransitionprobabilitycomputer.cpp
 	columnindexer.cpp

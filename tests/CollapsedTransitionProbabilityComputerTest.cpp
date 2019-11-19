@@ -188,4 +188,23 @@ TEST_CASE("CollapsedTransitionProbabilityComputer compute_transition_prob3", "[C
 
 }
 
+TEST_CASE("CollapsedTransitionProbabilityComputer compute_transition_start", "[CollapsedTransitioProbabilityComputer compute_transition_start]") {
+	CollapsedTransitionProbabilityComputer t (1000000, 2000000, 1.26, 10, false, 0.25);
+	double recomb_prob = 0.01183851532;
+	double no_recomb_prob = recomb_prob + 0.88161484678;
 
+	double no_recomb = no_recomb_prob * no_recomb_prob;
+	double one_recomb = recomb_prob * no_recomb_prob;
+	double two_recomb = recomb_prob*recomb_prob;
+
+	UniqueKmers u (0,1000000);
+	u.insert_path(0,0);
+	u.insert_path(1,0);
+	u.insert_path(2,1);
+
+	// transition probabilities are not normalized (as normalization factor is a constant and cancels out in HMM)
+	REQUIRE(doubles_equal(t.compute_transition_start(u.get_paths_of_allele(0), u.get_paths_of_allele(0)), 4.0));
+	REQUIRE(doubles_equal(t.compute_transition_start(u.get_paths_of_allele(0), u.get_paths_of_allele(1)), 2.0));
+	REQUIRE(doubles_equal(t.compute_transition_start(u.get_paths_of_allele(1), u.get_paths_of_allele(0)), 2.0));
+	REQUIRE(doubles_equal(t.compute_transition_start(u.get_paths_of_allele(1), u.get_paths_of_allele(1)), 1.0));
+}
