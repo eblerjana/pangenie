@@ -1,4 +1,4 @@
-#ifndef DYMANICBITSET_H
+#ifndef DYNAMICBITSET_H
 #define DYNAMICBITSET_H
 
 #include <vector>
@@ -9,6 +9,10 @@
 class DynamicBitset {
 public:
 	DynamicBitset();
+	/**
+	* @param bits bitstring represented as string object
+	**/
+	DynamicBitset(std::string bits);
 	/** check if bit at position index is set to true **/
 	bool is_set (size_t index) const;
 	/** set bit at position index to true **/

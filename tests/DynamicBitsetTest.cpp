@@ -13,6 +13,17 @@ TEST_CASE("DynamicBitset empty", "[DynamicBitset empty]"){
 	REQUIRE(b.convert_to_string() == "0000000000000000000000000000000000000000000000000000000000000000");
 }
 
+TEST_CASE("DynamicBitset string constructor", "[DynamicBitset string constructor]") {
+	DynamicBitset b ("011001001010");
+	REQUIRE(b.count() == 5);
+	REQUIRE(b.is_set(1));
+	REQUIRE(b.is_set(2));
+	REQUIRE(b.is_set(5));
+	REQUIRE(b.is_set(8));
+	REQUIRE(b.is_set(10));
+	REQUIRE(b.convert_to_string() == "0110010010100000000000000000000000000000000000000000000000000000");
+}
+
 TEST_CASE("DynamicBitset set/unset", "[DynamicBitset set/unset]") {
 	DynamicBitset b;
 	b.set(0);

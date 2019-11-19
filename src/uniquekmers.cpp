@@ -108,8 +108,8 @@ void UniqueKmers::get_allele_ids(vector<unsigned char>& a) {
 	}
 }
 
-DynamicBitset UniqueKmers::get_paths_of_allele(unsigned char allele_id) {
-	return this->allele_to_paths[allele_id];
+DynamicBitset UniqueKmers::get_paths_of_allele(unsigned char allele_id) const {
+	return this->allele_to_paths.at(allele_id);
 }
 
 ostream& operator<< (ostream& stream, const UniqueKmers& uk) {

@@ -13,6 +13,16 @@ DynamicBitset::DynamicBitset()
 	:bitstrings({0})
 {}
 
+DynamicBitset::DynamicBitset(string bits)
+	:bitstrings({0})
+{
+	for (size_t i = 0; i < bits.size(); ++i) {
+		if (bits[i] == '1') {
+			this->set(i);
+		}
+	}
+}
+
 bool DynamicBitset::is_set (size_t index) const {
 	size_t max_index = this->bitstrings.size()*64 - 1;
 	if (index < max_index) {
