@@ -108,6 +108,12 @@ void UniqueKmers::get_allele_ids(vector<unsigned char>& a) {
 	}
 }
 
+void UniqueKmers::get_covered_allele_ids(vector<unsigned char>& a) {
+	for (auto it = this->allele_to_paths.begin(); it != this->allele_to_paths.end(); ++it) {
+		if (it->second.count() > 0) a.push_back(it->first);
+	}
+}
+
 DynamicBitset UniqueKmers::get_paths_of_allele(unsigned char allele_id) const {
 	return this->allele_to_paths.at(allele_id);
 }
@@ -125,7 +131,7 @@ ostream& operator<< (ostream& stream, const UniqueKmers& uk) {
 	stream << "paths:" << endl;
 	for (auto it = uk.allele_to_paths.begin(); it != uk.allele_to_paths.end(); ++it) {
 		for (size_t path_id = 0; path_id < uk.max_path; ++path_id) {
-			if (it->second.is_set(path_id)) stream << path_id << " covers allele " << it->first << endl;
+			if (it->second.is_set(path_id)) stream << path_id << " covers allele " << (unsigned int) it->first << endl;
 		}
 	}
 	return stream;

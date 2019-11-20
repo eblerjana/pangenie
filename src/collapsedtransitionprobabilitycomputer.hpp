@@ -14,6 +14,7 @@ public:
 	long double compute_transition_start(DynamicBitset paths_allele1, DynamicBitset paths_allele2);
 private:
 	std::vector<long double> probabilities;
+	size_t nr_paths;
 	
 };
 #endif // COLLAPSED_TRANSITIONPROBABILITYCOMPUTER_HPP

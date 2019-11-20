@@ -6,9 +6,9 @@
 using namespace std;
 
 CollapsedTransitionProbabilityComputer::CollapsedTransitionProbabilityComputer(size_t from_variant, size_t to_variant, double recomb_rate, size_t nr_paths, bool uniform, long double effective_N)
+	:nr_paths(nr_paths)
 {
 	assert(from_variant <= to_variant );
-
 	if (uniform) {
 		this->probabilities = {1.0L, 1.0L, 1.0L, 1.0L};
 	} else {
@@ -32,5 +32,5 @@ long double CollapsedTransitionProbabilityComputer::compute_transition_prob(Dyna
 }
 
 long double CollapsedTransitionProbabilityComputer::compute_transition_start(DynamicBitset a_id1, DynamicBitset a_id2) {
-	return 1.0L * a_id1.count() * a_id2.count();
+	return (1.0L * a_id1.count() * a_id2.count() ) / (this->nr_paths * this->nr_paths);
 }
