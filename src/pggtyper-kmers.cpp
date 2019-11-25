@@ -14,7 +14,7 @@
 #include "copynumber.hpp"
 #include "variantreader.hpp"
 #include "uniquekmercomputer.hpp"
-#include "hmm.hpp"
+#include "collapsedhmm.hpp"
 #include "commandlineparser.hpp"
 #include "timer.hpp"
 #include "threadpool.hpp"
@@ -36,7 +36,7 @@ void run_genotyping_kmers(string chromosome, KmerCounter* genomic_kmer_counts, K
 	std::vector<UniqueKmers*> unique_kmers;
 	kmer_computer.compute_unique_kmers(&unique_kmers, regularization);
 	// construct HMM and run genotyping/phasing
-	HMM hmm(&unique_kmers, !only_phasing, !only_genotyping, 1.26, true);
+	CollapsedHMM hmm(&unique_kmers, !only_phasing, !only_genotyping, 1.26, true);
 	// store the results
 	{
 		lock_guard<mutex> lock (results->result_mutex);
