@@ -122,7 +122,7 @@ int main (int argc, char* argv[])
 
 	// read allele sequences and unitigs inbetween, write them into file
 	cerr << "Determine allele sequences ..." << endl;
-	VariantReader variant_reader (vcffile, reffile, kmersize, sample_name);
+	VariantReader variant_reader (vcffile, reffile, kmersize, false, sample_name);
 	string segment_file = outname + "_path_segments.fasta";
 	cerr << "Write path segments to file: " << segment_file << " ..." << endl;
 	variant_reader.write_path_segments(segment_file);

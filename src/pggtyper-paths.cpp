@@ -68,6 +68,7 @@ int main (int argc, char* argv[])
 	bool only_genotyping = false;
 	bool only_phasing = false;
 	double effective_N = 0.00001L;
+	bool add_reference = false;
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
@@ -80,6 +81,8 @@ int main (int argc, char* argv[])
 	argument_parser.add_optional_argument('n', "0.00001", "effective population size");
 	argument_parser.add_flag_argument('g', "only run genotyping (Forward backward algorithm)");
 	argument_parser.add_flag_argument('p', "only run phasing (Viterbi algorithm)");
+	argument_parser.add_flag_argument('a', "add reference as additional path.");
+
 	try {
 		argument_parser.parse(argc, argv);
 	} catch (const runtime_error& e) {
@@ -97,6 +100,7 @@ int main (int argc, char* argv[])
 	only_genotyping = argument_parser.get_flag('g');
 	only_phasing = argument_parser.get_flag('p');
 	effective_N = stold(argument_parser.get_argument('n'));
+	add_reference = argument_parser.get_flag('a');
 
 	// print info
 	cerr << "Files and parameters used:" << endl;
@@ -104,7 +108,7 @@ int main (int argc, char* argv[])
 
 	// read allele sequences and unitigs inbetween, write them into file
 	cerr << "Determine allele sequences ..." << endl;
-	VariantReader variant_reader (vcffile, reffile, 31, sample_name);
+	VariantReader variant_reader (vcffile, reffile, 31, add_reference, sample_name);
 
 	// determine chromosomes present in VCF
 	vector<string> chromosomes;

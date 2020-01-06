@@ -42,13 +42,14 @@ bool matches_pattern(string& sequence, regex& r) {
 	return true;
 }
 
-VariantReader::VariantReader(string filename, string reference_filename, size_t kmer_size, string sample)
+VariantReader::VariantReader(string filename, string reference_filename, size_t kmer_size, bool add_reference, string sample)
 	:fasta_reader(reference_filename),
 	 kmer_size(kmer_size),
 	 nr_variants(0),
 	 sample(sample),
 	 genotyping_outfile_open(false),
-	 phasing_outfile_open(false)
+	 phasing_outfile_open(false),
+	 add_reference(add_reference)
 {
 	if (filename.substr(filename.size()-3,3).compare(".gz") == 0) {
 		throw runtime_error("VariantReader::VariantReader: Uncompressed VCF-file is required.");
@@ -80,8 +81,9 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 					throw runtime_error("VariantReader::VariantReader: VCF header line is malformed.");
 				}
 			}
+			this->nr_paths = tokens.size();
 			// add one for reference path
-			this->nr_paths = tokens.size() - 9 + 1;
+			if (add_reference) this->nr_paths += 1;
 			continue;
 		}
 		if (tokens.size() < 10) {
@@ -126,7 +128,8 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 		}
 		parse_line(alleles, tokens[4], ',');
 		// construct paths
-		vector<unsigned char> paths = {(unsigned char) 0};
+		vector<unsigned char> paths = {};
+		if (add_reference) paths.push_back((unsigned char) 0);
 		for (size_t i = 9; i < tokens.size(); ++i) {
 			// make sure all genotypes are phased
 			if (tokens[i].find('/') != string::npos) {
@@ -336,7 +339,7 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 			info << "AF=";
 			for (unsigned int a = 1; a < nr_alleles; ++a) {
 				if (a > 1) info << ",";
-				info << setprecision(6) << v.allele_frequency(a, true);				
+				info << setprecision(6) << v.allele_frequency(a, this->add_reference);				
 			}
 			this->genotyping_outfile << info.str() << "\t"; // INFO
 			this->genotyping_outfile << "GT:GQ:GL:UK:KC" << "\t"; // FORMAT
@@ -422,7 +425,7 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 			info << "AF=";
 			for (unsigned int a = 1; a < nr_alleles; ++a) {
 				if (a > 1) info << ",";
-				info << setprecision(6) << v.allele_frequency(a, true);				
+				info << setprecision(6) << v.allele_frequency(a, this->add_reference);				
 			}
 			this->phasing_outfile << info.str() << "\t"; // INFO
 			this->phasing_outfile << "GT:UK:KC" << "\t"; // FORMAT

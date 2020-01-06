@@ -11,7 +11,7 @@
 
 class VariantReader {
 public:
-	VariantReader (std::string filename, std::string reference_filename, size_t kmer_size, std::string sample = "sample");
+	VariantReader (std::string filename, std::string reference_filename, size_t kmer_size, bool add_reference, std::string sample = "sample");
 	/**  writes all path segments (allele sequences + reference sequences in between)
 	*    to the given file.
 	**/
@@ -36,6 +36,7 @@ private:
 	size_t kmer_size;
 	size_t nr_paths;
 	size_t nr_variants;
+	bool add_reference;
 	std::string sample;
 	std::ofstream genotyping_outfile;
 	std::ofstream phasing_outfile;

@@ -9,7 +9,7 @@ using namespace std;
 TEST_CASE("VariantReader get_allele_string", "[VariantReader get_allele_string]") {
 	string vcf = "../tests/data/small1.vcf";
 	string fasta = "../tests/data/small1.fa";
-	VariantReader v(vcf, fasta, 10);
+	VariantReader v(vcf, fasta, 10, true);
 	REQUIRE(v.nr_of_genomic_kmers() == 2516);
 	REQUIRE(v.get_kmer_size() == 10);
 	REQUIRE(v.size_of("chrA") == 7);
@@ -48,7 +48,7 @@ TEST_CASE("VariantReader get_allele_string", "[VariantReader get_allele_string]"
 TEST_CASE("VariantReader get_overhang", "[VariantReader get_overhang]") {
 	string vcf = "../tests/data/small1.vcf";
 	string fasta = "../tests/data/small1.fa";
-	VariantReader v(vcf, fasta, 10);
+	VariantReader v(vcf, fasta, 10, false);
 
 	DnaSequence left_overhang;
 	DnaSequence right_overhang;
@@ -73,7 +73,7 @@ TEST_CASE("VariantReader write_path_segments", "[VariantReader write_path_segmen
 	string fasta = "../tests/data/small1.fa";
 
 	// read variants from VCF file
-	VariantReader v(vcf, fasta, 10);
+	VariantReader v(vcf, fasta, 10, false);
 	v.write_path_segments("../tests/data/small1-segments.fa");
 
 	// compare reference segments to expected sequences
@@ -121,7 +121,7 @@ TEST_CASE("VariantReader write_path_segments_no_variants", "[VariantReader write
 	string fasta = "../tests/data/small1.fa";
 
 	// read variants from VCF
-	VariantReader v(vcf, fasta, 10);
+	VariantReader v(vcf, fasta, 10, false);
 	v.write_path_segments("../tests/data/empty-segments.fa");
 	vector<string> computed = {};
 	vector<string> expected = {};
@@ -172,7 +172,7 @@ TEST_CASE("VariantReader write_genotypes_of", "[VariantReader write_genotypes_of
 	string fasta = "../tests/data/small1.fa";
 
 	// read variants from VCF file
-	VariantReader v(vcf, fasta, 10, "HG0");
+	VariantReader v(vcf, fasta, 10, false, "HG0");
 
 	vector<string> chromosomes;
 	vector<string> expected_chromosomes = {"chrA", "chrB"};
@@ -232,15 +232,15 @@ TEST_CASE("VariantReader broken_vcfs", "[VariantReader broken_vcfs]") {
 	string malformatted = "../tests/data/malformatted-vcf1.vcf";
 	string fasta = "../tests/data/small1.fa";
 
-	CHECK_THROWS(VariantReader(no_paths, fasta, 10));
-	CHECK_THROWS(VariantReader(malformatted, fasta, 10));
+	CHECK_THROWS(VariantReader(no_paths, fasta, 10, false));
+	CHECK_THROWS(VariantReader(malformatted, fasta, 10, false));
 }
 
 TEST_CASE("VariantReader no-alt-alleles", "[VariantReader no-alt-alleles]") {
 	string vcf = "../tests/data/no-alt-alleles.vcf";
 	string fasta = "../tests/data/small1.fa";
 
-	VariantReader v (vcf, fasta, 10);
+	VariantReader v (vcf, fasta, 10, false);
 	// should have skipped variant for which no alt alleles are given
 	REQUIRE(v.get_variants_on_chromosome("chrA").size() == 1);	
 }
@@ -249,7 +249,7 @@ TEST_CASE("VariantReader overlapping variants", "[VariantReader overlapping vari
 	string vcf = "../tests/data/overlapping-variants.vcf";
 	string fasta = "../tests/data/small1.fa";
 
-	VariantReader v (vcf, fasta, 10);
+	VariantReader v (vcf, fasta, 10, false);
 	// should have skipped variant that is contained in another
 	REQUIRE(v.get_variants_on_chromosome("chrA").size() == 1);
 }

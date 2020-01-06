@@ -83,6 +83,7 @@ int main (int argc, char* argv[])
 	long double regularization = 0.00001L;
 	bool count_only_graph = true;
 	bool ignore_imputed = false;
+	bool add_reference = false;
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
@@ -101,6 +102,7 @@ int main (int argc, char* argv[])
 	argument_parser.add_optional_argument('m', "0.00001", "regularization constant for copynumber probabilities");
 	argument_parser.add_flag_argument('c', "count all read kmers instead of only those located in graph.");
 	argument_parser.add_flag_argument('u', "output genotype ./. for variants not covered by any unique kmers.");
+	argument_parser.add_flag_argument('a', "add reference as additional path.");
 
 	try {
 		argument_parser.parse(argc, argv);
@@ -125,6 +127,7 @@ int main (int argc, char* argv[])
 	regularization = stold(argument_parser.get_argument('m'));
 	count_only_graph = !argument_parser.get_flag('c');
 	ignore_imputed = argument_parser.get_flag('u');
+	add_reference = argument_parser.get_flag('a');
 
 	// print info
 	cerr << "Files and parameters used:" << endl;
@@ -132,7 +135,7 @@ int main (int argc, char* argv[])
 
 	// read allele sequences and unitigs inbetween, write them into file
 	cerr << "Determine allele sequences ..." << endl;
-	VariantReader variant_reader (vcffile, reffile, kmersize, sample_name);
+	VariantReader variant_reader (vcffile, reffile, kmersize, add_reference, sample_name);
 	string segment_file = outname + "_path_segments.fasta";
 	cerr << "Write path segments to file: " << segment_file << " ..." << endl;
 	variant_reader.write_path_segments(segment_file);
