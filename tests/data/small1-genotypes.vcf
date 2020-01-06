@@ -1,16 +1,19 @@
 ##fileformat=VCFv4.2
-##fileDate=20190703
+##fileDate=20191217
+##INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency">
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype quality: phred scaled probability that the genotype is wrong.">
-##FORMAT=<ID=GL,Number=G,Type=Integer,Description="Comma-separated log10-scaled genotype likelihoods for absent, heterozygous, homozygous.">
+##FORMAT=<ID=GL,Number=G,Type=Float,Description="Comma-separated log10-scaled genotype likelihoods for absent, heterozygous, homozygous.">
+##FORMAT=<ID=UK,Number=1,Type=Integer,Description="Number of unique kmers used for genotyping.">
+##FORMAT=<ID=KC,Number=1,Type=Float,Description="Local kmer coverage.">
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	HG0
-chrA	101	.	A	T	.	PASS	.	GT:GQ:GL	0/1:5:-0.69897,-0.1549,-1
-chrA	151	.	C	GGGG	.	PASS	.	GT:GQ:GL	0/1:5:-0.69897,-0.1549,-1
-chrA	161	.	G	T	.	PASS	.	GT:GQ:GL	1/1:3:-0.69897,-0.699,-0.2218
-chrA	166	.	GAG	T	.	PASS	.	GT:GQ:GL	0/1:5:-0.69897,-0.1549,-1
-chrA	501	.	C	T	.	PASS	.	GT:GQ:GL	0/1:5:-0.69897,-0.1549,-1
-chrA	601	.	T	C	.	PASS	.	GT:GQ:GL	0/1:5:-0.69897,-0.1549,-1
-chrA	702	.	GA	TC	.	PASS	.	GT:GQ:GL	0/1:5:-0.69897,-0.1549,-1
-chrA	803	.	A	G	.	PASS	.	GT:GQ:GL	0/1:5:-0.69897,-0.1549,-1
-chrB	111	.	C	T	.	PASS	.	GT:GQ:GL	1/1:6:-1,-1,-0.09691
-chrB	161	.	G	T	.	PASS	.	GT:GQ:GL	1/1:6:-1,-1,-0.09691
+chrA	101	.	A	T	.	PASS	AF=0.4	GT:GQ:GL:UK:KC	0/1:5:-0.69897,-0.1549,-1:0:0
+chrA	151	.	C	GGGG	.	PASS	AF=0.4	GT:GQ:GL:UK:KC	0/1:5:-0.69897,-0.1549,-1:0:0
+chrA	161	.	G	T	.	PASS	AF=0.4	GT:GQ:GL:UK:KC	1/1:3:-0.69897,-0.699,-0.2218:3:0
+chrA	166	.	GAG	T	.	PASS	AF=0.2	GT:GQ:GL:UK:KC	0/1:5:-0.69897,-0.1549,-1:3:0
+chrA	501	.	C	T	.	PASS	AF=0.4	GT:GQ:GL:UK:KC	0/1:5:-0.69897,-0.1549,-1:0:0
+chrA	601	.	T	C	.	PASS	AF=0.4	GT:GQ:GL:UK:KC	0/1:5:-0.69897,-0.1549,-1:0:0
+chrA	702	.	GA	TC	.	PASS	AF=0.4	GT:GQ:GL:UK:KC	0/1:5:-0.69897,-0.1549,-1:0:0
+chrA	803	.	A	G	.	PASS	AF=0.4	GT:GQ:GL:UK:KC	0/1:5:-0.69897,-0.1549,-1:0:0
+chrB	111	.	C	T	.	PASS	AF=0.4	GT:GQ:GL:UK:KC	1/1:6:-1,-1,-0.09691:0:0
+chrB	161	.	G	T	.	PASS	AF=0.4	GT:GQ:GL:UK:KC	1/1:6:-1,-1,-0.09691:0:0

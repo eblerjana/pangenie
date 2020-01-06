@@ -8,7 +8,8 @@ using namespace std;
 GenotypingResult::GenotypingResult()
 	:haplotype_1(0),
 	 haplotype_2(0),
-	 nr_unique_kmers(0)
+	 nr_unique_kmers(0),
+	 coverage(0.0)
 {}
 
 pair<unsigned char, unsigned char> genotype_from_alleles (unsigned char allele1, unsigned char allele2) {
@@ -133,4 +134,12 @@ ostream& operator<<(ostream& os, const GenotypingResult& res) {
 		os << it->first.first << "/" << it->first.second << ": " << it->second << endl;
 	}
 	return os;
+}
+
+void GenotypingResult::set_coverage(double coverage) {
+	this->coverage = coverage;
+}
+	
+double GenotypingResult::get_coverage() const {
+	return this->coverage;
 }

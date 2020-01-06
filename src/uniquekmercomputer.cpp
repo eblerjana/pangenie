@@ -30,16 +30,7 @@ void unique_kmers(DnaSequence& allele, unsigned char index, size_t kmer_size, ma
 	}
 }
 
-
-
-UniqueKmerComputer::UniqueKmerComputer (KmerCounter* genomic_kmers, KmerCounter* read_kmers, VariantReader* variants, string chromosome, size_t kmer_coverage)
-	:genomic_kmers(genomic_kmers),
-	 read_kmers(read_kmers),
-	 variants(variants),
-	 chromosome(chromosome),
-	 kmer_coverage(kmer_coverage)
-{
-	// TODO: find a proper way to adjust this parameter!
+double get_error_parameter(double kmer_coverage) {
 	double cn0;
 	if (kmer_coverage < 10.0) {
 		cn0 = 0.99;
@@ -50,20 +41,36 @@ UniqueKmerComputer::UniqueKmerComputer (KmerCounter* genomic_kmers, KmerCounter*
 	} else {
 		cn0 = 0.8;
 	}
-	double cn1 = kmer_coverage / 2.0;
-	double cn2 = kmer_coverage;
-//	cerr << "Using Poisson distributions with parameters: " << cn0 << " " << cn1 << " " << cn2 << endl;
-	this->probability.set_parameters(cn0, cn1 , cn2);
+	return cn0;
+}
+
+UniqueKmerComputer::UniqueKmerComputer (KmerCounter* genomic_kmers, KmerCounter* read_kmers, VariantReader* variants, string chromosome, size_t kmer_coverage)
+	:genomic_kmers(genomic_kmers),
+	 read_kmers(read_kmers),
+	 variants(variants),
+	 chromosome(chromosome),
+	 kmer_coverage(kmer_coverage)
+{
 	jellyfish::mer_dna::k(this->variants->get_kmer_size());
 }
 
-void UniqueKmerComputer::compute_unique_kmers(vector<UniqueKmers*>* result, long double regularization_const) const {
+void UniqueKmerComputer::compute_unique_kmers(vector<UniqueKmers*>* result, long double regularization_const) {
 	size_t nr_variants = this->variants->size_of(this->chromosome);
 	for (size_t v = 0; v < nr_variants; ++v) {
+
+		// set parameters of distributions
+		// TODO call local coverage computation
+		size_t kmer_size = this->variants->get_kmer_size();
+		double kmer_coverage = compute_local_coverage(this->chromosome, v, 2*kmer_size);
+		double cn0 = get_error_parameter(kmer_coverage);
+		double cn1 = kmer_coverage / 2.0;
+		double cn2 = kmer_coverage;
+		this->probability.set_parameters(cn0, cn1, cn2);
 		
 		map <jellyfish::mer_dna, vector<unsigned char>> occurences;
 		const Variant& variant = this->variants->get_variant(this->chromosome, v);
 		UniqueKmers* u = new UniqueKmers(v, variant.get_start_position());
+		u->set_coverage(kmer_coverage);
 		size_t nr_alleles = variant.nr_of_alleles();
 
 		// insert empty alleles (to also capture paths for which no unique kmers exist)
@@ -75,7 +82,6 @@ void UniqueKmerComputer::compute_unique_kmers(vector<UniqueKmers*>* result, long
 		for (unsigned char a = 0; a < nr_alleles; ++a) {
 			// enumerate kmers and identify those with copynumber 1
 			DnaSequence allele = variant.get_allele_sequence(a);
-			size_t kmer_size = this->variants->get_kmer_size();
 			unique_kmers(allele, a, kmer_size, occurences);
 		}
 
@@ -146,5 +152,37 @@ void UniqueKmerComputer::compute_empty(vector<UniqueKmers*>* result) const {
 			u->insert_path(p,a);
 		}
 		result->push_back(u);
+	}
+}
+
+double UniqueKmerComputer::compute_local_coverage(string chromosome, size_t var_index, size_t length) {
+	DnaSequence left_overhang;
+	DnaSequence right_overhang;
+	double total_coverage = 0;
+	double total_kmers = 0;
+
+	this->variants->get_left_overhang(chromosome, var_index, length, left_overhang);
+	this->variants->get_right_overhang(chromosome, var_index, length, right_overhang);
+
+	size_t kmer_size = this->variants->get_kmer_size();
+	map <jellyfish::mer_dna, vector<unsigned char>> occurences;
+	unique_kmers(left_overhang, 0, kmer_size, occurences);
+	unique_kmers(right_overhang, 1, kmer_size, occurences);
+
+	for (auto& kmer : occurences) {
+		size_t genomic_count = this->genomic_kmers->getKmerAbundance(kmer.first);
+		if (genomic_count == 1) {
+			size_t read_count = this->read_kmers->getKmerAbundance(kmer.first);
+			// ignore too extreme counts
+			if ( (read_count < (this->kmer_coverage/4)) || (read_count > (this->kmer_coverage*4)) ) continue;
+			total_coverage += read_count;
+			total_kmers += 1;
+		}
+	}
+	// in case no unique kmers were found, use constant kmer coverage
+	if (total_kmers > 0) {
+		return total_coverage / total_kmers;
+	} else {
+		return this->kmer_coverage;
 	}
 }

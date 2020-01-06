@@ -25,7 +25,7 @@ TEST_CASE("VariantReader get_allele_string", "[VariantReader get_allele_string]"
 	REQUIRE(v.get_variant("chrA", 2).get_allele_string(0) == "GAAGCCAGTGCCCCGAGACGGCCAAA");
 	REQUIRE(v.get_variant("chrA", 2).get_allele_string(1) == "GAAGCCAGTTCCCCGAGACGGCCAAA");
 	REQUIRE(v.get_variant("chrA", 2).get_allele_string(2) == "GAAGCCAGTTCCCCTACGGCCAAA");
-	REQUIRE(v.get_variant("chrA", 2).nr_of_paths() == 4);
+	REQUIRE(v.get_variant("chrA", 2).nr_of_paths() == 5);
 
 	REQUIRE(v.get_variant("chrA", 3).get_allele_string(0) == "ACGTCCGTTCAGCCTTAGC");
 	REQUIRE(v.get_variant("chrA", 3).get_allele_string(1) == "ACGTCCGTTTAGCCTTAGC");
@@ -43,6 +43,29 @@ TEST_CASE("VariantReader get_allele_string", "[VariantReader get_allele_string]"
 	REQUIRE(v.get_variant("chrB", 1).get_allele_string(0) == "GAGTATTTTGATCATAAAT");
 
 	v.write_path_segments("/MMCI/TM/scratch/jebler/pgg-typer/pggtyper/pggtyper/tests/data/small1-segments.fa");
+}
+
+TEST_CASE("VariantReader get_overhang", "[VariantReader get_overhang]") {
+	string vcf = "../tests/data/small1.vcf";
+	string fasta = "../tests/data/small1.fa";
+	VariantReader v(vcf, fasta, 10);
+
+	DnaSequence left_overhang;
+	DnaSequence right_overhang;
+	v.get_left_overhang("chrA", 0, 20, left_overhang);
+	v.get_right_overhang("chrA", 0, 20, right_overhang);
+	REQUIRE(left_overhang.to_string() == "TTTGGTGATCTGGAATTCCG");
+	REQUIRE(right_overhang.to_string() == "CATAAGTTATGCTAAAAAAT");
+
+	v.get_left_overhang("chrA", 1, 20, left_overhang);
+	v.get_right_overhang("chrA", 1, 20, right_overhang);
+	REQUIRE(left_overhang.to_string() == "GTCTGTTAAGACCTTAGCTA");
+	REQUIRE(right_overhang.to_string() == "GAAGCCAGT");
+
+	v.get_left_overhang("chrA", 2, 20, left_overhang);
+	v.get_right_overhang("chrA", 2, 20, right_overhang);
+	REQUIRE(left_overhang.to_string() == "GAAGCCAGT");
+	REQUIRE(right_overhang.to_string() == "ACGGCCAAAACATACCATTT");
 }
 
 TEST_CASE("VariantReader write_path_segments", "[VariantReader write_path_segments]") {

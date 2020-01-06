@@ -1,14 +1,16 @@
 ##fileformat=VCFv4.2
-##fileDate=20190703
+##fileDate=20191217
+##INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency">
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=UK,Number=1,Type=Integer,Description="Number of unique kmers used for genotyping.">
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	HG0
-chrA	101	.	A	T	.	PASS	.	GT	0|0
-chrA	151	.	C	GGGG	.	PASS	.	GT	0|0
-chrA	161	.	G	T	.	PASS	.	GT	1|1
-chrA	166	.	GAG	T	.	PASS	.	GT	1|0
-chrA	501	.	C	T	.	PASS	.	GT	0|0
-chrA	601	.	T	C	.	PASS	.	GT	0|0
-chrA	702	.	GA	TC	.	PASS	.	GT	0|0
-chrA	803	.	A	G	.	PASS	.	GT	0|0
-chrB	111	.	C	T	.	PASS	.	GT	0|0
-chrB	161	.	G	T	.	PASS	.	GT	0|0
+chrA	101	.	A	T	.	PASS	AF=0.4	GT:UK:KC	0|0:0:0
+chrA	151	.	C	GGGG	.	PASS	AF=0.4	GT:UK:KC	0|0:0:0
+chrA	161	.	G	T	.	PASS	AF=0.4	GT:UK:KC	1|1:3:0
+chrA	166	.	GAG	T	.	PASS	AF=0.2	GT:UK:KC	1|0:3:0
+chrA	501	.	C	T	.	PASS	AF=0.4	GT:UK:KC	0|0:0:0
+chrA	601	.	T	C	.	PASS	AF=0.4	GT:UK:KC	0|0:0:0
+chrA	702	.	GA	TC	.	PASS	AF=0.4	GT:UK:KC	0|0:0:0
+chrA	803	.	A	G	.	PASS	AF=0.4	GT:UK:KC	0|0:0:0
+chrB	111	.	C	T	.	PASS	AF=0.4	GT:UK:KC	0|0:0:0
+chrB	161	.	G	T	.	PASS	AF=0.4	GT:UK:KC	0|0:0:0

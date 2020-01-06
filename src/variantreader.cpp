@@ -80,7 +80,8 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 					throw runtime_error("VariantReader::VariantReader: VCF header line is malformed.");
 				}
 			}
-			this->nr_paths = tokens.size() - 9;
+			// add one for reference path
+			this->nr_paths = tokens.size() - 9 + 1;
 			continue;
 		}
 		if (tokens.size() < 10) {
@@ -125,13 +126,13 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 		}
 		parse_line(alleles, tokens[4], ',');
 		// construct paths
-		vector<unsigned char> paths;
+		vector<unsigned char> paths = {(unsigned char) 0};
 		for (size_t i = 9; i < tokens.size(); ++i) {
 			// make sure all genotypes are phased
 			if (tokens[i].find('/') != string::npos) {
 				throw runtime_error("VariantReader::VariantReader: Found unphased genotype.");
 			}
-			vector<string> p;
+			vector<string> p ;
 			parse_line(p, tokens[i], '|');
 			for (string& s : p){
 				paths.push_back( (unsigned char) atoi(s.c_str()));
@@ -261,6 +262,7 @@ void VariantReader::open_genotyping_outfile(string filename) {
 	this->genotyping_outfile << "##FORMAT=<ID=GQ,Number=1,Type=Integer,Description=\"Genotype quality: phred scaled probability that the genotype is wrong.\">" << endl;
 	this->genotyping_outfile << "##FORMAT=<ID=GL,Number=G,Type=Float,Description=\"Comma-separated log10-scaled genotype likelihoods for absent, heterozygous, homozygous.\">" << endl;
 	this->genotyping_outfile << "##FORMAT=<ID=UK,Number=1,Type=Integer,Description=\"Number of unique kmers used for genotyping.\">" << endl;
+	this->genotyping_outfile << "##FORMAT=<ID=KC,Number=1,Type=Float,Description=\"Local kmer coverage.\">" << endl;
 	this->genotyping_outfile << "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t" << this->sample << endl; 
 }
 
@@ -279,6 +281,7 @@ void VariantReader::open_phasing_outfile(string filename) {
 	this->phasing_outfile << "##INFO=<ID=AF,Number=A,Type=Float,Description=\"Allele Frequency\">" << endl;
 	this->phasing_outfile << "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">" << endl;
 	this->phasing_outfile << "##FORMAT=<ID=UK,Number=1,Type=Integer,Description=\"Number of unique kmers used for genotyping.\">" << endl;
+	this->genotyping_outfile << "##FORMAT=<ID=KC,Number=1,Type=Float,Description=\"Local kmer coverage.\">" << endl;
 	this->phasing_outfile << "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t" << this->sample << endl;
 }
 
@@ -336,7 +339,7 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 				info << setprecision(6) << v.allele_frequency(a);				
 			}
 			this->genotyping_outfile << info.str() << "\t"; // INFO
-			this->genotyping_outfile << "GT:GQ:GL:UK" << "\t"; // FORMAT
+			this->genotyping_outfile << "GT:GQ:GL:UK:KC" << "\t"; // FORMAT
 
 			// determine computed genotype
 			pair<int,int> genotype = singleton_likelihoods.at(j).get_likeliest_genotype();
@@ -367,7 +370,8 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 				oss << "," << setprecision(4) << log10(likelihoods[j]);
 			}
 			this->genotyping_outfile << oss.str(); // GL
-			this->genotyping_outfile << ":" << singleton_likelihoods.at(j).get_nr_unique_kmers() << endl; // UK
+			this->genotyping_outfile << ":" << singleton_likelihoods.at(j).get_nr_unique_kmers(); // UK
+			this->genotyping_outfile << ":" << setprecision(2) << singleton_likelihoods.at(j).get_coverage() << endl; // KC
 		}
 	}
 }
@@ -421,7 +425,7 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 				info << setprecision(6) << v.allele_frequency(a);				
 			}
 			this->phasing_outfile << info.str() << "\t"; // INFO
-			this->phasing_outfile << "GT:UK" << "\t"; // FORMAT
+			this->phasing_outfile << "GT:UK:KC" << "\t"; // FORMAT
 
 			// determine phasing
 			if (ignore_imputed && (singleton_likelihoods.at(j).get_nr_unique_kmers()== 0)){
@@ -430,7 +434,8 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 				pair<unsigned char,unsigned char> haplotype = singleton_likelihoods.at(j).get_haplotype();
 				this->phasing_outfile << (unsigned int) haplotype.first << "|" << (unsigned int) haplotype.second; // GT (phased)
 			}
-			this->phasing_outfile << ":" << singleton_likelihoods.at(j).get_nr_unique_kmers() << endl; // UK
+			this->phasing_outfile << ":" << singleton_likelihoods.at(j).get_nr_unique_kmers(); // UK
+			this->phasing_outfile << ":" << setprecision(2) << singleton_likelihoods.at(j).get_coverage() << endl; // KC
 		}
 	}
 }
@@ -447,4 +452,24 @@ void VariantReader::close_phasing_outfile() {
 
 size_t VariantReader::nr_of_genomic_kmers() const {
 	return this->fasta_reader.get_total_kmers(this->kmer_size);
+}
+
+void VariantReader::get_left_overhang(std::string chromosome, size_t index, size_t length, DnaSequence& result) const {
+	size_t cur_start = this->variants_per_chromosome.at(chromosome).at(index).get_start_position();
+	size_t prev_end = 0;
+	if (index > 0) prev_end = this->variants_per_chromosome.at(chromosome).at(index-1).get_end_position();
+	size_t overhang_start = cur_start - length;
+	if (overhang_start < prev_end) overhang_start = prev_end;
+	size_t overhang_end = cur_start;
+	this->fasta_reader.get_subsequence(chromosome, overhang_start, overhang_end, result);
+}
+
+void VariantReader::get_right_overhang(std::string chromosome, size_t index, size_t length, DnaSequence& result) const {
+	size_t cur_end = this->variants_per_chromosome.at(chromosome).at(index).get_end_position();
+	size_t next_start = this->fasta_reader.get_size_of(chromosome);
+	if (index < (this->variants_per_chromosome.at(chromosome).size() - 1)) next_start = this->variants_per_chromosome.at(chromosome).at(index+1).get_start_position();
+	size_t overhang_end = cur_end + length;
+	if (overhang_end > next_start) overhang_end = next_start;
+	size_t overhang_start = cur_end;
+	this->fasta_reader.get_subsequence(chromosome, overhang_start, overhang_end, result);
 }

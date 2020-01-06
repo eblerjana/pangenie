@@ -38,11 +38,15 @@ public:
 	/** set number of unique kmers **/
 	size_t set_nr_unique_kmers(size_t nr_unique);
 	friend std::ostream& operator<<(std::ostream& os, const GenotypingResult& res);
+	void set_coverage(double coverage);
+	double get_coverage() const;
+
 private:
 	/** map genotype -> likelihood. genotype alleles are ordered in ascending order **/
 	std::map < std::pair<unsigned char,unsigned char>, long double > genotype_to_likelihood;
 	unsigned char haplotype_1;
 	unsigned char haplotype_2;
 	size_t nr_unique_kmers;
+	double coverage;
 };
 #endif // GENOTYPINGRESULT_HPP

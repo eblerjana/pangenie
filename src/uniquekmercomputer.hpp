@@ -18,7 +18,7 @@ public:
 	**/
 	UniqueKmerComputer (KmerCounter* genomic_kmers, KmerCounter* read_kmers, VariantReader* variants, std::string chromosome, size_t kmer_coverage);
 	/** generates UniqueKmers object for each position, ownership of vector is transferred to the caller. **/
-	void compute_unique_kmers(std::vector<UniqueKmers*>* result, long double regularization_const = 0.0L) const;
+	void compute_unique_kmers(std::vector<UniqueKmers*>* result, long double regularization_const = 0.0L);
 	/** generates empty UniwueKmers objects for each position (no kmers, only paths). Ownership of vector is transferred to caller. **/
 	void compute_empty(std::vector<UniqueKmers*>* result) const;
 
@@ -29,6 +29,13 @@ private:
 	std::string chromosome;
 	ProbabilityComputer probability;
 	size_t kmer_coverage;
+	/** compute local coverage in given interval based on unique kmers 
+	* @param chromosome chromosome
+	* @param var_index variant index
+	* @param length how far to go left and right of the variant
+	* @returns computed coverage
+	**/
+	double compute_local_coverage(std::string chromosome, size_t var_index, size_t length);
 };
 
 #endif // UNIQUEKMERCOMPUTER_HPP

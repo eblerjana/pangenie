@@ -7,7 +7,8 @@ using namespace std;
 UniqueKmers::UniqueKmers(size_t variant_id, size_t variant_position)
 	:variant_id(variant_id),
 	 variant_pos(variant_position),
-	 current_index(0)
+	 current_index(0),
+	 local_coverage(0.0)
 {}
 
 size_t UniqueKmers::get_variant_index() {
@@ -97,4 +98,12 @@ ostream& operator<< (ostream& stream, const UniqueKmers& uk) {
 		stream << it->first << " covers allele " << it->second << endl;
 	}
 	return stream;
+}
+
+void UniqueKmers::set_coverage(double local_coverage) {
+	this->local_coverage = local_coverage;
+}
+
+double UniqueKmers::get_coverage() const {
+	return this->local_coverage;
 }

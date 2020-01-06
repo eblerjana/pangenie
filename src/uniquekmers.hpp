@@ -41,6 +41,8 @@ public:
 	/** get all unique alleles covered at this position **/
 	void get_allele_ids(std::vector<unsigned char>& a);
 	friend std::ostream& operator<< (std::ostream& stream, const UniqueKmers& uk);
+	void set_coverage(double local_coverage);
+	double get_coverage() const;
 
 private:
 	size_t variant_id;
@@ -50,6 +52,7 @@ private:
 	std::map<unsigned char, KmerPath> alleles;
 	std::map<size_t, unsigned char> path_to_allele;
 	CopyNumberAssignment combine_paths(unsigned char allele_id1, unsigned char allele_id2);
+	double local_coverage;
 	friend class EmissionProbabilityComputer;
 };
 # endif // UNIQUEKMERS_HPP

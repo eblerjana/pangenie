@@ -28,6 +28,9 @@ public:
 	void close_genotyping_outfile();
 	void close_phasing_outfile();
 	size_t nr_of_genomic_kmers() const;
+	void get_left_overhang(std::string chromosome, size_t index, size_t length, DnaSequence& result) const;
+	void get_right_overhang(std::string chromosome, size_t index, size_t length, DnaSequence& result) const;
+
 private:
 	FastaReader fasta_reader;
 	size_t kmer_size;
