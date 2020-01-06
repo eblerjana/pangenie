@@ -408,13 +408,21 @@ TEST_CASE("Variant allele_frequency", "Variant allele_frequency") {
 	REQUIRE ( doubles_equal(v1.allele_frequency(0), 1.0/3.0) );
 	REQUIRE ( doubles_equal(v1.allele_frequency(1), 1.0/3.0) );
 	REQUIRE ( doubles_equal(v1.allele_frequency(2), 1.0/3.0) );
+	REQUIRE ( doubles_equal(v1.allele_frequency(0, true), 0.0) );
+	REQUIRE ( doubles_equal(v1.allele_frequency(1, true), 0.5) );
+	REQUIRE ( doubles_equal(v1.allele_frequency(2, true), 0.5) );
 
 	Variant v2("AAA", "TGC", "chr1", 4, 5, {"A", "G"}, {0,0,0,0,0,0,1,0,0,0});
 	REQUIRE ( doubles_equal(v2.allele_frequency(0), 0.9) );
 	REQUIRE ( doubles_equal(v2.allele_frequency(1), 0.1) );
+	REQUIRE ( doubles_equal(v2.allele_frequency(0, true), 8.0/9.0) );
+	REQUIRE ( doubles_equal(v2.allele_frequency(1, true), 1.0/9.0) );
 
 	Variant v3("AAA", "TGC", "chr1", 4, 5, {"A", "G", "C"}, {0,0,1,0,2,0,1,0,0,0});
 	REQUIRE ( doubles_equal(v3.allele_frequency(0), 0.7) );
 	REQUIRE ( doubles_equal(v3.allele_frequency(1), 0.2) );
 	REQUIRE ( doubles_equal(v3.allele_frequency(2), 0.1) );
+	REQUIRE ( doubles_equal(v3.allele_frequency(0, true), 6.0/9.0) );
+	REQUIRE ( doubles_equal(v3.allele_frequency(1, true), 2.0/9.0) );
+	REQUIRE ( doubles_equal(v3.allele_frequency(2, true), 1.0/9.0) );
 }

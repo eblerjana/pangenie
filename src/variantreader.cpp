@@ -336,7 +336,7 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 			info << "AF=";
 			for (unsigned int a = 1; a < nr_alleles; ++a) {
 				if (a > 1) info << ",";
-				info << setprecision(6) << v.allele_frequency(a);				
+				info << setprecision(6) << v.allele_frequency(a, true);				
 			}
 			this->genotyping_outfile << info.str() << "\t"; // INFO
 			this->genotyping_outfile << "GT:GQ:GL:UK:KC" << "\t"; // FORMAT
@@ -422,7 +422,7 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 			info << "AF=";
 			for (unsigned int a = 1; a < nr_alleles; ++a) {
 				if (a > 1) info << ",";
-				info << setprecision(6) << v.allele_frequency(a);				
+				info << setprecision(6) << v.allele_frequency(a, true);				
 			}
 			this->phasing_outfile << info.str() << "\t"; // INFO
 			this->phasing_outfile << "GT:UK:KC" << "\t"; // FORMAT

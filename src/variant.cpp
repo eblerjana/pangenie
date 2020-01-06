@@ -426,10 +426,19 @@ bool operator!=(const Variant& v1, const Variant& v2) {
 	return !(v1 == v2);
 }
 
-float Variant::allele_frequency(unsigned char allele_index) const {
+float Variant::allele_frequency(unsigned char allele_index, bool ignore_ref_path) const {
+	if (this->paths.size() == 0) {
+		return 0.0;
+	}
 	float freq = 0.0;
 	for (auto a : this->paths) {
 		if (a == allele_index) freq += 1;
 	}
-	return freq / this->paths.size();
+	unsigned int size = paths.size();
+	if (ignore_ref_path) size -= 1.0;
+	if (ignore_ref_path && (allele_index == 0)) {
+		assert(freq >= 1.0);
+		freq -= 1.0;
+	}
+	return freq / size;
 }
