@@ -251,10 +251,12 @@ if __name__ == "__main__":
 	print("\n######################################################################################################################################")
 	print("                                          Evaluation by genotype quality thresholds")
 	print("######################################################################################################################################")
-	for quality in quality_thresholds:
-		if quality == 0:
-			continue
-		genotype_concordance.print_statistics(quality, 0.0, 0, tsv_output)
+
+	for uk_count in uk_thresholds:
+		for quality in quality_thresholds:
+			if uk_count == 0 and quality == 0:
+				continue
+			genotype_concordance.print_statistics(quality, 0.0, uk_count, tsv_output)
 
 	print("\n######################################################################################################################################")
 	print("                                          Evaluation by allele frequency thresholds")
@@ -264,13 +266,5 @@ if __name__ == "__main__":
 			continue
 		genotype_concordance.print_statistics(0, allele_freq, 0, tsv_output)
 
-	print("\n######################################################################################################################################")
-	print("                                          Evaluation by unique kmer count thresholds")
-	print("######################################################################################################################################")
-	for uk_count in uk_thresholds:
-		if uk_count == 0:
-			continue
-		genotype_concordance.print_statistics(0, 0.0, uk_count, tsv_output)
 
-	if not args.tsv is None:
-		tsv_output.close()
+

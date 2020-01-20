@@ -180,7 +180,7 @@ double UniqueKmerComputer::compute_local_coverage(string chromosome, size_t var_
 		}
 	}
 	// in case no unique kmers were found, use constant kmer coverage
-	if (total_kmers > 0) {
+	if ((total_kmers > 0) && (total_coverage > 0)){
 		return total_coverage / total_kmers;
 	} else {
 		return this->kmer_coverage;
