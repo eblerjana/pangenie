@@ -71,6 +71,8 @@ TEST_CASE("HMM get_genotyping_result", "[HMM get_genotyping_result]") {
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,1));
 		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
 		REQUIRE(result.get_nr_unique_kmers() == 2);
+		REQUIRE(result.get_allele_kmer_count(0) == 1);
+		REQUIRE(result.get_allele_kmer_count(1) == 1);
 	}
 
 	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
@@ -107,8 +109,9 @@ TEST_CASE("HMM get_genotyping_result_normalized", "[HMM get_genotyping_result_no
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,1));
 		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
 		REQUIRE(result.get_nr_unique_kmers() == 2);
+		REQUIRE(result.get_allele_kmer_count(0) == 1);
+		REQUIRE(result.get_allele_kmer_count(1) == 1);
 	}
-
 	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
 }
 
@@ -132,6 +135,8 @@ TEST_CASE("HMM no_alt_allele", "[HMM no_alt_allele]") {
 	REQUIRE(doubles_equal(hmm.get_genotyping_result()[0].get_genotype_likelihood(0,0), 1.0));
 	REQUIRE(doubles_equal(hmm.get_genotyping_result()[0].get_genotype_likelihood(0,1), 0.0));
 	REQUIRE(doubles_equal(hmm.get_genotyping_result()[0].get_genotype_likelihood(1,1), 0.0));
+	REQUIRE(hmm.get_genotyping_result()[0].get_allele_kmer_count(0) == 1);
+	REQUIRE(hmm.get_genotyping_result()[0].get_allele_kmer_count(1) == 1);
 }
 
 TEST_CASE("HMM no_ref_allele", "[HMM no_ref_allele]") {
@@ -152,6 +157,8 @@ TEST_CASE("HMM no_ref_allele", "[HMM no_ref_allele]") {
 	REQUIRE(doubles_equal(hmm.get_genotyping_result()[0].get_genotype_likelihood(1,1), 1.0));
 	REQUIRE(doubles_equal(hmm.get_genotyping_result()[0].get_genotype_likelihood(0,1), 0.0));
 	REQUIRE(doubles_equal(hmm.get_genotyping_result()[0].get_genotype_likelihood(0,0), 0.0));
+	REQUIRE(hmm.get_genotyping_result()[0].get_allele_kmer_count(0) == 1);
+	REQUIRE(hmm.get_genotyping_result()[0].get_allele_kmer_count(1) == 1);
 }
 
 TEST_CASE("HMM no_unique_kmers", "[HMM no_unique_kmers]") {
@@ -184,6 +191,8 @@ TEST_CASE("HMM no_unique_kmers", "[HMM no_unique_kmers]") {
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,1));
 		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
 		REQUIRE(result.get_nr_unique_kmers() == 0);
+		REQUIRE(result.get_allele_kmer_count(0) == 0);
+		REQUIRE(result.get_allele_kmer_count(1) == 0);
 	}
 
 	REQUIRE( compare_vectors(computed_likelihoods, expected_likelihoods) );
@@ -220,6 +229,8 @@ TEST_CASE("HMM no_unique_kmers2", "[HMM no_unique_kmers2]") {
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,1));
 		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
 		REQUIRE(result.get_nr_unique_kmers() == 0);
+		REQUIRE(result.get_allele_kmer_count(0) == 0);
+		REQUIRE(result.get_allele_kmer_count(1) == 0);
 	}
 
 	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
@@ -260,9 +271,11 @@ TEST_CASE("HMM no_unique_kmers3", "[HMM no_unique_kmers3]") {
 	vector<double> expected_likelihoods = {0.00264169937, 0.99471660125, 0.00264169937, 0.02552917716, 0.94894164567, 0.02552917716, 0.002961313333, 0.99407737333, 0.002961313333};
 	vector<unsigned char> expected_haplotype1 = {0,0,0};
 	vector<unsigned char> expected_haplotype2 = {1,1,1};
+	vector<vector<unsigned int>> expected_counts = { {1,1}, {0,0}, {1,1} };
 	vector<double> computed_likelihoods;
 	vector<unsigned char> computed_haplotype1;
 	vector<unsigned char> computed_haplotype2;
+	unsigned int index = 0;
 	for (auto result : hmm.get_genotyping_result()) {
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,0));
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,1));
@@ -270,6 +283,9 @@ TEST_CASE("HMM no_unique_kmers3", "[HMM no_unique_kmers3]") {
 		pair<unsigned char,unsigned char> ht = result.get_haplotype();
 		computed_haplotype1.push_back(ht.first);
 		computed_haplotype2.push_back(ht.second);
+		REQUIRE(result.get_allele_kmer_count(0) == expected_counts[index][0]);
+		REQUIRE(result.get_allele_kmer_count(1) == expected_counts[index][1]);
+		index += 1;
 	}
 
 	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods));
@@ -343,6 +359,8 @@ TEST_CASE("HMM only_kmers", "[HMM only_kmers]") {
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,1));
 		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
 		REQUIRE(result.get_nr_unique_kmers() == 2);
+		REQUIRE(result.get_allele_kmer_count(0) == 1);
+		REQUIRE(result.get_allele_kmer_count(1) == 1);
 	}
 
 	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
@@ -360,6 +378,7 @@ TEST_CASE("HMM emissions_zero", "[HMM emissions_zero]") {
 	UniqueKmers u2(0,2000);
 	u2.insert_path(0,0);
 	u2.insert_path(1,0);
+	u2.insert_empty_allele(1);
 	u2.insert_kmer(CopyNumber(1.0,0.0,0.0), a1);
 	u2.insert_kmer(CopyNumber(1.0,0.0,0.0), a1);
 
@@ -374,11 +393,17 @@ TEST_CASE("HMM emissions_zero", "[HMM emissions_zero]") {
 	vector<double> expected_likelihoods = {0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0};
 	vector<double> computed_likelihoods;
 
+	unsigned int index = 0;
+	vector<vector<unsigned int>> expected_counts = { {1,1}, {2,0}, {1,1} };
+
 	for (auto result : hmm.get_genotyping_result()) {
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,0));
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,1));
 		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
 		REQUIRE(result.get_nr_unique_kmers() == 2);
+		REQUIRE(result.get_allele_kmer_count(0) == expected_counts[index][0]);
+		REQUIRE(result.get_allele_kmer_count(1) == expected_counts[index][1]);
+		index += 1;
 	}
 
 	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
@@ -415,6 +440,8 @@ TEST_CASE("HMM underflow", "[HMM underflow]") {
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,1));
 		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
 		REQUIRE(result.get_nr_unique_kmers() == 2);
+		REQUIRE(result.get_allele_kmer_count(0) == 1);
+		REQUIRE(result.get_allele_kmer_count(1) == 1);
 	}
 
 	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );

@@ -30,6 +30,7 @@ public:
 	* @param allele_ids on which alleles this kmer occurs
 	**/
 	void insert_kmer(CopyNumber cn, std::vector<unsigned char>& allele_ids);
+	/** checks if kmer at index kmer_index is on path path_id **/
 	bool kmer_on_path(size_t kmer_index, size_t path_id) const;
 	CopyNumber get_copynumber_of(size_t kmer_index);
 	/** number of unique kmers **/
@@ -41,8 +42,12 @@ public:
 	/** get all unique alleles covered at this position **/
 	void get_allele_ids(std::vector<unsigned char>& a);
 	friend std::ostream& operator<< (std::ostream& stream, const UniqueKmers& uk);
+	/** set the local kmer coverage computed for this position **/
 	void set_coverage(double local_coverage);
+	/** returns the local kmer coverage **/
 	double get_coverage() const;
+	/** returns a map which contains the number of unique kmers covering each allele **/
+	std::map<unsigned char, unsigned int> kmers_on_alleles () const;
 
 private:
 	size_t variant_id;

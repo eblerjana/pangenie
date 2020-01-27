@@ -11,6 +11,8 @@ public:
 	KmerPath();
 	/** indicate presence of kmer at index **/
 	void set_position(size_t index);
+	/** compute number of kmers on this path **/
+	size_t nr_kmers() const;
 	friend CopyNumberAssignment operator+(KmerPath& p1, KmerPath& p2);
 };
 

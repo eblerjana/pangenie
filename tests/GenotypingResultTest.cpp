@@ -125,3 +125,20 @@ TEST_CASE("GenotypingResult get_nr_unique_kmers", "[GenotypingResult get_nr_uniq
 	r.set_nr_unique_kmers(5);
 	REQUIRE(r.get_nr_unique_kmers() == 5);
 }
+
+TEST_CASE("GenotypingResult set_allele_kmer_counts", "[GenotypingResult set_allele_kmer_counts]") {
+	GenotypingResult r;
+	map<unsigned char, unsigned int> counts = { {0, 3}, {1, 4}, {3, 10} };
+	r.set_allele_kmer_counts(counts);
+	for (auto it = counts.begin(); it != counts.end(); ++it) {
+		REQUIRE(r.get_allele_kmer_count(it->first) == it->second);
+	}
+}
+
+TEST_CASE("GenotypingResult get_allele_kmer_counts", "[Genotyping get_allele_kmer_counts]") {
+	GenotypingResult r;
+	// kmer counts have not been set, should all be zero
+	for (size_t i = 0; i < 5; ++i) {
+		REQUIRE(r.get_allele_kmer_count(i) == 0);
+	}
+}

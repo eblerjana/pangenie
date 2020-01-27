@@ -53,11 +53,18 @@ def extract_call(record, read_gl=False, read_qual=False):
 			# add frequency of reference allele
 			frequencies = [1.0 - sum(info_fields)] + info_fields
 			allele_frequency = min(frequencies)
-#			print(info_fields, frequencies, allele_frequency)
+
+		# determine minimum number of kmers that cover each allele
+		if 'AK' in record.INFO:
+			info_fields = record.INFO['AK']
+			# determine minimum of unique kmers
+			unique_kmers = min(info_fields)
 
 		# determine number of unique kmers
-		if 'UK' in record.FORMAT:
-			unique_kmers = int(record.samples[0]['UK'])
+#		if 'UK' in record.FORMAT:
+#			unique_kmers = int(record.samples[0]['UK'])
+
+		
 
 	return Position(record.CHROM, record.POS), Genotype(final_gt, binary_gt, likelihood, allele_frequency, unique_kmers)
 

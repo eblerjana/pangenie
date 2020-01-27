@@ -131,3 +131,76 @@ TEST_CASE("UniqueKmers insert_empty_path2", "[UniqueKmers insert_empty_path2]") 
 	REQUIRE(allele_ids.size() == 1);
 	REQUIRE(allele_ids[0] == 1);
 }
+
+TEST_CASE("UniqueKmers kmers_on_alleles1", "[UniqueKmers kmers_on_alleles1]"){
+	vector<CopyNumber> cns = {CopyNumber(0.05,0.9,0.05),CopyNumber(0.8,0.1,0.1),CopyNumber(0.1,0.2,0.7)};
+	UniqueKmers u(0,1000);
+
+	// insert paths
+	u.insert_path(0,0);
+	u.insert_path(1,0);
+	u.insert_path(2,1);
+
+	vector< vector<unsigned char> > alleles = { {0,1}, {0}, {1} };
+	for (size_t i = 0; i < 3; ++i){
+		u.insert_kmer(cns[i], alleles[i]);
+	}
+
+	map<unsigned char, unsigned int> counts = u.kmers_on_alleles();
+	REQUIRE(counts.size() == 2);
+	REQUIRE(counts[0] == 2);
+	REQUIRE(counts[1] == 2);
+}
+
+
+TEST_CASE("UniqueKmers kmers_on_alleles2", "[UniqueKmers kmers_on_alleles2]") {
+	UniqueKmers u (0, 1000);
+	u.insert_empty_allele(0);
+	u.insert_empty_allele(2);
+	u.insert_path(0,0);
+	u.insert_path(1,0);
+	map<unsigned char, unsigned int> counts = u.kmers_on_alleles();
+	REQUIRE(counts.size() == 2);
+	REQUIRE(counts[0] == 0);
+	REQUIRE(counts[2] == 0);
+
+	vector<CopyNumber> cns = {CopyNumber(0.05,0.9,0.05),CopyNumber(0.8,0.1,0.1)};
+	vector<vector<unsigned char>> alleles = { {2}, {0} };
+	u.insert_kmer (cns[0], alleles[0]);
+	counts = u.kmers_on_alleles();
+	REQUIRE(counts.size() == 2);
+	REQUIRE(counts[0] == 0);
+	REQUIRE(counts[2] == 1);
+
+	u.insert_kmer (cns[1], alleles[1]);
+	counts = u.kmers_on_alleles();
+	REQUIRE(counts.size() == 2);
+	REQUIRE(counts[0] == 1);
+	REQUIRE(counts[2] == 1);
+
+	REQUIRE(!u.kmer_on_path(0,0));
+	REQUIRE(!u.kmer_on_path(0,1));
+	REQUIRE(u.kmer_on_path(1,0));
+	REQUIRE(u.kmer_on_path(1,1));
+}
+
+TEST_CASE("UniqueKmers kmers_on_alleles3", "[UniqueKmers kmers_on_alleles3]") {
+	UniqueKmers u(0, 1000);
+	CopyNumber cn(0.9, 0.1, 0.2);
+	vector<unsigned char> allele = {1};
+
+	u.insert_kmer(cn, allele);
+	u.insert_path(1,1);
+	REQUIRE(u.size() == 1);
+	REQUIRE(u.kmer_on_path(0, 1));
+	map<unsigned char, unsigned int> counts = u.kmers_on_alleles();
+	REQUIRE(counts.size() == 1);
+	REQUIRE(counts[1] == 1);
+
+	// insert allele 1 as an empty allele (should no longer contain previously inserted kmers)
+	u.insert_empty_allele(1);
+	REQUIRE(!u.kmer_on_path(0,1));
+	counts = u.kmers_on_alleles();
+	REQUIRE(counts.size() == 1);
+	REQUIRE(counts[1] == 0);
+}

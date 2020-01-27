@@ -172,6 +172,7 @@ void HMM::compute_viterbi_path() {
 
 		// store number of unique kmers used at current position (stored in UniqueKmers)
 		this->genotyping_result.at(column_index).set_nr_unique_kmers(this->unique_kmers->at(column_index)->size());
+		this->genotyping_result.at(column_index).set_allele_kmer_counts(this->unique_kmers->at(column_index)->kmers_on_alleles());
 
 		if (column_index == 0) break;
 
@@ -401,6 +402,7 @@ void HMM::compute_backward_column(size_t column_index) {
 	// store number of unique kmers used at current position (stored in UniqueKmers)
 	this->genotyping_result.at(column_index).set_nr_unique_kmers(this->unique_kmers->at(column_index)->size());
 	this->genotyping_result.at(column_index).set_coverage(this->unique_kmers->at(column_index)->get_coverage());
+	this->genotyping_result.at(column_index).set_allele_kmer_counts(this->unique_kmers->at(column_index)->kmers_on_alleles());
 }
 
 void HMM::compute_viterbi_column(size_t column_index) {

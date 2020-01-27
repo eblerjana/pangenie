@@ -324,19 +324,25 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 		// construct new variant object
 		Variant v(left, right, this->chromosome, this->start_positions.at(i), this->end_positions.at(i), new_alleles, paths_per_variant.at(i));
 		resulting_variants->push_back(v);
+		// new allele -> unique kmer counts map
+		map<unsigned char, unsigned int> new_kmer_counts;
 
 		if (input_genotyping != nullptr) {
 			// construct GenotypingResult
 			GenotypingResult g;
 			// iterate through all genotypes and determine the genotype likelihoods for single variant
 			for (size_t a0 = 0; a0 < this->nr_of_alleles(); ++a0) {
+				// determine allele a0 genotype corresponds to
+				vector<DnaSequence> allele0 = this->alleles.at(a0);
+				// determine allele index of a0 for current variant
+				auto it0 = find(alleles_per_variant.at(i).begin(), alleles_per_variant.at(i).end(), allele0.at(index));
+				unsigned char single_allele0 = distance(alleles_per_variant.at(i).begin(), it0);
+				// update unique kmer counts
+				new_kmer_counts[single_allele0] += input_genotyping->get_allele_kmer_count(a0);
 				for (size_t a1 = a0; a1 < this->nr_of_alleles(); ++a1) {
-					// determine alleles genotype corresponds to
-					vector<DnaSequence> allele0 = this->alleles.at(a0);
+					// determine allele a1 genotype corresponds to
 					vector<DnaSequence> allele1 = this->alleles.at(a1);
-					// determine alleles for current variant
-					auto it0 = find(alleles_per_variant.at(i).begin(), alleles_per_variant.at(i).end(), allele0.at(index));
-					unsigned char single_allele0 = distance(alleles_per_variant.at(i).begin(), it0);
+					// determine allele index of current variant
 					auto it1 = find(alleles_per_variant.at(i).begin(), alleles_per_variant.at(i).end(), allele1.at(index));
 					unsigned char single_allele1 = distance(alleles_per_variant.at(i).begin(), it1);
 					// update genotype likelihood
@@ -358,6 +364,7 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 			g.add_second_haplotype_allele(single_haplotype1);
 			g.set_nr_unique_kmers(input_genotyping->get_nr_unique_kmers());
 			g.set_coverage(input_genotyping->get_coverage());
+			g.set_allele_kmer_counts(new_kmer_counts);
 			resulting_genotyping->push_back(g);
 		}
 	}

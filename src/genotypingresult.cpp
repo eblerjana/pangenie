@@ -9,6 +9,7 @@ GenotypingResult::GenotypingResult()
 	:haplotype_1(0),
 	 haplotype_2(0),
 	 nr_unique_kmers(0),
+   kmer_counts_set(false),
 	 coverage(0.0)
 {}
 
@@ -142,4 +143,17 @@ void GenotypingResult::set_coverage(double coverage) {
 	
 double GenotypingResult::get_coverage() const {
 	return this->coverage;
+}
+
+void GenotypingResult::set_allele_kmer_counts (map<unsigned char, unsigned int> counts) {
+	this->kmer_counts = counts;
+	this->kmer_counts_set = true;
+}
+
+unsigned int GenotypingResult::get_allele_kmer_count(unsigned char allele) const {
+	if (this->kmer_counts_set) {
+		return this->kmer_counts.at(allele);
+	} else {
+		return 0;
+	}
 }
