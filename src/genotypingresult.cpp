@@ -9,7 +9,6 @@ GenotypingResult::GenotypingResult()
 	:haplotype_1(0),
 	 haplotype_2(0),
 	 nr_unique_kmers(0),
-   kmer_counts_set(false),
 	 coverage(0.0)
 {}
 
@@ -132,8 +131,14 @@ ostream& operator<<(ostream& os, const GenotypingResult& res) {
 	os << "haplotype allele 1: " << res.haplotype_1 << endl;
 	os << "haplotype allele 2: " << res.haplotype_2 << endl;
 	for (auto it = res.genotype_to_likelihood.begin(); it != res.genotype_to_likelihood.end(); ++it) {
-		os << it->first.first << "/" << it->first.second << ": " << it->second << endl;
+		os << (unsigned int) it->first.first << "/" << (unsigned int) it->first.second << ": " << it->second << endl;
 	}
+	os << "total unique kmers: " << res.nr_unique_kmers << endl;
+	os << "unique kmers per allele:" << endl;
+	for (auto it = res.kmer_counts.begin(); it != res.kmer_counts.end(); ++it) {
+		os << (unsigned int) it->first << ": " << it->second << endl; 
+	}
+	os << "computed coverage: " << res.coverage << endl;
 	return os;
 }
 
@@ -145,15 +150,16 @@ double GenotypingResult::get_coverage() const {
 	return this->coverage;
 }
 
-void GenotypingResult::set_allele_kmer_counts (map<unsigned char, unsigned int> counts) {
+void GenotypingResult::set_allele_kmer_counts (map<unsigned char, int> counts) {
 	this->kmer_counts = counts;
-	this->kmer_counts_set = true;
 }
 
-unsigned int GenotypingResult::get_allele_kmer_count(unsigned char allele) const {
-	if (this->kmer_counts_set) {
-		return this->kmer_counts.at(allele);
+int GenotypingResult::get_allele_kmer_count(unsigned char allele) const {
+	// check if there is a count stored for the allele
+	map<unsigned char, int>::const_iterator it = this->kmer_counts.find(allele);
+	if (it != this->kmer_counts.end()) {
+		return it->second;
 	} else {
-		return 0;
+		return -1;
 	}
 }

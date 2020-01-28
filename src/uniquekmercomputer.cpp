@@ -59,7 +59,6 @@ void UniqueKmerComputer::compute_unique_kmers(vector<UniqueKmers*>* result, long
 	for (size_t v = 0; v < nr_variants; ++v) {
 
 		// set parameters of distributions
-		// TODO call local coverage computation
 		size_t kmer_size = this->variants->get_kmer_size();
 		double kmer_coverage = compute_local_coverage(this->chromosome, v, 2*kmer_size);
 		double cn0 = get_error_parameter(kmer_coverage);

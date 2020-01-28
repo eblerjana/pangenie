@@ -1,20 +1,20 @@
 ##fileformat=VCFv4.2
-##fileDate=20200127
+##fileDate=20200128
 ##INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency">
 ##INFO=<ID=UK,Number=1,Type=Integer,Description="Total number of unique kmers.">
-##INFO=<ID=AK,Number=R,Type=Integer,Description="Number of unique kmers per allele.">
+##INFO=<ID=AK,Number=R,Type=Integer,Description="Number of unique kmers per allele. Will be -1 for alleles not covered by any input haplotype path">
 ##INFO=<ID=KC,Number=1,Type=Float,Description="Local kmer coverage.">
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype quality: phred scaled probability that the genotype is wrong.">
 ##FORMAT=<ID=GL,Number=G,Type=Float,Description="Comma-separated log10-scaled genotype likelihoods for absent, heterozygous, homozygous.">
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	HG0
-chrA	101	.	A	T	.	PASS	AF=0.5;UK=0;AK=0,0;KC=0	GT:GQ:GL	0/1:5:-0.69897,-0.1549,-1
-chrA	151	.	C	GGGG	.	PASS	AF=0.5;UK=0;AK=0,0;KC=0	GT:GQ:GL	0/1:5:-0.69897,-0.1549,-1
-chrA	161	.	G	T	.	PASS	AF=0.5;UK=3;AK=0,0;KC=0	GT:GQ:GL	1/1:3:-0.69897,-0.699,-0.2218
-chrA	166	.	GAG	T	.	PASS	AF=0.25;UK=3;AK=0,0;KC=0	GT:GQ:GL	0/1:5:-0.69897,-0.1549,-1
-chrA	501	.	C	T	.	PASS	AF=0.5;UK=0;AK=0,0;KC=0	GT:GQ:GL	0/1:5:-0.69897,-0.1549,-1
-chrA	601	.	T	C	.	PASS	AF=0.5;UK=0;AK=0,0;KC=0	GT:GQ:GL	0/1:5:-0.69897,-0.1549,-1
-chrA	702	.	GA	TC	.	PASS	AF=0.5;UK=0;AK=0,0;KC=0	GT:GQ:GL	0/1:5:-0.69897,-0.1549,-1
-chrA	803	.	A	G	.	PASS	AF=0.5;UK=0;AK=0,0;KC=0	GT:GQ:GL	0/1:5:-0.69897,-0.1549,-1
-chrB	111	.	C	T	.	PASS	AF=0.5;UK=0;AK=0,0;KC=0	GT:GQ:GL	1/1:6:-1,-1,-0.09691
-chrB	161	.	G	T	.	PASS	AF=0.5;UK=0;AK=0,0;KC=0	GT:GQ:GL	1/1:6:-1,-1,-0.09691
+chrA	101	.	A	T	.	PASS	AF=0.5;UK=0;AK=-1,-1;KC=0	GT:GQ:GL	0/1:5:-0.69897,-0.1549,-1
+chrA	151	.	C	GGGG	.	PASS	AF=0.5;UK=0;AK=-1,-1;KC=0	GT:GQ:GL	0/1:5:-0.69897,-0.1549,-1
+chrA	161	.	G	T	.	PASS	AF=0.5;UK=3;AK=-1,-2;KC=0	GT:GQ:GL	1/1:3:-0.69897,-0.699,-0.2218
+chrA	166	.	GAG	T	.	PASS	AF=0.25;UK=3;AK=-2,-1;KC=0	GT:GQ:GL	0/1:5:-0.69897,-0.1549,-1
+chrA	501	.	C	T	.	PASS	AF=0.5;UK=0;AK=-1,-1;KC=0	GT:GQ:GL	0/1:5:-0.69897,-0.1549,-1
+chrA	601	.	T	C	.	PASS	AF=0.5;UK=0;AK=-1,-1;KC=0	GT:GQ:GL	0/1:5:-0.69897,-0.1549,-1
+chrA	702	.	GA	TC	.	PASS	AF=0.5;UK=0;AK=-1,-1;KC=0	GT:GQ:GL	0/1:5:-0.69897,-0.1549,-1
+chrA	803	.	A	G	.	PASS	AF=0.5;UK=0;AK=-1,-1;KC=0	GT:GQ:GL	0/1:5:-0.69897,-0.1549,-1
+chrB	111	.	C	T	.	PASS	AF=0.5;UK=0;AK=-1,-1;KC=0	GT:GQ:GL	1/1:6:-1,-1,-0.09691
+chrB	161	.	G	T	.	PASS	AF=0.5;UK=0;AK=-1,-1;KC=0	GT:GQ:GL	1/1:6:-1,-1,-0.09691

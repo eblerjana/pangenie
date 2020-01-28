@@ -57,8 +57,8 @@ def extract_call(record, read_gl=False, read_qual=False):
 		# determine minimum number of kmers that cover each allele
 		if 'AK' in record.INFO:
 			info_fields = record.INFO['AK']
-			# determine minimum of unique kmers
-			unique_kmers = min(info_fields)
+			# determine minimum of unique kmers (exclude alleles not covered by paths)
+			unique_kmers = min([i for i in info_fields if i >= 0])
 
 		# determine number of unique kmers
 #		if 'UK' in record.FORMAT:

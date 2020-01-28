@@ -43,9 +43,9 @@ public:
 	/** set number of unique kmers **/
 	size_t set_nr_unique_kmers(size_t nr_unique);
 	/** set allele specific numbers of unique kmers **/
-	void set_allele_kmer_counts(std::map<unsigned char, unsigned int> counts);
+	void set_allele_kmer_counts(std::map<unsigned char, int> counts);
 	/** get allele specific number of unique kmers **/
-	unsigned int get_allele_kmer_count(unsigned char allele) const;
+	int get_allele_kmer_count(unsigned char allele) const;
 
 private:
 	/** map genotype -> likelihood. genotype alleles are ordered in ascending order **/
@@ -53,8 +53,7 @@ private:
 	unsigned char haplotype_1;
 	unsigned char haplotype_2;
 	size_t nr_unique_kmers;
-	bool kmer_counts_set;
-	std::map<unsigned char, unsigned int> kmer_counts;
+	std::map<unsigned char, int> kmer_counts;
 	double coverage;
 };
 #endif // GENOTYPINGRESULT_HPP

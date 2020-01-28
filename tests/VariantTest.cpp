@@ -181,7 +181,7 @@ TEST_CASE("Variant separate_variants_likelihoods", "Variant separate_variants_li
 	g.add_second_haplotype_allele(2);
 	g.set_nr_unique_kmers(5);
 	// unique kmers per allele
-	map<unsigned char, unsigned int> counts = { {0,3}, {1,9}, {2,2} };
+	map<unsigned char, int> counts = { {0,3}, {1,9}, {2,2} };
 	g.set_allele_kmer_counts(counts);
 
 	v1.combine_variants(v2);
@@ -229,7 +229,7 @@ TEST_CASE("Variant separate_variants_single", "[Variants separate_variants_singl
 	g.add_to_likelihood(0,1,0.7);
 	g.add_to_likelihood(1,1,0.2);
 	g.set_nr_unique_kmers(10);
-	map<unsigned char, unsigned int> counts = { {0, 10}, {1, 20} };
+	map<unsigned char, int> counts = { {0, 10}, {1, 20} };
 	g.set_allele_kmer_counts(counts);
 
 	// separate single variant
@@ -271,7 +271,7 @@ TEST_CASE("Variant separate_variants_single2", "[Variants separate_variants_sing
 	g.add_to_likelihood(0,1,0.7);
 	g.add_to_likelihood(1,1,0.2);
 	g.set_nr_unique_kmers(90);
-	map<unsigned char, unsigned int> counts = { {0, 2}, {1, 4} };
+	map<unsigned char, int> counts = { {0, 2}, {1, 4} };
 	g.set_allele_kmer_counts(counts);
 
 	// separate single variant
@@ -394,7 +394,7 @@ TEST_CASE("Variant combine_combined2", "[Variant combine_combined]") {
 	g.add_to_likelihood(0,2,0.05);
 	g.add_first_haplotype_allele(0);
 	g.add_second_haplotype_allele(2);
-	map<unsigned char, unsigned int> counts = { {0, 10}, {1, 2}, {2, 4} };
+	map<unsigned char, int> counts = { {0, 10}, {1, 2}, {2, 4} };
 	g.set_allele_kmer_counts(counts);
 
 	vector<Variant> single_vars;
@@ -464,4 +464,63 @@ TEST_CASE("Variant allele_frequency", "Variant allele_frequency") {
 	REQUIRE ( doubles_equal(v3.allele_frequency(0, true), 6.0/9.0) );
 	REQUIRE ( doubles_equal(v3.allele_frequency(1, true), 2.0/9.0) );
 	REQUIRE ( doubles_equal(v3.allele_frequency(2, true), 1.0/9.0) );
+}
+
+TEST_CASE("Variant separate_variants_likelihoods_uncovered", "Variant separate_variants_likelihoods_uncovered") {
+	Variant v1 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,1});
+	// second allele is not covered by any path
+	Variant v2 ("AACT", "ACTG", "chr2", 7, 8, {"G", "C", "T"}, {0,2});
+	Variant v3 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,1});
+
+	GenotypingResult g;
+	g.add_to_likelihood(0,0,0.05);
+	g.add_to_likelihood(0,1,0.05);
+	g.add_to_likelihood(1,1,0.9);
+	g.add_first_haplotype_allele(0);
+	g.add_second_haplotype_allele(0);
+	g.set_nr_unique_kmers(5);
+	// unique kmers per allele
+	map<unsigned char, int> counts = { {0,3}, {1,9} };
+	g.set_allele_kmer_counts(counts);
+
+	v1.combine_variants(v2);
+	vector<Variant> single_variants;
+	vector<GenotypingResult> single_genotypes;
+	v1.separate_variants(&single_variants, &g, &single_genotypes);
+	REQUIRE(single_variants.size() == 2);
+	REQUIRE(single_genotypes.size() == 2);
+
+	// expected genotype likelihoods
+	// order of alleles changes: uncovered allele has index 2 after separation
+	vector<vector<double>> expected = { {0.05,0.05,0.9}, {0.05, 0.05, 0.9, 0.0, 0.0, 0.0}};
+	pair<unsigned char,unsigned char> expected_haplotype = make_pair(0,0);
+	vector<unsigned int> nr_alleles = {2,3};
+
+	// computed genotype likelihoods
+	for (size_t i = 0; i < 2; ++i) {
+		vector<long double> computed = single_genotypes[i].get_all_likelihoods(nr_alleles[i]);
+		REQUIRE(computed.size() == expected[i].size());
+		for (size_t j = 0; j < expected[i].size(); ++j) {
+			REQUIRE(doubles_equal(computed[j], expected[i][j]));
+		}
+		// here, all haplotypes should be 0|0
+		REQUIRE(single_genotypes[i].get_haplotype() == expected_haplotype);
+		REQUIRE(single_genotypes[i].get_nr_unique_kmers() == 5);
+	}
+
+	// uncovered allele should have count -1
+	vector<vector<int>> expected_counts = { {3,9}, {3,9,-1} };
+	vector<vector<string>> expected_alleles = { {"A", "T"}, {"G", "T", "C"} };
+
+	REQUIRE(single_genotypes[0].get_allele_kmer_count(0) == expected_counts[0][0]);
+	REQUIRE(single_genotypes[0].get_allele_kmer_count(1) == expected_counts[0][1]);
+	REQUIRE(single_variants[0].get_allele_string(0) == expected_alleles[0][0]);
+	REQUIRE(single_variants[0].get_allele_string(1) == expected_alleles[0][1]);
+
+	REQUIRE(single_genotypes[1].get_allele_kmer_count(0) == expected_counts[1][0]);
+	REQUIRE(single_genotypes[1].get_allele_kmer_count(1) == expected_counts[1][1]);
+	REQUIRE(single_genotypes[1].get_allele_kmer_count(2) == expected_counts[1][2]);
+	REQUIRE(single_variants[1].get_allele_string(0) == expected_alleles[1][0]);
+	REQUIRE(single_variants[1].get_allele_string(1) == expected_alleles[1][1]);
+	REQUIRE(single_variants[1].get_allele_string(2) == expected_alleles[1][2]);
 }

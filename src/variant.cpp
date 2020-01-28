@@ -321,12 +321,12 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 				new_alleles.push_back(allele);
 			}
 		}
+		assert (new_alleles.size() < 256);
 		// construct new variant object
 		Variant v(left, right, this->chromosome, this->start_positions.at(i), this->end_positions.at(i), new_alleles, paths_per_variant.at(i));
 		resulting_variants->push_back(v);
 		// new allele -> unique kmer counts map
-		map<unsigned char, unsigned int> new_kmer_counts;
-
+		map<unsigned char, int> new_kmer_counts;
 		if (input_genotyping != nullptr) {
 			// construct GenotypingResult
 			GenotypingResult g;
@@ -377,7 +377,7 @@ bool Variant::is_combined() const {
 ostream& operator<<(ostream& os, const Variant& var) {
 	os << "left flank:\t" << var.left_flank.to_string() << endl;
 	os << "right flank:\t" << var.right_flank.to_string() << endl;
-	os << "position:\t" << var.chromosome << ":" << var.start_positions[0] << "-" << var.end_positions[0] << endl;
+	os << "position:\t" << var.chromosome << ":" << var.start_positions[0] << "-" << var.end_positions[var.end_positions.size() - 1] << endl;
 	os << "alleles:" << endl;
 	for (size_t i = 0; i < var.alleles.size(); ++i) {
 		os << i << ":\t";

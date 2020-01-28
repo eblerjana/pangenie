@@ -262,7 +262,7 @@ void VariantReader::open_genotyping_outfile(string filename) {
 	// TODO output command line
 	this->genotyping_outfile << "##INFO=<ID=AF,Number=A,Type=Float,Description=\"Allele Frequency\">" << endl;
 	this->genotyping_outfile << "##INFO=<ID=UK,Number=1,Type=Integer,Description=\"Total number of unique kmers.\">" << endl;
-	this->genotyping_outfile << "##INFO=<ID=AK,Number=R,Type=Integer,Description=\"Number of unique kmers per allele.\">" << endl;
+	this->genotyping_outfile << "##INFO=<ID=AK,Number=R,Type=Integer,Description=\"Number of unique kmers per allele. Will be -1 for alleles not covered by any input haplotype path\">" << endl;
 	this->genotyping_outfile << "##INFO=<ID=KC,Number=1,Type=Float,Description=\"Local kmer coverage.\">" << endl;
 	this->genotyping_outfile << "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">" << endl;
 	this->genotyping_outfile << "##FORMAT=<ID=GQ,Number=1,Type=Integer,Description=\"Genotype quality: phred scaled probability that the genotype is wrong.\">" << endl;
@@ -284,7 +284,7 @@ void VariantReader::open_phasing_outfile(string filename) {
 	// TODO output command line
 	this->phasing_outfile << "##INFO=<ID=AF,Number=A,Type=Float,Description=\"Allele Frequency\">" << endl;
 	this->phasing_outfile << "##INFO=<ID=UK,Number=1,Type=Integer,Description=\"Total number of unique kmers.\">" << endl;
-	this->phasing_outfile << "##INFO=<ID=AK,Number=R,Type=Integer,Description=\"Number of unique kmers per allele.\">" << endl;
+	this->phasing_outfile << "##INFO=<ID=AK,Number=R,Type=Integer,Description=\"Number of unique kmers per allele. Will be -1 for alleles not covered by any input haplotype path.\">" << endl;
 	this->phasing_outfile << "##INFO=<ID=KC,Number=1,Type=Float,Description=\"Local kmer coverage.\">" << endl;
 	this->phasing_outfile << "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">" << endl;
 	this->phasing_outfile << "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t" << this->sample << endl;
@@ -347,7 +347,7 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 			info << ";AK="; // AK
 			for (unsigned int a = 0; a < nr_alleles; ++a) {
 				if (a > 0) info << ",";
-				info << setprecision(2) << singleton_likelihoods.at(j).get_allele_kmer_count(a);
+				info << singleton_likelihoods.at(j).get_allele_kmer_count(a);
 			}
 			info << ";KC=" << setprecision(2) << singleton_likelihoods.at(j).get_coverage(); // KC
 
@@ -439,7 +439,7 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 			info << ";AK="; // AK
 			for (unsigned int a = 0; a < nr_alleles; ++a) {
 				if (a > 0) info << ",";
-				info << setprecision(2) << singleton_likelihoods.at(j).get_allele_kmer_count(a);
+				info << singleton_likelihoods.at(j).get_allele_kmer_count(a);
 			}
 			info << ";KC=" << setprecision(2) << singleton_likelihoods.at(j).get_coverage(); // KC
 

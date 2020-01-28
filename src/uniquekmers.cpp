@@ -91,7 +91,7 @@ ostream& operator<< (ostream& stream, const UniqueKmers& uk) {
 	}
 	stream << "alleles:" << endl;
 	for (auto it = uk.alleles.begin(); it != uk.alleles.end(); ++it) {
-		stream << it->first << "\t" << it->second.convert_to_string() << endl;
+		stream << (unsigned int) it->first << "\t" << it->second.convert_to_string() << endl;
 	}
 	stream << "paths:" << endl;
 	for (auto it = uk.path_to_allele.begin(); it != uk.path_to_allele.end(); ++it) {
@@ -108,8 +108,8 @@ double UniqueKmers::get_coverage() const {
 	return this->local_coverage;
 }
 
-map<unsigned char, unsigned int> UniqueKmers::kmers_on_alleles () const {
-	map<unsigned char, unsigned int> result;
+map<unsigned char, int> UniqueKmers::kmers_on_alleles () const {
+	map<unsigned char, int> result;
 	for (auto it = this->alleles.begin(); it != this->alleles.end(); ++it) {
 		result[it->first] = alleles.at(it->first).nr_kmers();
 	}

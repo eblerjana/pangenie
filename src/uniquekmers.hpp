@@ -47,7 +47,7 @@ public:
 	/** returns the local kmer coverage **/
 	double get_coverage() const;
 	/** returns a map which contains the number of unique kmers covering each allele **/
-	std::map<unsigned char, unsigned int> kmers_on_alleles () const;
+	std::map<unsigned char, int> kmers_on_alleles () const;
 
 private:
 	size_t variant_id;

@@ -146,7 +146,7 @@ TEST_CASE("UniqueKmers kmers_on_alleles1", "[UniqueKmers kmers_on_alleles1]"){
 		u.insert_kmer(cns[i], alleles[i]);
 	}
 
-	map<unsigned char, unsigned int> counts = u.kmers_on_alleles();
+	map<unsigned char, int> counts = u.kmers_on_alleles();
 	REQUIRE(counts.size() == 2);
 	REQUIRE(counts[0] == 2);
 	REQUIRE(counts[1] == 2);
@@ -159,7 +159,7 @@ TEST_CASE("UniqueKmers kmers_on_alleles2", "[UniqueKmers kmers_on_alleles2]") {
 	u.insert_empty_allele(2);
 	u.insert_path(0,0);
 	u.insert_path(1,0);
-	map<unsigned char, unsigned int> counts = u.kmers_on_alleles();
+	map<unsigned char, int> counts = u.kmers_on_alleles();
 	REQUIRE(counts.size() == 2);
 	REQUIRE(counts[0] == 0);
 	REQUIRE(counts[2] == 0);
@@ -193,7 +193,7 @@ TEST_CASE("UniqueKmers kmers_on_alleles3", "[UniqueKmers kmers_on_alleles3]") {
 	u.insert_path(1,1);
 	REQUIRE(u.size() == 1);
 	REQUIRE(u.kmer_on_path(0, 1));
-	map<unsigned char, unsigned int> counts = u.kmers_on_alleles();
+	map<unsigned char, int> counts = u.kmers_on_alleles();
 	REQUIRE(counts.size() == 1);
 	REQUIRE(counts[1] == 1);
 
