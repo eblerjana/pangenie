@@ -283,7 +283,8 @@ TEST_CASE("Variant separate_variants_single2", "[Variants separate_variants_sing
 	REQUIRE(single_genotypes.size() == 1);
 	REQUIRE(single_variants[0] == v);
 	REQUIRE(single_genotypes[0].get_nr_unique_kmers() == 90);
-	REQUIRE(single_genotypes[0].get_allele_kmer_count(0) == 2);
+	// allele 0 is not covered thus the kmer count should be -1
+	REQUIRE(single_genotypes[0].get_allele_kmer_count(0) == -1);
 	REQUIRE(single_genotypes[0].get_allele_kmer_count(1) == 4);
 
 	// same with flanks added
@@ -297,7 +298,8 @@ TEST_CASE("Variant separate_variants_single2", "[Variants separate_variants_sing
 	v.remove_flanking_sequence();
 	REQUIRE(single_variants[0] == v);
 	REQUIRE(single_genotypes[0].get_nr_unique_kmers() == 90);
-	REQUIRE(single_genotypes[0].get_allele_kmer_count(0) == 2);
+	// allele 0 is not covered thus the kmer count should be -1
+	REQUIRE(single_genotypes[0].get_allele_kmer_count(0) == -1);
 	REQUIRE(single_genotypes[0].get_allele_kmer_count(1) == 4);
 }
 
@@ -523,4 +525,28 @@ TEST_CASE("Variant separate_variants_likelihoods_uncovered", "Variant separate_v
 	REQUIRE(single_variants[1].get_allele_string(0) == expected_alleles[1][0]);
 	REQUIRE(single_variants[1].get_allele_string(1) == expected_alleles[1][1]);
 	REQUIRE(single_variants[1].get_allele_string(2) == expected_alleles[1][2]);
+}
+
+
+TEST_CASE("Variant separate_variants_likelihoods_single_uncovered", "[Variant separate_variants_likelihoods_single_uncovered]") {
+	Variant v ("ATGA", "CTGA", "chr1", 7, 8, {"A", "T"}, {1,1});
+	GenotypingResult g;
+	g.add_to_likelihood(1,1,1.0);
+	g.add_first_haplotype_allele(1);
+	g.add_second_haplotype_allele(1);
+	g.set_nr_unique_kmers(5);
+	map<unsigned char, int> counts = { {0,1}, {1,3} };
+	g.set_allele_kmer_counts(counts);
+
+	vector<Variant> single_variants;
+	vector<GenotypingResult> single_genotypes;
+	v.separate_variants(&single_variants, &g, &single_genotypes);
+	REQUIRE(single_variants.size() == 1);
+	REQUIRE(single_genotypes.size() == 1);
+	REQUIRE(doubles_equal(single_genotypes[0].get_genotype_likelihood(1,1), 1.0));
+	REQUIRE(single_variants[0].get_allele_string(0) == "A");
+	REQUIRE(single_variants[0].get_allele_string(1) == "T");
+	// allele 0 is not covered by any path and its kmer count should therefore be -1 
+	REQUIRE(single_genotypes[0].get_allele_kmer_count(0) == -1);
+	REQUIRE(single_genotypes[0].get_allele_kmer_count(1) == 3);
 }

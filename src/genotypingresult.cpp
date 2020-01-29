@@ -160,6 +160,6 @@ int GenotypingResult::get_allele_kmer_count(unsigned char allele) const {
 	if (it != this->kmer_counts.end()) {
 		return it->second;
 	} else {
-		return -1;
+		return 0;
 	}
 }

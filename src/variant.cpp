@@ -324,6 +324,9 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 		assert (new_alleles.size() < 256);
 		// construct new variant object
 		Variant v(left, right, this->chromosome, this->start_positions.at(i), this->end_positions.at(i), new_alleles, paths_per_variant.at(i));
+
+
+
 		resulting_variants->push_back(v);
 		// new allele -> unique kmer counts map
 		map<unsigned char, int> new_kmer_counts;
@@ -364,6 +367,19 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 			g.add_second_haplotype_allele(single_haplotype1);
 			g.set_nr_unique_kmers(input_genotyping->get_nr_unique_kmers());
 			g.set_coverage(input_genotyping->get_coverage());
+
+			// determine ids of uncovered paths
+			vector<unsigned char> uncovered_ids;
+			for (unsigned char u = 0; u < new_alleles.size(); ++u) {
+				if (find(paths_per_variant.at(i).begin(), paths_per_variant.at(i).end(), u) == paths_per_variant.at(i).end()) {
+					// allele not covered
+					uncovered_ids.push_back(u);
+				}
+			}
+			// set kmer counts of uncovered alleles to -1
+			for (auto u: uncovered_ids) {
+				new_kmer_counts[u] = -1;
+			}
 			g.set_allele_kmer_counts(new_kmer_counts);
 			resulting_genotyping->push_back(g);
 		}

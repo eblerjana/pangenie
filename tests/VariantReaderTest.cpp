@@ -224,7 +224,6 @@ TEST_CASE("VariantReader write_genotypes_of", "[VariantReader write_genotypes_of
 	v.write_phasing_of("chrA", genotypes_chrA);
 	v.write_phasing_of("chrB", genotypes_chrB);
 	v.close_genotyping_outfile();
-
 }
 
 TEST_CASE("VariantReader broken_vcfs", "[VariantReader broken_vcfs]") {
