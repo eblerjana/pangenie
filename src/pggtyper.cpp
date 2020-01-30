@@ -80,10 +80,10 @@ int main (int argc, char* argv[])
 	bool only_genotyping = false;
 	bool only_phasing = false;
 	long double effective_N = 0.00001L;
-	long double regularization = 0.00001L;
+	long double regularization = 0.001L;
 	bool count_only_graph = true;
 	bool ignore_imputed = false;
-	bool add_reference = false;
+	bool add_reference = true;
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
@@ -99,10 +99,10 @@ int main (int argc, char* argv[])
 	argument_parser.add_optional_argument('n', "0.00001", "effective population size");
 	argument_parser.add_flag_argument('g', "only run genotyping (Forward backward algorithm)");
 	argument_parser.add_flag_argument('p', "only run phasing (Viterbi algorithm)");
-	argument_parser.add_optional_argument('m', "0.00001", "regularization constant for copynumber probabilities");
+	argument_parser.add_optional_argument('m', "0.001", "regularization constant for copynumber probabilities");
 	argument_parser.add_flag_argument('c', "count all read kmers instead of only those located in graph.");
 	argument_parser.add_flag_argument('u', "output genotype ./. for variants not covered by any unique kmers.");
-	argument_parser.add_flag_argument('a', "add reference as additional path.");
+	argument_parser.add_flag_argument('d', "do not add reference as additional path.");
 
 	try {
 		argument_parser.parse(argc, argv);
@@ -127,7 +127,7 @@ int main (int argc, char* argv[])
 	regularization = stold(argument_parser.get_argument('m'));
 	count_only_graph = !argument_parser.get_flag('c');
 	ignore_imputed = argument_parser.get_flag('u');
-	add_reference = argument_parser.get_flag('a');
+	add_reference = !argument_parser.get_flag('d');
 
 	// print info
 	cerr << "Files and parameters used:" << endl;

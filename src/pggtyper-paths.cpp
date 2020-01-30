@@ -68,7 +68,7 @@ int main (int argc, char* argv[])
 	bool only_genotyping = false;
 	bool only_phasing = false;
 	double effective_N = 0.00001L;
-	bool add_reference = false;
+	bool add_reference = true;
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
@@ -81,7 +81,7 @@ int main (int argc, char* argv[])
 	argument_parser.add_optional_argument('n', "0.00001", "effective population size");
 	argument_parser.add_flag_argument('g', "only run genotyping (Forward backward algorithm)");
 	argument_parser.add_flag_argument('p', "only run phasing (Viterbi algorithm)");
-	argument_parser.add_flag_argument('a', "add reference as additional path.");
+	argument_parser.add_flag_argument('d', "do not add reference as additional path.");
 
 	try {
 		argument_parser.parse(argc, argv);
@@ -100,7 +100,7 @@ int main (int argc, char* argv[])
 	only_genotyping = argument_parser.get_flag('g');
 	only_phasing = argument_parser.get_flag('p');
 	effective_N = stold(argument_parser.get_argument('n'));
-	add_reference = argument_parser.get_flag('a');
+	add_reference = !argument_parser.get_flag('d');
 
 	// print info
 	cerr << "Files and parameters used:" << endl;

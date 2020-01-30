@@ -72,7 +72,7 @@ int main (int argc, char* argv[])
 	size_t nr_core_threads = 1;
 	bool only_genotyping = false;
 	bool only_phasing = false;
-	long double regularization = 0.00001L;
+	long double regularization = 0.001L;;
 	bool count_only_graph = true;
 	bool ignore_imputed = false;
 
@@ -89,7 +89,7 @@ int main (int argc, char* argv[])
 	argument_parser.add_optional_argument('t', "1", "number of threads to use for core algorithm. Largest number of threads possible is the number of chromosomes given in the VCF");
 	argument_parser.add_flag_argument('g', "only run genotyping (Forward backward algorithm)");
 	argument_parser.add_flag_argument('p', "only run phasing (Viterbi algorithm)");
-	argument_parser.add_optional_argument('m', "0.00001", "regularization constant for copynumber probabilities");
+	argument_parser.add_optional_argument('m', "0.001", "regularization constant for copynumber probabilities");
 	argument_parser.add_flag_argument('c', "count all kmers instead of only those located in graph..");
 	argument_parser.add_flag_argument('u', "output genotype ./. for variants not covered by any unique kmers.");
 
