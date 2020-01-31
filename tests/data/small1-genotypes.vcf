@@ -1,5 +1,5 @@
 ##fileformat=VCFv4.2
-##fileDate=20200129
+##fileDate=20200131
 ##INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency">
 ##INFO=<ID=UK,Number=1,Type=Integer,Description="Total number of unique kmers.">
 ##INFO=<ID=AK,Number=R,Type=Integer,Description="Number of unique kmers per allele. Will be -1 for alleles not covered by any input haplotype path">

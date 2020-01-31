@@ -108,6 +108,11 @@ void UniqueKmerComputer::compute_unique_kmers(vector<UniqueKmers*>* result, long
 					continue;
 				}
 
+				// skip kmer that occurs on all paths (they do not give any information about a genotype)
+				if (paths.size() == variant.nr_of_paths()) {
+					continue;
+				}
+
 				// skip kmers with "too extreme" counts
 				// TODO: value ok?
 				if (read_kmercount > (2*this->kmer_coverage)) {
