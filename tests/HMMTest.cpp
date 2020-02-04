@@ -351,7 +351,7 @@ TEST_CASE("HMM only_kmers", "[HMM only_kmers]") {
 	// switch on uniform transition probabilities
 	HMM hmm (&unique_kmers, true, true, 1.26, true, 0.25);
 
-	vector<double> expected_likelihoods = {0.00392156862745098, 0.988235294117647, 0.00784313725490196, 0.0045385779122541605, 0.02118003025718608, 0.9531013615733737, 0.06666666666666667, 0.5333333333333333, 0.39999999999999997};
+	vector<double> expected_likelihoods = {0.00392156862745098, 0.988235294117647, 0.00784313725490196, 0.0045385779122541605, 0.0423600605143722, 0.9531013615733737, 0.06666666666666667, 0.5333333333333333, 0.39999999999999997};
 	vector<double> computed_likelihoods;
 
 	for (auto result : hmm.get_genotyping_result()) {
@@ -390,7 +390,9 @@ TEST_CASE("HMM emissions_zero", "[HMM emissions_zero]") {
 
 	vector<UniqueKmers*> unique_kmers = {&u1, &u2, &u3};
 	HMM hmm (&unique_kmers, true, true, 446.287102628, false, 0.25);
-	vector<double> expected_likelihoods = {0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0};
+	// currently, backward probabilities that all become zero, are not corrected in current column (but stored as uniform for further computations)
+	// since all backward probs in first column are zero, likelihoods are zero as well. Backward probs are later set to uniform.
+	vector<double> expected_likelihoods = {0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0};
 	vector<double> computed_likelihoods;
 
 	unsigned int index = 0;
@@ -432,7 +434,8 @@ TEST_CASE("HMM underflow", "[HMM underflow]") {
 
 	vector<UniqueKmers*> unique_kmers = {&u1, &u2, &u3};
 	HMM hmm (&unique_kmers, true, true, 0.0, false, 0.25);
-	vector<double> expected_likelihoods = {0.0,1.0,0.0,0.25,0.5,0.25,0.0,1.0,0.0};
+	// currently, backward probabilities that all become zero, are not corrected in current column (but stored as uniform for further computations)
+	vector<double> expected_likelihoods = {0.0,0.0,0.0,0.0,1.0,0.0,0.0,1.0,0.0};
 	vector<double> computed_likelihoods;
 
 	for (auto result : hmm.get_genotyping_result()) {
