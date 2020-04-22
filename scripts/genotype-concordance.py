@@ -182,7 +182,7 @@ class GenotypingStatistics:
 		assert self.total_baseline == self.correct_all + self.wrong_all + self.not_in_callset_all + self.not_typed_all
 		correct_biallelic = self.confusion_matrix[0][0] + self.confusion_matrix[1][1] + self.confusion_matrix[2][2]
 		wrong_biallelic = self.confusion_matrix[0][1] + self.confusion_matrix[0][2] + self.confusion_matrix[1][0] + self.confusion_matrix[1][2] + self.confusion_matrix[2][1] + self.confusion_matrix[2][0]
-		not_typed_biallelic = self.total_baseline_biallelic - correct_biallelic - wrong_biallelic
+		not_typed_biallelic = self.total_baseline_biallelic - correct_biallelic - wrong_biallelic - self.not_in_callset_biallelic
 		typed_biallelic = max(correct_biallelic + wrong_biallelic, 1)
 
 		tsv_file.write('\t'.join([str(self.quality), # quality
@@ -193,10 +193,10 @@ class GenotypingStatistics:
 																	str(self.total_intersection), # intersection of callsets
 																	str(self.correct_all/float(typed_all)), # correct
 																	str(self.wrong_all/float(typed_all)), # wrong
-																	str(self.not_typed_all/float(self.total_baseline if self.total_baseline is not 0 else 1)), # not typed
+																	str((self.not_typed_all+self.not_in_callset_all)/float(self.total_baseline if self.total_baseline is not 0 else 1)), # not typed
 																	str(correct_biallelic/ float(typed_biallelic)), # correct biallelic
 																	str(wrong_biallelic/ float(typed_biallelic)), # wrong biallelic
-																	str(not_typed_biallelic/float(self.total_baseline_biallelic if self.total_baseline_biallelic is not 0 else 1)),  # not typed biallelic
+																	str((not_typed_biallelic+self.not_in_callset_biallelic)/float(self.total_baseline_biallelic if self.total_baseline_biallelic is not 0 else 1)),  # not typed biallelic
 																	str(self.correct_all),
 																	str(self.wrong_all),
 																	str(self.not_typed_all),
@@ -313,6 +313,9 @@ class GenotypeConcordanceComputer:
 					statistics[vartype].wrong_all += 1
 			else:
 				statistics[vartype].not_in_callset_all += 1
+				if gt.get_binary_genotype() != -1:
+					statistics[vartype].confusion_matrix[gt.get_binary_genotype()][3] += 1
+					statistics[vartype].not_in_callset_biallelic += 1
 
 		assert (statistics[vartype].correct_all + statistics[vartype].wrong_all + statistics[vartype].not_typed_all == statistics[vartype].total_intersection)
 		# write statistics and confusion matrices to file
