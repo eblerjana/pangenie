@@ -21,10 +21,10 @@
 Genotyping can be run as shown below. Required arguments are short read sequencing reads in FASTQ-format, the reference genome in FASTA-format and a fully-phased, multisample VCF-file that contains a panel of known haplotypes.
 Per default, the program will run genotyping (Forward-Backward algorithm) and phasing (Viterbi algorithm) and produces a VCF-file with genotypes for all variants in the input VCF (named `` <outname>_genotyping.vcf``) and a separate
 VCF-file with haplotypes (named `` <outname>_phasing.vcf``). Flags `` -g `` and `` -p `` can be used to run only genotyping or phasing, respectively.
-```bat
-```
+
 
 ```bat
+
 usage: PGGTyper [options] -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf>
 
 options:
