@@ -1,4 +1,4 @@
-name: pggtyper
+name: pangenie
 channels:
   - anaconda
   - conda-forge
@@ -55,5 +55,3 @@ dependencies:
   - wheel=0.33.4=py37_0
   - xz=5.2.4=h14c3975_1001
   - zlib=1.2.11=h7b6447c_3
-prefix: /MMCI/TM/scratch/jebler/miniconda3/envs/pggtyper
-

@@ -60,7 +60,7 @@ int main (int argc, char* argv[])
 	double time_total;
 
 	cerr << endl;
-	cerr << "program: PGGTyper-kmers - genotyping based on kmer-counting." << endl;
+	cerr << "program: PanGenie-kmers - genotyping based on kmer-counting." << endl;
 	cerr << "author: Jana Ebler" << endl << endl;
 	string readfile = "";
 	string reffile = "";
@@ -78,7 +78,7 @@ int main (int argc, char* argv[])
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
-	argument_parser.add_command("PGGTyper-kmers [options] -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf>");
+	argument_parser.add_command("PanGenie-kmers [options] -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf>");
 	argument_parser.add_mandatory_argument('i', "sequencing reads in FASTA/FASTQ format");
 	argument_parser.add_mandatory_argument('r', "reference genome in FASTA format");
 	argument_parser.add_mandatory_argument('v', "variants in VCF format");

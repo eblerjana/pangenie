@@ -58,7 +58,7 @@ int main (int argc, char* argv[])
 	double time_total;
 
 	cerr << endl;
-	cerr << "program: PGGTyper-paths - genotyping and phasing based on known haplotype paths." << endl;
+	cerr << "program: PanGenie-paths - genotyping and phasing based on known haplotype paths." << endl;
 	cerr << "author: Jana Ebler" << endl << endl;
 	string reffile = "";
 	string vcffile = "";
@@ -72,7 +72,7 @@ int main (int argc, char* argv[])
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
-	argument_parser.add_command("PGGTyper-paths [options] -r <reference.fa> -v <variants.vcf>");
+	argument_parser.add_command("PanGenie-paths [options] -r <reference.fa> -v <variants.vcf>");
 	argument_parser.add_mandatory_argument('r', "reference genome in FASTA format");
 	argument_parser.add_mandatory_argument('v', "variants in VCF format");
 	argument_parser.add_optional_argument('o', "result", "prefix of the output files");
