@@ -1,4 +1,6 @@
-# PGG-Typer
+# PanGenie
+
+A genotyper for various types of genetic variants (such as SNPs, indels and structural variants). Genotypes are computed based on read k-mer counts and a panel of known haplotypes.
 
 ## Requirements
 * gcc 4.7+
@@ -6,15 +8,15 @@
 * jellyfish
 
 ## Installation
-`` git clone https://jana_ebler@bitbucket.org/jana_ebler/pgg-typer.git``  
-`` cd pgg-typer``  
+`` git clone https://jana_ebler@bitbucket.org/jana_ebler/pangenie.git``  
+`` cd pangenie``  
 ``mkdir build; cd build; cmake .. ; make``
 
 ## Installing into a conda environment
-`` git clone https://jana_ebler@bitbucket.org/jana_ebler/pgg-typer.git``  
-`` cd pgg-typer``  
+`` git clone https://jana_ebler@bitbucket.org/jana_ebler/pangenie.git``  
+`` cd pangenie``  
 `` conda env create -f environment.yml``  
-`` conda activate pggtyper``   
+`` conda activate pangenie``   
 ``mkdir build; cd build; cmake .. ; make``
 
 ## Usage
@@ -25,7 +27,7 @@ VCF-file with haplotypes (named `` <outname>_phasing.vcf``). Flags `` -g `` and 
 
 ```bat
 
-usage: PGGTyper [options] -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf>
+usage: PanGenie [options] -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf>
 
 options:
 	-c	count all read kmers instead of only those located in graph.
