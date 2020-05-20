@@ -49,7 +49,7 @@ DnaSequence construct_right_flank(vector<DnaSequence>& alleles, size_t position,
 	return flank;
 }
 
-Variant::Variant(string left_flank, string right_flank, string chromosome, size_t start_position, size_t end_position, vector<string> alleles, vector<unsigned char> paths)
+Variant::Variant(string left_flank, string right_flank, string chromosome, size_t start_position, size_t end_position, vector<string> alleles, vector<unsigned char> paths, vector<bool> undefined_alleles)
 	:left_flank(left_flank),
 	 right_flank(right_flank),
 	 chromosome(chromosome),
@@ -61,10 +61,11 @@ Variant::Variant(string left_flank, string right_flank, string chromosome, size_
 	for (auto a : alleles) {
 		this->alleles.push_back({DnaSequence(a)});
 	}
-	this->set_values();
+	this->is_undefined = vector<vector<bool>>(this->alleles.size(), {false})
+	this->set_values(undefined_alleles);
 }
 
-Variant::Variant(DnaSequence& left_flank, DnaSequence& right_flank, string chromosome, size_t start_position, size_t end_position, vector<DnaSequence>& alleles, vector<unsigned char>& paths)
+Variant::Variant(DnaSequence& left_flank, DnaSequence& right_flank, string chromosome, size_t start_position, size_t end_position, vector<DnaSequence>& alleles, vector<unsigned char>& paths, vector<bool> undefined_alleles)
 	:left_flank(left_flank),
 	 right_flank(right_flank),
 	 chromosome(chromosome),
@@ -76,10 +77,11 @@ Variant::Variant(DnaSequence& left_flank, DnaSequence& right_flank, string chrom
 	for (auto a : alleles) {
 		this->alleles.push_back({a});
 	}
-	this->set_values();
+	this->is_undefined = vector<vector<bool>>(this->alleles.size(), {false})
+	this->set_values(undefined_alleles);
 }
 
-void Variant::set_values() {
+void Variant::set_values(vector<bool> undefined_alleles) {
 	// find out which alleles are not covered by any paths
 	vector<DnaSequence> uncovered;
 	assert(alleles.size() < 256);
@@ -115,6 +117,11 @@ void Variant::set_values() {
 		if (p >= nr_alleles) {
 			throw runtime_error("Variant::Variant: allele ids given in paths are invalid.");
 		}
+	}
+
+	// store which alleles are undefined
+	for (auto u: undefined_alleles) {
+		this->is_undefined[i][0] = true;
 	}
 }
 
@@ -236,6 +243,7 @@ void Variant::combine_variants (Variant const &v2){
 	}
 	vector<unsigned char> new_paths(this->paths.size());
 	vector<vector<DnaSequence>> new_alleles;
+	vector<vector<bool>> new_undefined;
 	unsigned char allele_index = 0;
 	for (auto it = path_to_index.begin(); it != path_to_index.end(); ++it) {
 		assert(allele_index < 256);
@@ -244,11 +252,17 @@ void Variant::combine_variants (Variant const &v2){
 		}
 		vector<DnaSequence> left_allele = this->alleles.at(it->first.first);
 		vector<DnaSequence> right_allele = v2.alleles.at(it->first.second);
+		// if any of the two alleles were undefined, new allele is undefined as well
 		DnaSequence flank;
 		this->right_flank.substr(0, v2.get_start_position() - this->get_end_position(), flank);
 		left_allele.push_back(flank);
 		left_allele.insert(left_allele.end(), right_allele.begin(), right_allele.end());
 		new_alleles.push_back(left_allele);
+		// update undefined alleles
+		vector<bool> left_undefined = this->alleles.at(it->first.first);
+		vector<bool> right_undefined = v2.alleles.at(it->first.second);
+		left_undefined.insert(left_undefined.end(), right_undefined.begin(), right_undefined.end());
+		new_undefined.push_back(left_undefined);
 		allele_index += 1;
 	}
 
@@ -259,8 +273,10 @@ void Variant::combine_variants (Variant const &v2){
 	this->alleles = new_alleles;
 	this->uncovered_alleles.insert(this->uncovered_alleles.end(), v2.uncovered_alleles.begin(), v2.uncovered_alleles.end());
 	this->paths = new_paths;
+	this->is_undefined = new_undefined;
 }
 
+// TODO: update undefined alleles
 void Variant::separate_variants (vector<Variant>* resulting_variants, const GenotypingResult* input_genotyping, vector<GenotypingResult>* resulting_genotyping) const {
 	size_t nr_variants = this->start_positions.size();
 	assert (this->uncovered_alleles.size() == nr_variants);
@@ -390,6 +406,7 @@ bool Variant::is_combined() const {
 	return (this->start_positions.size() > 1);
 }
 
+// TODO: add undefined
 ostream& operator<<(ostream& os, const Variant& var) {
 	os << "left flank:\t" << var.left_flank.to_string() << endl;
 	os << "right flank:\t" << var.right_flank.to_string() << endl;

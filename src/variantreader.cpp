@@ -130,6 +130,8 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 		// construct paths
 		vector<unsigned char> paths = {};
 		if (add_reference) paths.push_back((unsigned char) 0);
+		unsigned char undefined_index = alleles.size();
+		string undefined_allele = "N";
 		for (size_t i = 9; i < tokens.size(); ++i) {
 			// make sure all genotypes are phased
 			if (tokens[i].find('/') != string::npos) {
@@ -138,7 +140,17 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 			vector<string> p ;
 			parse_line(p, tokens[i], '|');
 			for (string& s : p){
-				paths.push_back( (unsigned char) atoi(s.c_str()));
+				// handle unknown genotypes '.'
+				if (s == ".") {
+					cerr << "Found undefined allele at position " << current_chrom << ":" << current_start_pos << endl;
+					// add "NNN" allele to the list of alleles
+					parse_line(alleles, undefined_allele, ',');
+					paths.push_back(undefined_index);
+					undefined_index += 1;
+					undefined_allele += "N";
+				} else {
+					paths.push_back( (unsigned char) atoi(s.c_str()));
+				}
 			}
 		}
 		// determine left and right flanks
