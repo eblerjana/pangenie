@@ -49,7 +49,7 @@ DnaSequence construct_right_flank(vector<DnaSequence>& alleles, size_t position,
 	return flank;
 }
 
-Variant::Variant(string left_flank, string right_flank, string chromosome, size_t start_position, size_t end_position, vector<string> alleles, vector<unsigned char> paths, vector<bool> undefined_alleles)
+Variant::Variant(string left_flank, string right_flank, string chromosome, size_t start_position, size_t end_position, vector<string> alleles, vector<unsigned char> paths, vector<unsigned char> undefined_alleles)
 	:left_flank(left_flank),
 	 right_flank(right_flank),
 	 chromosome(chromosome),
@@ -61,11 +61,11 @@ Variant::Variant(string left_flank, string right_flank, string chromosome, size_
 	for (auto a : alleles) {
 		this->alleles.push_back({DnaSequence(a)});
 	}
-	this->is_undefined = vector<vector<bool>>(this->alleles.size(), {false})
+	this->is_undefined = vector<vector<bool>>(this->alleles.size(), {false});
 	this->set_values(undefined_alleles);
 }
 
-Variant::Variant(DnaSequence& left_flank, DnaSequence& right_flank, string chromosome, size_t start_position, size_t end_position, vector<DnaSequence>& alleles, vector<unsigned char>& paths, vector<bool> undefined_alleles)
+Variant::Variant(DnaSequence& left_flank, DnaSequence& right_flank, string chromosome, size_t start_position, size_t end_position, vector<DnaSequence>& alleles, vector<unsigned char>& paths, vector<unsigned char> undefined_alleles)
 	:left_flank(left_flank),
 	 right_flank(right_flank),
 	 chromosome(chromosome),
@@ -77,11 +77,11 @@ Variant::Variant(DnaSequence& left_flank, DnaSequence& right_flank, string chrom
 	for (auto a : alleles) {
 		this->alleles.push_back({a});
 	}
-	this->is_undefined = vector<vector<bool>>(this->alleles.size(), {false})
+	this->is_undefined = vector<vector<bool>>(this->alleles.size(), {false});
 	this->set_values(undefined_alleles);
 }
 
-void Variant::set_values(vector<bool> undefined_alleles) {
+void Variant::set_values(vector<unsigned char>& undefined_alleles) {
 	// find out which alleles are not covered by any paths
 	vector<DnaSequence> uncovered;
 	assert(alleles.size() < 256);
@@ -121,7 +121,7 @@ void Variant::set_values(vector<bool> undefined_alleles) {
 
 	// store which alleles are undefined
 	for (auto u: undefined_alleles) {
-		this->is_undefined[i][0] = true;
+		this->is_undefined[u][0] = true;
 	}
 }
 
@@ -259,8 +259,8 @@ void Variant::combine_variants (Variant const &v2){
 		left_allele.insert(left_allele.end(), right_allele.begin(), right_allele.end());
 		new_alleles.push_back(left_allele);
 		// update undefined alleles
-		vector<bool> left_undefined = this->alleles.at(it->first.first);
-		vector<bool> right_undefined = v2.alleles.at(it->first.second);
+		vector<bool> left_undefined = this->is_undefined.at(it->first.first);
+		vector<bool> right_undefined = v2.is_undefined.at(it->first.second);
 		left_undefined.insert(left_undefined.end(), right_undefined.begin(), right_undefined.end());
 		new_undefined.push_back(left_undefined);
 		allele_index += 1;
@@ -276,14 +276,16 @@ void Variant::combine_variants (Variant const &v2){
 	this->is_undefined = new_undefined;
 }
 
-// TODO: update undefined alleles
+// TODO: update undefined alleles, still wrong ..
 void Variant::separate_variants (vector<Variant>* resulting_variants, const GenotypingResult* input_genotyping, vector<GenotypingResult>* resulting_genotyping) const {
 	size_t nr_variants = this->start_positions.size();
 	assert (this->uncovered_alleles.size() == nr_variants);
 	// collect the allele sequences for all variants 
 	vector<vector<DnaSequence>> alleles_per_variant (nr_variants);
+	vector<vector<unsigned char>> undefined_per_variant (nr_variants);
 	for (size_t i = 0; i < this->alleles.size(); ++i) {
 		vector<DnaSequence> allele = this->alleles.at(i);
+		vector<bool> undefined = this->is_undefined.at(i);
 		size_t start_index = 0;
 		if (this->flanks_added) start_index = 1;
 		for (size_t a = 0; a < nr_variants; a++) {
@@ -292,6 +294,7 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 			auto it = find(alleles_per_variant.at(a).begin(), alleles_per_variant.at(a).end(), sequence);
 			if (it == alleles_per_variant.at(a).end()) {
 				alleles_per_variant.at(a).push_back(sequence);
+				if (undefined.at(a)) undefined_per_variant.at(a).push_back((unsigned char) alleles_per_variant.at(a).size()-1);
 			}
 		}
 	}
@@ -331,15 +334,17 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 		vector<DnaSequence> uncovered = this->uncovered_alleles[i];
 		// add uncovered alleles to list of alleles
 		vector<DnaSequence> new_alleles = alleles_per_variant.at(i);
+		vector<unsigned char> new_undefined = undefined_per_variant.at(i);
 		for (auto allele : uncovered) {
 			// only add allele if it is not yet in list of alleles
 			if (find(new_alleles.begin(), new_alleles.end(), allele) == new_alleles.end()) {
 				new_alleles.push_back(allele);
+				new_undefined.push_back(new_alleles.size()-1);
 			}
 		}
 		assert (new_alleles.size() < 256);
 		// construct new variant object
-		Variant v(left, right, this->chromosome, this->start_positions.at(i), this->end_positions.at(i), new_alleles, paths_per_variant.at(i));
+		Variant v(left, right, this->chromosome, this->start_positions.at(i), this->end_positions.at(i), new_alleles, paths_per_variant.at(i), new_undefined);
 
 
 
@@ -481,4 +486,12 @@ float Variant::allele_frequency(unsigned char allele_index, bool ignore_ref_path
 		freq -= 1.0;
 	}
 	return freq / size;
+}
+
+bool Variant::is_undefined_allele(unsigned char allele_index) const {
+	for (auto u : this->is_undefined.at(allele_index)) {
+		if (u) return true;
+	}
+	
+	return false;
 }
