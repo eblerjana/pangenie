@@ -6,11 +6,13 @@
 using namespace std;
 
 DnaSequence::DnaSequence() 
-	:length(0)
+	:length(0),
+	 is_undefined(false)
 {}
 
 DnaSequence::DnaSequence(string& sequence)
-	:length(0)
+	:length(0),
+	 is_undefined(false)
 {
 	this->append(sequence);	
 }
@@ -18,6 +20,8 @@ DnaSequence::DnaSequence(string& sequence)
 void DnaSequence::append(string& seq) {
 	for (auto base : seq) {
 		unsigned char number = encode(base);
+		// check whether base was defined
+		if (number == 4) this->is_undefined = true;
 		if (this->length % 2 == 0) {
 			this->sequence.push_back(number << 4);
 		} else {
@@ -50,6 +54,7 @@ void DnaSequence::append(DnaSequence seq) {
 		if (seq.size() % 2 == 0) this->sequence.push_back(current);
 	}
 	this->length += seq.length;
+	this->is_undefined = this->is_undefined || seq.contains_undefined();
 }
 
 void DnaSequence::reverse() {
@@ -153,8 +158,21 @@ void DnaSequence::substr(size_t start, size_t end, DnaSequence& result) const {
 			substring.push_back(current);	
 		}
 	}
+
+	bool undefined = false;
+	if (this->is_undefined) {
+		// check whether there is an undefined base in subsequence
+		for (auto elem : substring) {
+			if ((elem & 68) != 0) {
+				undefined = true;
+				break;
+			}
+		}
+	}
+
 	result.sequence = move(substring); 
 	result.length = (end - start);
+	result.is_undefined = undefined;
 }
 
 string DnaSequence::to_string() const {
@@ -180,4 +198,8 @@ bool operator==(const DnaSequence& dna1, const DnaSequence& dna2) {
 
 bool operator!=(const DnaSequence& dna1, const DnaSequence& dna2) {
 	return !(dna1 == dna2);
+}
+
+bool DnaSequence::contains_undefined() const {
+	return this->is_undefined;
 }

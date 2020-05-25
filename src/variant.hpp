@@ -11,8 +11,6 @@
 * Represents a variant.
 **/
 
-// TODO: add funcionality to check whether variant allele is undefined (if combined, allele is undefined whenever one of its components is)
-
 class Variant {
 public:
 	/** 
@@ -21,8 +19,8 @@ public:
 	* @param alleles list of alleles (first one is used as reference allele)
 	* @param paths vector containing the allele each path covers (i-th path covers allele at paths[i])
 	**/
-	Variant(std::string left_flank, std::string right_flank, std::string chromosome, size_t start_position, size_t end_position, std::vector<std::string> alleles, std::vector<unsigned char> paths, std::vector<unsigned char> undefined_alleles = std::vector<unsigned char>());
-	Variant(DnaSequence& left_flank, DnaSequence& right_flank, std::string chromosome, size_t start_position, size_t end_position, std::vector<DnaSequence>& alleles, std::vector<unsigned char>& paths, std::vector<unsigned char> undefined_alleles = std::vector<unsigned char>());
+	Variant(std::string left_flank, std::string right_flank, std::string chromosome, size_t start_position, size_t end_position, std::vector<std::string> alleles, std::vector<unsigned char> paths);
+	Variant(DnaSequence& left_flank, DnaSequence& right_flank, std::string chromosome, size_t start_position, size_t end_position, std::vector<DnaSequence>& alleles, std::vector<unsigned char>& paths);
 	void add_flanking_sequence();
 	void remove_flanking_sequence();
 	void combine_variants (Variant const &v2);
@@ -42,7 +40,6 @@ public:
 	friend bool operator==(const Variant& v1, const Variant& v2);
 	friend bool operator!=(const Variant& v1, const Variant& v2);
 	float allele_frequency(unsigned char allele_index, bool ignore_ref_path = false) const;
-	bool is_undefined_allele(unsigned char allele_index) const;
 private:
 	DnaSequence left_flank;
 	DnaSequence right_flank;
@@ -54,9 +51,7 @@ private:
 	std::vector<std::vector<DnaSequence>> uncovered_alleles;
 	std::vector<unsigned char> paths;
 	bool flanks_added;
-	void set_values(std::vector<unsigned char>& undefined_alleles);
-	/** is_undefined[i] = true, if allele at index i is undefined **/
-	std::vector<std::vector<bool>> is_undefined;
+	void set_values();
 	
 };
 
