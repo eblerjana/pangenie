@@ -369,16 +369,18 @@ void HMM::compute_backward_column(size_t column_index) {
 			unsigned char prev_allele2 = previous_indexer->get_allele(prev_path_id2);
 			// determine backward probability from already computed column
 			long double prev_backward = previous_column->at(j);
-			long double current_backward = 0.0L;
+			long double emissions = 0.0L;
 
 			// if either of the paths at this state corresponds to an undefined allele, enumerate all possible allele combinations
 			vector<unsigned char> prev_alleles1 = {prev_allele1};
 			vector<unsigned char> prev_alleles2 = {prev_allele2};
 			for (auto a1 : prev_alleles1) {
 				for (auto a2 : prev_alleles2) {
-					current_backward += prev_backward * emission_probability_computer->get_emission_probability(a1, a2);
+					emissions += emission_probability_computer->get_emission_probability(a1, a2);
 				}
 			}
+
+			emissions *= prev_backward;
 
 			// add this probability (times the transition prob.) to all states in the current column
 			size_t i = 0;
@@ -387,7 +389,7 @@ void HMM::compute_backward_column(size_t column_index) {
 					// get paths corresponding to path indices
 					size_t path1 = column_indexer->get_path(path_id1);
 					size_t path2 = column_indexer->get_path(path_id2);
-					long double backward_prob = current_backward * transition_probability_computer-> compute_transition_prob(path1, path2, prev_path1, prev_path2);
+					long double backward_prob = emissions * transition_probability_computer-> compute_transition_prob(path1, path2, prev_path1, prev_path2);
 					(*current_column)[i] += backward_prob;
 					normalization_sum += backward_prob;
 					i += 1;
