@@ -75,9 +75,6 @@ TEST_CASE("HMM get_genotyping_result", "[HMM get_genotyping_result]") {
 		REQUIRE(result.get_allele_kmer_count(1) == 1);
 	}
 
-	for (size_t i = 0; i < expected_likelihoods.size(); ++i) {
-		cout << expected_likelihoods[i] << " " << computed_likelihoods[i] << endl;
-	}
 	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
 }
 
@@ -116,9 +113,6 @@ TEST_CASE("HMM get_genotyping_result_normalized", "[HMM get_genotyping_result_no
 		REQUIRE(result.get_allele_kmer_count(1) == 1);
 	}
 
-	for (size_t i = 0; i < expected_likelihoods.size(); ++i) {
-		cout << expected_likelihoods[i] << " " << computed_likelihoods[i] << endl;
-	}
 	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
 }
 
@@ -202,9 +196,6 @@ TEST_CASE("HMM no_unique_kmers", "[HMM no_unique_kmers]") {
 		REQUIRE(result.get_allele_kmer_count(1) == 0);
 	}
 
-	for (size_t i = 0; i < expected_likelihoods.size(); ++i) {
-		cout << expected_likelihoods[i] << " " << computed_likelihoods[i] << endl;
-	}
 	REQUIRE( compare_vectors(computed_likelihoods, expected_likelihoods) );
 }
 
@@ -243,9 +234,6 @@ TEST_CASE("HMM no_unique_kmers2", "[HMM no_unique_kmers2]") {
 		REQUIRE(result.get_allele_kmer_count(1) == 0);
 	}
 
-	for (size_t i = 0; i < expected_likelihoods.size(); ++i) {
-		cout << expected_likelihoods[i] << " " << computed_likelihoods[i] << endl;
-	}
 	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
 }
 
@@ -301,9 +289,6 @@ TEST_CASE("HMM no_unique_kmers3", "[HMM no_unique_kmers3]") {
 		index += 1;
 	}
 
-	for (size_t i = 0; i < expected_likelihoods.size(); ++i) {
-		cout << expected_likelihoods[i] << " " << computed_likelihoods[i] << endl;
-	}
 	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods));
 
 	// order of haplotype sequences can be different
@@ -338,9 +323,6 @@ TEST_CASE("HMM no_unique_kmers_uniform", "[HMM no_unique_kmers_uniorm]") {
 		REQUIRE(result.get_nr_unique_kmers() == 0);
 	}
 
-	for (size_t i = 0; i < expected_likelihoods.size(); ++i) {
-		cout << expected_likelihoods[i] << " " << computed_likelihoods[i] << endl;
-	}
 	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
 }
 
@@ -382,9 +364,6 @@ TEST_CASE("HMM only_kmers", "[HMM only_kmers]") {
 		REQUIRE(result.get_allele_kmer_count(1) == 1);
 	}
 
-	for (size_t i = 0; i < expected_likelihoods.size(); ++i) {
-		cout << expected_likelihoods[i] << " " << computed_likelihoods[i] << endl;
-	}
 	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
 }
 
@@ -430,9 +409,6 @@ TEST_CASE("HMM emissions_zero", "[HMM emissions_zero]") {
 		index += 1;
 	}
 
-	for (size_t i = 0; i < expected_likelihoods.size(); ++i) {
-		cout << expected_likelihoods[i] << " " << computed_likelihoods[i] << endl;
-	}
 	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
 }
 
@@ -472,10 +448,6 @@ TEST_CASE("HMM underflow", "[HMM underflow]") {
 		REQUIRE(result.get_allele_kmer_count(1) == 1);
 	}
 
-
-	for (size_t i = 0; i < expected_likelihoods.size(); ++i) {
-		cout << expected_likelihoods[i] << " " << computed_likelihoods[i] << endl;
-	}
 	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
 }
 

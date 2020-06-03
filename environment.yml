@@ -42,7 +42,6 @@ dependencies:
   - ncurses=6.1=hf484d3e_1002
   - numpy=1.16.4=py37h7e9f1db_0
   - numpy-base=1.16.4=py37hde5b4d6_0
-  - openssl=1.1.1=h7b6447c_0
   - pip=19.2.2=py37_0
   - py-boost=1.67.0=py37h04863e7_4
   - python=3.7.3=h33d41f4_1
