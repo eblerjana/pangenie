@@ -92,7 +92,7 @@ void UniqueKmerComputer::compute_unique_kmers(vector<UniqueKmers*>* result, long
 		}
 
 		// TODO: for now, if any allele is undefined, we don't consider any kmers
-		occurences.clear();
+		if (any_undefined) occurences.clear();
 
 		// check if kmers occur elsewhere in the genome
 		size_t nr_kmers_used = 0;
