@@ -78,11 +78,21 @@ void UniqueKmerComputer::compute_unique_kmers(vector<UniqueKmers*>* result, long
 			u->insert_empty_allele(a);
 			u->insert_path(p,a);
 		}
+
+		// whether any of the alleles is undefined
+		bool any_undefined = false;
 		for (unsigned char a = 0; a < nr_alleles; ++a) {
 			// enumerate kmers and identify those with copynumber 1
 			DnaSequence allele = variant.get_allele_sequence(a);
+			if (allele.contains_undefined()) {
+				any_undefined = true;
+				break;
+			}
 			unique_kmers(allele, a, kmer_size, occurences);
 		}
+
+		// TODO: for now, if any allele is undefined, we don't consider any kmers
+		occurences.clear();
 
 		// check if kmers occur elsewhere in the genome
 		size_t nr_kmers_used = 0;
