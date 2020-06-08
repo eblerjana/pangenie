@@ -10,7 +10,7 @@ EmissionProbabilityComputer::EmissionProbabilityComputer(UniqueKmers* uniquekmer
 	 all_zeros(true)
 {
 	vector<unsigned char> unique_alleles;
-	uniquekmers->get_allele_ids(unique_alleles);
+	uniquekmers->get_defined_allele_ids(unique_alleles);
 	unsigned char max_allele = *max_element(std::begin(unique_alleles), std::end(unique_alleles));
 	this->state_to_prob = vector< vector<long double>>(max_allele+1, vector<long double>(max_allele+1));
 

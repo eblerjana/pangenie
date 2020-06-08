@@ -19,8 +19,9 @@ size_t UniqueKmers::get_variant_position() {
 	return this->variant_pos;
 }
 
-void UniqueKmers::insert_empty_allele(unsigned char allele_id) {
+void UniqueKmers::insert_empty_allele(unsigned char allele_id, bool is_undefined) {
 	this->alleles[allele_id] = KmerPath(); 
+	this->is_undefined[allele_id] = is_undefined;
 }
 
 void UniqueKmers::insert_path(size_t path_id, unsigned char allele_id) {
@@ -83,6 +84,12 @@ void UniqueKmers::get_allele_ids(vector<unsigned char>& a) {
 	}
 }
 
+void UniqueKmers::get_defined_allele_ids(std::vector<unsigned char>& a) {
+	for (auto it = this->alleles.begin(); it != this->alleles.end(); ++it) {
+		if (!this->is_undefined.at(it->first)) a.push_back(it->first);
+	}
+}
+
 ostream& operator<< (ostream& stream, const UniqueKmers& uk) {
 	stream << "UniqueKmers for variant: " << uk.variant_id << endl;
 	for (size_t i = 0; i < uk.size(); ++i) {
@@ -114,4 +121,22 @@ map<unsigned char, int> UniqueKmers::kmers_on_alleles () const {
 		result[it->first] = alleles.at(it->first).nr_kmers();
 	}
 	return result;
+}
+
+bool UniqueKmers::is_undefined_allele (unsigned char allele_id) const {
+	// check if allele id exists
+	auto it = this->is_undefined.find(allele_id);
+	if (it != this->is_undefined.end()) {
+		return it->second;
+	} else {
+		return false;
+	}
+}
+
+void UniqueKmers::set_undefined_allele (unsigned char allele_id) {
+	auto it = this->is_undefined.find(allele_id);
+	if (it == this->is_undefined.end()) {
+		throw runtime_error("UniqueKmers::set_undefined_allele: allele_id " + to_string(allele_id) + " does not exist.");
+	}
+	this->is_undefined[allele_id] = true;
 }
