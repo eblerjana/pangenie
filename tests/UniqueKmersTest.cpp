@@ -204,3 +204,55 @@ TEST_CASE("UniqueKmers kmers_on_alleles3", "[UniqueKmers kmers_on_alleles3]") {
 	REQUIRE(counts.size() == 1);
 	REQUIRE(counts[1] == 0);
 }
+
+TEST_CASE("UniqueKmers undefined_allele", "[UniqueKmers undefined_allele]"){
+	vector<CopyNumber> cns = {CopyNumber(0.05,0.9,0.05),CopyNumber(0.8,0.1,0.1),CopyNumber(0.1,0.2,0.7)};
+	vector<vector<size_t>> paths = {{0,1,2}, {0,1}, {2}};
+	UniqueKmers u(0,1000);
+
+	// insert empty alleles
+	u.insert_empty_allele(0, true);
+	u.insert_empty_allele(1);
+
+	// insert paths
+	u.insert_path(0,0);
+	u.insert_path(1,0);
+	u.insert_path(2,1);
+
+	vector< vector<unsigned char> > alleles = { {0,1}, {0}, {1} };
+	for (size_t i = 0; i < 3; ++i){
+		u.insert_kmer(cns[i], alleles[i]);
+		for (auto& p : paths[i]){
+			REQUIRE(u.kmer_on_path(i, p));
+		}
+	}
+	for (size_t i = 0; i < 3; ++i){
+		REQUIRE(u.get_variant_index() == 0);
+		REQUIRE(u.get_variant_position() == 1000);
+		REQUIRE(u.get_copynumber_of(i) == cns[i]);
+	}
+
+	REQUIRE(u.is_undefined_allele(0));
+	REQUIRE(!u.is_undefined_allele(1));
+
+	// get only defined alleles
+	vector<unsigned char> all_alleles;
+	vector<unsigned char> defined_alleles;
+	u.get_allele_ids(all_alleles);
+	REQUIRE(all_alleles.size() == 2);
+	u.get_defined_allele_ids(defined_alleles);
+	REQUIRE(defined_alleles.size() == 1);
+	REQUIRE(defined_alleles.at(0) == (unsigned char) 1);
+
+	// manually set allele to undefined
+	u.set_undefined_allele(1);
+	REQUIRE(u.is_undefined_allele(1));
+
+	defined_alleles.clear();
+	// now there are no defined alleles, so expect an empty vector
+	u.get_defined_allele_ids(defined_alleles);
+	REQUIRE(defined_alleles.empty());
+
+	// make sure an execption is thrown in case an allele does not exist
+	REQUIRE_THROWS(u.set_undefined_allele(2));
+}

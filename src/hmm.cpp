@@ -215,6 +215,9 @@ void HMM::compute_forward_column(size_t column_index) {
 	backward_column = this->backward_columns.at(column_index);
 	assert (backward_column != nullptr);
 
+	vector<unsigned char> defined_alleles;
+	this->unique_kmers->at(column_index)->get_defined_allele_ids(defined_alleles);
+
 	// construct new column
 	vector<long double>* current_column = new vector<long double>();
 
@@ -266,12 +269,28 @@ void HMM::compute_forward_column(size_t column_index) {
 				previous_cell = 1.0L;
 			}
 
-			// TODO: if there are unknown alleles, go through all possible allele combinations here
-			// determine alleles current paths (ids) correspond to
+			// in case an allele is undefined, determine all possible alleles that could occur at this position.
 			unsigned char allele1 = column_indexer->get_allele(path_id1);
 			unsigned char allele2 = column_indexer->get_allele(path_id2);
-			vector<unsigned char> alleles1 = {allele1};
-			vector<unsigned char> alleles2 = {allele2};
+			vector<unsigned char> alleles1;
+			vector<unsigned char> alleles2;
+			cout << "here1" << endl;
+			if (this->unique_kmers->at(column_index)->is_undefined_allele(allele1)) {
+				alleles1 = defined_alleles;
+			} else {
+				alleles1 = {allele1};
+			}
+
+			cout << "here2" << endl;
+
+			if (this->unique_kmers->at(column_index)->is_undefined_allele(allele2)) {
+				alleles2 = defined_alleles;
+			} else {
+				alleles2 = {allele2};
+			}
+
+			cout << "here3" << endl;
+
 			long double current_cell = 0.0L;
 			for (auto a1 : alleles1) {
 				for (auto a2 : alleles2) {
@@ -286,12 +305,16 @@ void HMM::compute_forward_column(size_t column_index) {
 				}
 			}
 
+			cout << "here4" << endl;
+
 			// set entry of current column
 			current_column->push_back(current_cell);
 			normalization_sum += current_cell;
 			i += 1;
 		}
 	}
+
+	cout << "here5" << endl;
 
 	if (normalization_sum > 0.0L) {
 		// normalize the entries in current column to sum up to 1
@@ -301,6 +324,8 @@ void HMM::compute_forward_column(size_t column_index) {
 		transform(current_column->begin(), current_column->end(), current_column->begin(),  [uniform](long double c) -> long double {return uniform;});
 //		cerr << "Underflow in Forward pass at position: " << this->unique_kmers->at(column_index)->get_variant_position() << ". Column set to uniform." << endl;
 	}
+
+	cout << "here6" << endl;
 
 	if (this->previous_forward_column != nullptr) {
 		delete this->previous_forward_column;
@@ -318,9 +343,13 @@ void HMM::compute_forward_column(size_t column_index) {
 		this->genotyping_result.at(column_index).divide_likelihoods_by(normalization_f_b);
 	}
 
+	cout << "here6" << endl;
+
 	this->genotyping_result.at(column_index).set_nr_unique_kmers(this->unique_kmers->at(column_index)->size());
 	this->genotyping_result.at(column_index).set_coverage(this->unique_kmers->at(column_index)->get_coverage());
 	this->genotyping_result.at(column_index).set_allele_kmer_counts(this->unique_kmers->at(column_index)->kmers_on_alleles());
+
+	cout << "here7" << endl;
 }
 
 void HMM::compute_backward_column(size_t column_index) {

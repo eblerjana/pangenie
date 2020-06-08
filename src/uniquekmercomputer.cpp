@@ -84,6 +84,7 @@ void UniqueKmerComputer::compute_unique_kmers(vector<UniqueKmers*>* result, long
 			DnaSequence allele = variant.get_allele_sequence(a);
 			if (allele.contains_undefined()) {
 				// skip kmers of alleles that are undefined
+				u->set_undefined_allele(a);
 				continue;
 			}
 			unique_kmers(allele, a, kmer_size, occurences);
