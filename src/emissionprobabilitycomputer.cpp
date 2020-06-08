@@ -1,6 +1,7 @@
 #include <stdexcept>
 #include <sstream>
 #include <algorithm>
+#include <cassert>
 #include "emissionprobabilitycomputer.hpp"
 
 using namespace std;
@@ -10,13 +11,15 @@ EmissionProbabilityComputer::EmissionProbabilityComputer(UniqueKmers* uniquekmer
 	 all_zeros(true)
 {
 	vector<unsigned char> unique_alleles;
-	uniquekmers->get_defined_allele_ids(unique_alleles);
+	uniquekmers->get_allele_ids(unique_alleles);
 	unsigned char max_allele = *max_element(std::begin(unique_alleles), std::end(unique_alleles));
 	this->state_to_prob = vector< vector<long double>>(max_allele+1, vector<long double>(max_allele+1));
 
 	for (auto a1 : unique_alleles) {
 		for (auto a2 : unique_alleles) {
-			this->state_to_prob[a1][a2] = compute_emission_probability(a1, a2);
+			bool a1_is_undefined = uniquekmers->is_undefined_allele(a1);
+			bool a2_is_undefined = uniquekmers->is_undefined_allele(a2);
+			this->state_to_prob[a1][a2] = compute_emission_probability(a1, a2, a1_is_undefined, a2_is_undefined);
 			if (this->state_to_prob[a1][a2] > 0) this->all_zeros = false;
 		}
 	}
@@ -29,14 +32,24 @@ long double EmissionProbabilityComputer::get_emission_probability(unsigned char 
 	return this->state_to_prob[allele_id1][allele_id2];
 }
 
-long double EmissionProbabilityComputer::compute_emission_probability(unsigned char allele_id1, unsigned char allele_id2){
+long double EmissionProbabilityComputer::compute_emission_probability(unsigned char allele_id1, unsigned char allele_id2, bool a1_undefined, bool a2_undefined){
 	long double result = 1.0L;
 	// combine the two paths to get expected kmer copy numbers
 	CopyNumberAssignment cna = this->uniquekmers->combine_paths(allele_id1, allele_id2);
 	for (size_t i = 0; i < this->uniquekmers->size(); ++i){
 		unsigned int expected_kmer_count = cna.get_position(i);
-		// multiply result by probability of expected kmer count
-		result *= uniquekmers->kmer_to_copynumber[i].get_probability_of(expected_kmer_count);
+
+		if (a1_undefined && a2_undefined) {
+			// all kmers can have copy numbers 0-2
+			result *= (1.0L / 3.0L) * (uniquekmers->kmer_to_copynumber[i].get_probability_of(0) + uniquekmers->kmer_to_copynumber[i].get_probability_of(1) + uniquekmers->kmer_to_copynumber[i].get_probability_of(2));
+		} else if (a1_undefined || a2_undefined) {
+			// two possible copy numbers
+			assert (expected_kmer_count < 2);
+			result *= 0.5L * (uniquekmers->kmer_to_copynumber[i].get_probability_of(expected_kmer_count) + uniquekmers->kmer_to_copynumber[i].get_probability_of(expected_kmer_count + 1));
+		} else {
+			// expected kmer count is known
+			result *= uniquekmers->kmer_to_copynumber[i].get_probability_of(expected_kmer_count);
+		}
 	}
 	return result;
 }

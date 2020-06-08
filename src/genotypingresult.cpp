@@ -65,6 +65,27 @@ vector<long double> GenotypingResult::get_all_likelihoods (size_t nr_alleles) co
 	return result;
 }
 
+GenotypingResult GenotypingResult::get_specific_likelihoods (vector<unsigned char>& alleles) const {
+	GenotypingResult result;
+	size_t nr_alleles = alleles.size();
+	assert (nr_alleles < 256);
+	long double sum = 0.0L;
+	for (unsigned char i = 0; i < nr_alleles; ++i) {
+		for (unsigned char j = 0; j < nr_alleles; ++j) {
+			long double likelihood = this->get_genotype_likelihood(alleles[i], alleles[j]);
+			if (this->haplotype_1 == alleles[i]) result.haplotype_1 = i;
+			if (this->haplotype_2 == alleles[j]) result.haplotype_2 = j;
+			result.add_to_likelihood(i, j, likelihood);
+			sum += likelihood;
+		}
+	}
+	result.nr_unique_kmers = this->nr_unique_kmers;
+	result.coverage = this->coverage;
+	result.kmer_counts = this->kmer_counts;
+	result.divide_likelihoods_by(sum);
+	return result;
+}
+
 size_t GenotypingResult::get_genotype_quality (unsigned char allele1, unsigned char allele2) const {
 	// check if likelihoods are normalized
 	long double sum = 0.0;

@@ -341,10 +341,18 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 				throw runtime_error(oss.str());
 			}
 
-			string alt_alleles = v.get_allele_string(1);
-			for (size_t i = 2; i < nr_alleles; ++i) {
-				alt_alleles += "," + v.get_allele_string(i);
+			string alt_alleles = "";
+			vector<unsigned char> defined_alleles;
+			for (size_t i = 1; i < nr_alleles; ++i) {
+				DnaSequence allele = v.get_allele_sequence(i);
+				// skip alleles that are undefined
+				if (!allele.contains_undefined()) {
+					if (i > 1) alt_alleles += ",";
+					alt_alleles += allele.to_string();
+					defined_alleles.push_back(i);
+				}
 			}
+
 			this->genotyping_outfile << alt_alleles << "\t"; // ALT
 			this->genotyping_outfile << ".\t"; // QUAL
 			this->genotyping_outfile << "PASS" << "\t"; // FILTER
@@ -355,34 +363,38 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 				if (a > 1) info << ",";
 				info << setprecision(6) << v.allele_frequency(a, this->add_reference);				
 			}
-			info << ";UK=" << singleton_likelihoods.at(j).get_nr_unique_kmers(); // UK
+
+			// keep only likelihoods for genotypes with defined alleles
+			GenotypingResult genotype_likelihoods = singleton_likelihoods.at(j).get_specific_likelihoods(defined_alleles);
+
+			info << ";UK=" << genotype_likelihoods.get_nr_unique_kmers(); // UK
 			info << ";AK="; // AK
 			for (unsigned int a = 0; a < nr_alleles; ++a) {
 				if (a > 0) info << ",";
-				info << singleton_likelihoods.at(j).get_allele_kmer_count(a);
+				info << genotype_likelihoods.get_allele_kmer_count(a);
 			}
-			info << ";KC=" << setprecision(2) << singleton_likelihoods.at(j).get_coverage(); // KC
+			info << ";KC=" << setprecision(2) << genotype_likelihoods.get_coverage(); // KC
 
 			this->genotyping_outfile << info.str() << "\t"; // INFO
 			this->genotyping_outfile << "GT:GQ:GL" << "\t"; // FORMAT
 
 			// determine computed genotype
-			pair<int,int> genotype = singleton_likelihoods.at(j).get_likeliest_genotype();
-			if (ignore_imputed && (singleton_likelihoods.at(j).get_nr_unique_kmers() == 0)) genotype = {-1,-1};
+			pair<int,int> genotype = genotype_likelihoods.get_likeliest_genotype();
+			if (ignore_imputed && (genotype_likelihoods.get_nr_unique_kmers() == 0)) genotype = {-1,-1};
 			if ( (genotype.first != -1) && (genotype.second != -1)) {
 
 				// unique maximum and therefore a likeliest genotype exists
 				this->genotyping_outfile << genotype.first << "/" << genotype.second << ":"; // GT
 
 				// output genotype quality
-				this->genotyping_outfile << singleton_likelihoods.at(j).get_genotype_quality(genotype.first, genotype.second) << ":"; // GQ
+				this->genotyping_outfile << genotype_likelihoods.get_genotype_quality(genotype.first, genotype.second) << ":"; // GQ
 			} else {
 				// genotype could not be determined 
 				this->genotyping_outfile << ".:.:"; // GT:GQ
 			}
 
 			// output genotype likelihoods
-			vector<long double> likelihoods = singleton_likelihoods.at(j).get_all_likelihoods(nr_alleles);
+			vector<long double> likelihoods = genotype_likelihoods.get_all_likelihoods(nr_alleles);
 			if (likelihoods.size() < 3) {
 				ostringstream oss;
 				oss << "VariantReader::write_genotypes_of: too few likelihoods (" << likelihoods.size() << ") computed for variant at position " << v.get_start_position() << endl;
@@ -432,10 +444,20 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 				throw runtime_error(oss.str());
 			}
 
-			string alt_alleles = v.get_allele_string(1);
-			for (size_t i = 2; i < nr_alleles; ++i) {
-				alt_alleles += "," + v.get_allele_string(i);
+			string alt_alleles = "";
+			vector<unsigned char> defined_alleles;
+			for (size_t i = 1; i < nr_alleles; ++i) {
+				DnaSequence allele = v.get_allele_sequence(i);
+				// skip alleles that are undefined
+				if (!allele.contains_undefined()) {
+					if (i > 1) alt_alleles += ",";
+					alt_alleles += allele.to_string();
+					defined_alleles.push_back(i);
+				}
 			}
+
+			// keep only likelihoods for genotypes with defined alleles
+			GenotypingResult genotype_likelihoods = singleton_likelihoods.at(j).get_specific_likelihoods(defined_alleles);
 
 			this->phasing_outfile << alt_alleles << "\t"; // ALT
 			this->phasing_outfile << ".\t"; // QUAL
@@ -447,22 +469,29 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 				if (a > 1) info << ",";
 				info << setprecision(6) << v.allele_frequency(a, this->add_reference);				
 			}
-			info << ";UK=" << singleton_likelihoods.at(j).get_nr_unique_kmers(); // UK
+			info << ";UK=" << genotype_likelihoods.get_nr_unique_kmers(); // UK
 			info << ";AK="; // AK
 			for (unsigned int a = 0; a < nr_alleles; ++a) {
 				if (a > 0) info << ",";
-				info << singleton_likelihoods.at(j).get_allele_kmer_count(a);
+				info << genotype_likelihoods.get_allele_kmer_count(a);
 			}
-			info << ";KC=" << setprecision(2) << singleton_likelihoods.at(j).get_coverage(); // KC
+			info << ";KC=" << setprecision(2) << genotype_likelihoods.get_coverage(); // KC
 
 			this->phasing_outfile << info.str() << "\t"; // INFO
 			this->phasing_outfile << "GT" << "\t"; // FORMAT
 
 			// determine phasing
-			if (ignore_imputed && (singleton_likelihoods.at(j).get_nr_unique_kmers()== 0)){
+			if (ignore_imputed && (genotype_likelihoods.get_nr_unique_kmers()== 0)){
 				this->phasing_outfile << "./." << endl; ; // GT (phased)
 			} else {
 				pair<unsigned char,unsigned char> haplotype = singleton_likelihoods.at(j).get_haplotype();
+				// check if the haplotype allele is undefined
+				bool hap1_undefined = v.get_allele_sequence(haplotype.first).contains_undefined();
+				bool hap2_undefined = v.get_allele_sequence(haplotype.second).contains_undefined();
+				string hap1 (1, haplotype.first);
+				string hap2 (1, haplotype.second);
+				if (hap1_undefined) hap1 = ".";
+				if (hap2_undefined) hap2 = ".";
 				this->phasing_outfile << (unsigned int) haplotype.first << "|" << (unsigned int) haplotype.second << endl; // GT (phased)
 			}
 		}
