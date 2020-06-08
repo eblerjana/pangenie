@@ -25,8 +25,8 @@ public:
 
 private:
 	std::vector<ColumnIndexer*> column_indexers;
-	std::vector< std::vector<long double>* > forward_columns;
-	std::vector<long double>* previous_backward_column;
+	std::vector< std::vector<long double>* > backward_columns;
+	std::vector<long double>* previous_forward_column;
 	std::vector< std::vector<long double>* > viterbi_columns;
 	std::vector<UniqueKmers*>* unique_kmers;
 	std::vector<TransitionProbabilityComputer*> transition_prob_computers;

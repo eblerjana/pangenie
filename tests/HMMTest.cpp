@@ -112,6 +112,7 @@ TEST_CASE("HMM get_genotyping_result_normalized", "[HMM get_genotyping_result_no
 		REQUIRE(result.get_allele_kmer_count(0) == 1);
 		REQUIRE(result.get_allele_kmer_count(1) == 1);
 	}
+
 	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
 }
 
@@ -390,9 +391,9 @@ TEST_CASE("HMM emissions_zero", "[HMM emissions_zero]") {
 
 	vector<UniqueKmers*> unique_kmers = {&u1, &u2, &u3};
 	HMM hmm (&unique_kmers, true, true, 446.287102628, false, 0.25);
-	// currently, backward probabilities that all become zero, are not corrected in current column (but stored as uniform for further computations)
-	// since all backward probs in first column are zero, likelihoods are zero as well. Backward probs are later set to uniform.
-	vector<double> expected_likelihoods = {0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0};
+	// currently, forward probabilities that all become zero, are not corrected in current column (but stored as uniform for further computations)
+	// since all forward probs in first column are zero, likelihoods are zero as well. Forward probs are later set to uniform.
+	vector<double> expected_likelihoods = {0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0};
 	vector<double> computed_likelihoods;
 
 	unsigned int index = 0;
@@ -434,8 +435,8 @@ TEST_CASE("HMM underflow", "[HMM underflow]") {
 
 	vector<UniqueKmers*> unique_kmers = {&u1, &u2, &u3};
 	HMM hmm (&unique_kmers, true, true, 0.0, false, 0.25);
-	// currently, backward probabilities that all become zero, are not corrected in current column (but stored as uniform for further computations)
-	vector<double> expected_likelihoods = {0.0,0.0,0.0,0.0,1.0,0.0,0.0,1.0,0.0};
+	// currently, forward probabilities that all become zero, are not corrected in current column (but stored as uniform for further computations)
+	vector<double> expected_likelihoods = {0.0,1.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0};
 	vector<double> computed_likelihoods;
 
 	for (auto result : hmm.get_genotyping_result()) {
