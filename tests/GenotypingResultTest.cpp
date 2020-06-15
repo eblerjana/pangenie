@@ -99,6 +99,57 @@ TEST_CASE("GenotypingResult get_all_likelihoods (triallelic)", "[GenotypingResul
 	REQUIRE(r.get_genotype_quality(0,1) == 0);
 }
 
+TEST_CASE("GenotypingResult get_specific_likelihoods", "[GenotypingResult get_specific_likelihoods]") {
+	GenotypingResult r;
+	r.add_to_likelihood(0,0,0.01);
+	r.add_to_likelihood(0,1,0.02);
+	r.add_to_likelihood(0,2,0.1);
+	r.add_to_likelihood(1,0,0.15);
+	r.add_to_likelihood(1,1,0.05);
+	r.add_to_likelihood(1,2,0.15);
+	r.add_to_likelihood(2,0,0.20);
+	r.add_to_likelihood(2,1,0.22);
+	r.add_to_likelihood(2,2,0.1);
+
+	vector<long double> all_likelihoods = r.get_all_likelihoods(3);
+	vector<long double> expected_likelihoods = {0.01, 0.17, 0.05, 0.30, 0.37, 0.1};
+
+	for (size_t i = 0; i < 6; ++i) {
+		REQUIRE(doubles_equal(all_likelihoods[i], expected_likelihoods[i]));
+	}
+
+	vector<unsigned char> defined_alleles = {0,2};
+	GenotypingResult specific_likelihoods = r.get_specific_likelihoods(defined_alleles);
+	vector<long double> likelihoods = specific_likelihoods.get_all_likelihoods(2);
+	vector<long double> expected_specific_likelihoods = {0.0243902439, 0.73170731706, 0.24390243902};
+
+	for (size_t i = 0; i < 3; ++i) {
+		REQUIRE(doubles_equal(likelihoods[i], expected_specific_likelihoods[i]));
+	}
+}
+
+TEST_CASE("GenotypingResult get_specific_likelihoods2", "[GenotypingResult get_specific_likelihoods2]") {
+	GenotypingResult r;
+	r.add_to_likelihood(0,0,0.2);
+	r.add_to_likelihood(0,1,0.7);
+	r.add_to_likelihood(1,1,0.1);
+
+	vector<long double> all_likelihoods = r.get_all_likelihoods(2);
+	vector<long double> expected_likelihoods = {0.2, 0.7, 0.1};
+
+	for (size_t i = 0; i < 3; ++i) {
+		REQUIRE(doubles_equal(all_likelihoods[i], expected_likelihoods[i]));
+	}
+
+	vector<unsigned char> defined_alleles = {0,1};
+	GenotypingResult specific_likelihoods = r.get_specific_likelihoods(defined_alleles);
+	vector<long double> likelihoods = specific_likelihoods.get_all_likelihoods(2);
+
+	for (size_t i = 0; i < 3; ++i) {
+		REQUIRE(doubles_equal(likelihoods[i], expected_likelihoods[i]));
+	}
+}
+
 TEST_CASE("GenotypingResult get_genotype_quality unnormalized", "[GenotypingResult get_genotype_quality unnormalized]") {
 
 	GenotypingResult r;

@@ -71,7 +71,7 @@ GenotypingResult GenotypingResult::get_specific_likelihoods (vector<unsigned cha
 	assert (nr_alleles < 256);
 	long double sum = 0.0L;
 	for (unsigned char i = 0; i < nr_alleles; ++i) {
-		for (unsigned char j = 0; j < nr_alleles; ++j) {
+		for (unsigned char j = i; j < nr_alleles; ++j) {
 			long double likelihood = this->get_genotype_likelihood(alleles[i], alleles[j]);
 			if (this->haplotype_1 == alleles[i]) result.haplotype_1 = i;
 			if (this->haplotype_2 == alleles[j]) result.haplotype_2 = j;

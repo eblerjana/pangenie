@@ -342,9 +342,10 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 			}
 
 			string alt_alleles = "";
-			vector<unsigned char> defined_alleles;
+			vector<unsigned char> defined_alleles = {0};
 			for (size_t i = 1; i < nr_alleles; ++i) {
 				DnaSequence allele = v.get_allele_sequence(i);
+				cout << allele.to_string() << endl;
 				// skip alleles that are undefined
 				if (!allele.contains_undefined()) {
 					if (i > 1) alt_alleles += ",";
@@ -366,6 +367,16 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 
 			// keep only likelihoods for genotypes with defined alleles
 			GenotypingResult genotype_likelihoods = singleton_likelihoods.at(j).get_specific_likelihoods(defined_alleles);
+			nr_alleles = defined_alleles.size();
+
+			cout << singleton_likelihoods[j] << endl;
+			cout << genotype_likelihoods << endl;
+
+			for (auto d : defined_alleles) {
+				cout << (unsigned int) d << endl;
+			}
+
+
 
 			info << ";UK=" << genotype_likelihoods.get_nr_unique_kmers(); // UK
 			info << ";AK="; // AK
