@@ -11,13 +11,14 @@ EmissionProbabilityComputer::EmissionProbabilityComputer(UniqueKmers* uniquekmer
 {
 	vector<unsigned char> unique_alleles;
 	uniquekmers->get_defined_allele_ids(unique_alleles);
-	unsigned char max_allele = *max_element(std::begin(unique_alleles), std::end(unique_alleles));
-	this->state_to_prob = vector< vector<long double>>(max_allele+1, vector<long double>(max_allele+1));
-
-	for (auto a1 : unique_alleles) {
-		for (auto a2 : unique_alleles) {
+	if (unique_alleles.size() > 0) {
+		unsigned char max_allele = *max_element(std::begin(unique_alleles), std::end(unique_alleles));
+		this->state_to_prob = vector< vector<long double>>(max_allele+1, vector<long double>(max_allele+1));
+		for (auto a1 : unique_alleles) {
+			for (auto a2 : unique_alleles) {
 			this->state_to_prob[a1][a2] = compute_emission_probability(a1, a2);
-			if (this->state_to_prob[a1][a2] > 0) this->all_zeros = false;
+				if (this->state_to_prob[a1][a2] > 0) this->all_zeros = false;
+			}
 		}
 	}
 

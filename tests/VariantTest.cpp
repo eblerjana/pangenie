@@ -219,7 +219,6 @@ TEST_CASE("Variant separate_variants_likelihoods", "Variant separate_variants_li
 		REQUIRE(single_variants[i].get_allele_string(0) == expected_alleles[i][0]);
 		REQUIRE(single_variants[i].get_allele_string(1) == expected_alleles[i][1]);
 	}
-	
 }
 
 TEST_CASE("Variant separate_variants_single", "[Variants separate_variants_single]") {
@@ -549,4 +548,58 @@ TEST_CASE("Variant separate_variants_likelihoods_single_uncovered", "[Variant se
 	// allele 0 is not covered by any path and its kmer count should therefore be -1 
 	REQUIRE(single_genotypes[0].get_allele_kmer_count(0) == -1);
 	REQUIRE(single_genotypes[0].get_allele_kmer_count(1) == 3);
+}
+
+TEST_CASE("Variant separate_variants_likelihoods_undefined", "[Variant separate_variants_likelihoods_undefined]") {
+	Variant v1 ("ATGA", "CTGA", "chr2", 4, 5, {"N", "T"}, {0,0,1,1});
+	Variant v2 ("ANCT", "ACTG", "chr2", 7, 10, {"GAG", "ACC"}, {0,0,0,1});
+	Variant v3 ("ATGA", "CTGA", "chr2", 4, 5, {"N", "T"}, {0,0,1,1});
+
+	GenotypingResult g;
+	g.add_to_likelihood(1,1,0.5);
+	g.add_to_likelihood(1,2,0.4);
+	g.add_to_likelihood(2,2,0.1);
+
+	g.add_first_haplotype_allele(1);
+	g.add_second_haplotype_allele(2);
+	g.set_nr_unique_kmers(5);
+	// unique kmers per allele
+	map<unsigned char, int> counts = { {0,3}, {1,9}, {2,2} };
+	g.set_allele_kmer_counts(counts);
+
+	v1.combine_variants(v2);
+	vector<Variant> single_variants;
+	vector<GenotypingResult> single_genotypes;
+	v1.separate_variants(&single_variants, &g, &single_genotypes);
+	REQUIRE(single_variants.size() == 2);
+	REQUIRE(single_variants[0] == v3);
+	REQUIRE(single_variants[1] == v2);
+	REQUIRE(single_genotypes.size() == 2);
+
+	// expected genotype likelihoods
+	vector<vector<double>> expected = { {0.0,0.0,1.0}, {0.5,0.4,0.1}};
+	vector<pair<unsigned char,unsigned char>> expected_haplotypes = {make_pair(1,1), make_pair(0,1)};
+
+	// computed genotype likelihoods
+	for (size_t i = 0; i < 2; ++i) {
+		vector<long double> computed = single_genotypes[i].get_all_likelihoods(2);
+		REQUIRE(computed.size() == expected[i].size());
+		for (size_t j = 0; j < expected[i].size(); ++j) {
+			cout << computed[j] << " " << expected[i][j] << endl;
+			REQUIRE(doubles_equal(computed[j], expected[i][j]));
+		}
+		// here, all haplotypes should be 0|1
+		REQUIRE(single_genotypes[i].get_haplotype() == expected_haplotypes[i]);
+		REQUIRE(single_genotypes[i].get_nr_unique_kmers() == 5);
+	}
+
+	vector<vector<unsigned int>> expected_counts = { {3,11}, {12,2} };
+	vector<vector<string>> expected_alleles = { {"N", "T"}, {"GAG", "ACC"}, {"G", "GTC"} };
+	for (size_t i = 0; i < 2; ++i) {
+		REQUIRE(single_genotypes[i].get_allele_kmer_count(0) == expected_counts[i][0]);
+		REQUIRE(single_genotypes[i].get_allele_kmer_count(1) == expected_counts[i][1]);
+		REQUIRE(single_variants[i].get_allele_string(0) == expected_alleles[i][0]);
+		REQUIRE(single_variants[i].get_allele_string(1) == expected_alleles[i][1]);
+	}
+	
 }

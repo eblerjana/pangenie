@@ -33,6 +33,11 @@ void UniqueKmers::insert_kmer(CopyNumber cn,  vector<unsigned char>& alleles){
 	this->kmer_to_copynumber.push_back(cn);
 	for (auto const& a: alleles){
 		this->alleles[a].set_position(index);
+		if (this->is_undefined[a]) {
+			cerr << "UniqueKmers::insert_kmer: attempt to insert kmers for undefined allele: " <<  (unsigned int) a << endl;
+		} else {
+			this->is_undefined[a] = false;
+		}
 	}
 	current_index += 1;
 }
@@ -100,6 +105,11 @@ ostream& operator<< (ostream& stream, const UniqueKmers& uk) {
 	for (auto it = uk.alleles.begin(); it != uk.alleles.end(); ++it) {
 		stream << (unsigned int) it->first << "\t" << it->second.convert_to_string() << endl;
 	}
+	stream << "undefined alleles:" << endl;
+	for (auto it = uk.is_undefined.begin(); it != uk.is_undefined.end(); ++it) {
+		if (it->second) stream << (unsigned int) it->first << endl;
+	}
+
 	stream << "paths:" << endl;
 	for (auto it = uk.path_to_allele.begin(); it != uk.path_to_allele.end(); ++it) {
 		stream << it->first << " covers allele " << (unsigned int) it->second << endl;

@@ -15,12 +15,13 @@ using namespace std;
 /**
 void print_column(vector<long double>* column, ColumnIndexer* indexer) {
 	for (size_t i = 0; i < column->size(); ++i) {
-		pair<size_t,size_t> paths = indexer->get_paths(i);
+		pair<size_t,size_t> paths = indexer->get_path_ids_at(i);
 		cout << setprecision(15) << column->at(i) << " paths: " << paths.first << " " <<  paths.second << endl;
 	}
 	cout << "" << endl;
 }
 **/
+
 
 // TODO: first do backward pass and then forward pass (since the combined backward probabilities are sufficient at a position)
 
@@ -274,22 +275,17 @@ void HMM::compute_forward_column(size_t column_index) {
 			unsigned char allele2 = column_indexer->get_allele(path_id2);
 			vector<unsigned char> alleles1;
 			vector<unsigned char> alleles2;
-			cout << "here1" << endl;
 			if (this->unique_kmers->at(column_index)->is_undefined_allele(allele1)) {
 				alleles1 = defined_alleles;
 			} else {
 				alleles1 = {allele1};
 			}
 
-			cout << "here2" << endl;
-
 			if (this->unique_kmers->at(column_index)->is_undefined_allele(allele2)) {
 				alleles2 = defined_alleles;
 			} else {
 				alleles2 = {allele2};
 			}
-
-			cout << "here3" << endl;
 
 			long double current_cell = 0.0L;
 			for (auto a1 : alleles1) {
@@ -301,11 +297,9 @@ void HMM::compute_forward_column(size_t column_index) {
 					current_cell += forward_prob;
 					normalization_f_b += forward_backward_prob;
 					// update genotype likelihood
-					this->genotyping_result.at(column_index).add_to_likelihood(allele1, allele2, forward_backward_prob);
+					this->genotyping_result.at(column_index).add_to_likelihood(a1, a2, forward_backward_prob);
 				}
 			}
-
-			cout << "here4" << endl;
 
 			// set entry of current column
 			current_column->push_back(current_cell);
@@ -313,8 +307,6 @@ void HMM::compute_forward_column(size_t column_index) {
 			i += 1;
 		}
 	}
-
-	cout << "here5" << endl;
 
 	if (normalization_sum > 0.0L) {
 		// normalize the entries in current column to sum up to 1
@@ -324,8 +316,6 @@ void HMM::compute_forward_column(size_t column_index) {
 		transform(current_column->begin(), current_column->end(), current_column->begin(),  [uniform](long double c) -> long double {return uniform;});
 //		cerr << "Underflow in Forward pass at position: " << this->unique_kmers->at(column_index)->get_variant_position() << ". Column set to uniform." << endl;
 	}
-
-	cout << "here6" << endl;
 
 	if (this->previous_forward_column != nullptr) {
 		delete this->previous_forward_column;
@@ -343,13 +333,12 @@ void HMM::compute_forward_column(size_t column_index) {
 		this->genotyping_result.at(column_index).divide_likelihoods_by(normalization_f_b);
 	}
 
-	cout << "here6" << endl;
-
 	this->genotyping_result.at(column_index).set_nr_unique_kmers(this->unique_kmers->at(column_index)->size());
 	this->genotyping_result.at(column_index).set_coverage(this->unique_kmers->at(column_index)->get_coverage());
 	this->genotyping_result.at(column_index).set_allele_kmer_counts(this->unique_kmers->at(column_index)->kmers_on_alleles());
 
-	cout << "here7" << endl;
+//	cout << "FORWARD COLUMN: "  << endl;
+//	print_column(current_column, column_indexer);
 }
 
 void HMM::compute_backward_column(size_t column_index) {
@@ -387,6 +376,14 @@ void HMM::compute_backward_column(size_t column_index) {
 	// state index of previous column
 	size_t j = 0;
 
+	// alleles that are defined in previous column
+	vector<unsigned char> prev_defined;
+	this->unique_kmers->at(column_index+1)->get_defined_allele_ids(prev_defined);
+
+	// alleles that are defined in current column
+	vector<unsigned char> cur_defined;
+	this->unique_kmers->at(column_index)->get_defined_allele_ids(cur_defined);
+
 	// iterate through complete previous column
 	for (size_t prev_path_id1 = 0; prev_path_id1 < nr_prev_paths; ++prev_path_id1) {
 		for (size_t prev_path_id2 = 0; prev_path_id2 < nr_prev_paths; ++prev_path_id2) {
@@ -401,8 +398,19 @@ void HMM::compute_backward_column(size_t column_index) {
 			long double emissions = 0.0L;
 
 			// if either of the paths at this state corresponds to an undefined allele, enumerate all possible allele combinations
-			vector<unsigned char> prev_alleles1 = {prev_allele1};
-			vector<unsigned char> prev_alleles2 = {prev_allele2};
+			vector<unsigned char> prev_alleles1;
+			vector<unsigned char> prev_alleles2;
+			if (this->unique_kmers->at(column_index+1)->is_undefined_allele(prev_allele1)) {
+				prev_alleles1 = prev_defined;
+			} else {
+				prev_alleles1 = {prev_allele1};
+			}
+
+			if (this->unique_kmers->at(column_index+1)->is_undefined_allele(prev_allele2)) {
+				prev_alleles2 = prev_defined;
+			} else {
+				prev_alleles2 = {prev_allele2};
+			}
 			for (auto a1 : prev_alleles1) {
 				for (auto a2 : prev_alleles2) {
 					emissions += emission_probability_computer->get_emission_probability(a1, a2);
