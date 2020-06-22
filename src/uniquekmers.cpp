@@ -100,6 +100,12 @@ ostream& operator<< (ostream& stream, const UniqueKmers& uk) {
 	for (auto it = uk.alleles.begin(); it != uk.alleles.end(); ++it) {
 		stream << (unsigned int) it->first << "\t" << it->second.convert_to_string() << endl;
 	}
+
+	stream << "undefined alleles:" << endl;
+	for (auto it = uk.alleles.begin(); it != uk.alleles.end(); ++it) {
+		if (uk.is_undefined_allele(it->first)) stream << (unsigned int) it->first << endl;
+	}
+
 	stream << "paths:" << endl;
 	for (auto it = uk.path_to_allele.begin(); it != uk.path_to_allele.end(); ++it) {
 		stream << it->first << " covers allele " << (unsigned int) it->second << endl;

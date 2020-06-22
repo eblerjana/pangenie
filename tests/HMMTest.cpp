@@ -116,6 +116,112 @@ TEST_CASE("HMM get_genotyping_result_normalized", "[HMM get_genotyping_result_no
 }
 
 
+TEST_CASE("HMM undefined_alleles1", "[HMM get_undefined_alleles1]") {
+	UniqueKmers u1(0,2000);
+	vector<unsigned char> a1 = {0};
+	vector<unsigned char> a2 = {1};
+	u1.insert_empty_allele(0);
+	u1.insert_empty_allele(1, true);
+	REQUIRE (u1.is_undefined_allele(1));
+	u1.insert_path(0,0);
+	u1.insert_path(1,1);
+	u1.insert_kmer(CopyNumber(0.1,0.9,0.1), a1);
+//	u1.insert_kmer(CopyNumber(0.1,0.9,0.1), a2);
+
+	UniqueKmers u2(1,3000);
+	u2.insert_path(0,0);
+	u2.insert_path(1,1);
+	u2.insert_kmer(CopyNumber(0.01,0.01,0.9), a1);
+	u2.insert_kmer(CopyNumber(0.9,0.3,0.1), a2);
+
+	vector<UniqueKmers*> unique_kmers = {&u1,&u2};
+	// recombination rate leads to recombination probability of 0.1
+	// TODO: this currently runs ONLY the genotyping
+	HMM hmm (&unique_kmers, true, true, 446.287102628, false, 0.25);
+
+	// expected likelihoods, as computed by hand
+	vector<double> expected_likelihoods = { 0.45417761795, 0.52185641164, 0.02396597038, 0.97855858361, 0.01875778106, 0.00268363531};
+	vector<double> computed_likelihoods;
+	for (auto result : hmm.get_genotyping_result()) {
+		computed_likelihoods.push_back(result.get_genotype_likelihood(0,0));
+		computed_likelihoods.push_back(result.get_genotype_likelihood(0,1));
+		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
+	}
+
+	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
+
+	computed_likelihoods.clear();
+	// extract only likelihoods for defined genotypes
+	vector<double> expected_specific_likelihoods = {1.0, 0.0, 0.0, 0.97855858361, 0.01875778106, 0.00268363531};
+	vector<vector<unsigned char>> defined_alleles = {{1}, {0,1}};
+	vector<GenotypingResult> result = hmm.get_genotyping_result();
+	for (unsigned int i = 0; i < result.size(); ++i) {
+		GenotypingResult final_likelihood = result[i].get_specific_likelihoods(defined_alleles[i]);
+		computed_likelihoods.push_back(final_likelihood.get_genotype_likelihood(0,0));
+		computed_likelihoods.push_back(final_likelihood.get_genotype_likelihood(0,1));
+		computed_likelihoods.push_back(final_likelihood.get_genotype_likelihood(1,1));
+	}
+
+	REQUIRE( compare_vectors(expected_specific_likelihoods, computed_likelihoods) );
+
+}
+
+TEST_CASE("HMM only_undefined_alleles", "[HMM only_undefined_alleles]") {
+	UniqueKmers u1(0,2000);
+	vector<unsigned char> a1 = {0};
+	vector<unsigned char> a2 = {1};
+	// set both alleles to undefined
+	u1.insert_empty_allele(0, true);
+	u1.insert_empty_allele(1, true);
+	u1.insert_path(0,0);
+	u1.insert_path(1,1);
+	u1.insert_kmer(CopyNumber(0.1,0.9,0.1), a1);
+	u1.insert_kmer(CopyNumber(0.1,0.9,0.1), a2);
+
+	UniqueKmers u2(1,3000);
+	// set both alleles to undefined
+	u2.insert_empty_allele(0, true);
+	u2.insert_empty_allele(1, true);
+	u2.insert_path(0,1);
+	u2.insert_path(1,0);
+	u2.insert_kmer(CopyNumber(0.01,0.01,0.9), a1);
+	u2.insert_kmer(CopyNumber(0.9,0.3,0.1), a2);
+
+	vector<UniqueKmers*> unique_kmers = {&u1,&u2};
+	// recombination rate leads to recombination probability of 0.1
+	// TODO: this currently runs ONLY the genotyping
+	HMM hmm (&unique_kmers, true, false, 446.287102628, false, 0.25);
+
+	// expected likelihoods, as computed by hand
+	vector<double> expected_likelihoods = { 0.25, 0.5, 0.25, 0.25, 0.5, 0.25};
+	vector<double> computed_likelihoods;
+	for (auto result : hmm.get_genotyping_result()) {
+		computed_likelihoods.push_back(result.get_genotype_likelihood(0,0));
+		computed_likelihoods.push_back(result.get_genotype_likelihood(0,1));
+		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
+		REQUIRE(result.get_nr_unique_kmers() == 2);
+		REQUIRE(result.get_allele_kmer_count(0) == 1);
+		REQUIRE(result.get_allele_kmer_count(1) == 1);
+	}
+
+	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
+
+	computed_likelihoods.clear();
+	// extract only likelihoods for defined genotypes
+	vector<double> expected_specific_likelihoods = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+	vector<vector<unsigned char>> defined_alleles = {{}, {}};
+	vector<GenotypingResult> result = hmm.get_genotyping_result();
+	for (unsigned int i = 0; i < result.size(); ++i) {
+		GenotypingResult final_likelihood = result[i].get_specific_likelihoods(defined_alleles[i]);
+		computed_likelihoods.push_back(final_likelihood.get_genotype_likelihood(0,0));
+		computed_likelihoods.push_back(final_likelihood.get_genotype_likelihood(0,1));
+		computed_likelihoods.push_back(final_likelihood.get_genotype_likelihood(1,1));
+	}
+
+	REQUIRE( compare_vectors(expected_specific_likelihoods, computed_likelihoods) );
+}
+
+
 TEST_CASE("HMM no_alt_allele", "[HMM no_alt_allele]") {
 	UniqueKmers u(0,2000);
 	vector<unsigned char> a1 = {0,1};

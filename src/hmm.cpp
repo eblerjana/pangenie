@@ -12,15 +12,15 @@
 
 using namespace std;
 
-/**
+
 void print_column(vector<long double>* column, ColumnIndexer* indexer) {
 	for (size_t i = 0; i < column->size(); ++i) {
-		pair<size_t,size_t> paths = indexer->get_paths(i);
+		pair<size_t,size_t> paths = indexer->get_path_ids_at(i);
 		cout << setprecision(15) << column->at(i) << " paths: " << paths.first << " " <<  paths.second << endl;
 	}
 	cout << "" << endl;
 }
-**/
+
 
 HMM::HMM(vector<UniqueKmers*>* unique_kmers, bool run_genotyping, bool run_phasing, double recombrate, bool uniform, long double effective_N)
 	:unique_kmers(unique_kmers),
