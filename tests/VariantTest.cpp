@@ -351,6 +351,16 @@ TEST_CASE("Variant uncovered_single", "[Variant uncovered_single]") {
 	REQUIRE(single_vars[0] == v2);
 }
 
+TEST_CASE("Variant nr_missing_alleles", "[Variant nr_missing_alleles]") {
+	Variant v1("AAA", "TTT", "chr1", 5, 6, {"A", "GNN", "T"}, {0,1,1,2});
+	REQUIRE(v1.nr_missing_alleles() == 2);
+
+	Variant v2("AAAN", "TTTN", "chr1", 5, 6, {"A", "G", "T"}, {0,0,1,0});
+	REQUIRE(v2.nr_missing_alleles() == 0);
+	v2.add_flanking_sequence();
+	REQUIRE(v2.nr_missing_alleles() == 4);
+}
+
 TEST_CASE("Variant combine_combined", "[Variant combine_combined]") {
 	Variant v1("AAA", "TCA", "chr1", 4, 5, {"A", "T", "G"}, {0,0});
 	Variant v2("AAT", "AAG", "chr1", 6, 7, {"C", "T"}, {0,1});

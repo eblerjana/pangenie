@@ -465,3 +465,12 @@ float Variant::allele_frequency(unsigned char allele_index, bool ignore_ref_path
 	}
 	return freq / size;
 }
+
+size_t Variant::nr_missing_alleles() const {
+	size_t missing = 0;
+	for (auto path : this->paths) {
+		DnaSequence allele = this->get_allele_sequence(path);
+		if (allele.contains_undefined()) missing += 1;
+	}
+	return missing;
+}
