@@ -494,3 +494,101 @@ TEST_CASE("HMM get_genotyping_result_neutral_kmers", "[HMM get_genotyping_result
 	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
 }
 
+
+TEST_CASE("HMM only_paths", "[HMM only_paths]") {
+	// want to only consider the following paths. All others should be ignored.
+	vector<size_t> only_paths = {0,3};
+	UniqueKmers u1(0,2000);
+	vector<unsigned char> a1 = {0};
+	vector<unsigned char> a2 = {1};
+	vector<unsigned char> a3 = {2};
+	u1.insert_empty_allele(0);
+	u1.insert_empty_allele(1);
+	u1.insert_empty_allele(2);
+	u1.insert_path(0,0);
+	u1.insert_path(1,2);
+	u1.insert_path(2,1);
+	u1.insert_path(3,1);
+	u1.insert_kmer(CopyNumber(0.1,0.9,0.1), a1);
+	u1.insert_kmer(CopyNumber(0.1,0.9,0.1), a2);
+
+	UniqueKmers u2(1,3000);
+	u2.insert_empty_allele(0);
+	u2.insert_empty_allele(1);
+	u2.insert_empty_allele(2);
+	u2.insert_path(0,0);
+	u2.insert_path(1,0);
+	u2.insert_path(2,2);
+	u2.insert_path(3,1);
+	u2.insert_kmer(CopyNumber(0.01,0.01,0.9), a1);
+	u2.insert_kmer(CopyNumber(0.9,0.3,0.1), a2);
+
+	vector<UniqueKmers*> unique_kmers = {&u1,&u2};
+//	vector<Variant> variants;
+//	variants.push_back(Variant("NNN", "NNN", "chr1", 2000, 2003, {"AAT", "ATT"}, {0,1}));
+//	variants.push_back(Variant("NNN", "NNN", "chr1", 3000, 3003, {"CCC", "CGC"}, {0,1}));
+
+	// recombination rate leads to recombination probability of 0.1
+	HMM hmm (&unique_kmers, true, true, 446.287102628, false, 0.25, &only_paths);
+
+	// expected likelihoods, as computed by hand
+	vector<double> expected_likelihoods = { 0.0509465435, 0.9483202731, 0.0007331832, 0.9678020017, 0.031003181, 0.0011948172 };
+	vector<double> computed_likelihoods;
+	for (auto result : hmm.get_genotyping_result()) {
+		computed_likelihoods.push_back(result.get_genotype_likelihood(0,0));
+		computed_likelihoods.push_back(result.get_genotype_likelihood(0,1));
+		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
+		REQUIRE(result.get_nr_unique_kmers() == 2);
+		REQUIRE(result.get_allele_kmer_count(0) == 1);
+		REQUIRE(result.get_allele_kmer_count(1) == 1);
+		REQUIRE(result.get_allele_kmer_count(2) == 0);
+	}
+
+	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
+}
+
+TEST_CASE("HMM no_only_paths2", "[HMM only_paths2]") {
+	vector<unsigned char> a2 = {2};
+	UniqueKmers u1(0, 2000);
+	u1.insert_path(0,0);
+	u1.insert_path(1,1);
+	u1.insert_path(2,2);
+	u1.insert_empty_allele(0);
+	u1.insert_empty_allele(1);
+	u1.insert_empty_allele(2);
+	u1.insert_kmer(CopyNumber(0.05, 0.8, 0.15), a2);
+
+	UniqueKmers u2(0, 3000);
+	u2.insert_path(0,0);
+	u2.insert_path(1,1);
+	u2.insert_empty_allele(0);
+	u2.insert_empty_allele(1);
+	u2.insert_empty_allele(2);
+
+	u2.insert_kmer(CopyNumber(0.05, 0.8, 0.15), a2);
+	u2.insert_path(2,2);
+
+	vector<UniqueKmers*> unique_kmers = {&u1, &u2};
+//	vector<Variant> variants;
+//	variants.push_back(Variant("AAA", "TTT", "chr1", 2000, 2003, {"ATA", "AAA"}, {0,1}));
+//	variants.push_back(Variant("CCC", "GGG", "chr1", 3000, 3003, {"CTC", "CGC"}, {0,1}));
+
+	// recombination rate leads to recombination probability of 0.1
+	vector<size_t> only_paths = {0,1};
+	HMM hmm (&unique_kmers, true, true, 446.287102628, false, 0.25, &only_paths);
+
+	// each path combination should be equally likely here
+	vector<double> expected_likelihoods = {0.25, 0.5, 0.25, 0.25, 0.5, 0.25};
+	vector<double> computed_likelihoods;
+
+	for (auto result : hmm.get_genotyping_result()) {
+		computed_likelihoods.push_back(result.get_genotype_likelihood(0,0));
+		computed_likelihoods.push_back(result.get_genotype_likelihood(0,1));
+		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
+		REQUIRE(result.get_nr_unique_kmers() == 1);
+		REQUIRE(result.get_allele_kmer_count(0) == 0);
+		REQUIRE(result.get_allele_kmer_count(1) == 0);
+	}
+
+	REQUIRE( compare_vectors(computed_likelihoods, expected_likelihoods) );
+}

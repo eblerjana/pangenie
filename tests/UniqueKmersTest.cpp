@@ -204,3 +204,52 @@ TEST_CASE("UniqueKmers kmers_on_alleles3", "[UniqueKmers kmers_on_alleles3]") {
 	REQUIRE(counts.size() == 1);
 	REQUIRE(counts[1] == 0);
 }
+
+TEST_CASE("UniqueKmers get_path_ids", "[UniqueKmers get_path_ids]") {
+	UniqueKmers u (0, 1000);
+	u.insert_empty_allele(0);
+	u.insert_empty_allele(2);
+	u.insert_path(0,0);
+	u.insert_path(1,0);
+	u.insert_path(2,2);
+	u.insert_path(3,1);
+
+	vector<size_t> path_ids;
+	vector<unsigned char> allele_ids;
+	u.get_path_ids(path_ids, allele_ids);
+
+	vector<size_t> expected_path_ids = {0,1,2,3};
+	vector<unsigned char> expected_allele_ids = {0,0,2,1};
+	REQUIRE(path_ids == expected_path_ids);
+	REQUIRE(allele_ids == expected_allele_ids);
+
+	// select only specific path_ids
+	path_ids.clear();
+	allele_ids.clear();
+	vector<size_t> specific_ids = {0,2,10};
+	expected_path_ids = {0,2};
+	expected_allele_ids = {0,2};
+	u.get_path_ids(path_ids, allele_ids, &specific_ids);
+	REQUIRE(path_ids == expected_path_ids);
+	REQUIRE(allele_ids == expected_allele_ids);
+
+	// no overlap between requested ids and the ones in UniqueKmers
+	path_ids.clear();
+	allele_ids.clear();
+	specific_ids = {20,30,40};
+	expected_path_ids = {};
+	expected_allele_ids = {};
+	u.get_path_ids(path_ids, allele_ids, &specific_ids);
+	REQUIRE(path_ids == expected_path_ids);
+	REQUIRE(allele_ids == expected_allele_ids);
+
+	// all alleles should have been returned
+	path_ids.clear();
+	allele_ids.clear();
+	specific_ids = {0,1,2,3};
+	expected_path_ids = {0,1,2,3};
+	expected_allele_ids = {0,0,2,1};
+	u.get_path_ids(path_ids, allele_ids, &specific_ids);
+	REQUIRE(path_ids == expected_path_ids);
+	REQUIRE(allele_ids == expected_allele_ids);	
+}

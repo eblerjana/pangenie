@@ -18,8 +18,10 @@ public:
 	* @param run_phasing run phasing (Viterbi)
 	* @param recombrate recombination rate
 	* @param uniform use uniform transition probabilities
+	* @param effective_N effective population size
+	* @param only_paths only use these paths and ignore others that might be in unique_kmers.
 	**/
-	HMM(std::vector<UniqueKmers*>* unique_kmers, bool run_genotyping, bool run_phasing, double recombrate = 1.26, bool uniform = false, long double effective_N = 25000.0L);
+	HMM(std::vector<UniqueKmers*>* unique_kmers, bool run_genotyping, bool run_phasing, double recombrate = 1.26, bool uniform = false, long double effective_N = 25000.0L, std::vector<size_t>* only_paths = nullptr);
 	std::vector<GenotypingResult> get_genotyping_result() const;
 	~HMM();
 
@@ -35,7 +37,7 @@ private:
 	void compute_forward_prob();
 	void compute_backward_prob();
 	void compute_viterbi_path();
-	void index_columns();
+	void index_columns(std::vector<size_t>* only_paths = nullptr);
 	void compute_forward_column(size_t column_index);
 	void compute_backward_column(size_t column_index);
 	void compute_viterbi_column(size_t column_index);

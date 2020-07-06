@@ -37,8 +37,8 @@ public:
 	size_t size() const;
 	/** return number of paths **/
 	size_t get_nr_paths() const;
-	/** get all paths and alleles covering this position **/
-	void get_path_ids(std::vector<size_t>& paths, std::vector<unsigned char>& alleles);
+	/** get all paths and alleles covering this position. If only_include, make sure to only output path_ids that are contained in only_include. **/
+	void get_path_ids(std::vector<size_t>& paths, std::vector<unsigned char>& alleles, std::vector<size_t>* only_include = nullptr);
 	/** get all unique alleles covered at this position **/
 	void get_allele_ids(std::vector<unsigned char>& a);
 	friend std::ostream& operator<< (std::ostream& stream, const UniqueKmers& uk);

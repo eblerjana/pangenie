@@ -12,17 +12,16 @@
 
 using namespace std;
 
-/**
 void print_column(vector<long double>* column, ColumnIndexer* indexer) {
 	for (size_t i = 0; i < column->size(); ++i) {
-		pair<size_t,size_t> paths = indexer->get_paths(i);
+		pair<size_t,size_t> paths = indexer->get_path_ids_at(i);
 		cout << setprecision(15) << column->at(i) << " paths: " << paths.first << " " <<  paths.second << endl;
 	}
 	cout << "" << endl;
 }
-**/
 
-HMM::HMM(vector<UniqueKmers*>* unique_kmers, bool run_genotyping, bool run_phasing, double recombrate, bool uniform, long double effective_N)
+
+HMM::HMM(vector<UniqueKmers*>* unique_kmers, bool run_genotyping, bool run_phasing, double recombrate, bool uniform, long double effective_N, vector<size_t>* only_paths)
 	:unique_kmers(unique_kmers),
 	 genotyping_result(unique_kmers->size())
 {
@@ -34,12 +33,13 @@ HMM::HMM(vector<UniqueKmers*>* unique_kmers, bool run_genotyping, bool run_phasi
 		size_t prev_pos = this->unique_kmers->at(i-1)->get_variant_position();
 		size_t cur_pos = this->unique_kmers->at(i)->get_variant_position();
 		size_t nr_paths = this->unique_kmers->at(i)->get_nr_paths();
+		if (only_paths != nullptr) nr_paths = only_paths->size();
 		TransitionProbabilityComputer* t = new TransitionProbabilityComputer(prev_pos, cur_pos, recombrate, nr_paths, uniform, effective_N);
 		this->transition_prob_computers.at(i-1) = t;
 	}
 	this->previous_backward_column = nullptr;
 //	cerr << "Indexing the columns ..." << endl;
-	index_columns();
+	index_columns(only_paths);
 	if (run_genotyping) {
 //		cerr << "Computing forward probabilities ..." << endl;
 		compute_forward_prob();
@@ -62,7 +62,7 @@ HMM::~HMM(){
 	init(this->column_indexers, 0);
 }
 
-void HMM::index_columns() {
+void HMM::index_columns(vector<size_t>* only_paths) {
 	size_t column_count = this->unique_kmers->size();
 	init(column_indexers, column_count);
 	// do one forward pass to compute ColumnIndexers
@@ -70,7 +70,7 @@ void HMM::index_columns() {
 		// get path ids of current column
 		vector<size_t> current_paths;
 		vector<unsigned char> current_alleles;
-		this->unique_kmers->at(column_index)->get_path_ids(current_paths, current_alleles);
+		this->unique_kmers->at(column_index)->get_path_ids(current_paths, current_alleles, only_paths);
 		size_t nr_paths = current_paths.size();
 
 		if (nr_paths == 0) {

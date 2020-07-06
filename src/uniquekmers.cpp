@@ -70,10 +70,23 @@ size_t UniqueKmers::get_nr_paths() const {
 	return this->path_to_allele.size();
 }
 
-void UniqueKmers::get_path_ids(vector<size_t>& p, vector<unsigned char>& a) {
-	for (auto it = this->path_to_allele.begin(); it != this->path_to_allele.end(); ++it) {
-		p.push_back(it->first);
-		a.push_back(it->second);
+void UniqueKmers::get_path_ids(vector<size_t>& p, vector<unsigned char>& a, vector<size_t>* only_include) {
+	if (only_include != nullptr) {
+		// only return paths that are also contained in only_include
+		for (auto p_it = only_include->begin(); p_it != only_include->end(); ++p_it) {
+			// check if path is in path_to_allele
+			auto it = this->path_to_allele.find(*p_it);
+			if (it != this->path_to_allele.end()) {
+				p.push_back(*p_it);
+				a.push_back(it->second);
+			}
+		}
+	} else {
+		// return all paths and corresponding alleles
+		for (auto it = this->path_to_allele.begin(); it != this->path_to_allele.end(); ++it) {
+			p.push_back(it->first);
+			a.push_back(it->second);
+		}
 	}
 }
 
