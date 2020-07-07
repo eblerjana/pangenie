@@ -81,7 +81,7 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 					throw runtime_error("VariantReader::VariantReader: VCF header line is malformed.");
 				}
 			}
-			this->nr_paths = tokens.size();
+			this->nr_paths = (tokens.size() - 9)*2;
 			// add one for reference path
 			if (add_reference) this->nr_paths += 1;
 			continue;
@@ -469,6 +469,10 @@ void VariantReader::close_phasing_outfile() {
 
 size_t VariantReader::nr_of_genomic_kmers() const {
 	return this->fasta_reader.get_total_kmers(this->kmer_size);
+}
+
+size_t VariantReader::nr_of_paths() const {
+	return this->nr_paths;
 }
 
 void VariantReader::get_left_overhang(std::string chromosome, size_t index, size_t length, DnaSequence& result) const {

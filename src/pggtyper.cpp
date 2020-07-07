@@ -18,8 +18,15 @@
 #include "commandlineparser.hpp"
 #include "timer.hpp"
 #include "threadpool.hpp"
+#include "pathsampler.hpp"
 
 using namespace std;
+
+struct UniqueKmersMap {
+	mutex kmers_mutex;
+	map<string, vector<UniqueKmers*>> unique_kmers;
+	map<string, double> runtimes;
+};
 
 struct Results {
 	mutex result_mutex;
@@ -27,23 +34,31 @@ struct Results {
 	map<string, double> runtimes;
 };
 
-void run_genotyping(string chromosome, KmerCounter* genomic_kmer_counts, KmerCounter* read_kmer_counts, VariantReader* variant_reader, size_t kmer_abundance_peak, bool only_genotyping, bool only_phasing, long double effective_N, long double regularization,  Results* results) {
+// bind(prepare_unique_kmers, chromosome, genomic, read_kmer_counts, variants, kmer_abundance_peak, result);
+void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, KmerCounter* read_kmer_counts, VariantReader* variant_reader, size_t kmer_abundance_peak, long double regularization, UniqueKmersMap* unique_kmers_map) {
 	Timer timer;
-	// determine sets of kmers unique to each variant region
 	UniqueKmerComputer kmer_computer(genomic_kmer_counts, read_kmer_counts, variant_reader, chromosome, kmer_abundance_peak);
 	std::vector<UniqueKmers*> unique_kmers;
 	kmer_computer.compute_unique_kmers(&unique_kmers, regularization);
+	// store the results
+	{
+		lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
+		unique_kmers_map->unique_kmers.insert(pair<string, vector<UniqueKmers*>> (chromosome, move(unique_kmers)));
+	}
+	// store runtime
+	lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
+	unique_kmers_map->runtimes.insert(pair<string, double>(chromosome, timer.get_total_time()));
+}
+
+void run_genotyping(string chromosome, vector<UniqueKmers*>* unique_kmers, bool only_genotyping, bool only_phasing, long double effective_N, long double regularization, vector<size_t>* only_paths, Results* results) {
+	Timer timer;
 	// construct HMM and run genotyping/phasing
-	HMM hmm(&unique_kmers, !only_phasing, !only_genotyping, 1.26, false, effective_N);
+	HMM hmm(unique_kmers, !only_phasing, !only_genotyping, 1.26, false, effective_N, only_paths);
 	// store the results
 	{
 		lock_guard<mutex> lock_result (results->result_mutex);
+		// TODO: combine the new results to the already existing ones (if present)
 		results->result.insert(pair<string, vector<GenotypingResult>> (chromosome, move(hmm.get_genotyping_result())));
-	}
-	// destroy unique kmers
-	for (size_t i = 0; i < unique_kmers.size(); ++i) {
-		delete unique_kmers[i];
-		unique_kmers[i] = nullptr;
 	}
 	// store runtime
 	lock_guard<mutex> lock_result (results->result_mutex);
@@ -196,16 +211,40 @@ int main (int argc, char* argv[])
 		cerr << "Warning: set nr_core_threads to " << available_threads << "." << endl;
 		nr_core_threads = available_threads;
 	}
-	Results results;
+
+	// prepare UniqueKmers for each chromosome
+	UniqueKmersMap unique_kmers_list;
 	{
 		// create thread pool
 		ThreadPool threadPool (nr_core_threads);
 		for (auto chromosome : chromosomes) {
 			KmerCounter* genomic = &genomic_kmer_counts;
 			VariantReader* variants = &variant_reader;
+			UniqueKmersMap* result = &unique_kmers_list;
+			function<void()> f_unique_kmers = bind(prepare_unique_kmers, chromosome, genomic, read_kmer_counts, variants, kmer_abundance_peak, regularization, result);
+			threadPool.submit(f_unique_kmers);
+		}
+	}
+
+	// prepare subsets of paths to run on
+	size_t nr_paths = variant_reader.nr_of_paths();
+	PathSampler path_sampler(nr_paths);
+	vector<vector<size_t>> subsets;
+	path_sampler.select_multiple_subsets(subsets, nr_paths, 1);
+
+	// run genotyping
+	Results results;
+	{
+		// create thread pool
+		ThreadPool threadPool (nr_core_threads);
+		for (auto chromosome : chromosomes) {
+			vector<UniqueKmers*>* unique_kmers = &unique_kmers_list.unique_kmers[chromosome];
 			Results* r = &results;
-			function<void()> f_genotyping = bind(run_genotyping, chromosome, genomic, read_kmer_counts, variants, kmer_abundance_peak, only_genotyping, only_phasing, effective_N, regularization, r);
-			threadPool.submit(f_genotyping);
+			for (auto subset : subsets) {
+				vector<size_t>* only_paths = &subset;
+				function<void()> f_genotyping = bind(run_genotyping, chromosome, unique_kmers, only_genotyping, only_phasing, effective_N, regularization, only_paths, r);
+				threadPool.submit(f_genotyping);
+			}
 		}
 	}
 

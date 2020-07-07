@@ -41,6 +41,8 @@ TEST_CASE("VariantReader get_allele_string", "[VariantReader get_allele_string]"
 
 	REQUIRE(v.get_variant("chrB", 0).get_allele_string(0) == "CCACTTCATCAAGACACAA");
 	REQUIRE(v.get_variant("chrB", 1).get_allele_string(0) == "GAGTATTTTGATCATAAAT");
+	// there should be 4+1 paths (since the reference path is added)
+	REQUIRE(v.nr_of_paths() == 5);
 
 	v.write_path_segments("/MMCI/TM/scratch/jebler/pgg-typer/pggtyper/pggtyper/tests/data/small1-segments.fa");
 }
@@ -66,6 +68,7 @@ TEST_CASE("VariantReader get_overhang", "[VariantReader get_overhang]") {
 	v.get_right_overhang("chrA", 2, 20, right_overhang);
 	REQUIRE(left_overhang.to_string() == "GAAGCCAGT");
 	REQUIRE(right_overhang.to_string() == "ACGGCCAAAACATACCATTT");
+	REQUIRE(v.nr_of_paths() == 4);
 }
 
 TEST_CASE("VariantReader write_path_segments", "[VariantReader write_path_segments]") {

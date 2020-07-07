@@ -12,6 +12,7 @@ add_library(PanGenieLib SHARED
 	jellyfishcounter.cpp
 	jellyfishreader.cpp
 	kmerpath.cpp
+	pathsampler.cpp
 	probabilitycomputer.cpp
 	sequenceutils.cpp
 	timer.cpp
