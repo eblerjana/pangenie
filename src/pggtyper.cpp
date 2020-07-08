@@ -241,6 +241,14 @@ int main (int argc, char* argv[])
 	size_t nr_samples = nr_paths;
 	// TODO: determine how often to sample and how large each sample should be
 	path_sampler.select_multiple_subsets(subsets, nr_samples, 1);
+	if (!only_phasing) cerr << "Sampled " << subsets.size() << " subsets of paths each of size " << nr_paths << "for genotyping." << endl;
+
+	// for now, run phasing only once on largest set of paths that can still be handled.
+	// in order to use all paths, an iterative stradegie should be considered
+	vector<size_t> phasing_paths;
+	size_t nr_phasing_paths = max((unsigned int) nr_paths, (unsigned int) 30);
+	path_sampler.select_single_subset(phasing_paths, nr_phasing_paths);
+	if (!only_genotyping) cerr << "Sampled " << nr_phasing_paths << " to be used for phasing." << endl;
 
 	// run genotyping
 	Results results;
@@ -250,10 +258,20 @@ int main (int argc, char* argv[])
 		for (auto chromosome : chromosomes) {
 			vector<UniqueKmers*>* unique_kmers = &unique_kmers_list.unique_kmers[chromosome];
 			Results* r = &results;
-			for (auto subset : subsets) {
-				vector<size_t>* only_paths = &subset;
-				function<void()> f_genotyping = bind(run_genotyping, chromosome, unique_kmers, only_genotyping, only_phasing, effective_N, regularization, only_paths, r);
+			// if requested, run phasing first
+			if (!only_genotyping) {
+				vector<size_t>* only_paths = &phasing_paths;
+				function<void()> f_genotyping = bind(run_genotyping, chromosome, unique_kmers, false, true, effective_N, regularization, only_paths, r);
 				threadPool.submit(f_genotyping);
+			}
+
+			if (!only_phasing) {
+				// if requested, run genotying
+				for (auto subset : subsets) {
+					vector<size_t>* only_paths = &subset;
+					function<void()> f_genotyping = bind(run_genotyping, chromosome, unique_kmers, true, false, effective_N, regularization, only_paths, r);
+					threadPool.submit(f_genotyping);
+				}
 			}
 		}
 	}
