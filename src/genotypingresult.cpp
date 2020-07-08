@@ -164,7 +164,7 @@ int GenotypingResult::get_allele_kmer_count(unsigned char allele) const {
 	}
 }
 
-void GenotypingResult::combine(GenotypingResult& likelihoods) {
+void GenotypingResult::combine(GenotypingResult& likelihoods) { 
 	// std::map < std::pair<unsigned char,unsigned char>, long double > genotype_to_likelihood;
 	for (auto it = likelihoods.genotype_to_likelihood.begin(); it != likelihoods.genotype_to_likelihood.end(); ++it) {
 		pair<unsigned char, unsigned char> genotype = it->first;

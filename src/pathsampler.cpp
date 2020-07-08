@@ -1,7 +1,9 @@
 #include "pathsampler.hpp"
 #include <random>
 #include <unordered_set>
+#include <iostream>
 #include <cassert>
+#include <algorithm>
 
 using namespace std;
 
@@ -22,6 +24,7 @@ void PathSampler::select_single_subset(vector<size_t>& result, size_t sample_siz
 			sample.insert(d);
 	}
 	std::copy(sample.begin(), sample.end(), std::back_inserter(result));
+	sort(result.begin(), result.end());
 }
 
 void PathSampler::select_multiple_subsets(vector<vector<size_t>>& result, size_t sample_size, size_t n) const {

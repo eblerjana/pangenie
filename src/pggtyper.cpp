@@ -57,14 +57,15 @@ void run_genotyping(string chromosome, vector<UniqueKmers*>* unique_kmers, bool 
 	// store the results
 	{
 		lock_guard<mutex> lock_result (results->result_mutex);
-		// TODO: combine the new results to the already existing ones (if present)
-		if (results->result[chromosome].size() == 0) {
+		// combine the new results to the already existing ones (if present)
+		if (results->result.find(chromosome) == results->result.end()) {
 			results->result.insert(pair<string, vector<GenotypingResult>> (chromosome, move(hmm.get_genotyping_result())));
 		} else {
 			// combine newly computed likelihoods with already exisiting ones
 			size_t index = 0;
 			for (auto likelihoods : hmm.get_genotyping_result()) {
 				results->result[chromosome][index].combine(likelihoods);
+				index += 1;
 			}
 		}
 	}
@@ -220,6 +221,8 @@ int main (int argc, char* argv[])
 		nr_core_threads = available_threads;
 	}
 
+	cerr << "Determine unique kmers ..." << endl;
+
 	// prepare UniqueKmers for each chromosome
 	UniqueKmersMap unique_kmers_list;
 	{
@@ -234,21 +237,26 @@ int main (int argc, char* argv[])
 		}
 	}
 
+	cerr << "TEST " << unique_kmers_list.unique_kmers.size()  << " " << unique_kmers_list.unique_kmers["chr1"].size() << endl;
+
 	// prepare subsets of paths to run on
 	size_t nr_paths = variant_reader.nr_of_paths();
 	PathSampler path_sampler(nr_paths);
 	vector<vector<size_t>> subsets;
-	size_t nr_samples = nr_paths;
+	size_t sample_size = nr_paths;
+	size_t nr_samples = 1;
+	sample_size = 5;
+	nr_samples = 5;
 	// TODO: determine how often to sample and how large each sample should be
-	path_sampler.select_multiple_subsets(subsets, nr_samples, 1);
-	if (!only_phasing) cerr << "Sampled " << subsets.size() << " subsets of paths each of size " << nr_paths << "for genotyping." << endl;
+	path_sampler.select_multiple_subsets(subsets, sample_size, nr_samples);
+	if (!only_phasing) cerr << "Sampled " << subsets.size() << " subsets of paths each of size " << nr_paths << " for genotyping." << endl;
 
 	// for now, run phasing only once on largest set of paths that can still be handled.
 	// in order to use all paths, an iterative stradegie should be considered
 	vector<size_t> phasing_paths;
-	size_t nr_phasing_paths = max((unsigned int) nr_paths, (unsigned int) 30);
+	size_t nr_phasing_paths = min((unsigned int) nr_paths, (unsigned int) 30);
 	path_sampler.select_single_subset(phasing_paths, nr_phasing_paths);
-	if (!only_genotyping) cerr << "Sampled " << nr_phasing_paths << " to be used for phasing." << endl;
+	if (!only_genotyping) cerr << "Sampled " << phasing_paths.size() << " paths to be used for phasing." << endl;
 
 	// run genotyping
 	Results results;
@@ -279,7 +287,7 @@ int main (int argc, char* argv[])
 	// normalize the combined likelihoods
 	for (auto it_chrom = results.result.begin(); it_chrom != results.result.end(); ++it_chrom) {
 		for (auto it_likelihood = it_chrom->second.begin(); it_likelihood != it_chrom->second.end(); ++it_likelihood) {
-			it_likelihood->divide_likelihoods_by(nr_samples);
+			it_likelihood->divide_likelihoods_by((long double) nr_samples);
 		}
 	}
 
