@@ -152,3 +152,34 @@ TEST_CASE("GenotypingResult get_allele_kmer_counts", "[Genotyping get_allele_kme
 		REQUIRE(r.get_allele_kmer_count(it->first) == it->second);
 	}
 }
+
+TEST_CASE("GenotypingResult combine", "[GenotypingResult combine]") {
+	GenotypingResult r1;
+	r1.add_to_likelihood(1,1,0.8);
+	r1.add_to_likelihood(0,1,0.1);
+	r1.add_to_likelihood(0,0,0.1);
+
+	GenotypingResult r2;
+	r2.add_to_likelihood(1,1,0.9);
+	r2.add_to_likelihood(0,1,0.06);
+	r2.add_to_likelihood(0,0,0.04);
+
+	r1.combine(r2);
+	REQUIRE(doubles_equal(r1.get_genotype_likelihood(1,1), 1.7));
+	REQUIRE(doubles_equal(r1.get_genotype_likelihood(0,1), 0.16));
+	REQUIRE(doubles_equal(r1.get_genotype_likelihood(0,0), 0.14));
+
+	GenotypingResult r3;
+	r3.add_to_likelihood(1,2,0.1);
+	r3.add_to_likelihood(0,1,0.2);
+	r3.add_to_likelihood(0,0,0.4);
+	r3.add_to_likelihood(2,2,0.3);
+
+	r1.combine(r3);
+	REQUIRE(doubles_equal(r1.get_genotype_likelihood(2,2), 0.3));
+	REQUIRE(doubles_equal(r1.get_genotype_likelihood(1,2), 0.1));
+	REQUIRE(doubles_equal(r1.get_genotype_likelihood(1,1), 1.7));
+	REQUIRE(doubles_equal(r1.get_genotype_likelihood(0,1), 0.36));
+	REQUIRE(doubles_equal(r1.get_genotype_likelihood(0,0), 0.54));
+	
+}

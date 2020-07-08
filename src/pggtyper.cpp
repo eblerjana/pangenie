@@ -58,7 +58,15 @@ void run_genotyping(string chromosome, vector<UniqueKmers*>* unique_kmers, bool 
 	{
 		lock_guard<mutex> lock_result (results->result_mutex);
 		// TODO: combine the new results to the already existing ones (if present)
-		results->result.insert(pair<string, vector<GenotypingResult>> (chromosome, move(hmm.get_genotyping_result())));
+		if (results->result[chromosome].size() == 0) {
+			results->result.insert(pair<string, vector<GenotypingResult>> (chromosome, move(hmm.get_genotyping_result())));
+		} else {
+			// combine newly computed likelihoods with already exisiting ones
+			size_t index = 0;
+			for (auto likelihoods : hmm.get_genotyping_result()) {
+				results->result[chromosome][index].combine(likelihoods);
+			}
+		}
 	}
 	// store runtime
 	lock_guard<mutex> lock_result (results->result_mutex);
@@ -230,7 +238,9 @@ int main (int argc, char* argv[])
 	size_t nr_paths = variant_reader.nr_of_paths();
 	PathSampler path_sampler(nr_paths);
 	vector<vector<size_t>> subsets;
-	path_sampler.select_multiple_subsets(subsets, nr_paths, 1);
+	size_t nr_samples = nr_paths;
+	// TODO: determine how often to sample and how large each sample should be
+	path_sampler.select_multiple_subsets(subsets, nr_samples, 1);
 
 	// run genotyping
 	Results results;
@@ -245,6 +255,13 @@ int main (int argc, char* argv[])
 				function<void()> f_genotyping = bind(run_genotyping, chromosome, unique_kmers, only_genotyping, only_phasing, effective_N, regularization, only_paths, r);
 				threadPool.submit(f_genotyping);
 			}
+		}
+	}
+
+	// normalize the combined likelihoods
+	for (auto it_chrom = results.result.begin(); it_chrom != results.result.end(); ++it_chrom) {
+		for (auto it_likelihood = it_chrom->second.begin(); it_likelihood != it_chrom->second.end(); ++it_likelihood) {
+			it_likelihood->divide_likelihoods_by(nr_samples);
 		}
 	}
 

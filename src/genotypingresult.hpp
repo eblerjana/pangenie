@@ -46,6 +46,10 @@ public:
 	void set_allele_kmer_counts(std::map<unsigned char, int> counts);
 	/** get allele specific number of unique kmers **/
 	int get_allele_kmer_count(unsigned char allele) const;
+	/** add the given likelihoods. Haplotypes, kmer_counts and coverage are not changed,
+	 ** only the likelihoods are modified and not normalized.
+	 **/
+	void combine(GenotypingResult& likelihoods);
 
 private:
 	/** map genotype -> likelihood. genotype alleles are ordered in ascending order **/
