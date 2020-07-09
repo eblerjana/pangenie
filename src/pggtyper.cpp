@@ -71,7 +71,11 @@ void run_genotyping(string chromosome, vector<UniqueKmers*>* unique_kmers, bool 
 	}
 	// store runtime
 	lock_guard<mutex> lock_result (results->result_mutex);
-	results->runtimes.insert(pair<string,double>(chromosome, timer.get_total_time()));
+	if (results->runtimes.find(chromosome) == results->runtimes.end()) {
+		results->runtimes.insert(pair<string,double>(chromosome, timer.get_total_time()));
+	} else {
+		results->runtimes[chromosome] += timer.get_total_time();
+	}
 }
 
 bool ends_with (string const &full_string, string const ending) {
@@ -87,6 +91,7 @@ int main (int argc, char* argv[])
 	Timer timer;
 	double time_preprocessing;
 	double time_kmer_counting;
+	double time_path_sampling;
 	double time_writing;
 	double time_total;
 
@@ -108,6 +113,8 @@ int main (int argc, char* argv[])
 	bool count_only_graph = true;
 	bool ignore_imputed = false;
 	bool add_reference = true;
+	size_t sampling_size = 10;
+	size_t sampling_times = 5;
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
@@ -127,6 +134,8 @@ int main (int argc, char* argv[])
 	argument_parser.add_flag_argument('c', "count all read kmers instead of only those located in graph.");
 	argument_parser.add_flag_argument('u', "output genotype ./. for variants not covered by any unique kmers.");
 	argument_parser.add_flag_argument('d', "do not add reference as additional path.");
+	argument_parser.add_optional_argument('a', "10", "sample subsets of paths of this size.");
+	argument_parser.add_optional_argument('b', "5", "how many times to sample paths.");
 
 	try {
 		argument_parser.parse(argc, argv);
@@ -152,6 +161,8 @@ int main (int argc, char* argv[])
 	count_only_graph = !argument_parser.get_flag('c');
 	ignore_imputed = argument_parser.get_flag('u');
 	add_reference = !argument_parser.get_flag('d');
+	sampling_size = stoi(argument_parser.get_argument('a'));
+	sampling_times = stoi(argument_parser.get_argument('b'));
 
 	// print info
 	cerr << "Files and parameters used:" << endl;
@@ -163,9 +174,6 @@ int main (int argc, char* argv[])
 	string segment_file = outname + "_path_segments.fasta";
 	cerr << "Write path segments to file: " << segment_file << " ..." << endl;
 	variant_reader.write_path_segments(segment_file);
-
-//	// determine total genome size
-//	size_t genome_kmers = variant_reader.nr_of_genomic_kmers();
 
 	// determine chromosomes present in VCF
 	vector<string> chromosomes;
@@ -214,20 +222,35 @@ int main (int argc, char* argv[])
 	cerr << "Construct HMM and run core algorithm ..." << endl;
 	time_kmer_counting = timer.get_interval_time();
 
-	// determine max number of available threads (at most one thread per chromosome possible)
-	size_t available_threads = min(thread::hardware_concurrency(), (unsigned int) chromosomes.size());
-	if (nr_core_threads > available_threads) {
-		cerr << "Warning: set nr_core_threads to " << available_threads << "." << endl;
-		nr_core_threads = available_threads;
-	}
+	// prepare subsets of paths to run on
+	size_t nr_paths = variant_reader.nr_of_paths();
+	PathSampler path_sampler(nr_paths);
+	vector<vector<size_t>> subsets;
+	// TODO: determine how often to sample and how large each sample should be
+	path_sampler.select_multiple_subsets(subsets, sampling_size, sampling_times);
+	if (!only_phasing) cerr << "Sampled " << subsets.size() << " subset(s) of paths each of size " << sampling_size << " for genotyping." << endl;
+
+	// for now, run phasing only once on largest set of paths that can still be handled.
+	// in order to use all paths, an iterative stradegie should be considered
+	vector<size_t> phasing_paths;
+	size_t nr_phasing_paths = min((unsigned int) nr_paths, (unsigned int) 30);
+	path_sampler.select_single_subset(phasing_paths, nr_phasing_paths);
+	if (!only_genotyping) cerr << "Sampled " << phasing_paths.size() << " paths to be used for phasing." << endl;
+	time_path_sampling = timer.get_interval_time();
 
 	cerr << "Determine unique kmers ..." << endl;
+	// determine number of cores to use
+	size_t available_threads_uk = min(thread::hardware_concurrency(), (unsigned int) chromosomes.size());
+	size_t nr_cores_uk = min(nr_core_threads, available_threads_uk);
+	if (nr_cores_uk < nr_core_threads) {
+		cerr << "Warning: using " << nr_cores_uk << " for determining unique kmers." << endl;
+	}
 
 	// prepare UniqueKmers for each chromosome
 	UniqueKmersMap unique_kmers_list;
 	{
-		// create thread pool
-		ThreadPool threadPool (nr_core_threads);
+		// create thread pool with at most nr_chromosomes threads
+		ThreadPool threadPool (nr_cores_uk);
 		for (auto chromosome : chromosomes) {
 			KmerCounter* genomic = &genomic_kmer_counts;
 			VariantReader* variants = &variant_reader;
@@ -237,26 +260,12 @@ int main (int argc, char* argv[])
 		}
 	}
 
-	cerr << "TEST " << unique_kmers_list.unique_kmers.size()  << " " << unique_kmers_list.unique_kmers["chr1"].size() << endl;
-
-	// prepare subsets of paths to run on
-	size_t nr_paths = variant_reader.nr_of_paths();
-	PathSampler path_sampler(nr_paths);
-	vector<vector<size_t>> subsets;
-	size_t sample_size = nr_paths;
-	size_t nr_samples = 1;
-	sample_size = 5;
-	nr_samples = 5;
-	// TODO: determine how often to sample and how large each sample should be
-	path_sampler.select_multiple_subsets(subsets, sample_size, nr_samples);
-	if (!only_phasing) cerr << "Sampled " << subsets.size() << " subsets of paths each of size " << nr_paths << " for genotyping." << endl;
-
-	// for now, run phasing only once on largest set of paths that can still be handled.
-	// in order to use all paths, an iterative stradegie should be considered
-	vector<size_t> phasing_paths;
-	size_t nr_phasing_paths = min((unsigned int) nr_paths, (unsigned int) 30);
-	path_sampler.select_single_subset(phasing_paths, nr_phasing_paths);
-	if (!only_genotyping) cerr << "Sampled " << phasing_paths.size() << " paths to be used for phasing." << endl;
+	// determine max number of available threads for genotyping (at most one thread per chromosome and subsample possible)
+	size_t available_threads = min(thread::hardware_concurrency(), (unsigned int) chromosomes.size() * (unsigned int) sampling_times);
+	if (nr_core_threads > available_threads) {
+		cerr << "Warning: using " << available_threads << " for genotyping." << endl;
+		nr_core_threads = available_threads;
+	}
 
 	// run genotyping
 	Results results;
@@ -287,22 +296,15 @@ int main (int argc, char* argv[])
 	// normalize the combined likelihoods
 	for (auto it_chrom = results.result.begin(); it_chrom != results.result.end(); ++it_chrom) {
 		for (auto it_likelihood = it_chrom->second.begin(); it_likelihood != it_chrom->second.end(); ++it_likelihood) {
-			it_likelihood->divide_likelihoods_by((long double) nr_samples);
+			it_likelihood->divide_likelihoods_by((long double) sampling_times);
 		}
 	}
 
-/**
-	boost::asio::thread_pool threadPool(nr_core_threads);
-	for (auto chromosome : chromosomes) {
-		boost::asio::post(threadPool, boost::bind(run_genotyping, chromosome, &genomic_kmer_counts, read_kmer_counts, &variant_reader, kmer_abundance_peak, only_genotyping, only_phasing, effective_N, &results));
-	} 
-	threadPool.join();
-**/
 	timer.get_interval_time();
 
 	// output VCF
 	cerr << "Write results to VCF ..." << endl;
-	assert (results.result.size() == chromosomes.size());
+	if (!(only_genotyping && only_phasing)) assert (results.result.size() == chromosomes.size());
 	// write VCF
 	for (auto it = results.result.begin(); it != results.result.end(); ++it) {
 		if (!only_phasing) {
@@ -325,14 +327,15 @@ int main (int argc, char* argv[])
 	// output times
 	cerr << "time spent reading input files:\t" << time_preprocessing << " sec" << endl;
 	cerr << "time spent counting kmers: \t" << time_kmer_counting << " sec" << endl;
+	cerr << "time spent selecting paths: \t" << time_path_sampling << " sec" << endl;
 	// output per chromosome time
 	double time_hmm = time_writing;
 	for (auto chromosome : chromosomes) {
-		double time_chrom = results.runtimes.at(chromosome);
+		double time_chrom = results.runtimes[chromosome] + unique_kmers_list.runtimes[chromosome];
 		cerr << "time spent genotyping chromosome " << chromosome << ":\t" << time_chrom << endl;
 		time_hmm += time_chrom;
 	}
-	cerr << "total running time:\t" << time_preprocessing + time_kmer_counting + time_hmm << " sec"<< endl;
+	cerr << "total running time:\t" << time_preprocessing + time_kmer_counting + time_path_sampling + time_hmm + time_writing << " sec"<< endl;
 	cerr << "total wallclock time: " << time_total  << " sec" << endl;
 
 	// memory usage
