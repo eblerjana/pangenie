@@ -114,7 +114,7 @@ int main (int argc, char* argv[])
 	bool ignore_imputed = false;
 	bool add_reference = true;
 	size_t sampling_size = 10;
-	size_t sampling_times = 5;
+//	size_t sampling_times = 5;
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
@@ -135,7 +135,7 @@ int main (int argc, char* argv[])
 	argument_parser.add_flag_argument('u', "output genotype ./. for variants not covered by any unique kmers.");
 	argument_parser.add_flag_argument('d', "do not add reference as additional path.");
 	argument_parser.add_optional_argument('a', "10", "sample subsets of paths of this size.");
-	argument_parser.add_optional_argument('b', "5", "how many times to sample paths.");
+//	argument_parser.add_optional_argument('b', "5", "how many times to sample paths.");
 
 	try {
 		argument_parser.parse(argc, argv);
@@ -162,7 +162,7 @@ int main (int argc, char* argv[])
 	ignore_imputed = argument_parser.get_flag('u');
 	add_reference = !argument_parser.get_flag('d');
 	sampling_size = stoi(argument_parser.get_argument('a'));
-	sampling_times = stoi(argument_parser.get_argument('b'));
+//	sampling_times = stoi(argument_parser.get_argument('b'));
 
 	// print info
 	cerr << "Files and parameters used:" << endl;
@@ -227,7 +227,16 @@ int main (int argc, char* argv[])
 	PathSampler path_sampler(nr_paths);
 	vector<vector<size_t>> subsets;
 	// TODO: determine how often to sample and how large each sample should be
-	path_sampler.select_multiple_subsets(subsets, sampling_size, sampling_times);
+//	path_sampler.select_multiple_subsets(subsets, sampling_size, sampling_times);
+	path_sampler.partition_paths(subsets, sampling_size);
+
+	for (auto s : subsets) {
+		for (auto b : s) {
+			cout << b << endl;
+		}
+		cout << "-----" << endl;
+	}
+
 	if (!only_phasing) cerr << "Sampled " << subsets.size() << " subset(s) of paths each of size " << sampling_size << " for genotyping." << endl;
 
 	// for now, run phasing only once on largest set of paths that can still be handled.
@@ -261,7 +270,7 @@ int main (int argc, char* argv[])
 	}
 
 	// determine max number of available threads for genotyping (at most one thread per chromosome and subsample possible)
-	size_t available_threads = min(thread::hardware_concurrency(), (unsigned int) chromosomes.size() * (unsigned int) sampling_times);
+	size_t available_threads = min(thread::hardware_concurrency(), (unsigned int) chromosomes.size() * (unsigned int) subsets.size());
 	if (nr_core_threads > available_threads) {
 		cerr << "Warning: using " << available_threads << " for genotyping." << endl;
 		nr_core_threads = available_threads;
@@ -296,7 +305,7 @@ int main (int argc, char* argv[])
 	// normalize the combined likelihoods
 	for (auto it_chrom = results.result.begin(); it_chrom != results.result.end(); ++it_chrom) {
 		for (auto it_likelihood = it_chrom->second.begin(); it_likelihood != it_chrom->second.end(); ++it_likelihood) {
-			it_likelihood->divide_likelihoods_by((long double) sampling_times);
+			it_likelihood->divide_likelihoods_by((long double) subsets.size());
 		}
 	}
 

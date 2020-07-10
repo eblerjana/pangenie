@@ -34,3 +34,25 @@ void PathSampler::select_multiple_subsets(vector<vector<size_t>>& result, size_t
 		result.push_back(sample);
 	}
 }
+
+void PathSampler::partition_paths(vector<vector<size_t>>& result, size_t sample_size) const {
+	vector<size_t> all_paths = {};
+	for (size_t i = 0; i < this->total_number; ++i) {
+		all_paths.push_back(i);
+	}
+	random_shuffle(all_paths.begin(), all_paths.end());
+	
+	// partition into parts of length sample_size
+	for (size_t i = 0; i < all_paths.size(); i += sample_size) {
+		auto last = min(all_paths.size(), i+sample_size);
+		vector<size_t> subset(all_paths.begin()+i, all_paths.begin()+last);
+		sort(subset.begin(), subset.end());
+		result.push_back(subset);
+	}
+
+	// if the last sample is shorter than the sample_size, randomly add additional paths
+	size_t missing = sample_size - result.at(result.size()-1).size();
+	if (missing > 0) {
+		this->select_single_subset(result[result.size()-1], missing);
+	}
+}
