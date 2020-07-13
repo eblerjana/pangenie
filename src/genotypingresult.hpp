@@ -50,6 +50,7 @@ public:
 	 ** only the likelihoods are modified and not normalized.
 	 **/
 	void combine(GenotypingResult& likelihoods);
+	void normalize();
 
 private:
 	/** map genotype -> likelihood. genotype alleles are ordered in ascending order **/

@@ -53,7 +53,7 @@ void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, K
 void run_genotyping(string chromosome, vector<UniqueKmers*>* unique_kmers, bool only_genotyping, bool only_phasing, long double effective_N, long double regularization, vector<size_t>* only_paths, Results* results) {
 	Timer timer;
 	// construct HMM and run genotyping/phasing
-	HMM hmm(unique_kmers, !only_phasing, !only_genotyping, 1.26, false, effective_N, only_paths);
+	HMM hmm(unique_kmers, !only_phasing, !only_genotyping, 1.26, false, effective_N, only_paths, false);
 	// store the results
 	{
 		lock_guard<mutex> lock_result (results->result_mutex);
@@ -67,6 +67,13 @@ void run_genotyping(string chromosome, vector<UniqueKmers*>* unique_kmers, bool 
 				results->result[chromosome][index].combine(likelihoods);
 				index += 1;
 			}
+		}
+		// normalize the likelihoods after they have been combined
+		for (size_t i = 0; i < results->result.size(); ++i) {
+			cout << "before" << endl;
+			cout << results->result[chromosome][i] << endl;
+			results->result[chromosome][i].normalize();
+			cout << results->result[chromosome][i] << endl;
 		}
 	}
 	// store runtime

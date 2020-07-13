@@ -175,3 +175,15 @@ void GenotypingResult::combine(GenotypingResult& likelihoods) {
 	assert(this->coverage == likelihoods.coverage);
 	assert(this->kmer_counts == likelihoods.kmer_counts);
 }
+
+void GenotypingResult::normalize () {
+	// sum up probabilities
+	long double normalization_sum = 0.0L;
+	for (auto it = this->genotype_to_likelihood.begin(); it != this->genotype_to_likelihood.end(); ++it) {
+		normalization_sum += it->second;
+	}
+
+	if (normalization_sum > 0) {
+		this->divide_likelihoods_by(normalization_sum);
+	}
+}

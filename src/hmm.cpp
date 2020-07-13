@@ -21,9 +21,10 @@ void print_column(vector<long double>* column, ColumnIndexer* indexer) {
 }
 
 
-HMM::HMM(vector<UniqueKmers*>* unique_kmers, bool run_genotyping, bool run_phasing, double recombrate, bool uniform, long double effective_N, vector<size_t>* only_paths)
+HMM::HMM(vector<UniqueKmers*>* unique_kmers, bool run_genotyping, bool run_phasing, double recombrate, bool uniform, long double effective_N, vector<size_t>* only_paths, bool normalize)
 	:unique_kmers(unique_kmers),
-	 genotyping_result(unique_kmers->size())
+	 genotyping_result(unique_kmers->size()),
+	 forward_normalization_sums (unique_kmers->size(), 0.0L)
 {
 	size_t size = this->unique_kmers->size();
 
@@ -45,6 +46,12 @@ HMM::HMM(vector<UniqueKmers*>* unique_kmers, bool run_genotyping, bool run_phasi
 		compute_forward_prob();
 //		cerr << "Computing backward probabilities ..." << endl;
 		compute_backward_prob();
+
+		if (normalize) {
+			for (size_t i = 0; i < this->genotyping_result.size(); ++i) {
+				genotyping_result[i].normalize();
+			}
+		}
 	}
 
 	if (run_phasing) {
@@ -271,6 +278,11 @@ void HMM::compute_forward_column(size_t column_index) {
 
 	// store the column
 	this->forward_columns.at(column_index) = current_column;
+	if (normalization_sum > 0.0L) {
+		this->forward_normalization_sums.at(column_index) = normalization_sum;
+	} else {
+		this->forward_normalization_sums.at(column_index) = 1.0L;
+	}
 }
 
 void HMM::compute_backward_column(size_t column_index) {
@@ -362,7 +374,7 @@ void HMM::compute_backward_column(size_t column_index) {
 			normalization_f_b += forward_backward_prob;
 
 			// update genotype likelihood
-			this->genotyping_result.at(column_index).add_to_likelihood(allele1, allele2, forward_backward_prob);
+			this->genotyping_result.at(column_index).add_to_likelihood(allele1, allele2, forward_backward_prob * this->forward_normalization_sums.at(column_index));
 			i += 1;
 		}
 	}
@@ -395,10 +407,10 @@ void HMM::compute_backward_column(size_t column_index) {
 		this->forward_columns.at(column_index) = nullptr;
 	}
 
-	if (normalization_f_b > 0.0L) {
-		// normalize the GenotypingResults likelihoods 
-		this->genotyping_result.at(column_index).divide_likelihoods_by(normalization_f_b);
-	}
+//	if (normalization_f_b > 0.0L) {
+//		// normalize the GenotypingResults likelihoods 
+//		this->genotyping_result.at(column_index).divide_likelihoods_by(normalization_f_b);
+//	}
 
 	// store number of unique kmers used at current position (stored in UniqueKmers)
 	this->genotyping_result.at(column_index).set_nr_unique_kmers(this->unique_kmers->at(column_index)->size());

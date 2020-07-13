@@ -21,13 +21,14 @@ public:
 	* @param effective_N effective population size
 	* @param only_paths only use these paths and ignore others that might be in unique_kmers.
 	**/
-	HMM(std::vector<UniqueKmers*>* unique_kmers, bool run_genotyping, bool run_phasing, double recombrate = 1.26, bool uniform = false, long double effective_N = 25000.0L, std::vector<size_t>* only_paths = nullptr);
+	HMM(std::vector<UniqueKmers*>* unique_kmers, bool run_genotyping, bool run_phasing, double recombrate = 1.26, bool uniform = false, long double effective_N = 25000.0L, std::vector<size_t>* only_paths = nullptr, bool normalize = true);
 	std::vector<GenotypingResult> get_genotyping_result() const;
 	~HMM();
 
 private:
 	std::vector<ColumnIndexer*> column_indexers;
 	std::vector< std::vector<long double>* > forward_columns;
+	std::vector< long double > forward_normalization_sums;
 	std::vector<long double>* previous_backward_column;
 	std::vector< std::vector<long double>* > viterbi_columns;
 	std::vector<UniqueKmers*>* unique_kmers;
