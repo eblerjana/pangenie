@@ -183,3 +183,16 @@ TEST_CASE("GenotypingResult combine", "[GenotypingResult combine]") {
 	REQUIRE(doubles_equal(r1.get_genotype_likelihood(0,0), 0.54));
 	
 }
+
+
+TEST_CASE("GenotypingResult normalize", "[GenotypingResult normalize]") {
+	GenotypingResult g;
+	g.add_to_likelihood(1,1,2);
+	g.add_to_likelihood(1,0,1);
+	g.add_to_likelihood(0,0,2);
+	g.normalize();
+
+	REQUIRE(doubles_equal(g.get_genotype_likelihood(1,1), 0.4));
+	REQUIRE(doubles_equal(g.get_genotype_likelihood(0,1), 0.2));
+	REQUIRE(doubles_equal(g.get_genotype_likelihood(0,0), 0.4));
+}

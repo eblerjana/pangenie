@@ -64,16 +64,13 @@ void run_genotyping(string chromosome, vector<UniqueKmers*>* unique_kmers, bool 
 			// combine newly computed likelihoods with already exisiting ones
 			size_t index = 0;
 			for (auto likelihoods : hmm.get_genotyping_result()) {
-				results->result[chromosome][index].combine(likelihoods);
+				results->result.at(chromosome).at(index).combine(likelihoods);
 				index += 1;
 			}
 		}
 		// normalize the likelihoods after they have been combined
-		for (size_t i = 0; i < results->result.size(); ++i) {
-			cout << "before" << endl;
-			cout << results->result[chromosome][i] << endl;
-			results->result[chromosome][i].normalize();
-			cout << results->result[chromosome][i] << endl;
+		for (size_t i = 0; i < results->result.at(chromosome).size(); ++i) {
+			results->result.at(chromosome).at(i).normalize();
 		}
 	}
 	// store runtime
@@ -300,19 +297,13 @@ int main (int argc, char* argv[])
 
 			if (!only_phasing) {
 				// if requested, run genotying
+				for (size_t s = 0; s < subsets.size(); ++s)
 				for (auto subset : subsets) {
-					vector<size_t>* only_paths = &subset;
+					vector<size_t>* only_paths = &subsets[s];
 					function<void()> f_genotyping = bind(run_genotyping, chromosome, unique_kmers, true, false, effective_N, regularization, only_paths, r);
 					threadPool.submit(f_genotyping);
 				}
 			}
-		}
-	}
-
-	// normalize the combined likelihoods
-	for (auto it_chrom = results.result.begin(); it_chrom != results.result.end(); ++it_chrom) {
-		for (auto it_likelihood = it_chrom->second.begin(); it_likelihood != it_chrom->second.end(); ++it_likelihood) {
-			it_likelihood->divide_likelihoods_by((long double) subsets.size());
 		}
 	}
 

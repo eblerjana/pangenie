@@ -408,10 +408,6 @@ TEST_CASE("HMM emissions_zero", "[HMM emissions_zero]") {
 		index += 1;
 	}
 
-	for (size_t i = 0; i < expected_likelihoods.size(); ++i) {
-		cout << expected_likelihoods[i] << " " << computed_likelihoods[i] << endl;
-	}
-
 	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
 }
 
