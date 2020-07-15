@@ -232,7 +232,7 @@ int main (int argc, char* argv[])
 	vector<vector<size_t>> subsets;
 	// TODO: determine how often to sample and how large each sample should be
 //	path_sampler.select_multiple_subsets(subsets, sampling_size, sampling_times);
-	path_sampler.partition_paths(subsets, sampling_size);
+	path_sampler.partition_samples(subsets, sampling_size);
 
 	for (auto s : subsets) {
 		for (auto b : s) {

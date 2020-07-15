@@ -105,3 +105,51 @@ TEST_CASE("PathSampler partition_paths2", "[PathSampler partition_paths2]") {
 	REQUIRE(includes(all_paths.begin(), all_paths.end(),
                   expected_paths.begin(), expected_paths.end()));
 }
+
+TEST_CASE("PathSampler partition_samples", "[PathSampler partition_samples]") {
+	PathSampler sampler (20);
+	vector<vector<size_t>> partitions = {};
+
+	sampler.partition_samples(partitions, 4);
+	REQUIRE(partitions.size() == 5);
+	
+	vector<size_t> all_paths = {};
+	for (auto v : partitions) {
+		for (auto e : v) {
+			all_paths.push_back(e);
+		}
+	}
+	sort(all_paths.begin(), all_paths.end());
+
+	vector<size_t> expected_paths = {};
+	for (size_t i = 0; i < 20; ++i) {
+		expected_paths.push_back(i);
+	}
+	REQUIRE(all_paths == expected_paths);
+}
+
+
+TEST_CASE("PathSampler partition_samples2", "[PathSampler partition_samples]") {
+	PathSampler sampler (9);
+	vector<vector<size_t>> partitions = {};
+
+	sampler.partition_samples(partitions, 5);
+//	REQUIRE(partitions.size() == 2);
+	
+	vector<size_t> all_paths = {};
+	for (auto v : partitions) {
+		cout << " ----" << endl; 
+		for (auto e : v) {
+			all_paths.push_back(e);
+			cout << e << endl;
+		}
+	}
+	sort(all_paths.begin(), all_paths.end());
+
+	vector<size_t> expected_paths = {0};
+	for (size_t i = 0; i < 9; ++i) {
+		expected_paths.push_back(i);
+	}
+	REQUIRE(all_paths == expected_paths);
+}
+

@@ -56,3 +56,51 @@ void PathSampler::partition_paths(vector<vector<size_t>>& result, size_t sample_
 		this->select_single_subset(result[result.size()-1], missing);
 	}
 }
+
+void PathSampler::partition_samples(vector<vector<size_t>>& result, size_t sample_size) const {
+	vector<pair<size_t,size_t>> all_samples;
+	bool reference_added = this->total_number % 2 != 0;
+
+	if (reference_added) {
+		// reference not part of the panel
+		for (size_t i = 1; i < this->total_number-1; i+=2) {
+			all_samples.push_back(pair<size_t,size_t>(i,i+1));
+		}
+	} else {
+		for (size_t i = 0; i < this->total_number-1; i+=2) {
+			all_samples.push_back(pair<size_t,size_t>(i,i+1));
+		}
+	}
+
+	random_shuffle(all_samples.begin(), all_samples.end());
+	// list all paths
+	vector<size_t> all_paths;
+
+	if (reference_added) all_paths.push_back(0);
+
+	for (auto p : all_samples) {
+		all_paths.push_back(p.first);
+		all_paths.push_back(p.second);
+	}
+
+
+	// partition into parts of length sample_size
+	for (size_t i = 0; i < all_paths.size(); i += sample_size) {
+		auto last = min(all_paths.size(), i+sample_size);
+		vector<size_t> subset(all_paths.begin()+i, all_paths.begin()+last);
+//		if (reference_added) subset.push_back(0); 
+		sort(subset.begin(), subset.end());
+		result.push_back(subset);
+	}
+	// if the last sample is shorter than the sample_size, randomly add additional paths
+	size_t missing;
+//	if (reference_added) {
+//		missing = sample_size - (result.at(result.size()-1).size() - 1);
+//	} else {
+	missing = sample_size - result.at(result.size()-1).size();
+//	}
+
+	if (missing > 0) {
+		this->select_single_subset(result[result.size()-1], missing);
+	}
+}

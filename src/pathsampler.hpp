@@ -12,6 +12,8 @@ public:
 	void select_multiple_subsets(std::vector<std::vector<size_t>>& result, size_t sample_size, size_t n) const;
 	// partition set of paths
 	void partition_paths(std::vector<std::vector<size_t>>& result, size_t sample_size) const;
+	// partition paths in sample aware manner
+	void partition_samples(std::vector<std::vector<size_t>>& result, size_t sample_size) const;
 private:
 	size_t total_number; 
 };
