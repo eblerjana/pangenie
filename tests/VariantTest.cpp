@@ -469,10 +469,10 @@ TEST_CASE("Variant allele_frequency", "Variant allele_frequency") {
 }
 
 TEST_CASE("Variant separate_variants_likelihoods_uncovered", "Variant separate_variants_likelihoods_uncovered") {
-	Variant v1 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,1});
+	Variant v1 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,1}, "VAR1");
 	// second allele is not covered by any path
-	Variant v2 ("AACT", "ACTG", "chr2", 7, 8, {"G", "C", "T"}, {0,2});
-	Variant v3 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,1});
+	Variant v2 ("AACT", "ACTG", "chr2", 7, 8, {"G", "C", "T"}, {0,2}, "VAR2");
+	Variant v3 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,1}, "VAR3");
 
 	GenotypingResult g;
 	g.add_to_likelihood(0,0,0.05);
@@ -488,6 +488,7 @@ TEST_CASE("Variant separate_variants_likelihoods_uncovered", "Variant separate_v
 	v1.combine_variants(v2);
 	vector<Variant> single_variants;
 	vector<GenotypingResult> single_genotypes;
+	REQUIRE(v1.get_id() == "VAR1;VAR2");
 	v1.separate_variants(&single_variants, &g, &single_genotypes);
 	REQUIRE(single_variants.size() == 2);
 	REQUIRE(single_genotypes.size() == 2);
@@ -527,7 +528,6 @@ TEST_CASE("Variant separate_variants_likelihoods_uncovered", "Variant separate_v
 	REQUIRE(single_variants[1].get_allele_string(2) == expected_alleles[1][2]);
 }
 
-
 TEST_CASE("Variant separate_variants_likelihoods_single_uncovered", "[Variant separate_variants_likelihoods_single_uncovered]") {
 	Variant v ("ATGA", "CTGA", "chr1", 7, 8, {"A", "T"}, {1,1});
 	GenotypingResult g;
@@ -549,4 +549,20 @@ TEST_CASE("Variant separate_variants_likelihoods_single_uncovered", "[Variant se
 	// allele 0 is not covered by any path and its kmer count should therefore be -1 
 	REQUIRE(single_genotypes[0].get_allele_kmer_count(0) == -1);
 	REQUIRE(single_genotypes[0].get_allele_kmer_count(1) == 3);
+}
+
+TEST_CASE("Variant get_id", "[Variant get_id]") {
+	Variant v1 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,1}, "VAR1");
+	Variant v2 ("AACT", "ACTG", "chr2", 7, 8, {"G", "C", "T"}, {0,2}, "VAR2");
+
+	REQUIRE(v1.get_id() == "VAR1");
+	REQUIRE(v2.get_id() == "VAR2");
+	v1.combine_variants(v2);
+
+	REQUIRE(v1.get_id() == "VAR1;VAR2");
+	vector<Variant> single_variants;
+	v1.separate_variants(&single_variants);
+	REQUIRE(single_variants.size() == 2);
+	REQUIRE(single_variants[0].get_id() == "VAR1");
+	REQUIRE(single_variants[1].get_id() == "VAR2");
 }

@@ -318,7 +318,7 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 			v.remove_flanking_sequence();
 			this->genotyping_outfile << v.get_chromosome() << "\t"; // CHROM
 			this->genotyping_outfile << (v.get_start_position() + 1) << "\t"; // POS
-			this->genotyping_outfile << ".\t"; // ID
+			this->genotyping_outfile << v.get_id() << "\t"; // ID
 			this->genotyping_outfile << v.get_allele_string(0) << "\t"; // REF
 
 			// get alternative allele
@@ -409,7 +409,7 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 			v.remove_flanking_sequence();
 			this->phasing_outfile << v.get_chromosome() << "\t"; // CHROM
 			this->phasing_outfile << (v.get_start_position() + 1) << "\t"; // POS
-			this->phasing_outfile << ".\t"; // ID
+			this->phasing_outfile << v.get_id() << "\t"; // ID
 			this->phasing_outfile << v.get_allele_string(0) << "\t"; // REF
 
 			// get alternative alleles

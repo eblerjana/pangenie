@@ -19,8 +19,8 @@ public:
 	* @param alleles list of alleles (first one is used as reference allele)
 	* @param paths vector containing the allele each path covers (i-th path covers allele at paths[i])
 	**/
-	Variant(std::string left_flank, std::string right_flank, std::string chromosome, size_t start_position, size_t end_position, std::vector<std::string> alleles, std::vector<unsigned char> paths);
-	Variant(DnaSequence& left_flank, DnaSequence& right_flank, std::string chromosome, size_t start_position, size_t end_position, std::vector<DnaSequence>& alleles, std::vector<unsigned char>& paths);
+	Variant(std::string left_flank, std::string right_flank, std::string chromosome, size_t start_position, size_t end_position, std::vector<std::string> alleles, std::vector<unsigned char> paths, std::string variant_id = ".");
+	Variant(DnaSequence& left_flank, DnaSequence& right_flank, std::string chromosome, size_t start_position, size_t end_position, std::vector<DnaSequence>& alleles, std::vector<unsigned char>& paths, std::string variant_id = ".");
 	void add_flanking_sequence();
 	void remove_flanking_sequence();
 	void combine_variants (Variant const &v2);
@@ -40,12 +40,15 @@ public:
 	friend bool operator==(const Variant& v1, const Variant& v2);
 	friend bool operator!=(const Variant& v1, const Variant& v2);
 	float allele_frequency(unsigned char allele_index, bool ignore_ref_path = false) const;
+	std::string get_id() const;
+
 private:
 	DnaSequence left_flank;
 	DnaSequence right_flank;
 	std::string chromosome;
 	std::vector<size_t> start_positions;
 	std::vector<size_t> end_positions;
+	std::vector<std::string> variant_ids;
 	std::vector<std::vector<DnaSequence>> alleles;
 	/** alleles not covered by any paths **/
 	std::vector<std::vector<DnaSequence>> uncovered_alleles;
