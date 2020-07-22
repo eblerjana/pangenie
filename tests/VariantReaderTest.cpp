@@ -18,6 +18,7 @@ TEST_CASE("VariantReader get_allele_string", "[VariantReader get_allele_string]"
 
 	REQUIRE(v.get_variant("chrA", 0).get_allele_string(0) == "GGAATTCCGACATAAGTTA");
 	REQUIRE(v.get_variant("chrA", 0).get_allele_string(1) == "GGAATTCCGTCATAAGTTA");
+	REQUIRE(v.get_variant("chrA", 0).get_id() == "var1");
 
 	REQUIRE(v.get_variant("chrA", 1).get_allele_string(0) == "CCTTAGCTACGAAGCCAGT");
 	REQUIRE(v.get_variant("chrA", 1).get_allele_string(1) == "CCTTAGCTAGGGGGAAGCCAGT");
@@ -26,6 +27,7 @@ TEST_CASE("VariantReader get_allele_string", "[VariantReader get_allele_string]"
 	REQUIRE(v.get_variant("chrA", 2).get_allele_string(1) == "GAAGCCAGTTCCCCGAGACGGCCAAA");
 	REQUIRE(v.get_variant("chrA", 2).get_allele_string(2) == "GAAGCCAGTTCCCCTACGGCCAAA");
 	REQUIRE(v.get_variant("chrA", 2).nr_of_paths() == 5);
+	REQUIRE(v.get_variant("chrA", 2).get_id() == "var2;var3;.");
 
 	REQUIRE(v.get_variant("chrA", 3).get_allele_string(0) == "ACGTCCGTTCAGCCTTAGC");
 	REQUIRE(v.get_variant("chrA", 3).get_allele_string(1) == "ACGTCCGTTTAGCCTTAGC");

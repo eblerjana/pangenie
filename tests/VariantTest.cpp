@@ -566,3 +566,23 @@ TEST_CASE("Variant get_id", "[Variant get_id]") {
 	REQUIRE(single_variants[0].get_id() == "VAR1");
 	REQUIRE(single_variants[1].get_id() == "VAR2");
 }
+
+TEST_CASE("Variant get_id2", "[Variant get_id2]") {
+	Variant v1 ("AAA", "TGC", "chr1", 4, 5, {"A", "G"}, {0,0,0,0,0,0,1,0,0,0}, "VAR1");
+	Variant v2 ("AAT", "CCG", "chr1", 6, 7, {"G", "C"},  {0,0,0,0,0,0,1,0,0,0}, ".");
+	Variant v3 ("GCC", "GGG", "chr1", 9, 10, {"G", "C"}, {0,0,0,0,0,0,0,1,0,0}, "VAR2;VAR3");
+
+	REQUIRE(v1.get_id() == "VAR1");
+	REQUIRE(v2.get_id() == ".");
+	REQUIRE(v3.get_id() == "VAR2;VAR3");
+	v1.combine_variants(v2);
+	v1.combine_variants(v3);
+
+	REQUIRE(v1.get_id() == "VAR1;.;VAR2;VAR3");
+	vector<Variant> single_variants;
+	v1.separate_variants(&single_variants);
+	REQUIRE(single_variants.size() == 3);
+	REQUIRE(single_variants[0].get_id() == "VAR1");
+	REQUIRE(single_variants[1].get_id() == ".");
+	REQUIRE(single_variants[2].get_id() == "VAR2;VAR3");
+}

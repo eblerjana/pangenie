@@ -212,7 +212,7 @@ int main (int argc, char* argv[])
 
 	// count kmers in allele + reference sequence
 	cerr << "Count kmers in genome ..." << endl;
-	JellyfishCounter genomic_kmer_counts (segment_file, kmersize, nr_jellyfish_threads);
+	KmerCounter* genomic_kmer_counts = new JellyfishCounter(segment_file, kmersize, nr_jellyfish_threads);
 
 	// TODO: only for analysis
 	struct rusage r_usage1;
@@ -265,13 +265,21 @@ int main (int argc, char* argv[])
 		// create thread pool with at most nr_chromosomes threads
 		ThreadPool threadPool (nr_cores_uk);
 		for (auto chromosome : chromosomes) {
-			KmerCounter* genomic = &genomic_kmer_counts;
 			VariantReader* variants = &variant_reader;
 			UniqueKmersMap* result = &unique_kmers_list;
-			function<void()> f_unique_kmers = bind(prepare_unique_kmers, chromosome, genomic, read_kmer_counts, variants, kmer_abundance_peak, regularization, result);
+			function<void()> f_unique_kmers = bind(prepare_unique_kmers, chromosome, genomic_kmer_counts, read_kmer_counts, variants, kmer_abundance_peak, regularization, result);
 			threadPool.submit(f_unique_kmers);
 		}
 	}
+
+	// TODO: only for analysis
+	struct rusage r_usage2;
+	getrusage(RUSAGE_SELF, &r_usage2);
+	cerr << "#### Memory usage until now: " << (r_usage2.ru_maxrss / 1E6) << " GB ####" << endl;
+
+	// destroy kmer counts as they are no longer needed
+	delete genomic_kmer_counts;
+	delete read_kmer_counts;
 
 	// determine max number of available threads for genotyping (at most one thread per chromosome and subsample possible)
 	size_t available_threads = min(thread::hardware_concurrency(), (unsigned int) chromosomes.size() * (unsigned int) subsets.size());
@@ -350,6 +358,5 @@ int main (int argc, char* argv[])
 	getrusage(RUSAGE_SELF, &r_usage);
 	cerr << "Total maximum memory usage: " << (r_usage.ru_maxrss / 1E6) << " GB" << endl;
 
-	delete read_kmer_counts;
 	return 0;
 }
