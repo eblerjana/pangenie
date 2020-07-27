@@ -279,7 +279,14 @@ int main (int argc, char* argv[])
 
 	// destroy kmer counts as they are no longer needed
 	delete genomic_kmer_counts;
+	genomic_kmer_counts = nullptr;
 	delete read_kmer_counts;
+	read_kmer_counts = nullptr;
+
+	// TODO: only for analysis
+	struct rusage r_usage3;
+	getrusage(RUSAGE_SELF, &r_usage3);
+	cerr << "#### Memory usage until now: " << (r_usage3.ru_maxrss / 1E6) << " GB ####" << endl;
 
 	// determine max number of available threads for genotyping (at most one thread per chromosome and subsample possible)
 	size_t available_threads = min(thread::hardware_concurrency(), (unsigned int) chromosomes.size() * (unsigned int) subsets.size());

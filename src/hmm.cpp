@@ -24,7 +24,8 @@ void print_column(vector<long double>* column, ColumnIndexer* indexer) {
 HMM::HMM(vector<UniqueKmers*>* unique_kmers, bool run_genotyping, bool run_phasing, double recombrate, bool uniform, long double effective_N, vector<size_t>* only_paths, bool normalize)
 	:unique_kmers(unique_kmers),
 	 genotyping_result(unique_kmers->size()),
-	 forward_normalization_sums (unique_kmers->size(), 0.0L)
+	 forward_normalization_sums (unique_kmers->size(), 0.0L),
+	 absent_in_panel(unique_kmers->size())
 {
 	size_t size = this->unique_kmers->size();
 
@@ -88,9 +89,14 @@ void HMM::index_columns(vector<size_t>* only_paths) {
 
 		// the ColumnIndexer to be filled
 		ColumnIndexer* column_indexer = new ColumnIndexer(column_index);
+		bool all_absent = true;
 		for (size_t i = 0; i < nr_paths; ++i) {
 			column_indexer->insert_path(current_paths[i], current_alleles[i]);
+			if (current_alleles[i] != 0) all_absent = false;
 		}
+
+		// mark whether there where any non reference alleles covered by the paths at this position
+		this->absent_in_panel[column_index] = all_absent;
 
 		// store the ColummIndexer
 		this->column_indexers.at(column_index) = column_indexer;
@@ -412,6 +418,8 @@ void HMM::compute_backward_column(size_t column_index) {
 //		this->genotyping_result.at(column_index).divide_likelihoods_by(normalization_f_b);
 //	}
 
+	// TODO: skipt these positions completely. if no variant alleles, set likelihoods to uniform
+	if (this->absent_in_panel.at(column_index)) this->genotyping_result[column_index] = GenotypingResult();
 	// store number of unique kmers used at current position (stored in UniqueKmers)
 	this->genotyping_result.at(column_index).set_nr_unique_kmers(this->unique_kmers->at(column_index)->size());
 	this->genotyping_result.at(column_index).set_coverage(this->unique_kmers->at(column_index)->get_coverage());
