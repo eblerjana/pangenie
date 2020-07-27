@@ -131,8 +131,8 @@ TEST_CASE("HMM no_alt_allele", "[HMM no_alt_allele]") {
 //	vector<Variant> variants;
 //	variants.push_back(Variant("ATGC", "TGGG", "chr1", 2000, 2003, {"AAT", "ATT"}, {0,0,0}));
 	HMM hmm (&unique_kmers, true, true, 1.26, false, 0.25);
-	// since only ref allele is covered by paths, 0/0 should have prob. 1
-	REQUIRE(doubles_equal(hmm.get_genotyping_result()[0].get_genotype_likelihood(0,0), 1.0));
+	// since only ref allele is covered by paths, 0/0 should have prob, but in this case, HMM sets likelihoods to uniform.
+	REQUIRE(doubles_equal(hmm.get_genotyping_result()[0].get_genotype_likelihood(0,0), 0.0));
 	REQUIRE(doubles_equal(hmm.get_genotyping_result()[0].get_genotype_likelihood(0,1), 0.0));
 	REQUIRE(doubles_equal(hmm.get_genotyping_result()[0].get_genotype_likelihood(1,1), 0.0));
 	REQUIRE(hmm.get_genotyping_result()[0].get_allele_kmer_count(0) == 1);
@@ -392,7 +392,7 @@ TEST_CASE("HMM emissions_zero", "[HMM emissions_zero]") {
 	HMM hmm (&unique_kmers, true, true, 446.287102628, false, 0.25);
 	// currently, backward probabilities that all become zero, are not corrected in current column (but stored as uniform for further computations)
 	// since all backward probs in first column are zero, likelihoods are zero as well. Backward probs are later set to uniform.
-	vector<double> expected_likelihoods = {0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0};
+	vector<double> expected_likelihoods = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0};
 	vector<double> computed_likelihoods;
 
 	unsigned int index = 0;
