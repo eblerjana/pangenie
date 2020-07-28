@@ -34,7 +34,6 @@ struct Results {
 	map<string, double> runtimes;
 };
 
-// bind(prepare_unique_kmers, chromosome, genomic, read_kmer_counts, variants, kmer_abundance_peak, result);
 void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, KmerCounter* read_kmer_counts, VariantReader* variant_reader, size_t kmer_abundance_peak, long double regularization, UniqueKmersMap* unique_kmers_map) {
 	Timer timer;
 	UniqueKmerComputer kmer_computer(genomic_kmer_counts, read_kmer_counts, variant_reader, chromosome, kmer_abundance_peak);
@@ -95,6 +94,7 @@ int main (int argc, char* argv[])
 	Timer timer;
 	double time_preprocessing;
 	double time_kmer_counting;
+	double time_unique_kmers;
 	double time_path_sampling;
 	double time_writing;
 	double time_total;
@@ -118,7 +118,6 @@ int main (int argc, char* argv[])
 	bool ignore_imputed = false;
 	bool add_reference = true;
 	size_t sampling_size = 10;
-//	size_t sampling_times = 5;
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
@@ -139,7 +138,6 @@ int main (int argc, char* argv[])
 	argument_parser.add_flag_argument('u', "output genotype ./. for variants not covered by any unique kmers.");
 	argument_parser.add_flag_argument('d', "do not add reference as additional path.");
 	argument_parser.add_optional_argument('a', "10", "sample subsets of paths of this size.");
-//	argument_parser.add_optional_argument('b', "5", "how many times to sample paths.");
 
 	try {
 		argument_parser.parse(argc, argv);
@@ -166,7 +164,6 @@ int main (int argc, char* argv[])
 	ignore_imputed = argument_parser.get_flag('u');
 	add_reference = !argument_parser.get_flag('d');
 	sampling_size = stoi(argument_parser.get_argument('a'));
-//	sampling_times = stoi(argument_parser.get_argument('b'));
 
 	// print info
 	cerr << "Files and parameters used:" << endl;
@@ -191,47 +188,82 @@ int main (int argc, char* argv[])
 
 	time_preprocessing = timer.get_interval_time();
 
-	KmerCounter* read_kmer_counts = nullptr;
-	// determine kmer copynumbers in reads
-	if (readfile.substr(std::max(3, (int) readfile.size())-3) == std::string(".jf")) {
-		cerr << "Read pre-computed read kmer counts ..." << endl;
-		jellyfish::mer_dna::k(kmersize);
-		read_kmer_counts = new JellyfishReader(readfile, kmersize);
-	} else {
-		cerr << "Count kmers in reads ..." << endl;
-		if (count_only_graph) {
-			read_kmer_counts = new JellyfishCounter(readfile, segment_file, kmersize, nr_jellyfish_threads);
-		} else {
-			read_kmer_counts = new JellyfishCounter(readfile, kmersize, nr_jellyfish_threads);
-		}
-	}
-//	cerr << "Compute kmer-coverage ..." << endl;
-//	size_t kmer_coverage = read_kmer_counts.computeKmerCoverage(genome_kmers);
-	size_t kmer_abundance_peak = read_kmer_counts->computeHistogram(10000, count_only_graph, outname + "_histogram.histo");
-	cerr << "Computed kmer abundance peak: " << kmer_abundance_peak << endl;
+	// UniqueKmers for each chromosome
+	UniqueKmersMap unique_kmers_list;
 
-	// count kmers in allele + reference sequence
-	cerr << "Count kmers in genome ..." << endl;
-	KmerCounter* genomic_kmer_counts = new JellyfishCounter(segment_file, kmersize, nr_jellyfish_threads);
+	{
+		KmerCounter* read_kmer_counts = nullptr;
+		// determine kmer copynumbers in reads
+		if (readfile.substr(std::max(3, (int) readfile.size())-3) == std::string(".jf")) {
+			cerr << "Read pre-computed read kmer counts ..." << endl;
+			jellyfish::mer_dna::k(kmersize);
+			read_kmer_counts = new JellyfishReader(readfile, kmersize);
+		} else {
+			cerr << "Count kmers in reads ..." << endl;
+			if (count_only_graph) {
+				read_kmer_counts = new JellyfishCounter(readfile, segment_file, kmersize, nr_jellyfish_threads);
+			} else {
+				read_kmer_counts = new JellyfishCounter(readfile, kmersize, nr_jellyfish_threads);
+			}
+		}
+
+		size_t kmer_abundance_peak = read_kmer_counts->computeHistogram(10000, count_only_graph, outname + "_histogram.histo");
+		cerr << "Computed kmer abundance peak: " << kmer_abundance_peak << endl;
+
+		// count kmers in allele + reference sequence
+		cerr << "Count kmers in genome ..." << endl;
+		JellyfishCounter genomic_kmer_counts (segment_file, kmersize, nr_jellyfish_threads);
+
+		// TODO: only for analysis
+		struct rusage r_usage1;
+		getrusage(RUSAGE_SELF, &r_usage1);
+		cerr << "#### Memory usage until now: " << (r_usage1.ru_maxrss / 1E6) << " GB ####" << endl;
+
+		// prepare output files
+		if (! only_phasing) variant_reader.open_genotyping_outfile(outname + "_genotyping.vcf");
+		if (! only_genotyping) variant_reader.open_phasing_outfile(outname + "_phasing.vcf");
+
+		time_kmer_counting = timer.get_interval_time();
+
+		cerr << "Determine unique kmers ..." << endl;
+		// determine number of cores to use
+		size_t available_threads_uk = min(thread::hardware_concurrency(), (unsigned int) chromosomes.size());
+		size_t nr_cores_uk = min(nr_core_threads, available_threads_uk);
+		if (nr_cores_uk < nr_core_threads) {
+			cerr << "Warning: using " << nr_cores_uk << " for determining unique kmers." << endl;
+		}
+
+		{
+			// create thread pool with at most nr_chromosomes threads
+			ThreadPool threadPool (nr_cores_uk);
+			for (auto chromosome : chromosomes) {
+				VariantReader* variants = &variant_reader;
+				UniqueKmersMap* result = &unique_kmers_list;
+				KmerCounter* genomic_counts = &genomic_kmer_counts;
+				function<void()> f_unique_kmers = bind(prepare_unique_kmers, chromosome, genomic_counts, read_kmer_counts, variants, kmer_abundance_peak, regularization, result);
+				threadPool.submit(f_unique_kmers);
+			}
+		}
+
+		// TODO: only for analysis
+		struct rusage r_usage2;
+		getrusage(RUSAGE_SELF, &r_usage2);
+		cerr << "#### Memory usage until now: " << (r_usage2.ru_maxrss / 1E6) << " GB ####" << endl;
+
+		delete read_kmer_counts;
+		read_kmer_counts = nullptr;
+		time_unique_kmers = timer.get_interval_time();
+	}
 
 	// TODO: only for analysis
-	struct rusage r_usage1;
-	getrusage(RUSAGE_SELF, &r_usage1);
-	cerr << "#### Memory usage until now: " << (r_usage1.ru_maxrss / 1E6) << " GB ####" << endl;
-
-	// prepare output files
-	if (! only_phasing) variant_reader.open_genotyping_outfile(outname + "_genotyping.vcf");
-	if (! only_genotyping) variant_reader.open_phasing_outfile(outname + "_phasing.vcf");
-
-	cerr << "Construct HMM and run core algorithm ..." << endl;
-	time_kmer_counting = timer.get_interval_time();
+	struct rusage r_usage3;
+	getrusage(RUSAGE_SELF, &r_usage3);
+	cerr << "#### Memory usage until now: " << (r_usage3.ru_maxrss / 1E6) << " GB ####" << endl;
 
 	// prepare subsets of paths to run on
 	size_t nr_paths = variant_reader.nr_of_paths();
 	PathSampler path_sampler(nr_paths);
 	vector<vector<size_t>> subsets;
-	// TODO: determine how often to sample and how large each sample should be
-//	path_sampler.select_multiple_subsets(subsets, sampling_size, sampling_times);
 	path_sampler.partition_samples(subsets, sampling_size);
 
 	for (auto s : subsets) {
@@ -251,42 +283,7 @@ int main (int argc, char* argv[])
 	if (!only_genotyping) cerr << "Sampled " << phasing_paths.size() << " paths to be used for phasing." << endl;
 	time_path_sampling = timer.get_interval_time();
 
-	cerr << "Determine unique kmers ..." << endl;
-	// determine number of cores to use
-	size_t available_threads_uk = min(thread::hardware_concurrency(), (unsigned int) chromosomes.size());
-	size_t nr_cores_uk = min(nr_core_threads, available_threads_uk);
-	if (nr_cores_uk < nr_core_threads) {
-		cerr << "Warning: using " << nr_cores_uk << " for determining unique kmers." << endl;
-	}
-
-	// prepare UniqueKmers for each chromosome
-	UniqueKmersMap unique_kmers_list;
-	{
-		// create thread pool with at most nr_chromosomes threads
-		ThreadPool threadPool (nr_cores_uk);
-		for (auto chromosome : chromosomes) {
-			VariantReader* variants = &variant_reader;
-			UniqueKmersMap* result = &unique_kmers_list;
-			function<void()> f_unique_kmers = bind(prepare_unique_kmers, chromosome, genomic_kmer_counts, read_kmer_counts, variants, kmer_abundance_peak, regularization, result);
-			threadPool.submit(f_unique_kmers);
-		}
-	}
-
-	// TODO: only for analysis
-	struct rusage r_usage2;
-	getrusage(RUSAGE_SELF, &r_usage2);
-	cerr << "#### Memory usage until now: " << (r_usage2.ru_maxrss / 1E6) << " GB ####" << endl;
-
-	// destroy kmer counts as they are no longer needed
-	delete genomic_kmer_counts;
-	genomic_kmer_counts = nullptr;
-	delete read_kmer_counts;
-	read_kmer_counts = nullptr;
-
-	// TODO: only for analysis
-	struct rusage r_usage3;
-	getrusage(RUSAGE_SELF, &r_usage3);
-	cerr << "#### Memory usage until now: " << (r_usage3.ru_maxrss / 1E6) << " GB ####" << endl;
+	cerr << "Construct HMM and run core algorithm ..." << endl;
 
 	// determine max number of available threads for genotyping (at most one thread per chromosome and subsample possible)
 	size_t available_threads = min(thread::hardware_concurrency(), (unsigned int) chromosomes.size() * (unsigned int) subsets.size());
@@ -312,8 +309,7 @@ int main (int argc, char* argv[])
 
 			if (!only_phasing) {
 				// if requested, run genotying
-				for (size_t s = 0; s < subsets.size(); ++s)
-				for (auto subset : subsets) {
+				for (size_t s = 0; s < subsets.size(); ++s){
 					vector<size_t>* only_paths = &subsets[s];
 					function<void()> f_genotyping = bind(run_genotyping, chromosome, unique_kmers, true, false, effective_N, regularization, only_paths, r);
 					threadPool.submit(f_genotyping);
@@ -350,6 +346,7 @@ int main (int argc, char* argv[])
 	cerr << "time spent reading input files:\t" << time_preprocessing << " sec" << endl;
 	cerr << "time spent counting kmers: \t" << time_kmer_counting << " sec" << endl;
 	cerr << "time spent selecting paths: \t" << time_path_sampling << " sec" << endl;
+	cerr << "time spent determining unique kmers: \t" << time_unique_kmers << " sec" << endl; 
 	// output per chromosome time
 	double time_hmm = time_writing;
 	for (auto chromosome : chromosomes) {
@@ -357,7 +354,7 @@ int main (int argc, char* argv[])
 		cerr << "time spent genotyping chromosome " << chromosome << ":\t" << time_chrom << endl;
 		time_hmm += time_chrom;
 	}
-	cerr << "total running time:\t" << time_preprocessing + time_kmer_counting + time_path_sampling + time_hmm + time_writing << " sec"<< endl;
+	cerr << "total running time:\t" << time_preprocessing + time_kmer_counting + time_path_sampling + time_unique_kmers +  time_hmm + time_writing << " sec"<< endl;
 	cerr << "total wallclock time: " << time_total  << " sec" << endl;
 
 	// memory usage

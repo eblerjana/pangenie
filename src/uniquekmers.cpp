@@ -4,16 +4,11 @@
 
 using namespace std;
 
-UniqueKmers::UniqueKmers(size_t variant_id, size_t variant_position)
-	:variant_id(variant_id),
-	 variant_pos(variant_position),
+UniqueKmers::UniqueKmers(size_t variant_position)
+	:variant_pos(variant_position),
 	 current_index(0),
 	 local_coverage(0.0)
 {}
-
-size_t UniqueKmers::get_variant_index() {
-	return this->variant_id;
-}
 
 size_t UniqueKmers::get_variant_position() {
 	return this->variant_pos;
@@ -97,7 +92,7 @@ void UniqueKmers::get_allele_ids(vector<unsigned char>& a) {
 }
 
 ostream& operator<< (ostream& stream, const UniqueKmers& uk) {
-	stream << "UniqueKmers for variant: " << uk.variant_id << endl;
+	stream << "UniqueKmers for variant: " << uk.variant_pos << endl;
 	for (size_t i = 0; i < uk.size(); ++i) {
 		CopyNumber cn = uk.kmer_to_copynumber[i];
 		stream << i << ": " << cn.get_probability_of(0) << " " << cn.get_probability_of(1) <<  " " << cn.get_probability_of(2) << endl;

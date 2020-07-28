@@ -18,8 +18,7 @@ public:
 	* @param variant_id variant identifier
 	* @param variant_position genomic variant position
 	**/
-	UniqueKmers(size_t variant_id, size_t variant_position);
-	size_t get_variant_index();
+	UniqueKmers(size_t variant_position);
 	size_t get_variant_position();
 	/** insert empty allele (no kmers) **/
 	void insert_empty_allele(unsigned char allele_id);
@@ -50,7 +49,6 @@ public:
 	std::map<unsigned char, int> kmers_on_alleles () const;
 
 private:
-	size_t variant_id;
 	size_t variant_pos;
 	size_t current_index;
 	std::vector<CopyNumber> kmer_to_copynumber;

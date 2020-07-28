@@ -68,7 +68,7 @@ void UniqueKmerComputer::compute_unique_kmers(vector<UniqueKmers*>* result, long
 		
 		map <jellyfish::mer_dna, vector<unsigned char>> occurences;
 		const Variant& variant = this->variants->get_variant(this->chromosome, v);
-		UniqueKmers* u = new UniqueKmers(v, variant.get_start_position());
+		UniqueKmers* u = new UniqueKmers(variant.get_start_position());
 		u->set_coverage(kmer_coverage);
 		size_t nr_alleles = variant.nr_of_alleles();
 
@@ -146,7 +146,7 @@ void UniqueKmerComputer::compute_empty(vector<UniqueKmers*>* result) const {
 	size_t nr_variants = this->variants->size_of(this->chromosome);
 	for (size_t v = 0; v < nr_variants; ++v) {
 		const Variant& variant = this->variants->get_variant(this->chromosome, v);
-		UniqueKmers* u = new UniqueKmers(v, variant.get_start_position());
+		UniqueKmers* u = new UniqueKmers(variant.get_start_position());
 		size_t nr_alleles = variant.nr_of_alleles();
 
 		// insert empty alleles and paths

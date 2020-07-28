@@ -9,7 +9,7 @@ using namespace std;
 TEST_CASE("UniqueKmers testcase 1", "[UniqueKmers testcase 1]"){
 	vector<CopyNumber> cns = {CopyNumber(0.05,0.9,0.05),CopyNumber(0.8,0.1,0.1),CopyNumber(0.1,0.2,0.7)};
 	vector<vector<size_t>> paths = {{0,1,2}, {0,1}, {2}};
-	UniqueKmers u(0,1000);
+	UniqueKmers u(1000);
 
 	// insert paths
 	u.insert_path(0,0);
@@ -24,14 +24,13 @@ TEST_CASE("UniqueKmers testcase 1", "[UniqueKmers testcase 1]"){
 		}
 	}
 	for (size_t i = 0; i < 3; ++i){
-		REQUIRE(u.get_variant_index() == 0);
 		REQUIRE(u.get_variant_position() == 1000);
 		REQUIRE(u.get_copynumber_of(i) == cns[i]);
 	}
 }
 
 TEST_CASE("UniqueKmers get_copynumber_of", "[UniqueKmers get_copynumber_of]"){
-	UniqueKmers u(1, 2000);
+	UniqueKmers u(2000);
 	for (size_t i = 0; i < 3; ++i){
 		CHECK_THROWS(u.get_copynumber_of(i));
 	}
@@ -42,7 +41,7 @@ TEST_CASE("UniqueKmers get_copynumber_of", "[UniqueKmers get_copynumber_of]"){
 }
 
 TEST_CASE("UniqueKmers insert_empty_path", "[UniqueKmers insert_empty_path]") {
-	UniqueKmers u(0, 1000);
+	UniqueKmers u(1000);
 	vector<CopyNumber> cns = { CopyNumber(0.001, 0.5, 0.001), CopyNumber(1.0, 0.0, 0.0), CopyNumber(0.001,0.001, 0.6) };
 	vector<vector<size_t>> paths = { {0}, {0}, {2} };
 	vector<vector<unsigned char>> alleles = {{0}, {0}, {1}};
@@ -102,7 +101,7 @@ TEST_CASE("UniqueKmers insert_empty_path", "[UniqueKmers insert_empty_path]") {
 }
 
 TEST_CASE("UniqueKmers insert_empty_path2", "[UniqueKmers insert_empty_path2]") {
-	UniqueKmers u(0, 1000);
+	UniqueKmers u(1000);
 	CopyNumber cn(0.9, 0.1, 0.2);
 	vector<unsigned char> allele = {1};
 
@@ -134,7 +133,7 @@ TEST_CASE("UniqueKmers insert_empty_path2", "[UniqueKmers insert_empty_path2]") 
 
 TEST_CASE("UniqueKmers kmers_on_alleles1", "[UniqueKmers kmers_on_alleles1]"){
 	vector<CopyNumber> cns = {CopyNumber(0.05,0.9,0.05),CopyNumber(0.8,0.1,0.1),CopyNumber(0.1,0.2,0.7)};
-	UniqueKmers u(0,1000);
+	UniqueKmers u(1000);
 
 	// insert paths
 	u.insert_path(0,0);
@@ -154,7 +153,7 @@ TEST_CASE("UniqueKmers kmers_on_alleles1", "[UniqueKmers kmers_on_alleles1]"){
 
 
 TEST_CASE("UniqueKmers kmers_on_alleles2", "[UniqueKmers kmers_on_alleles2]") {
-	UniqueKmers u (0, 1000);
+	UniqueKmers u (1000);
 	u.insert_empty_allele(0);
 	u.insert_empty_allele(2);
 	u.insert_path(0,0);
@@ -185,7 +184,7 @@ TEST_CASE("UniqueKmers kmers_on_alleles2", "[UniqueKmers kmers_on_alleles2]") {
 }
 
 TEST_CASE("UniqueKmers kmers_on_alleles3", "[UniqueKmers kmers_on_alleles3]") {
-	UniqueKmers u(0, 1000);
+	UniqueKmers u(1000);
 	CopyNumber cn(0.9, 0.1, 0.2);
 	vector<unsigned char> allele = {1};
 
@@ -206,7 +205,7 @@ TEST_CASE("UniqueKmers kmers_on_alleles3", "[UniqueKmers kmers_on_alleles3]") {
 }
 
 TEST_CASE("UniqueKmers get_path_ids", "[UniqueKmers get_path_ids]") {
-	UniqueKmers u (0, 1000);
+	UniqueKmers u (1000);
 	u.insert_empty_allele(0);
 	u.insert_empty_allele(2);
 	u.insert_path(0,0);

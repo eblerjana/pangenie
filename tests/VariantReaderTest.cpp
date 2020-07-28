@@ -257,3 +257,21 @@ TEST_CASE("VariantReader overlapping variants", "[VariantReader overlapping vari
 	// should have skipped variant that is contained in another
 	REQUIRE(v.get_variants_on_chromosome("chrA").size() == 1);
 }
+
+TEST_CASE("VariantReader get_chromosomes", "[VariantReader get_chromosomes]") {
+	string vcf1 = "../tests/data/small1.vcf";
+	string vcf2 = "../tests/data/small2.vcf";
+	string fasta = "../tests/data/small1.fa";
+
+	VariantReader v1(vcf1, fasta, 10, false);
+	vector<string> chromosomes;
+	v1.get_chromosomes(&chromosomes);
+	vector<string> expected1 = {"chrA", "chrB"};
+	REQUIRE(chromosomes == expected1);
+
+	VariantReader v2(vcf2, fasta, 10, false);
+	chromosomes.clear();
+	v2.get_chromosomes(&chromosomes);
+	vector<string> expected2 = {"chrB", "chrC", "chrA"};
+	REQUIRE(chromosomes == expected2);
+}

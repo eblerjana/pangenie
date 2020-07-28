@@ -48,8 +48,10 @@ long double GenotypingResult::get_genotype_likelihood (unsigned char allele1, un
 
 vector<long double> GenotypingResult::get_all_likelihoods (size_t nr_alleles) const {
 	assert (nr_alleles < 256);
+
 	// determine number of possible genotypes
 	size_t nr_genotypes = (nr_alleles * (nr_alleles + 1)) / 2;
+
 	vector<long double> result(nr_genotypes, 0.0L);
 	for (auto const& l : this->genotype_to_likelihood) {
 		unsigned char allele1 = l.first.first;

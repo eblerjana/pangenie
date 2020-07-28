@@ -198,8 +198,17 @@ void VariantReader::write_path_segments(std::string filename) const {
 }
 
 void VariantReader::get_chromosomes(vector<string>* result) const {
+
+	// sort the chromosomes by size (decending).
+	vector<pair<size_t,string>> chromosome_sizes;
 	for (auto const& element : this->variants_per_chromosome) {
-		result->push_back(element.first);
+		chromosome_sizes.push_back(make_pair(element.second.size(), element.first));
+	}
+	sort(chromosome_sizes.rbegin(), chromosome_sizes.rend());
+
+	// return chromosomes in sorted order
+	for (auto const& element : chromosome_sizes) {
+		result->push_back(element.second);
 	}
 }
 
@@ -370,6 +379,7 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 			}
 
 			// output genotype likelihoods
+			cout << singleton_likelihoods.at(j) << endl;
 			vector<long double> likelihoods = singleton_likelihoods.at(j).get_all_likelihoods(nr_alleles);
 			if (likelihoods.size() < 3) {
 				ostringstream oss;

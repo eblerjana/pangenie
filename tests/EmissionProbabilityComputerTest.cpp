@@ -12,7 +12,7 @@ TEST_CASE("EmissionProbabilityComputer get_emission_probability", "EmissionProba
 	vector<string> kmers = {"CATG", "ATGC", "CATT", "ATTG", "TTGC"};
 	vector<vector<unsigned char>> alleles = {{0}, {0}, {1}, {1}, {1}};
 	vector<CopyNumber> cns = { CopyNumber(0.01, 0.2, 0.0), CopyNumber(0.001,0.5,0.001), CopyNumber(0.0,0.3,0.02), CopyNumber(0.05,0.6,0.0), CopyNumber(0.01,0.2,0.01)};
-	UniqueKmers unique_kmers(0, 1000);
+	UniqueKmers unique_kmers(1000);
 	unique_kmers.insert_path(0,0);
 	unique_kmers.insert_path(1,1);
 	unique_kmers.insert_path(2,1);

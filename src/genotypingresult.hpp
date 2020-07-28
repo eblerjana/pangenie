@@ -21,7 +21,7 @@ public:
 	void add_first_haplotype_allele(unsigned char allele);
 	/** add allele on haplotype 2 **/
 	void add_second_haplotype_allele(unsigned char allele);
-	/** get likelihood of genotype allele1/allele2 (=allele2/allele1) **/
+	/** get likelihood of genotype allele1/allele2 (=allele2/allele1). **/
 	long double get_genotype_likelihood(unsigned char allele1, unsigned char allele2) const;
 	/** get all likelihoods ordered as defined in VCF specification. **/
 	std::vector<long double> get_all_likelihoods (size_t nr_alleles) const;

@@ -88,7 +88,7 @@ void HMM::index_columns(vector<size_t>* only_paths) {
 		}
 
 		// the ColumnIndexer to be filled
-		ColumnIndexer* column_indexer = new ColumnIndexer(column_index);
+		ColumnIndexer* column_indexer = new ColumnIndexer();
 		bool all_absent = true;
 		for (size_t i = 0; i < nr_paths; ++i) {
 			column_indexer->insert_path(current_paths[i], current_alleles[i]);

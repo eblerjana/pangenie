@@ -10,7 +10,7 @@
 
 class ColumnIndexer {
 public:
-	ColumnIndexer(size_t variant_id);
+	ColumnIndexer();
 	/** insert a path and the allele it covers **/
 	void insert_path(size_t path, unsigned char allele);
 	/** number of paths inserted **/
@@ -23,8 +23,6 @@ public:
 	std::pair<size_t,size_t> get_path_ids_at (size_t column_index) const;
 
 private:
-	size_t variant_id;
-	size_t size;
 	std::vector<size_t> paths;
 	std::vector<unsigned char> alleles;
 };
