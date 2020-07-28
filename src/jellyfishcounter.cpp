@@ -29,7 +29,7 @@ JellyfishCounter::JellyfishCounter (string readfile, size_t kmer_size, size_t nr
 	const uint64_t hash_size    = 10000000; // Initial size of hash.
 	const uint32_t num_reprobes = 126;
 	const uint32_t num_threads  = nr_threads; // Number of concurrent threads
-	const uint32_t counter_len  = 4;  // Minimum length of counting field
+	const uint32_t counter_len  = 7;  // Minimum length of counting field
 	const bool canonical = true; // Use canonical representation
 
 	// create the hash
@@ -54,7 +54,7 @@ JellyfishCounter::JellyfishCounter (string readfile, string kmerfile, size_t kme
 	const uint64_t hash_size    = 10000000; // Initial size of hash.
 	const uint32_t num_reprobes = 126;
 	const uint32_t num_threads  = nr_threads; // Number of concurrent threads
-	const uint32_t counter_len  = 4;  // Minimum length of counting field
+	const uint32_t counter_len  = 7;  // Minimum length of counting field
 	const bool canonical = true; // Use canonical representation
 
 	// create the hash

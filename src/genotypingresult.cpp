@@ -97,6 +97,11 @@ void GenotypingResult::divide_likelihoods_by(long double value) {
 }
 
 pair<int, int> GenotypingResult::get_likeliest_genotype() const {
+	// if empty, set genotype to unknown
+	if (this->genotype_to_likelihood.size() == 0) {
+		return make_pair(-1,-1);
+	}
+
 	long double best_value = 0.0L;
 	pair<unsigned char, unsigned char> best_genotype = make_pair(0,0); 
 	for (auto const& l : this->genotype_to_likelihood) {

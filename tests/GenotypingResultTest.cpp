@@ -39,6 +39,10 @@ TEST_CASE("GenotypingResult get_likeliest_genotype", "[GenotypingResult get_like
 	r2.add_to_likelihood(0,1,0.5);
 	// both genotypes equally likely
 	REQUIRE(r2.get_likeliest_genotype() == pair<int, int>(-1,-1));
+
+	// empty object, genotype should be unknown
+	GenotypingResult r3;
+	REQUIRE(r3.get_likeliest_genotype() == pair<int,int>(-1,-1));
 }
 
 TEST_CASE("GenotypingResult divide_likelihoods_by", "[GenotypingResult divide_likelihoods_by]") {
