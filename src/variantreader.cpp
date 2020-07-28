@@ -379,7 +379,6 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 			}
 
 			// output genotype likelihoods
-			cout << singleton_likelihoods.at(j) << endl;
 			vector<long double> likelihoods = singleton_likelihoods.at(j).get_all_likelihoods(nr_alleles);
 			if (likelihoods.size() < 3) {
 				ostringstream oss;
