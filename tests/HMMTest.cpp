@@ -132,6 +132,7 @@ TEST_CASE("HMM no_alt_allele", "[HMM no_alt_allele]") {
 //	variants.push_back(Variant("ATGC", "TGGG", "chr1", 2000, 2003, {"AAT", "ATT"}, {0,0,0}));
 	HMM hmm (&unique_kmers, true, true, 1.26, false, 0.25);
 	// since only ref allele is covered by paths, 0/0 should have prob, but in this case, HMM sets likelihoods to uniform.
+	REQUIRE(hmm.get_genotyping_result()[0].get_likeliest_genotype() == pair<int,int>(-1,-1));
 	REQUIRE(doubles_equal(hmm.get_genotyping_result()[0].get_genotype_likelihood(0,0), 0.0));
 	REQUIRE(doubles_equal(hmm.get_genotyping_result()[0].get_genotype_likelihood(0,1), 0.0));
 	REQUIRE(doubles_equal(hmm.get_genotyping_result()[0].get_genotype_likelihood(1,1), 0.0));

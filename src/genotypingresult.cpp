@@ -99,6 +99,11 @@ void GenotypingResult::divide_likelihoods_by(long double value) {
 }
 
 pair<int, int> GenotypingResult::get_likeliest_genotype() const {
+	// if empty, set genotype to unknown
+	if (this->genotype_to_likelihood.size() == 0) {
+		return make_pair(-1,-1);
+	}
+
 	long double best_value = 0.0L;
 	pair<unsigned char, unsigned char> best_genotype = make_pair(0,0); 
 	for (auto const& l : this->genotype_to_likelihood) {
@@ -118,7 +123,12 @@ pair<int, int> GenotypingResult::get_likeliest_genotype() const {
 		}
 	}
 
-	return best_genotype;
+	// if best genotype has likelihood 0 (this can happen if there is only one entry), return ./.
+	if (best_value > 0.0L) {
+		return best_genotype;
+	} else {
+		return make_pair(-1,-1);
+	}
 }
 
 size_t GenotypingResult::get_nr_unique_kmers() const {
