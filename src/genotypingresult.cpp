@@ -121,7 +121,12 @@ pair<int, int> GenotypingResult::get_likeliest_genotype() const {
 		}
 	}
 
-	return best_genotype;
+	// if best genotype has likelihood 0 (this can happen if there is only one entry), return ./.
+	if (best_value > 0.0L) {
+		return best_genotype;
+	} else {
+		return make_pair(-1,-1);
+	}
 }
 
 size_t GenotypingResult::get_nr_unique_kmers() const {

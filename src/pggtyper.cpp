@@ -312,8 +312,7 @@ int main (int argc, char* argv[])
 
 			if (!only_phasing) {
 				// if requested, run genotying
-				for (size_t s = 0; s < subsets.size(); ++s)
-				for (auto subset : subsets) {
+				for (size_t s = 0; s < subsets.size(); ++s) {
 					vector<size_t>* only_paths = &subsets[s];
 					function<void()> f_genotyping = bind(run_genotyping, chromosome, unique_kmers, true, false, effective_N, regularization, only_paths, r);
 					threadPool.submit(f_genotyping);
