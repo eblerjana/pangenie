@@ -348,8 +348,8 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 			for (size_t i = 1; i < nr_alleles; ++i) {
 				DnaSequence allele = v.get_allele_sequence(i);
 				// skip alleles that are undefined
-				if (!allele.contains_undefined()) {
-					if (i > 1) alt_alleles += ",";
+				if (!v.is_undefined_allele(i)) {
+					if (alt_alleles != "") alt_alleles += ",";
 					alt_alleles += allele.to_string();
 					defined_alleles.push_back(i);
 				}
@@ -456,8 +456,8 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 			for (size_t i = 1; i < nr_alleles; ++i) {
 				DnaSequence allele = v.get_allele_sequence(i);
 				// skip alleles that are undefined
-				if (!allele.contains_undefined()) {
-					if (i > 1) alt_alleles += ",";
+				if (! v.is_undefined_allele(i)) {
+					if (alt_alleles != "") alt_alleles += ",";
 					alt_alleles += allele.to_string();
 					defined_alleles.push_back(i);
 				}
@@ -496,8 +496,8 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 			} else {
 				pair<unsigned char,unsigned char> haplotype = singleton_likelihoods.at(j).get_haplotype();
 				// check if the haplotype allele is undefined
-				bool hap1_undefined = v.get_allele_sequence(haplotype.first).contains_undefined();
-				bool hap2_undefined = v.get_allele_sequence(haplotype.second).contains_undefined();
+				bool hap1_undefined = v.is_undefined_allele(haplotype.first);
+				bool hap2_undefined = v.is_undefined_allele(haplotype.second);
 				string hap1 (1, haplotype.first);
 				string hap2 (1, haplotype.second);
 				if (hap1_undefined) hap1 = ".";

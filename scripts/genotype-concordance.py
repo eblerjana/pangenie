@@ -24,7 +24,7 @@ class VariantType(Enum):
 	large_complex = 9
 
 class Variant:
-	def __init__(self, genotype, binary_genotype, variant_type : VariantType, quality=None, allele_frequency=None, unique_kmers=None):
+	def __init__(self, genotype, binary_genotype, variant_type : VariantType, quality=None, allele_frequency=None, unique_kmers=None, missing_alleles=None):
 		"""
 		Represents a genotyped variant.
 		"""
@@ -34,6 +34,7 @@ class Variant:
 		self._quality=quality
 		self._allele_frequency=allele_frequency
 		self._unique_kmers=unique_kmers
+		self._missing_alleles=missing_alleles
 
 	def get_genotype(self):
 		return self._genotype
@@ -58,6 +59,9 @@ class Variant:
 
 	def get_unique_kmers(self):
 		return self._unique_kmers
+
+	def get_missing_alleles(self):
+		return self._missing_alleles
 
 
 def determine_variant_type(record):
@@ -109,6 +113,7 @@ def extract_call(record, read_gl=False, read_qual=False):
 	# allele frequency of least frequent allele
 	allele_frequency = 0.0
 	unique_kmers = 0
+	missing_alleles = 0
 	# determine the type of variant
 	variant_type = determine_variant_type(record)
 
@@ -149,17 +154,24 @@ def extract_call(record, read_gl=False, read_qual=False):
 			# determine minimum of unique kmers (exclude alleles not covered by paths)
 			unique_kmers = min([i for i in info_fields if i >= 0])
 
-	return Position(record.CHROM, record.POS), Variant(genotype_sequences, binary_genotype, variant_type, likelihood, allele_frequency, unique_kmers)
+		# determine number of missing alleles at variant position
+		if 'MA' in record.INFO:
+			info_fields = record.INFO['MA']
+			assert len(info_fields) == 1
+			missing_alleles = info_fields[0]
+
+	return Position(record.CHROM, record.POS), Variant(genotype_sequences, binary_genotype, variant_type, likelihood, allele_frequency, unique_kmers, missing_alleles)
 
 
 class GenotypingStatistics:
 
-	def __init__(self, quality, allele_frequency, unique_kmers):
+	def __init__(self, quality, allele_frequency, unique_kmers, missing_alleles):
 
 		# thresholds used to filter variant set
 		self.quality = quality
 		self.allele_frequency = allele_frequency
 		self.unique_kmers = unique_kmers
+		self.missing_alleles = missing_alleles
 
 		# numbers of variants in baseline and callset
 		self.total_baseline = 0
@@ -188,6 +200,7 @@ class GenotypingStatistics:
 		tsv_file.write('\t'.join([str(self.quality), # quality
 																	str(self.allele_frequency), # allele freq
 																	str(self.unique_kmers), # unique kmer count
+																	str(self.missing_alleles), # nr of missing alleles
 																	str(self.total_baseline), # total baseline variants
 																	str(self.total_baseline_biallelic), # total biallelic variants
 																	str(self.total_intersection), # intersection of callsets
@@ -210,7 +223,7 @@ class GenotypingStatistics:
 
 	def print_matrix_to_file(self, txt_file):
 		txt_file.write('\n###############################################################################################################################################\n')
-		txt_file.write('#       Matrix for quality: '  + str(self.quality) +', allele frequency threshold: ' + str(self.allele_frequency) + ' and unique kmer count threshold: ' + str(self.unique_kmers) + '#\n')
+		txt_file.write('#       Matrix for quality: '  + str(self.quality) +', allele frequency threshold: ' + str(self.allele_frequency) + ' , unique kmer count threshold: ' + str(self.unique_kmers) + ' and missing alleles threshold: ' + str(self.missing_alleles) + '#\n')
 		txt_file.write('  ###############################################################################################################################################\n\n')
 		matrix_string = "\t0\t1\t2\t./.\n"
 		for true in range(4):
@@ -259,7 +272,7 @@ class GenotypeConcordanceComputer:
 	def nr_callset_variants(self):
 		return self._total_callset
 
-	def print_statistics(self, varianttypes, quality, allele_freq, uk_count, txt_files, tsv_files):
+	def print_statistics(self, varianttypes, quality, allele_freq, uk_count, missing_count, txt_files, tsv_files):
 		"""
 		Compute genotype concordance statistics for all variants with
 		a quality at least quality and for which the allele frequency 
@@ -270,7 +283,7 @@ class GenotypeConcordanceComputer:
 		assert len(txt_files) == len(tsv_files) == len(varianttypes)
 
 		# keep variant statistics for all variant types
-		statistics = { var_type : GenotypingStatistics(quality, allele_freq, uk_count) for var_type in varianttypes }
+		statistics = { var_type : GenotypingStatistics(quality, allele_freq, uk_count, missing_count) for var_type in varianttypes }
 
 		# check genotype predictions
 		for pos, gt in self._baseline_variants.items():
@@ -294,7 +307,7 @@ class GenotypeConcordanceComputer:
 				callset_gt = callset_predictions[0]
 				statistics[vartype].total_intersection += 1
 
-				if callset_gt.get_quality() < quality or callset_gt.get_allele_frequency() < allele_freq or callset_gt.get_unique_kmers() < uk_count:
+				if callset_gt.get_quality() < quality or callset_gt.get_allele_frequency() < allele_freq or callset_gt.get_unique_kmers() < uk_count or callset_gt.get_missing_alleles() < missing_count:
 					statistics[vartype].not_typed_all += 1
 					continue
 
@@ -334,12 +347,14 @@ if __name__ == "__main__":
 	parser.add_argument('--qualities', default='0', metavar='GQ-THRESHOLDS', help='comma separated list of GQ-thresholds to consider (default: consider all variants regardless of quality).')
 	parser.add_argument('--allele-frequencies', default='0', metavar='AF-THRESHOLDS', help='comma separated list of allele frequency thresholds to consider (default: consider all variants regardless of allele frequency.).')
 	parser.add_argument('--unique-kmers', default='0', metavar='UK-THRESHOLDS', help='comma separated list of unique kmer counts for a variant (only works for VCFs with UK tag.).')
+	parser.add_argument('--missing', default='0', metavar='MISSING-ALLELES_THRESHOLDS', help='comma separated list of missing allele counts for a variant (only works for VCFs with MA tag.).')
 	parser.add_argument('--use-qual', default=False, action='store_true', help='use qualities in QUAL field instead of GQ fields (default: use GQ field).')
 	args = parser.parse_args()
 
 	quality_thresholds = [int(i) for i in args.qualities.split(',')]
 	allele_freq_thresholds = [float(i) for i in args.allele_frequencies.split(',')]
 	uk_thresholds = [int(i) for i in args.unique_kmers.split(',')]
+	missing_thresholds = [int(i) for i in args.missing.split(',')]
 	genotype_concordance = GenotypeConcordanceComputer(args.baseline, args.callset, args.use_qual)
 
 	# prepare output files
@@ -378,17 +393,22 @@ if __name__ == "__main__":
 
 	# compute statistics
 	vartypes = [vartype for vartype in VariantType]
-	genotype_concordance.print_statistics(vartypes, 0, 0.0, 0, txt_files, tsv_files)
+	genotype_concordance.print_statistics(vartypes, 0, 0.0, 0, 0, txt_files, tsv_files)
 	for uk_count in uk_thresholds:
 		for quality in quality_thresholds:
 			if uk_count == quality == 0:
 				continue
-			genotype_concordance.print_statistics(vartypes, quality, 0.0, uk_count, txt_files, tsv_files)
+			genotype_concordance.print_statistics(vartypes, quality, 0.0, uk_count, 0, txt_files, tsv_files)
 
 	for allele_freq in allele_freq_thresholds:
 		if allele_freq == 0:
 			continue
-		genotype_concordance.print_statistics(vartypes, 0, allele_freq, 0, txt_files, tsv_files)
+		genotype_concordance.print_statistics(vartypes, 0, allele_freq, 0, 0, txt_files, tsv_files)
+
+	for missing_count in missing_thresholds:
+		if missing_count == 0:
+			continue
+		genotype_concordance.print_statistics(vartypes, 0, 0.0, 0, missing_count, txt_files, tsv_files)
 
 	# close files
 	for i in range(len(tsv_files)):

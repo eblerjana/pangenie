@@ -466,6 +466,18 @@ float Variant::allele_frequency(unsigned char allele_index, bool ignore_ref_path
 	return freq / size;
 }
 
+bool Variant::is_undefined_allele(size_t allele_id) const {
+	size_t start = 0;
+	if (this->flanks_added) start = 1;
+
+	DnaSequence allele_without_flanks;
+
+	for (size_t i = start; i < this->alleles.at(allele_id).size(); i+=2) {
+		allele_without_flanks.append(this->alleles.at(allele_id).at(i));
+	}
+	return allele_without_flanks.contains_undefined();
+}
+
 size_t Variant::nr_missing_alleles() const {
 	size_t missing = 0;
 	for (auto path : this->paths) {
