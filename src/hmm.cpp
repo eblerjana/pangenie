@@ -12,6 +12,7 @@
 
 using namespace std;
 
+
 void print_column(vector<long double>* column, ColumnIndexer* indexer) {
 	for (size_t i = 0; i < column->size(); ++i) {
 		pair<size_t,size_t> paths = indexer->get_path_ids_at(i);

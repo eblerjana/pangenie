@@ -25,6 +25,9 @@ public:
 	long double get_genotype_likelihood(unsigned char allele1, unsigned char allele2) const;
 	/** get all likelihoods ordered as defined in VCF specification. **/
 	std::vector<long double> get_all_likelihoods (size_t nr_alleles) const;
+	/** get all likelihoods for genotypes containing the given alleles. Likelihoods are normalized so sum up to 1. 
+	NOTE: haplotype alleles are set only if they occur in the list of given alleles. Otherwise (i.e. if undefined), they are 0.**/
+	GenotypingResult get_specific_likelihoods (std::vector<unsigned char>& alleles) const;
 	/** get genotype quality (phred scaled prob that genotype is wrong) **/
 	size_t get_genotype_quality (unsigned char allele1, unsigned char allele2) const;
 	/** get haplotype **/

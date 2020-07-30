@@ -14,8 +14,9 @@ size_t UniqueKmers::get_variant_position() {
 	return this->variant_pos;
 }
 
-void UniqueKmers::insert_empty_allele(unsigned char allele_id) {
+void UniqueKmers::insert_empty_allele(unsigned char allele_id, bool is_undefined) {
 	this->alleles[allele_id] = KmerPath(); 
+	this->is_undefined[allele_id] = is_undefined;
 }
 
 void UniqueKmers::insert_path(unsigned short path_id, unsigned char allele_id) {
@@ -91,6 +92,12 @@ void UniqueKmers::get_allele_ids(vector<unsigned char>& a) {
 	}
 }
 
+void UniqueKmers::get_defined_allele_ids(std::vector<unsigned char>& a) {
+	for (auto it = this->alleles.begin(); it != this->alleles.end(); ++it) {
+		if (!this->is_undefined.at(it->first)) a.push_back(it->first);
+	}
+}
+
 ostream& operator<< (ostream& stream, const UniqueKmers& uk) {
 	stream << "UniqueKmers for variant: " << uk.variant_pos << endl;
 	for (size_t i = 0; i < uk.size(); ++i) {
@@ -100,6 +107,12 @@ ostream& operator<< (ostream& stream, const UniqueKmers& uk) {
 	for (auto it = uk.alleles.begin(); it != uk.alleles.end(); ++it) {
 		stream << (unsigned int) it->first << "\t" << it->second.convert_to_string() << endl;
 	}
+
+	stream << "undefined alleles:" << endl;
+	for (auto it = uk.alleles.begin(); it != uk.alleles.end(); ++it) {
+		if (uk.is_undefined_allele(it->first)) stream << (unsigned int) it->first << endl;
+	}
+
 	stream << "paths:" << endl;
 	for (auto it = uk.path_to_allele.begin(); it != uk.path_to_allele.end(); ++it) {
 		stream << it->first << " covers allele " << (unsigned int) it->second << endl;
@@ -121,4 +134,22 @@ map<unsigned char, int> UniqueKmers::kmers_on_alleles () const {
 		result[it->first] = alleles.at(it->first).nr_kmers();
 	}
 	return result;
+}
+
+bool UniqueKmers::is_undefined_allele (unsigned char allele_id) const {
+	// check if allele id exists
+	auto it = this->is_undefined.find(allele_id);
+	if (it != this->is_undefined.end()) {
+		return it->second;
+	} else {
+		return false;
+	}
+}
+
+void UniqueKmers::set_undefined_allele (unsigned char allele_id) {
+	auto it = this->is_undefined.find(allele_id);
+	if (it == this->is_undefined.end()) {
+		throw runtime_error("UniqueKmers::set_undefined_allele: allele_id " + to_string(allele_id) + " does not exist.");
+	}
+	this->is_undefined[allele_id] = true;
 }

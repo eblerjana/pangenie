@@ -130,6 +130,8 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 		// construct paths
 		vector<unsigned char> paths = {};
 		if (add_reference) paths.push_back((unsigned char) 0);
+		unsigned char undefined_index = alleles.size();
+		string undefined_allele = "N";
 		for (size_t i = 9; i < tokens.size(); ++i) {
 			// make sure all genotypes are phased
 			if (tokens[i].find('/') != string::npos) {
@@ -138,7 +140,17 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 			vector<string> p ;
 			parse_line(p, tokens[i], '|');
 			for (string& s : p){
-				paths.push_back( (unsigned char) atoi(s.c_str()));
+				// handle unknown genotypes '.'
+				if (s == ".") {
+					cerr << "Found undefined allele at position " << current_chrom << ":" << current_start_pos << endl;
+					// add "NNN" allele to the list of alleles
+					parse_line(alleles, undefined_allele, ',');
+					paths.push_back(undefined_index);
+					undefined_index += 1;
+					undefined_allele += "N";
+				} else {
+					paths.push_back( (unsigned char) atoi(s.c_str()));
+				}
 			}
 		}
 		// determine left and right flanks
@@ -270,6 +282,7 @@ void VariantReader::open_genotyping_outfile(string filename) {
 	this->genotyping_outfile << "##fileDate=" << get_date() << endl;
 	// TODO output command line
 	this->genotyping_outfile << "##INFO=<ID=AF,Number=A,Type=Float,Description=\"Allele Frequency\">" << endl;
+	this->genotyping_outfile << "##INFO=<ID=MA,Number=A,Type=Integer,Description=\"Number of alleles missing in panel haplotypes.\">" << endl;
 	this->genotyping_outfile << "##INFO=<ID=UK,Number=1,Type=Integer,Description=\"Total number of unique kmers.\">" << endl;
 	this->genotyping_outfile << "##INFO=<ID=AK,Number=R,Type=Integer,Description=\"Number of unique kmers per allele. Will be -1 for alleles not covered by any input haplotype path\">" << endl;
 	this->genotyping_outfile << "##INFO=<ID=KC,Number=1,Type=Float,Description=\"Local kmer coverage.\">" << endl;
@@ -292,6 +305,7 @@ void VariantReader::open_phasing_outfile(string filename) {
 	this->phasing_outfile << "##fileDate=" << get_date() << endl;
 	// TODO output command line
 	this->phasing_outfile << "##INFO=<ID=AF,Number=A,Type=Float,Description=\"Allele Frequency\">" << endl;
+	this->phasing_outfile << "##INFO=<ID=MA,Number=A,Type=Integer,Description=\"Number of alleles missing in panel haplotypes.\">" << endl;
 	this->phasing_outfile << "##INFO=<ID=UK,Number=1,Type=Integer,Description=\"Total number of unique kmers.\">" << endl;
 	this->phasing_outfile << "##INFO=<ID=AK,Number=R,Type=Integer,Description=\"Number of unique kmers per allele. Will be -1 for alleles not covered by any input haplotype path.\">" << endl;
 	this->phasing_outfile << "##INFO=<ID=KC,Number=1,Type=Float,Description=\"Local kmer coverage.\">" << endl;
@@ -338,48 +352,65 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 				throw runtime_error(oss.str());
 			}
 
-			string alt_alleles = v.get_allele_string(1);
-			for (size_t i = 2; i < nr_alleles; ++i) {
-				alt_alleles += "," + v.get_allele_string(i);
+			string alt_alleles = "";
+			vector<unsigned char> defined_alleles = {0};
+			for (size_t i = 1; i < nr_alleles; ++i) {
+				DnaSequence allele = v.get_allele_sequence(i);
+				// skip alleles that are undefined
+				if (!v.is_undefined_allele(i)) {
+					if (alt_alleles != "") alt_alleles += ",";
+					alt_alleles += allele.to_string();
+					defined_alleles.push_back(i);
+				}
 			}
+
 			this->genotyping_outfile << alt_alleles << "\t"; // ALT
 			this->genotyping_outfile << ".\t"; // QUAL
 			this->genotyping_outfile << "PASS" << "\t"; // FILTER
 			// output allele frequencies of all alleles
 			ostringstream info;
 			info << "AF="; // AF
-			for (unsigned int a = 1; a < nr_alleles; ++a) {
+			for (unsigned int a = 1; a < defined_alleles.size(); ++a) {
 				if (a > 1) info << ",";
-				info << setprecision(6) << v.allele_frequency(a, this->add_reference);				
+				info << setprecision(6) << v.allele_frequency(defined_alleles[a], this->add_reference);				
 			}
-			info << ";UK=" << singleton_likelihoods.at(j).get_nr_unique_kmers(); // UK
+
+			// keep only likelihoods for genotypes with defined alleles
+			size_t nr_missing = v.nr_missing_alleles();
+			GenotypingResult genotype_likelihoods = singleton_likelihoods.at(j);
+			if (nr_missing > 0) genotype_likelihoods = singleton_likelihoods.at(j).get_specific_likelihoods(defined_alleles);
+			nr_alleles = defined_alleles.size();
+
+			info << ";UK=" << genotype_likelihoods.get_nr_unique_kmers(); // UK
 			info << ";AK="; // AK
 			for (unsigned int a = 0; a < nr_alleles; ++a) {
 				if (a > 0) info << ",";
-				info << singleton_likelihoods.at(j).get_allele_kmer_count(a);
+				info << genotype_likelihoods.get_allele_kmer_count(a);
 			}
-			info << ";KC=" << setprecision(2) << singleton_likelihoods.at(j).get_coverage(); // KC
+
+			info << ";MA=" << nr_missing;
+			info << ";KC=" << setprecision(2) << genotype_likelihoods.get_coverage(); // KC
 
 			this->genotyping_outfile << info.str() << "\t"; // INFO
 			this->genotyping_outfile << "GT:GQ:GL" << "\t"; // FORMAT
 
 			// determine computed genotype
-			pair<int,int> genotype = singleton_likelihoods.at(j).get_likeliest_genotype();
-			if (ignore_imputed && (singleton_likelihoods.at(j).get_nr_unique_kmers() == 0)) genotype = {-1,-1};
+			pair<int,int> genotype = genotype_likelihoods.get_likeliest_genotype();
+			if (ignore_imputed && (genotype_likelihoods.get_nr_unique_kmers() == 0)) genotype = {-1,-1};
 			if ( (genotype.first != -1) && (genotype.second != -1)) {
 
 				// unique maximum and therefore a likeliest genotype exists
 				this->genotyping_outfile << genotype.first << "/" << genotype.second << ":"; // GT
 
 				// output genotype quality
-				this->genotyping_outfile << singleton_likelihoods.at(j).get_genotype_quality(genotype.first, genotype.second) << ":"; // GQ
+				this->genotyping_outfile << genotype_likelihoods.get_genotype_quality(genotype.first, genotype.second) << ":"; // GQ
 			} else {
 				// genotype could not be determined 
 				this->genotyping_outfile << ".:.:"; // GT:GQ
 			}
 
 			// output genotype likelihoods
-			vector<long double> likelihoods = singleton_likelihoods.at(j).get_all_likelihoods(nr_alleles);
+			vector<long double> likelihoods = genotype_likelihoods.get_all_likelihoods(nr_alleles);
 			if (likelihoods.size() < 3) {
 				ostringstream oss;
 				oss << "VariantReader::write_genotypes_of: too few likelihoods (" << likelihoods.size() << ") computed for variant at position " << v.get_start_position() << endl;
@@ -429,10 +460,21 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 				throw runtime_error(oss.str());
 			}
 
-			string alt_alleles = v.get_allele_string(1);
-			for (size_t i = 2; i < nr_alleles; ++i) {
-				alt_alleles += "," + v.get_allele_string(i);
+			string alt_alleles = "";
+			vector<unsigned char> defined_alleles = {0};
+			for (size_t i = 1; i < nr_alleles; ++i) {
+				DnaSequence allele = v.get_allele_sequence(i);
+				// skip alleles that are undefined
+				if (! v.is_undefined_allele(i)) {
+					if (alt_alleles != "") alt_alleles += ",";
+					alt_alleles += allele.to_string();
+					defined_alleles.push_back(i);
+				}
 			}
+
+			size_t nr_missing = v.nr_missing_alleles();
+			GenotypingResult genotype_likelihoods = singleton_likelihoods.at(j);
+			if (nr_missing > 0) genotype_likelihoods = singleton_likelihoods.at(j).get_specific_likelihoods(defined_alleles);
 
 			this->phasing_outfile << alt_alleles << "\t"; // ALT
 			this->phasing_outfile << ".\t"; // QUAL
@@ -440,26 +482,35 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 			// output allele frequencies of all alleles
 			ostringstream info;
 			info << "AF=";
-			for (unsigned int a = 1; a < nr_alleles; ++a) {
+			for (unsigned int a = 1; a < defined_alleles.size(); ++a) {
 				if (a > 1) info << ",";
-				info << setprecision(6) << v.allele_frequency(a, this->add_reference);				
+				info << setprecision(6) << v.allele_frequency(defined_alleles[a], this->add_reference);				
 			}
-			info << ";UK=" << singleton_likelihoods.at(j).get_nr_unique_kmers(); // UK
+			info << ";UK=" << genotype_likelihoods.get_nr_unique_kmers(); // UK
 			info << ";AK="; // AK
 			for (unsigned int a = 0; a < nr_alleles; ++a) {
 				if (a > 0) info << ",";
-				info << singleton_likelihoods.at(j).get_allele_kmer_count(a);
+				info << genotype_likelihoods.get_allele_kmer_count(a);
 			}
-			info << ";KC=" << setprecision(2) << singleton_likelihoods.at(j).get_coverage(); // KC
+
+			info << ";MA=" << nr_missing;
+			info << ";KC=" << setprecision(2) << genotype_likelihoods.get_coverage(); // KC
 
 			this->phasing_outfile << info.str() << "\t"; // INFO
 			this->phasing_outfile << "GT" << "\t"; // FORMAT
 
 			// determine phasing
-			if (ignore_imputed && (singleton_likelihoods.at(j).get_nr_unique_kmers()== 0)){
+			if (ignore_imputed && (genotype_likelihoods.get_nr_unique_kmers()== 0)){
 				this->phasing_outfile << "./." << endl; ; // GT (phased)
 			} else {
 				pair<unsigned char,unsigned char> haplotype = singleton_likelihoods.at(j).get_haplotype();
+				// check if the haplotype allele is undefined
+				bool hap1_undefined = v.is_undefined_allele(haplotype.first);
+				bool hap2_undefined = v.is_undefined_allele(haplotype.second);
+				string hap1 (1, haplotype.first);
+				string hap2 (1, haplotype.second);
+				if (hap1_undefined) hap1 = ".";
+				if (hap2_undefined) hap2 = ".";
 				this->phasing_outfile << (unsigned int) haplotype.first << "|" << (unsigned int) haplotype.second << endl; // GT (phased)
 			}
 		}

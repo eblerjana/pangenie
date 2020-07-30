@@ -351,6 +351,16 @@ TEST_CASE("Variant uncovered_single", "[Variant uncovered_single]") {
 	REQUIRE(single_vars[0] == v2);
 }
 
+TEST_CASE("Variant nr_missing_alleles", "[Variant nr_missing_alleles]") {
+	Variant v1("AAA", "TTT", "chr1", 5, 6, {"A", "GNN", "T"}, {0,1,1,2});
+	REQUIRE(v1.nr_missing_alleles() == 2);
+
+	Variant v2("AAAN", "TTTN", "chr1", 5, 6, {"A", "G", "T"}, {0,0,1,0});
+	REQUIRE(v2.nr_missing_alleles() == 0);
+	v2.add_flanking_sequence();
+	REQUIRE(v2.nr_missing_alleles() == 4);
+}
+
 TEST_CASE("Variant combine_combined", "[Variant combine_combined]") {
 	Variant v1("AAA", "TCA", "chr1", 4, 5, {"A", "T", "G"}, {0,0});
 	Variant v2("AAT", "AAG", "chr1", 6, 7, {"C", "T"}, {0,1});
@@ -585,4 +595,86 @@ TEST_CASE("Variant get_id2", "[Variant get_id2]") {
 	REQUIRE(single_variants[0].get_id() == "VAR1");
 	REQUIRE(single_variants[1].get_id() == ".");
 	REQUIRE(single_variants[2].get_id() == "VAR2;VAR3");
+}
+
+TEST_CASE("Variant is_undefined_allele", "[Variant is_undefined_allele]"){
+	Variant v1("AAN", "TAC", "chr1", 10, 14, {"ATGC", "ATT"}, {0,1});
+
+	REQUIRE(!v1.is_undefined_allele(0));
+	REQUIRE(!v1.is_undefined_allele(1));
+
+	v1.add_flanking_sequence();
+	REQUIRE(!v1.is_undefined_allele(0));
+	REQUIRE(!v1.is_undefined_allele(1));
+
+	Variant v2("GCT", "CCC", "chr1", 15, 17, {"AN", "G"}, {1,0});
+	REQUIRE(v2.is_undefined_allele(0));
+	REQUIRE(!v2.is_undefined_allele(1));
+
+	v2.add_flanking_sequence();
+	REQUIRE(v2.is_undefined_allele(0));
+	REQUIRE(!v2.is_undefined_allele(1));
+}
+
+TEST_CASE("Variant combine_variants_undefined_flanks", "[Variant combine_variants_undefined_flanks]") {
+	Variant v1 ("ATGA", "CNGA", "chr2", 4, 5, {"A", "T"}, {0,0,1,1});
+	Variant v2 ("AACN", "ACTG", "chr2", 7, 10, {"GAG", "ACC"}, {0,0,1,1});
+	Variant v3 ("GACT", "GGAA", "chr2", 13, 14, {"G", "GTC"}, {0,0,1,0});
+
+	v1.combine_variants(v2);
+	v1.combine_variants(v3);
+
+	REQUIRE(v1.nr_of_alleles() == 3);
+	REQUIRE(v1.nr_of_paths() == 4);
+	REQUIRE(v1.get_allele_string(0) == "ACNGAGACTG");
+	REQUIRE(v1.get_allele_string(1) == "TCNACCACTG");
+	REQUIRE(v1.get_allele_string(2) == "TCNACCACTGTC");
+	REQUIRE(v1.get_chromosome() == "chr2");
+	REQUIRE(v1.get_start_position() == 4);
+	REQUIRE(v1.get_end_position() == 14);
+	REQUIRE(v1.get_allele_on_path(0) == 0);
+	REQUIRE(v1.get_allele_on_path(1) == 0);
+	REQUIRE(v1.get_allele_on_path(2) == 2);
+	REQUIRE(v1.get_allele_on_path(3) == 1);
+
+	v1.add_flanking_sequence();
+	REQUIRE(!v1.is_undefined_allele(0));
+	REQUIRE(!v1.is_undefined_allele(1));
+	REQUIRE(!v1.is_undefined_allele(2));
+
+	v1.remove_flanking_sequence();
+	REQUIRE(!v1.is_undefined_allele(0));
+	REQUIRE(!v1.is_undefined_allele(1));
+	REQUIRE(!v1.is_undefined_allele(2));
+
+	v1.add_flanking_sequence();
+	vector<Variant> single_variants;
+	v1.separate_variants(&single_variants);
+
+	for (auto v : single_variants) {
+		REQUIRE(!v.is_undefined_allele(0));
+		REQUIRE(!v.is_undefined_allele(1));
+	}
+}
+
+TEST_CASE("Variant combine_variants_undefined_alleles", "[Variant combine_variants_undefined_flanks]") {
+	Variant v1 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,0,1,1});
+	Variant v2 ("AACT", "ACTG", "chr2", 7, 10, {"GNG", "ACC"}, {0,0,1,1});
+
+	v1.combine_variants(v2);
+	REQUIRE(v1.nr_of_alleles() == 2);
+	REQUIRE(v1.get_allele_string(0) == "ACTGNG");
+	REQUIRE(v1.get_allele_string(1) == "TCTACC");
+
+	REQUIRE(v1.is_undefined_allele(0));
+	REQUIRE(!v1.is_undefined_allele(1));
+
+	v1.add_flanking_sequence();
+	vector<Variant> single_variants;
+	v1.separate_variants(&single_variants);
+	REQUIRE(single_variants.size() == 2);
+	REQUIRE(!single_variants[0].is_undefined_allele(0));
+	REQUIRE(!single_variants[0].is_undefined_allele(1));
+	REQUIRE(single_variants[1].is_undefined_allele(0));
+	REQUIRE(!single_variants[1].is_undefined_allele(1));
 }

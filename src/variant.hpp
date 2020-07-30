@@ -41,6 +41,8 @@ public:
 	friend bool operator!=(const Variant& v1, const Variant& v2);
 	float allele_frequency(unsigned char allele_index, bool ignore_ref_path = false) const;
 	std::string get_id() const;
+	bool is_undefined_allele(size_t allele_id) const;
+	size_t nr_missing_alleles() const;
 
 private:
 	DnaSequence left_flank;

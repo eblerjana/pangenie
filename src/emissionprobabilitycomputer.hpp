@@ -29,6 +29,6 @@ private:
 	ProbabilityTable* probabilities;
 	bool all_zeros;
 	ProbabilityMatrix state_to_prob;
-	long double compute_emission_probability(unsigned char allele1, unsigned char allele2);
+	long double compute_emission_probability(unsigned char allele1, unsigned char allele2, bool allele1_undefined, bool allele2_undefined);
 };
 # endif // EMISSIONPROBABILITYCOMPUTER_H

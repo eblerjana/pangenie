@@ -39,12 +39,16 @@ public:
 	/** comparision operators **/
 	friend bool operator==(const DnaSequence& dna1, const DnaSequence& dna2);
 	friend bool operator!=(const DnaSequence& dna1, const DnaSequence& dna2);
+	/** returns true if the sequence contains at least one undefined base (different from A,T,C,G,a,t,c,g) **/
+	bool contains_undefined() const;
 
 private:
 	/** store 2 bases per char (using 4 bits for each) **/
 	std::vector<unsigned char> sequence;
 	/** length of the sequence **/
 	size_t length;
+	/** is true if sequence contains any undefined bases (N,n) **/
+	bool is_undefined;
 };
 
 #endif // DNASEQUENCE_HPP
