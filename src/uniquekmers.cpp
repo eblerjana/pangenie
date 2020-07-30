@@ -7,7 +7,7 @@ using namespace std;
 UniqueKmers::UniqueKmers(size_t variant_position)
 	:variant_pos(variant_position),
 	 current_index(0),
-	 local_coverage(0.0)
+	 local_coverage(0)
 {}
 
 size_t UniqueKmers::get_variant_position() {
@@ -18,13 +18,13 @@ void UniqueKmers::insert_empty_allele(unsigned char allele_id) {
 	this->alleles[allele_id] = KmerPath(); 
 }
 
-void UniqueKmers::insert_path(size_t path_id, unsigned char allele_id) {
+void UniqueKmers::insert_path(unsigned short path_id, unsigned char allele_id) {
 	this->path_to_allele[path_id] = allele_id;
 }
 
-void UniqueKmers::insert_kmer(CopyNumber cn,  vector<unsigned char>& alleles){
+void UniqueKmers::insert_kmer(unsigned short readcount,  vector<unsigned char>& alleles){
 	size_t index = this->current_index;
-	this->kmer_to_copynumber.push_back(cn);
+	this->kmer_to_count.push_back(readcount);
 	for (auto const& a: alleles){
 		this->alleles[a].set_position(index);
 	}
@@ -49,11 +49,11 @@ CopyNumberAssignment UniqueKmers::combine_paths(unsigned char allele_id1, unsign
 	return this->alleles.at(allele_id1) + this->alleles.at(allele_id2);
 }
 
-CopyNumber UniqueKmers::get_copynumber_of(size_t kmer_index) {
+unsigned short UniqueKmers::get_readcount_of(size_t kmer_index) {
 	if (kmer_index < this->current_index) {
-		return this->kmer_to_copynumber[kmer_index];
+		return this->kmer_to_count[kmer_index];
 	} else {
-		throw runtime_error("UniqueKmers::get_copynumber_of: requested kmer index: " + to_string(kmer_index) + " does not exist.");
+		throw runtime_error("UniqueKmers::get_readcount_of: requested kmer index: " + to_string(kmer_index) + " does not exist.");
 	}
 }
 
@@ -61,11 +61,11 @@ size_t UniqueKmers::size() const {
 	return this->current_index;
 }
 
-size_t UniqueKmers::get_nr_paths() const {
+unsigned short UniqueKmers::get_nr_paths() const {
 	return this->path_to_allele.size();
 }
 
-void UniqueKmers::get_path_ids(vector<size_t>& p, vector<unsigned char>& a, vector<size_t>* only_include) {
+void UniqueKmers::get_path_ids(vector<unsigned short>& p, vector<unsigned char>& a, vector<unsigned short>* only_include) {
 	if (only_include != nullptr) {
 		// only return paths that are also contained in only_include
 		for (auto p_it = only_include->begin(); p_it != only_include->end(); ++p_it) {
@@ -94,8 +94,7 @@ void UniqueKmers::get_allele_ids(vector<unsigned char>& a) {
 ostream& operator<< (ostream& stream, const UniqueKmers& uk) {
 	stream << "UniqueKmers for variant: " << uk.variant_pos << endl;
 	for (size_t i = 0; i < uk.size(); ++i) {
-		CopyNumber cn = uk.kmer_to_copynumber[i];
-		stream << i << ": " << cn.get_probability_of(0) << " " << cn.get_probability_of(1) <<  " " << cn.get_probability_of(2) << endl;
+		stream << i << ": " << uk.kmer_to_count[i] << endl;
 	}
 	stream << "alleles:" << endl;
 	for (auto it = uk.alleles.begin(); it != uk.alleles.end(); ++it) {
@@ -108,11 +107,11 @@ ostream& operator<< (ostream& stream, const UniqueKmers& uk) {
 	return stream;
 }
 
-void UniqueKmers::set_coverage(double local_coverage) {
+void UniqueKmers::set_coverage(unsigned short local_coverage) {
 	this->local_coverage = local_coverage;
 }
 
-double UniqueKmers::get_coverage() const {
+unsigned short UniqueKmers::get_coverage() const {
 	return this->local_coverage;
 }
 

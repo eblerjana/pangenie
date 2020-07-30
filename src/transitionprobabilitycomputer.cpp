@@ -5,7 +5,7 @@
 
 using namespace std;
 
-TransitionProbabilityComputer::TransitionProbabilityComputer(size_t from_variant, size_t to_variant, double recomb_rate, size_t nr_paths, bool uniform, long double effective_N)
+TransitionProbabilityComputer::TransitionProbabilityComputer(size_t from_variant, size_t to_variant, double recomb_rate, unsigned short nr_paths, bool uniform, long double effective_N)
 {
 	assert(from_variant <= to_variant );
 	this->uniform = uniform;
@@ -17,7 +17,7 @@ TransitionProbabilityComputer::TransitionProbabilityComputer(size_t from_variant
 	this->probabilities = {no_recomb_prob*no_recomb_prob, no_recomb_prob*recomb_prob, recomb_prob*recomb_prob};
 }
 
-long double TransitionProbabilityComputer::compute_transition_prob(size_t path_id1, size_t path_id2, size_t path_id3, size_t path_id4){
+long double TransitionProbabilityComputer::compute_transition_prob(unsigned short path_id1, unsigned short path_id2, unsigned short path_id3, unsigned short path_id4){
 	if (this->uniform) {
 		return 1.0L;
 	} else {

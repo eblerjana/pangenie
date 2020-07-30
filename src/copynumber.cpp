@@ -27,16 +27,16 @@ CopyNumber::CopyNumber(long double cn_0, long double cn_1, long double cn_2, lon
 	this->probabilities[1] = (cn_1 + regularization_const) / sum;
 }
 
-long double CopyNumber::get_probability_of(int cn){
+long double CopyNumber::get_probability_of(int cn) const {
 	if( (cn < 0) || (cn > 2) ){
 		ostringstream oss;
 		oss << "CopyNumber::get_probability_of: Invalid copy number: " << cn;
 		throw runtime_error(oss.str());
 	}
 	if( (cn == 2) && (this->probabilities.size() < 3)) {
-		return 1.0L - probabilities[0] - probabilities[1];
+		return 1.0L - probabilities.at(0) - probabilities.at(1);
 	} else {
-		return probabilities[cn];
+		return probabilities.at(cn);
 	}
 }
 

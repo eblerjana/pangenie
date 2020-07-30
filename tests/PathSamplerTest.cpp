@@ -10,16 +10,16 @@ using namespace std;
 
 TEST_CASE("PathSampler select_single_subset", "[PathSampler select_single_subset]") {
 	PathSampler sampler (10);
-	vector<size_t> sample = {};
+	vector<unsigned short> sample = {};
 
-	for (size_t i = 0; i < 30; ++i) {
+	for (unsigned short i = 0; i < 30; ++i) {
 		sample.clear();
 		sampler.select_single_subset(sample, 7);
 		REQUIRE(sample.size() == 7);
 
 		// make sure each path was only selected once
-		set<size_t> s(sample.begin(), sample.end());
-		vector<size_t> singleton (s.begin(), s.end());
+		set<unsigned short> s(sample.begin(), sample.end());
+		vector<unsigned short> singleton (s.begin(), s.end());
 		sort(sample.begin(), sample.end());
 		sort(singleton.begin(), singleton.end());
 		REQUIRE(singleton == sample);
@@ -35,17 +35,17 @@ TEST_CASE("PathSampler select_single_subset", "[PathSampler select_single_subset
 
 TEST_CASE("PathSampler select_multiple_subsets", "[PathSampler select_multiple_subsets]") {
 	PathSampler sampler (20);
-	vector<vector<size_t>> samples = {};
+	vector<vector<unsigned short>> samples = {};
 
-	for (size_t i = 0; i < 30; ++i) {
+	for (unsigned short i = 0; i < 30; ++i) {
 		samples.clear();
 		sampler.select_multiple_subsets(samples, 7, 5);
 		REQUIRE(samples.size() == 5);
 
 		for (auto sample : samples) {
 			// make sure each path was only selected once
-			set<size_t> s(sample.begin(), sample.end());
-			vector<size_t> singleton (s.begin(), s.end());
+			set<unsigned short> s(sample.begin(), sample.end());
+			vector<unsigned short> singleton (s.begin(), s.end());
 			sort(sample.begin(), sample.end());
 			sort(singleton.begin(), singleton.end());
 			REQUIRE(singleton == sample);
@@ -61,12 +61,12 @@ TEST_CASE("PathSampler select_multiple_subsets", "[PathSampler select_multiple_s
 
 TEST_CASE("PathSampler partition_paths", "[PathSampler partition_paths]") {
 	PathSampler sampler (20);
-	vector<vector<size_t>> partitions = {};
+	vector<vector<unsigned short>> partitions = {};
 
 	sampler.partition_paths(partitions, 4);
 	REQUIRE(partitions.size() == 5);
 	
-	vector<size_t> all_paths = {};
+	vector<unsigned short> all_paths = {};
 	for (auto v : partitions) {
 		for (auto e : v) {
 			all_paths.push_back(e);
@@ -74,8 +74,8 @@ TEST_CASE("PathSampler partition_paths", "[PathSampler partition_paths]") {
 	}
 	sort(all_paths.begin(), all_paths.end());
 
-	vector<size_t> expected_paths = {};
-	for (size_t i = 0; i < 20; ++i) {
+	vector<unsigned short> expected_paths = {};
+	for (unsigned short i = 0; i < 20; ++i) {
 		expected_paths.push_back(i);
 	}
 
@@ -84,12 +84,12 @@ TEST_CASE("PathSampler partition_paths", "[PathSampler partition_paths]") {
 
 TEST_CASE("PathSampler partition_paths2", "[PathSampler partition_paths2]") {
 	PathSampler sampler (25);
-	vector<vector<size_t>> partitions = {};
+	vector<vector<unsigned short>> partitions = {};
 
 	sampler.partition_paths(partitions, 4);
 	REQUIRE(partitions.size() == 7);
 	
-	vector<size_t> all_paths = {};
+	vector<unsigned short> all_paths = {};
 	for (auto v : partitions) {
 		for (auto e : v) {
 			all_paths.push_back(e);
@@ -97,8 +97,8 @@ TEST_CASE("PathSampler partition_paths2", "[PathSampler partition_paths2]") {
 	}
 	sort(all_paths.begin(), all_paths.end());
 
-	vector<size_t> expected_paths = {};
-	for (size_t i = 0; i < 25; ++i) {
+	vector<unsigned short> expected_paths = {};
+	for (unsigned short i = 0; i < 25; ++i) {
 		expected_paths.push_back(i);
 	}
 
@@ -108,12 +108,12 @@ TEST_CASE("PathSampler partition_paths2", "[PathSampler partition_paths2]") {
 
 TEST_CASE("PathSampler partition_samples", "[PathSampler partition_samples]") {
 	PathSampler sampler (20);
-	vector<vector<size_t>> partitions = {};
+	vector<vector<unsigned short>> partitions = {};
 
 	sampler.partition_samples(partitions, 4);
 	REQUIRE(partitions.size() == 5);
 	
-	vector<size_t> all_paths = {};
+	vector<unsigned short> all_paths = {};
 	for (auto v : partitions) {
 		for (auto e : v) {
 			all_paths.push_back(e);
@@ -121,8 +121,8 @@ TEST_CASE("PathSampler partition_samples", "[PathSampler partition_samples]") {
 	}
 	sort(all_paths.begin(), all_paths.end());
 
-	vector<size_t> expected_paths = {};
-	for (size_t i = 0; i < 20; ++i) {
+	vector<unsigned short> expected_paths = {};
+	for (unsigned short i = 0; i < 20; ++i) {
 		expected_paths.push_back(i);
 	}
 	REQUIRE(all_paths == expected_paths);
@@ -131,12 +131,12 @@ TEST_CASE("PathSampler partition_samples", "[PathSampler partition_samples]") {
 
 TEST_CASE("PathSampler partition_samples2", "[PathSampler partition_samples]") {
 	PathSampler sampler (9);
-	vector<vector<size_t>> partitions = {};
+	vector<vector<unsigned short>> partitions = {};
 
 	sampler.partition_samples(partitions, 5);
 //	REQUIRE(partitions.size() == 2);
 	
-	vector<size_t> all_paths = {};
+	vector<unsigned short> all_paths = {};
 	for (auto v : partitions) {
 		cout << " ----" << endl; 
 		for (auto e : v) {
@@ -146,8 +146,8 @@ TEST_CASE("PathSampler partition_samples2", "[PathSampler partition_samples]") {
 	}
 	sort(all_paths.begin(), all_paths.end());
 
-	vector<size_t> expected_paths = {0};
-	for (size_t i = 0; i < 9; ++i) {
+	vector<unsigned short> expected_paths = {0};
+	for (unsigned short i = 0; i < 9; ++i) {
 		expected_paths.push_back(i);
 	}
 	REQUIRE(all_paths == expected_paths);

@@ -14,10 +14,10 @@ TEST_CASE("ColumnIndexer insert", "[ColumnIndexer insert]"){
 	REQUIRE(c.get_path(1) == 3);
 	REQUIRE(c.get_allele(0) == 0);
 	REQUIRE(c.get_allele(1) == 2);
-	REQUIRE(c.get_path_ids_at(0) == pair<size_t,size_t>(0,0));
-	REQUIRE(c.get_path_ids_at(1) == pair<size_t,size_t>(0,1));
-	REQUIRE(c.get_path_ids_at(2) == pair<size_t,size_t>(1,0));
-	REQUIRE(c.get_path_ids_at(3) == pair<size_t,size_t>(1,1));
+	REQUIRE(c.get_path_ids_at(0) == pair<unsigned short,unsigned short>(0,0));
+	REQUIRE(c.get_path_ids_at(1) == pair<unsigned short,unsigned short>(0,1));
+	REQUIRE(c.get_path_ids_at(2) == pair<unsigned short,unsigned short>(1,0));
+	REQUIRE(c.get_path_ids_at(3) == pair<unsigned short,unsigned short>(1,1));
 }
 
 TEST_CASE("ColumnIndexer test_invalid", "[ColumnIndexer test_invalid]") {
@@ -33,5 +33,5 @@ TEST_CASE("ColumnIndexer test_invalid", "[ColumnIndexer test_invalid]") {
 	REQUIRE(c.nr_paths() == 1);
 	REQUIRE(c.get_path(0) == 1);
 	REQUIRE(c.get_allele(0) == 0);
-	REQUIRE(c.get_path_ids_at(0) == pair<size_t,size_t>(0,0));
+	REQUIRE(c.get_path_ids_at(0) == pair<unsigned short,unsigned short>(0,0));
 }

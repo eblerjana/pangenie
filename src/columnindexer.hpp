@@ -12,18 +12,18 @@ class ColumnIndexer {
 public:
 	ColumnIndexer();
 	/** insert a path and the allele it covers **/
-	void insert_path(size_t path, unsigned char allele);
+	void insert_path(unsigned short path, unsigned char allele);
 	/** number of paths inserted **/
-	size_t nr_paths () const;
+	unsigned short nr_paths () const;
 	/** get path at index path_id **/
-	size_t get_path (size_t path_index) const;
+	unsigned short get_path (unsigned short path_index) const;
 	/** get allele at index path_id **/
-	unsigned char get_allele (size_t path_index) const;
+	unsigned char get_allele (unsigned short path_index) const;
 	/** get column index a pair of states corresponds to **/
-	std::pair<size_t,size_t> get_path_ids_at (size_t column_index) const;
+	std::pair<unsigned short,unsigned short> get_path_ids_at (size_t column_index) const;
 
 private:
-	std::vector<size_t> paths;
+	std::vector<unsigned short> paths;
 	std::vector<unsigned char> alleles;
 };
 

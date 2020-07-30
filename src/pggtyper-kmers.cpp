@@ -29,14 +29,14 @@ struct Results {
 	map<string, double> runtimes;
 };
 
-void run_genotyping_kmers(string chromosome, KmerCounter* genomic_kmer_counts, KmerCounter* read_kmer_counts, VariantReader* variant_reader, size_t kmer_abundance_peak, bool only_genotyping, bool only_phasing, long double regularization, Results* results) {
+void run_genotyping_kmers(string chromosome, KmerCounter* genomic_kmer_counts, KmerCounter* read_kmer_counts, VariantReader* variant_reader, ProbabilityTable* probs, size_t kmer_abundance_peak, bool only_genotyping, bool only_phasing, Results* results) {
 	Timer timer;
 	// determine sets of kmers unique to each variant region
 	UniqueKmerComputer kmer_computer(genomic_kmer_counts, read_kmer_counts, variant_reader, chromosome, kmer_abundance_peak);
 	std::vector<UniqueKmers*> unique_kmers;
-	kmer_computer.compute_unique_kmers(&unique_kmers, regularization);
+	kmer_computer.compute_unique_kmers(&unique_kmers, probs);
 	// construct HMM and run genotyping/phasing
-	HMM hmm(&unique_kmers, !only_phasing, !only_genotyping, 1.26, true);
+	HMM hmm(&unique_kmers, probs, !only_phasing, !only_genotyping, 1.26, true);
 	// store the results
 	{
 		lock_guard<mutex> lock (results->result_mutex);
@@ -174,6 +174,7 @@ int main (int argc, char* argv[])
 	time_kmer_counting = timer.get_interval_time();
 
 	cerr << "Construct HMM and run core algorithm ..." << endl;
+	ProbabilityTable probabilities (kmer_abundance_peak / 4, kmer_abundance_peak*4, 2*kmer_abundance_peak, regularization);
 
 	// determine max number of available threads (at most one thread per chromosome possible)
 	size_t available_threads = min(thread::hardware_concurrency(), (unsigned int) chromosomes.size());
@@ -189,7 +190,8 @@ int main (int argc, char* argv[])
 			KmerCounter* genomic = &genomic_kmer_counts;
 			VariantReader* variants = &variant_reader;
 			Results* r = &results;
-			function<void()> f_genotyping = bind(run_genotyping_kmers, chromosome, genomic, read_kmer_counts, variants, kmer_abundance_peak, only_genotyping, only_phasing, regularization, r);
+			ProbabilityTable* probs = &probabilities;
+			function<void()> f_genotyping = bind(run_genotyping_kmers, chromosome, genomic, read_kmer_counts, variants, probs, kmer_abundance_peak, only_genotyping, only_phasing, r);
 			threadPool.submit(f_genotyping);
 		}
 	}

@@ -1,6 +1,7 @@
 #include "uniquekmercomputer.hpp"
 #include <jellyfish/mer_dna.hpp>
 #include <iostream>
+#include <cassert>
 #include <map>
 
 using namespace std;
@@ -30,20 +31,6 @@ void unique_kmers(DnaSequence& allele, unsigned char index, size_t kmer_size, ma
 	}
 }
 
-double get_error_parameter(double kmer_coverage) {
-	double cn0;
-	if (kmer_coverage < 10.0) {
-		cn0 = 0.99;
-	} else if (kmer_coverage < 20) {
-		cn0 = 0.95;
-	} else if (kmer_coverage < 40) {
-		cn0 = 0.9;
-	} else {
-		cn0 = 0.8;
-	}
-	return cn0;
-}
-
 UniqueKmerComputer::UniqueKmerComputer (KmerCounter* genomic_kmers, KmerCounter* read_kmers, VariantReader* variants, string chromosome, size_t kmer_coverage)
 	:genomic_kmers(genomic_kmers),
 	 read_kmers(read_kmers),
@@ -54,17 +41,14 @@ UniqueKmerComputer::UniqueKmerComputer (KmerCounter* genomic_kmers, KmerCounter*
 	jellyfish::mer_dna::k(this->variants->get_kmer_size());
 }
 
-void UniqueKmerComputer::compute_unique_kmers(vector<UniqueKmers*>* result, long double regularization_const) {
+//TODO
+void UniqueKmerComputer::compute_unique_kmers(vector<UniqueKmers*>* result, ProbabilityTable* probabilities) {
 	size_t nr_variants = this->variants->size_of(this->chromosome);
 	for (size_t v = 0; v < nr_variants; ++v) {
 
 		// set parameters of distributions
 		size_t kmer_size = this->variants->get_kmer_size();
 		double kmer_coverage = compute_local_coverage(this->chromosome, v, 2*kmer_size);
-		double cn0 = get_error_parameter(kmer_coverage);
-		double cn1 = kmer_coverage / 2.0;
-		double cn2 = kmer_coverage;
-		this->probability.set_parameters(cn0, cn1, cn2);
 		
 		map <jellyfish::mer_dna, vector<unsigned char>> occurences;
 		const Variant& variant = this->variants->get_variant(this->chromosome, v);
@@ -73,7 +57,8 @@ void UniqueKmerComputer::compute_unique_kmers(vector<UniqueKmers*>* result, long
 		size_t nr_alleles = variant.nr_of_alleles();
 
 		// insert empty alleles (to also capture paths for which no unique kmers exist)
-		for (size_t p = 0; p < variant.nr_of_paths(); ++p) {
+		assert(variant.nr_of_paths() < 65535);
+		for (unsigned short p = 0; p < variant.nr_of_paths(); ++p) {
 			unsigned char a = variant.get_allele_on_path(p);
 			u->insert_empty_allele(a);
 			u->insert_path(p,a);
@@ -120,21 +105,15 @@ void UniqueKmerComputer::compute_unique_kmers(vector<UniqueKmers*>* result, long
 				}
 
 				// determine probabilities
-				long double p_cn0 = this->probability.get_probability(0, read_kmercount);
-				long double p_cn1 = this->probability.get_probability(1, read_kmercount);
-				long double p_cn2 = this->probability.get_probability(2, read_kmercount);
+				CopyNumber cn = probabilities->get_probability(kmer_coverage, read_kmercount);
+				long double p_cn0 = cn.get_probability_of(0);
+				long double p_cn1 = cn.get_probability_of(1);
+				long double p_cn2 = cn.get_probability_of(2);
 
 				// skip kmers with only 0 probabilities
 				if ( (p_cn0 > 0) || (p_cn1 > 0) || (p_cn2 > 0) ) {
 					nr_kmers_used += 1;
-					if (regularization_const > 0) {
-						CopyNumber cn(p_cn0, p_cn1, p_cn2, regularization_const);
-						u->insert_kmer(cn, kmer.second);
-					} else {
-						// not normalizing seems to increase precision
-						CopyNumber cn(p_cn0, p_cn1, p_cn2);
-						u->insert_kmer(cn, kmer.second);
-					}
+					u->insert_kmer(read_kmercount, kmer.second);
 				}
 			}
 		}
@@ -150,7 +129,8 @@ void UniqueKmerComputer::compute_empty(vector<UniqueKmers*>* result) const {
 		size_t nr_alleles = variant.nr_of_alleles();
 
 		// insert empty alleles and paths
-		for (size_t p = 0; p < variant.nr_of_paths(); ++p) {
+		assert(variant.nr_of_paths() < 65535);
+		for (unsigned short p = 0; p < variant.nr_of_paths(); ++p) {
 			unsigned char a = variant.get_allele_on_path(p);
 			u->insert_empty_allele(a);
 			u->insert_path(p,a);
@@ -159,11 +139,11 @@ void UniqueKmerComputer::compute_empty(vector<UniqueKmers*>* result) const {
 	}
 }
 
-double UniqueKmerComputer::compute_local_coverage(string chromosome, size_t var_index, size_t length) {
+unsigned short UniqueKmerComputer::compute_local_coverage(string chromosome, size_t var_index, size_t length) {
 	DnaSequence left_overhang;
 	DnaSequence right_overhang;
-	double total_coverage = 0;
-	double total_kmers = 0;
+	size_t total_coverage = 0;
+	size_t total_kmers = 0;
 
 	this->variants->get_left_overhang(chromosome, var_index, length, left_overhang);
 	this->variants->get_right_overhang(chromosome, var_index, length, right_overhang);

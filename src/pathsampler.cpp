@@ -7,16 +7,16 @@
 
 using namespace std;
 
-PathSampler::PathSampler(size_t total_number) 
+PathSampler::PathSampler(unsigned short total_number) 
 	: total_number(total_number)
 {}
 
-void PathSampler::select_single_subset(vector<size_t>& result, size_t sample_size) const {
+void PathSampler::select_single_subset(vector<unsigned short>& result, unsigned short sample_size) const {
 	assert(sample_size <= this->total_number);
 	unordered_set<int> sample;
 	default_random_engine generator;
 
-	for(size_t d = this->total_number - sample_size; d < this->total_number; ++d) {
+	for(unsigned short d = this->total_number - sample_size; d < this->total_number; ++d) {
 		int t = uniform_int_distribution<>(0, d)(generator);
 		if (sample.find(t) == sample.end() )
 			sample.insert(t);
@@ -27,38 +27,38 @@ void PathSampler::select_single_subset(vector<size_t>& result, size_t sample_siz
 	sort(result.begin(), result.end());
 }
 
-void PathSampler::select_multiple_subsets(vector<vector<size_t>>& result, size_t sample_size, size_t n) const {
-	for (size_t i = 0; i < n; ++i) {
-		vector<size_t> sample;
+void PathSampler::select_multiple_subsets(vector<vector<unsigned short>>& result, unsigned short sample_size,  unsigned short n) const {
+	for (unsigned short i = 0; i < n; ++i) {
+		vector<unsigned short> sample;
 		this->select_single_subset(sample, sample_size);
 		result.push_back(sample);
 	}
 }
 
-void PathSampler::partition_paths(vector<vector<size_t>>& result, size_t sample_size) const {
-	vector<size_t> all_paths = {};
-	for (size_t i = 0; i < this->total_number; ++i) {
+void PathSampler::partition_paths(vector<vector<unsigned short>>& result, unsigned short sample_size) const {
+	vector<unsigned short> all_paths = {};
+	for (unsigned short i = 0; i < this->total_number; ++i) {
 		all_paths.push_back(i);
 	}
 	random_shuffle(all_paths.begin(), all_paths.end());
 	
 	// partition into parts of length sample_size
-	for (size_t i = 0; i < all_paths.size(); i += sample_size) {
-		auto last = min(all_paths.size(), i+sample_size);
-		vector<size_t> subset(all_paths.begin()+i, all_paths.begin()+last);
+	for (unsigned short i = 0; i < all_paths.size(); i += sample_size) {
+		auto last = min(all_paths.size(), (size_t) i+sample_size);
+		vector<unsigned short> subset(all_paths.begin()+i, all_paths.begin()+last);
 		sort(subset.begin(), subset.end());
 		result.push_back(subset);
 	}
 
 	// if the last sample is shorter than the sample_size, randomly add additional paths
-	size_t missing = sample_size - result.at(result.size()-1).size();
+	unsigned short missing = sample_size - result.at(result.size()-1).size();
 	if (missing > 0) {
 		this->select_single_subset(result[result.size()-1], missing);
 	}
 }
 
-void PathSampler::partition_samples(vector<vector<size_t>>& result, size_t sample_size) const {
-	vector<pair<size_t,size_t>> all_samples;
+void PathSampler::partition_samples(vector<vector<unsigned short>>& result, unsigned short sample_size) const {
+	vector<pair<unsigned short,unsigned short>> all_samples;
 	bool reference_added = this->total_number % 2 != 0;
 
 	if (reference_added) {
@@ -74,7 +74,7 @@ void PathSampler::partition_samples(vector<vector<size_t>>& result, size_t sampl
 
 	random_shuffle(all_samples.begin(), all_samples.end());
 	// list all paths
-	vector<size_t> all_paths;
+	vector<unsigned short> all_paths;
 
 	if (reference_added) all_paths.push_back(0);
 
@@ -85,15 +85,15 @@ void PathSampler::partition_samples(vector<vector<size_t>>& result, size_t sampl
 
 
 	// partition into parts of length sample_size
-	for (size_t i = 0; i < all_paths.size(); i += sample_size) {
-		auto last = min(all_paths.size(), i+sample_size);
-		vector<size_t> subset(all_paths.begin()+i, all_paths.begin()+last);
+	for (unsigned short i = 0; i < all_paths.size(); i += sample_size) {
+		auto last = min(all_paths.size(), (size_t) i+sample_size);
+		vector<unsigned short> subset(all_paths.begin()+i, all_paths.begin()+last);
 //		if (reference_added) subset.push_back(0); 
 		sort(subset.begin(), subset.end());
 		result.push_back(subset);
 	}
 	// if the last sample is shorter than the sample_size, randomly add additional paths
-	size_t missing;
+	unsigned short missing;
 //	if (reference_added) {
 //		missing = sample_size - (result.at(result.size()-1).size() - 1);
 //	} else {

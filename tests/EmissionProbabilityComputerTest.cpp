@@ -2,6 +2,7 @@
 #include "utils.hpp"
 #include "../src/emissionprobabilitycomputer.hpp"
 #include "../src/copynumber.hpp"
+#include "../src/probabilitytable.hpp"
 #include <vector>
 #include <string>
 
@@ -11,21 +12,24 @@ TEST_CASE("EmissionProbabilityComputer get_emission_probability", "EmissionProba
 	// construct UniqueKmers object
 	vector<string> kmers = {"CATG", "ATGC", "CATT", "ATTG", "TTGC"};
 	vector<vector<unsigned char>> alleles = {{0}, {0}, {1}, {1}, {1}};
+	vector<unsigned short> counts = {4, 6, 8, 2, 5};
 	vector<CopyNumber> cns = { CopyNumber(0.01, 0.2, 0.0), CopyNumber(0.001,0.5,0.001), CopyNumber(0.0,0.3,0.02), CopyNumber(0.05,0.6,0.0), CopyNumber(0.01,0.2,0.01)};
+	ProbabilityTable probs (0,10,10,0.0);
 	UniqueKmers unique_kmers(1000);
 	unique_kmers.insert_path(0,0);
 	unique_kmers.insert_path(1,1);
 	unique_kmers.insert_path(2,1);
 	for (unsigned int i = 0; i < kmers.size(); ++i) {
-		unique_kmers.insert_kmer(cns[i],  alleles[i]);
+		unique_kmers.insert_kmer(counts[i],  alleles[i]);
+		probs.modify_probability(0, counts[i], cns[i]);
 	}
 
-	vector<size_t> path_ids;
+	vector<unsigned short> path_ids;
 	vector<unsigned char> allele_ids;
 	unique_kmers.get_path_ids(path_ids, allele_ids);
 
 	// construct EmissionProbabilityComputer
-	EmissionProbabilityComputer emission_prob_comp (&unique_kmers);
+	EmissionProbabilityComputer emission_prob_comp (&unique_kmers, &probs);
 	REQUIRE (doubles_equal(emission_prob_comp.get_emission_probability(0,0), 0.0));
 	REQUIRE (doubles_equal(emission_prob_comp.get_emission_probability(0,1), 0.0036));
 	REQUIRE (doubles_equal(emission_prob_comp.get_emission_probability(1,0), 0.0036));

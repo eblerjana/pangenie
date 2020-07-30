@@ -16,7 +16,7 @@ public:
 	CopyNumber(long double cn_0, long double cn_1, long double cn_2);
 	CopyNumber(long double cn_0, long double cn_1, long double cn_2, long double regularization_const);
 	/** get probability of copy number cn **/
-	long double get_probability_of(int cn);
+	long double get_probability_of(int cn) const;
 	bool operator==(const CopyNumber &other) const;
 	bool operator!=(const CopyNumber &other) const;
 private:

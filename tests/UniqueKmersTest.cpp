@@ -7,7 +7,7 @@
 using namespace std;
 
 TEST_CASE("UniqueKmers testcase 1", "[UniqueKmers testcase 1]"){
-	vector<CopyNumber> cns = {CopyNumber(0.05,0.9,0.05),CopyNumber(0.8,0.1,0.1),CopyNumber(0.1,0.2,0.7)};
+	vector<unsigned short> counts = {5,6,7};
 	vector<vector<size_t>> paths = {{0,1,2}, {0,1}, {2}};
 	UniqueKmers u(1000);
 
@@ -18,31 +18,30 @@ TEST_CASE("UniqueKmers testcase 1", "[UniqueKmers testcase 1]"){
 
 	vector< vector<unsigned char> > alleles = { {0,1}, {0}, {1} };
 	for (size_t i = 0; i < 3; ++i){
-		u.insert_kmer(cns[i], alleles[i]);
+		u.insert_kmer(counts[i], alleles[i]);
 		for (auto& p : paths[i]){
 			REQUIRE(u.kmer_on_path(i, p));
 		}
 	}
 	for (size_t i = 0; i < 3; ++i){
 		REQUIRE(u.get_variant_position() == 1000);
-		REQUIRE(u.get_copynumber_of(i) == cns[i]);
+		REQUIRE(u.get_readcount_of(i) == counts[i]);
 	}
 }
 
 TEST_CASE("UniqueKmers get_copynumber_of", "[UniqueKmers get_copynumber_of]"){
 	UniqueKmers u(2000);
 	for (size_t i = 0; i < 3; ++i){
-		CHECK_THROWS(u.get_copynumber_of(i));
+		CHECK_THROWS(u.get_readcount_of(i));
 	}
-	CopyNumber cn(0.05, 0.9, 0.05);
 	vector<unsigned char> alleles = {0};
-	u.insert_kmer(cn, alleles);
-	REQUIRE(u.get_copynumber_of(0) == cn);
+	u.insert_kmer(5, alleles);
+	REQUIRE(u.get_readcount_of(0) == 5);
 }
 
 TEST_CASE("UniqueKmers insert_empty_path", "[UniqueKmers insert_empty_path]") {
 	UniqueKmers u(1000);
-	vector<CopyNumber> cns = { CopyNumber(0.001, 0.5, 0.001), CopyNumber(1.0, 0.0, 0.0), CopyNumber(0.001,0.001, 0.6) };
+	vector<unsigned short> counts = {5, 0, 10};
 	vector<vector<size_t>> paths = { {0}, {0}, {2} };
 	vector<vector<unsigned char>> alleles = {{0}, {0}, {1}};
 
@@ -51,13 +50,13 @@ TEST_CASE("UniqueKmers insert_empty_path", "[UniqueKmers insert_empty_path]") {
 
 	// insert the kmers
 	for (size_t i = 0; i < 3; ++i) {
-		u.insert_kmer(cns[i], alleles[i]);
+		u.insert_kmer(counts[i], alleles[i]);
 		for (auto& p : paths[i]) {
 			REQUIRE(u.kmer_on_path(i, p));
 		}
 	}
 
-	vector<size_t> path_ids;
+	vector<unsigned short> path_ids;
 	vector<unsigned char> allele_ids;
 	u.get_path_ids(path_ids, allele_ids);
 	REQUIRE(u.size() == 3);
@@ -89,28 +88,27 @@ TEST_CASE("UniqueKmers insert_empty_path", "[UniqueKmers insert_empty_path]") {
 	REQUIRE(allele_ids[2] == 1);
 
 	// make sure path is indeed empty
-	for (size_t i = 0; i < 3; ++i) {
+	for (unsigned short i = 0; i < 3; ++i) {
 		REQUIRE(! u.kmer_on_path(i, 1));
 	}
 
 	// add kmer to the empty path
 	vector<unsigned char> allele = {2};
-	u.insert_kmer(CopyNumber(0.01, 0.8, 0.01), allele);
+	u.insert_kmer(5, allele);
 	REQUIRE(u.size() == 4);
 	REQUIRE(u.kmer_on_path(3, 1));
 }
 
 TEST_CASE("UniqueKmers insert_empty_path2", "[UniqueKmers insert_empty_path2]") {
 	UniqueKmers u(1000);
-	CopyNumber cn(0.9, 0.1, 0.2);
 	vector<unsigned char> allele = {1};
 
-	u.insert_kmer(cn, allele);
+	u.insert_kmer(10, allele);
 	u.insert_path(1,1);
 	REQUIRE(u.size() == 1);
 	REQUIRE(u.kmer_on_path(0, 1));
 
-	vector<size_t> path_ids;
+	vector<unsigned short> path_ids;
 	vector<unsigned char> allele_ids;
 	u.get_path_ids(path_ids, allele_ids);
 	REQUIRE(path_ids.size() == 1);
@@ -132,7 +130,7 @@ TEST_CASE("UniqueKmers insert_empty_path2", "[UniqueKmers insert_empty_path2]") 
 }
 
 TEST_CASE("UniqueKmers kmers_on_alleles1", "[UniqueKmers kmers_on_alleles1]"){
-	vector<CopyNumber> cns = {CopyNumber(0.05,0.9,0.05),CopyNumber(0.8,0.1,0.1),CopyNumber(0.1,0.2,0.7)};
+	vector<unsigned short> read_counts = {5, 1, 9};
 	UniqueKmers u(1000);
 
 	// insert paths
@@ -142,7 +140,7 @@ TEST_CASE("UniqueKmers kmers_on_alleles1", "[UniqueKmers kmers_on_alleles1]"){
 
 	vector< vector<unsigned char> > alleles = { {0,1}, {0}, {1} };
 	for (size_t i = 0; i < 3; ++i){
-		u.insert_kmer(cns[i], alleles[i]);
+		u.insert_kmer(read_counts[i], alleles[i]);
 	}
 
 	map<unsigned char, int> counts = u.kmers_on_alleles();
@@ -163,15 +161,15 @@ TEST_CASE("UniqueKmers kmers_on_alleles2", "[UniqueKmers kmers_on_alleles2]") {
 	REQUIRE(counts[0] == 0);
 	REQUIRE(counts[2] == 0);
 
-	vector<CopyNumber> cns = {CopyNumber(0.05,0.9,0.05),CopyNumber(0.8,0.1,0.1)};
+	vector<unsigned short> read_counts = {5, 1};
 	vector<vector<unsigned char>> alleles = { {2}, {0} };
-	u.insert_kmer (cns[0], alleles[0]);
+	u.insert_kmer (read_counts[0], alleles[0]);
 	counts = u.kmers_on_alleles();
 	REQUIRE(counts.size() == 2);
 	REQUIRE(counts[0] == 0);
 	REQUIRE(counts[2] == 1);
 
-	u.insert_kmer (cns[1], alleles[1]);
+	u.insert_kmer (read_counts[1], alleles[1]);
 	counts = u.kmers_on_alleles();
 	REQUIRE(counts.size() == 2);
 	REQUIRE(counts[0] == 1);
@@ -185,10 +183,9 @@ TEST_CASE("UniqueKmers kmers_on_alleles2", "[UniqueKmers kmers_on_alleles2]") {
 
 TEST_CASE("UniqueKmers kmers_on_alleles3", "[UniqueKmers kmers_on_alleles3]") {
 	UniqueKmers u(1000);
-	CopyNumber cn(0.9, 0.1, 0.2);
 	vector<unsigned char> allele = {1};
 
-	u.insert_kmer(cn, allele);
+	u.insert_kmer(10, allele);
 	u.insert_path(1,1);
 	REQUIRE(u.size() == 1);
 	REQUIRE(u.kmer_on_path(0, 1));
@@ -213,11 +210,11 @@ TEST_CASE("UniqueKmers get_path_ids", "[UniqueKmers get_path_ids]") {
 	u.insert_path(2,2);
 	u.insert_path(3,1);
 
-	vector<size_t> path_ids;
+	vector<unsigned short> path_ids;
 	vector<unsigned char> allele_ids;
 	u.get_path_ids(path_ids, allele_ids);
 
-	vector<size_t> expected_path_ids = {0,1,2,3};
+	vector<unsigned short> expected_path_ids = {0,1,2,3};
 	vector<unsigned char> expected_allele_ids = {0,0,2,1};
 	REQUIRE(path_ids == expected_path_ids);
 	REQUIRE(allele_ids == expected_allele_ids);
@@ -225,7 +222,7 @@ TEST_CASE("UniqueKmers get_path_ids", "[UniqueKmers get_path_ids]") {
 	// select only specific path_ids
 	path_ids.clear();
 	allele_ids.clear();
-	vector<size_t> specific_ids = {0,2,10};
+	vector<unsigned short> specific_ids = {0,2,10};
 	expected_path_ids = {0,2};
 	expected_allele_ids = {0,2};
 	u.get_path_ids(path_ids, allele_ids, &specific_ids);

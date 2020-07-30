@@ -34,11 +34,11 @@ struct Results {
 	map<string, double> runtimes;
 };
 
-void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, KmerCounter* read_kmer_counts, VariantReader* variant_reader, size_t kmer_abundance_peak, long double regularization, UniqueKmersMap* unique_kmers_map) {
+void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, KmerCounter* read_kmer_counts, VariantReader* variant_reader, ProbabilityTable* probs, UniqueKmersMap* unique_kmers_map, size_t kmer_coverage) {
 	Timer timer;
-	UniqueKmerComputer kmer_computer(genomic_kmer_counts, read_kmer_counts, variant_reader, chromosome, kmer_abundance_peak);
+	UniqueKmerComputer kmer_computer(genomic_kmer_counts, read_kmer_counts, variant_reader, chromosome, kmer_coverage);
 	std::vector<UniqueKmers*> unique_kmers;
-	kmer_computer.compute_unique_kmers(&unique_kmers, regularization);
+	kmer_computer.compute_unique_kmers(&unique_kmers, probs);
 	// store the results
 	{
 		lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
@@ -49,10 +49,10 @@ void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, K
 	unique_kmers_map->runtimes.insert(pair<string, double>(chromosome, timer.get_total_time()));
 }
 
-void run_genotyping(string chromosome, vector<UniqueKmers*>* unique_kmers, bool only_genotyping, bool only_phasing, long double effective_N, long double regularization, vector<size_t>* only_paths, Results* results) {
+void run_genotyping(string chromosome, vector<UniqueKmers*>* unique_kmers, ProbabilityTable* probs, bool only_genotyping, bool only_phasing, long double effective_N, vector<unsigned short>* only_paths, Results* results) {
 	Timer timer;
 	// construct HMM and run genotyping/phasing
-	HMM hmm(unique_kmers, !only_phasing, !only_genotyping, 1.26, false, effective_N, only_paths, false);
+	HMM hmm(unique_kmers, probs, !only_phasing, !only_genotyping, 1.26, false, effective_N, only_paths, false);
 	// store the results
 	{
 		lock_guard<mutex> lock_result (results->result_mutex);
@@ -190,6 +190,7 @@ int main (int argc, char* argv[])
 
 	// UniqueKmers for each chromosome
 	UniqueKmersMap unique_kmers_list;
+	ProbabilityTable probabilities;
 
 	{
 		KmerCounter* read_kmer_counts = nullptr;
@@ -233,6 +234,9 @@ int main (int argc, char* argv[])
 			cerr << "Warning: using " << nr_cores_uk << " for determining unique kmers." << endl;
 		}
 
+		// precompute probabilities
+		probabilities = ProbabilityTable(kmer_abundance_peak / 4, kmer_abundance_peak*4, 2*kmer_abundance_peak, regularization);
+
 		{
 			// create thread pool with at most nr_chromosomes threads
 			ThreadPool threadPool (nr_cores_uk);
@@ -240,7 +244,8 @@ int main (int argc, char* argv[])
 				VariantReader* variants = &variant_reader;
 				UniqueKmersMap* result = &unique_kmers_list;
 				KmerCounter* genomic_counts = &genomic_kmer_counts;
-				function<void()> f_unique_kmers = bind(prepare_unique_kmers, chromosome, genomic_counts, read_kmer_counts, variants, kmer_abundance_peak, regularization, result);
+				ProbabilityTable* probs = &probabilities;
+				function<void()> f_unique_kmers = bind(prepare_unique_kmers, chromosome, genomic_counts, read_kmer_counts, variants, probs, result, kmer_abundance_peak);
 				threadPool.submit(f_unique_kmers);
 			}
 		}
@@ -261,9 +266,9 @@ int main (int argc, char* argv[])
 	cerr << "#### Memory usage until now: " << (r_usage3.ru_maxrss / 1E6) << " GB ####" << endl;
 
 	// prepare subsets of paths to run on
-	size_t nr_paths = variant_reader.nr_of_paths();
+	unsigned short nr_paths = variant_reader.nr_of_paths();
 	PathSampler path_sampler(nr_paths);
-	vector<vector<size_t>> subsets;
+	vector<vector<unsigned short>> subsets;
 	path_sampler.partition_samples(subsets, sampling_size);
 
 	for (auto s : subsets) {
@@ -277,8 +282,8 @@ int main (int argc, char* argv[])
 
 	// for now, run phasing only once on largest set of paths that can still be handled.
 	// in order to use all paths, an iterative stradegie should be considered
-	vector<size_t> phasing_paths;
-	size_t nr_phasing_paths = min((unsigned int) nr_paths, (unsigned int) 30);
+	vector<unsigned short> phasing_paths;
+	unsigned short nr_phasing_paths = min((unsigned short) nr_paths, (unsigned short) 30);
 	path_sampler.select_single_subset(phasing_paths, nr_phasing_paths);
 	if (!only_genotyping) cerr << "Sampled " << phasing_paths.size() << " paths to be used for phasing." << endl;
 	time_path_sampling = timer.get_interval_time();
@@ -299,19 +304,20 @@ int main (int argc, char* argv[])
 		ThreadPool threadPool (nr_core_threads);
 		for (auto chromosome : chromosomes) {
 			vector<UniqueKmers*>* unique_kmers = &unique_kmers_list.unique_kmers[chromosome];
+			ProbabilityTable* probs = &probabilities;
 			Results* r = &results;
 			// if requested, run phasing first
 			if (!only_genotyping) {
-				vector<size_t>* only_paths = &phasing_paths;
-				function<void()> f_genotyping = bind(run_genotyping, chromosome, unique_kmers, false, true, effective_N, regularization, only_paths, r);
+				vector<unsigned short>* only_paths = &phasing_paths;
+				function<void()> f_genotyping = bind(run_genotyping, chromosome, unique_kmers, probs, false, true, effective_N, only_paths, r);
 				threadPool.submit(f_genotyping);
 			}
 
 			if (!only_phasing) {
 				// if requested, run genotying
 				for (size_t s = 0; s < subsets.size(); ++s){
-					vector<size_t>* only_paths = &subsets[s];
-					function<void()> f_genotyping = bind(run_genotyping, chromosome, unique_kmers, true, false, effective_N, regularization, only_paths, r);
+					vector<unsigned short>* only_paths = &subsets[s];
+					function<void()> f_genotyping = bind(run_genotyping, chromosome, unique_kmers, probs, true, false, effective_N, only_paths, r);
 					threadPool.submit(f_genotyping);
 				}
 			}
@@ -361,6 +367,14 @@ int main (int argc, char* argv[])
 	struct rusage r_usage;
 	getrusage(RUSAGE_SELF, &r_usage);
 	cerr << "Total maximum memory usage: " << (r_usage.ru_maxrss / 1E6) << " GB" << endl;
+
+	// destroy UniqueKmers
+	for (auto it = unique_kmers_list.unique_kmers.begin(); it != unique_kmers_list.unique_kmers.end(); ++it){
+		for (size_t i = 0; i < it->second.size(); ++i) {
+			delete it->second[i];
+			it->second[i] = nullptr;
+		}
+	}
 
 	return 0;
 }

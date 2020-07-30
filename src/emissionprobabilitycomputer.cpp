@@ -5,8 +5,9 @@
 
 using namespace std;
 
-EmissionProbabilityComputer::EmissionProbabilityComputer(UniqueKmers* uniquekmers)
+EmissionProbabilityComputer::EmissionProbabilityComputer(UniqueKmers* uniquekmers, ProbabilityTable* probabilities)
 	:uniquekmers(uniquekmers),
+	 probabilities(probabilities),
 	 all_zeros(true)
 {
 	vector<unsigned char> unique_alleles;
@@ -36,7 +37,7 @@ long double EmissionProbabilityComputer::compute_emission_probability(unsigned c
 	for (size_t i = 0; i < this->uniquekmers->size(); ++i){
 		unsigned int expected_kmer_count = cna.get_position(i);
 		// multiply result by probability of expected kmer count
-		result *= uniquekmers->kmer_to_copynumber[i].get_probability_of(expected_kmer_count);
+		result *= this->probabilities->get_probability(this->uniquekmers->local_coverage, this->uniquekmers->kmer_to_count[i]).get_probability_of(expected_kmer_count);
 	}
 	return result;
 }
