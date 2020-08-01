@@ -41,7 +41,7 @@ UniqueKmerComputer::UniqueKmerComputer (KmerCounter* genomic_kmers, KmerCounter*
 	jellyfish::mer_dna::k(this->variants->get_kmer_size());
 }
 
-//TODO
+
 void UniqueKmerComputer::compute_unique_kmers(vector<UniqueKmers*>* result, ProbabilityTable* probabilities) {
 	size_t nr_variants = this->variants->size_of(this->chromosome);
 	for (size_t v = 0; v < nr_variants; ++v) {

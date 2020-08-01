@@ -37,7 +37,6 @@ private:
 	std::vector<TransitionProbabilityComputer*> transition_prob_computers;
 	std::vector< std::vector<size_t>* > viterbi_backtrace_columns;
 	std::vector< GenotypingResult > genotyping_result;
-	std::vector<bool> absent_in_panel;
 	void compute_forward_prob();
 	void compute_backward_prob();
 	void compute_viterbi_path();

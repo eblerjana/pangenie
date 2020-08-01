@@ -84,7 +84,7 @@ GenotypingResult GenotypingResult::get_specific_likelihoods (vector<unsigned cha
 	result.nr_unique_kmers = this->nr_unique_kmers;
 	result.coverage = this->coverage;
 	result.kmer_counts = this->kmer_counts;
-	result.divide_likelihoods_by(sum);
+	if (sum > 0) result.divide_likelihoods_by(sum);
 	return result;
 }
 
@@ -198,15 +198,10 @@ int GenotypingResult::get_allele_kmer_count(unsigned char allele) const {
 }
 
 void GenotypingResult::combine(GenotypingResult& likelihoods) { 
-	// std::map < std::pair<unsigned char,unsigned char>, long double > genotype_to_likelihood;
 	for (auto it = likelihoods.genotype_to_likelihood.begin(); it != likelihoods.genotype_to_likelihood.end(); ++it) {
 		pair<unsigned char, unsigned char> genotype = it->first;
 		this->genotype_to_likelihood[genotype] += it->second;
 	}
-
-	assert(this->nr_unique_kmers == likelihoods.nr_unique_kmers);
-	assert(this->coverage == likelihoods.coverage);
-	assert(this->kmer_counts == likelihoods.kmer_counts);
 }
 
 void GenotypingResult::normalize () {

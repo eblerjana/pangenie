@@ -25,25 +25,31 @@ void print_column(vector<long double>* column, ColumnIndexer* indexer) {
 HMM::HMM(vector<UniqueKmers*>* unique_kmers, ProbabilityTable* probabilities, bool run_genotyping, bool run_phasing, double recombrate, bool uniform, long double effective_N, vector<unsigned short>* only_paths, bool normalize)
 	:unique_kmers(unique_kmers),
 	 probabilities(probabilities),
-	 genotyping_result(unique_kmers->size()),
-	 forward_normalization_sums (unique_kmers->size(), 0.0L),
-	 absent_in_panel(unique_kmers->size())
+	 genotyping_result(unique_kmers->size())
 {
-	size_t size = this->unique_kmers->size();
+	// index all columns with at least one alternative allele
+	index_columns(only_paths);
+
+	size_t size = this->column_indexers.size();
+	// initialize forward normalization sums
+	this->forward_normalization_sums = vector<long double>(size, 0.0L);
 
 	// construct TransitionProbabilityComputers
-	init(this->transition_prob_computers, size-1);
+	if (size > 0) init(this->transition_prob_computers, size-1);
 	for (size_t i = 1; i < size; ++i) {
-		size_t prev_pos = this->unique_kmers->at(i-1)->get_variant_position();
-		size_t cur_pos = this->unique_kmers->at(i)->get_variant_position();
-		unsigned short nr_paths = this->unique_kmers->at(i)->get_nr_paths();
+		size_t prev_index = this->column_indexers.at(i-1)->get_variant_id();
+		size_t cur_index = this->column_indexers.at(i)->get_variant_id();
+		size_t prev_pos = this->unique_kmers->at(prev_index)->get_variant_position();
+		size_t cur_pos = this->unique_kmers->at(cur_index)->get_variant_position();
+		unsigned short nr_paths = this->unique_kmers->at(cur_index)->get_nr_paths();
 		if (only_paths != nullptr) nr_paths = only_paths->size();
 		TransitionProbabilityComputer* t = new TransitionProbabilityComputer(prev_pos, cur_pos, recombrate, nr_paths, uniform, effective_N);
 		this->transition_prob_computers.at(i-1) = t;
 	}
+
 	this->previous_backward_column = nullptr;
 //	cerr << "Indexing the columns ..." << endl;
-	index_columns(only_paths);
+
 	if (run_genotyping) {
 //		cerr << "Computing forward probabilities ..." << endl;
 		compute_forward_prob();
@@ -74,7 +80,6 @@ HMM::~HMM(){
 
 void HMM::index_columns(vector<unsigned short>* only_paths) {
 	size_t column_count = this->unique_kmers->size();
-	init(column_indexers, column_count);
 	// do one forward pass to compute ColumnIndexers
 	for (size_t column_index = 0; column_index < column_count; ++ column_index) {
 		// get path ids of current column
@@ -89,24 +94,25 @@ void HMM::index_columns(vector<unsigned short>* only_paths) {
 			throw runtime_error(oss.str());
 		}
 
-		// the ColumnIndexer to be filled
-		ColumnIndexer* column_indexer = new ColumnIndexer();
+		// check whether there are any non-reference alleles in panel
 		bool all_absent = true;
 		for (unsigned short i = 0; i < nr_paths; ++i) {
-			column_indexer->insert_path(current_paths[i], current_alleles[i]);
 			if (current_alleles[i] != 0) all_absent = false;
 		}
 
-		// mark whether there where any non reference alleles covered by the paths at this position
-		this->absent_in_panel[column_index] = all_absent;
-
-		// store the ColummIndexer
-		this->column_indexers.at(column_index) = column_indexer;
+		if (!all_absent) {
+			// the ColumnIndexer to be filled
+			ColumnIndexer* column_indexer = new ColumnIndexer(column_index);
+			for (unsigned short i = 0; i < nr_paths; ++i) {
+				column_indexer->insert_path(current_paths[i], current_alleles[i]);
+			}
+			this->column_indexers.push_back(column_indexer);
+		}
 	}
 }
 
 void HMM::compute_forward_prob() {
-	size_t column_count = this->unique_kmers->size();
+	size_t column_count = this->column_indexers.size();
 	init(this->forward_columns, column_count);
 	
 	// forward pass
@@ -122,7 +128,8 @@ void HMM::compute_forward_prob() {
 }
 
 void HMM::compute_backward_prob() {
-	size_t column_count = this->unique_kmers->size();
+	size_t column_count = this->column_indexers.size();
+	if (column_count == 0) return;
 	if (this->previous_backward_column != nullptr) {
 		delete this->previous_backward_column;
 		this->previous_backward_column = nullptr;
@@ -135,7 +142,8 @@ void HMM::compute_backward_prob() {
 }
 
 void HMM::compute_viterbi_path() {
-	size_t column_count = this->unique_kmers->size();
+	size_t column_count = this->column_indexers.size();
+	if (column_count == 0) return;
 	init(this->viterbi_columns, column_count);
 	init(this->viterbi_backtrace_columns, column_count);
 
@@ -182,13 +190,14 @@ void HMM::compute_viterbi_path() {
 		}
 
 		// store resulting haplotypes
-		this->genotyping_result.at(column_index).add_first_haplotype_allele(allele1);
-		this->genotyping_result.at(column_index).add_second_haplotype_allele(allele2);
+		size_t variant_id = this->column_indexers.at(column_index)->get_variant_id();
+		this->genotyping_result.at(variant_id).add_first_haplotype_allele(allele1);
+		this->genotyping_result.at(variant_id).add_second_haplotype_allele(allele2);
 
 		// store number of unique kmers used at current position (stored in UniqueKmers)
-		this->genotyping_result.at(column_index).set_nr_unique_kmers(this->unique_kmers->at(column_index)->size());
-		this->genotyping_result.at(column_index).set_coverage(this->unique_kmers->at(column_index)->get_coverage());
-		this->genotyping_result.at(column_index).set_allele_kmer_counts(this->unique_kmers->at(column_index)->kmers_on_alleles());
+		this->genotyping_result.at(variant_id).set_nr_unique_kmers(this->unique_kmers->at(variant_id)->size());
+		this->genotyping_result.at(variant_id).set_coverage(this->unique_kmers->at(variant_id)->get_coverage());
+		this->genotyping_result.at(variant_id).set_allele_kmer_counts(this->unique_kmers->at(variant_id)->kmers_on_alleles());
 
 		if (column_index == 0) break;
 
@@ -199,7 +208,8 @@ void HMM::compute_viterbi_path() {
 }
 
 void HMM::compute_forward_column(size_t column_index) {
-	assert(column_index < this->unique_kmers->size());
+	assert(column_index < this->column_indexers.size());
+	size_t variant_id = this->column_indexers.at(column_index)->get_variant_id();
 
 	// check whether column was computed already
 	if (this->forward_columns[column_index] != nullptr) return;
@@ -222,7 +232,7 @@ void HMM::compute_forward_column(size_t column_index) {
 	assert (column_indexer != nullptr);
 
 	// emission probability computer
-	EmissionProbabilityComputer emission_probability_computer(this->unique_kmers->at(column_index), this->probabilities);
+	EmissionProbabilityComputer emission_probability_computer(this->unique_kmers->at(variant_id), this->probabilities);
 
 	// normalization
 	long double normalization_sum = 0.0L;
@@ -294,8 +304,9 @@ void HMM::compute_forward_column(size_t column_index) {
 }
 
 void HMM::compute_backward_column(size_t column_index) {
-	size_t column_count = this->unique_kmers->size();
+	size_t column_count = this->column_indexers.size();
 	assert(column_index < column_count);
+	size_t variant_id = this->column_indexers.at(column_index)->get_variant_id();
 
 	// get previous indexers and probabilitycomputers
 	ColumnIndexer* previous_indexer = nullptr;
@@ -307,7 +318,7 @@ void HMM::compute_backward_column(size_t column_index) {
 		assert (this->previous_backward_column != nullptr);
 		transition_probability_computer = this->transition_prob_computers.at(column_index);
 		previous_indexer = this->column_indexers.at(column_index+1);
-		emission_probability_computer = new EmissionProbabilityComputer(this->unique_kmers->at(column_index+1), this->probabilities);
+		emission_probability_computer = new EmissionProbabilityComputer(this->unique_kmers->at(this->column_indexers.at(column_index+1)->get_variant_id()), this->probabilities);
 
 		// get forward probabilities (needed for computing posteriors
 		if (forward_column == nullptr) {
@@ -382,7 +393,7 @@ void HMM::compute_backward_column(size_t column_index) {
 			normalization_f_b += forward_backward_prob;
 
 			// update genotype likelihood
-			this->genotyping_result.at(column_index).add_to_likelihood(allele1, allele2, forward_backward_prob * this->forward_normalization_sums.at(column_index));
+			this->genotyping_result.at(variant_id).add_to_likelihood(allele1, allele2, forward_backward_prob * this->forward_normalization_sums.at(column_index));
 			i += 1;
 		}
 	}
@@ -420,16 +431,15 @@ void HMM::compute_backward_column(size_t column_index) {
 //		this->genotyping_result.at(column_index).divide_likelihoods_by(normalization_f_b);
 //	}
 
-	// TODO: skipt these positions completely. if no variant alleles, set likelihoods to uniform
-	if (this->absent_in_panel.at(column_index)) this->genotyping_result[column_index] = GenotypingResult();
 	// store number of unique kmers used at current position (stored in UniqueKmers)
-	this->genotyping_result.at(column_index).set_nr_unique_kmers(this->unique_kmers->at(column_index)->size());
-	this->genotyping_result.at(column_index).set_coverage(this->unique_kmers->at(column_index)->get_coverage());
-	this->genotyping_result.at(column_index).set_allele_kmer_counts(this->unique_kmers->at(column_index)->kmers_on_alleles());
+	this->genotyping_result.at(variant_id).set_nr_unique_kmers(this->unique_kmers->at(variant_id)->size());
+	this->genotyping_result.at(variant_id).set_coverage(this->unique_kmers->at(variant_id)->get_coverage());
+	this->genotyping_result.at(variant_id).set_allele_kmer_counts(this->unique_kmers->at(variant_id)->kmers_on_alleles());
 }
 
 void HMM::compute_viterbi_column(size_t column_index) {
-	assert(column_index < this->unique_kmers->size());
+	assert(column_index < this->column_indexers.size());
+	size_t variant_id = this->column_indexers.at(column_index)->get_variant_id();
 
 	// check whether column was computed already
 	if (this->viterbi_columns[column_index] != nullptr) return;
@@ -452,7 +462,7 @@ void HMM::compute_viterbi_column(size_t column_index) {
 	assert (column_indexer != nullptr);
 
 	// emission probability computer
-	EmissionProbabilityComputer emission_probability_computer(this->unique_kmers->at(column_index), this->probabilities);
+	EmissionProbabilityComputer emission_probability_computer(this->unique_kmers->at(variant_id), this->probabilities);
 
 	// normalization 
 	long double normalization_sum = 0.0L;

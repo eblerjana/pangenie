@@ -3,7 +3,8 @@
 
 using namespace std;
 
-ColumnIndexer::ColumnIndexer ()
+ColumnIndexer::ColumnIndexer (size_t variant_id)
+	:variant_id(variant_id)
 {}
 
 void ColumnIndexer::insert_path (unsigned short path, unsigned char allele) {
@@ -36,4 +37,8 @@ pair<unsigned short,unsigned short> ColumnIndexer::get_path_ids_at (size_t colum
 	size_t p_id1 = column_index % this->nr_paths();
 	size_t p_id2 = (column_index / this->nr_paths()) % this->nr_paths();
 	return pair<unsigned short,unsigned short> (p_id2, p_id1);
+}
+
+size_t ColumnIndexer::get_variant_id() const {
+	return this->variant_id;
 }
