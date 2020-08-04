@@ -47,6 +47,4 @@ options:
 	-v VAL	variants in VCF format (required).
 ```
 
-Note that for the current version of this algorithm, the number of haplotypes (which is twice the number of samples) given in the input VCF should not be larger than 30. For larger panels, first subsample a smaller panel and use that as input for genotyping.
-
 
