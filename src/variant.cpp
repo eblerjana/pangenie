@@ -336,21 +336,23 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 		if (input_genotyping != nullptr) {
 			// construct GenotypingResult
 			GenotypingResult g;
+			// precompute alleles
+			vector<unsigned char> precomputed_ids (this->nr_of_alleles());
+			for (size_t a0 = 0; a0 < this->nr_of_alleles(); ++a0) {
+				vector<DnaSequence> allele0 = this->alleles.at(a0);
+				auto it0 = find(alleles_per_variant.at(i).begin(), alleles_per_variant.at(i).end(), allele0.at(index));
+				unsigned char single_allele0 = distance(alleles_per_variant.at(i).begin(), it0);
+				precomputed_ids[a0] = single_allele0;
+			}
 			// iterate through all genotypes and determine the genotype likelihoods for single variant
 			for (size_t a0 = 0; a0 < this->nr_of_alleles(); ++a0) {
 				// determine allele a0 genotype corresponds to
-				vector<DnaSequence> allele0 = this->alleles.at(a0);
-				// determine allele index of a0 for current variant
-				auto it0 = find(alleles_per_variant.at(i).begin(), alleles_per_variant.at(i).end(), allele0.at(index));
-				unsigned char single_allele0 = distance(alleles_per_variant.at(i).begin(), it0);
+				unsigned char single_allele0 = precomputed_ids[a0];
 				// update unique kmer counts
 				new_kmer_counts[single_allele0] += input_genotyping->get_allele_kmer_count(a0);
 				for (size_t a1 = a0; a1 < this->nr_of_alleles(); ++a1) {
 					// determine allele a1 genotype corresponds to
-					vector<DnaSequence> allele1 = this->alleles.at(a1);
-					// determine allele index of current variant
-					auto it1 = find(alleles_per_variant.at(i).begin(), alleles_per_variant.at(i).end(), allele1.at(index));
-					unsigned char single_allele1 = distance(alleles_per_variant.at(i).begin(), it1);
+					unsigned char single_allele1 = precomputed_ids[a1];
 					// update genotype likelihood
 					long double combined_likelihood = input_genotyping->get_genotype_likelihood(a0, a1);
 					g.add_to_likelihood(single_allele0, single_allele1, combined_likelihood);
@@ -359,12 +361,8 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 			// get the haplotype alleles of the combined variant
 			pair<unsigned char,unsigned char> haplotype = input_genotyping->get_haplotype();
 			// get corresponding alleles for current variant
-			vector<DnaSequence> allele0 = this->alleles.at(haplotype.first);
-			vector<DnaSequence> allele1 = this->alleles.at(haplotype.second);
-			auto it0 = find(alleles_per_variant.at(i).begin(), alleles_per_variant.at(i).end(), allele0.at(index));
-			unsigned char single_haplotype0 = distance(alleles_per_variant.at(i).begin(), it0);
-			auto it1 = find(alleles_per_variant.at(i).begin(), alleles_per_variant.at(i).end(), allele1.at(index));
-			unsigned char single_haplotype1 = distance(alleles_per_variant.at(i).begin(), it1);
+			unsigned char single_haplotype0 = precomputed_ids[haplotype.first];
+			unsigned char single_haplotype1 = precomputed_ids[haplotype.second];
 			// update result
 			g.add_first_haplotype_allele(single_haplotype0);
 			g.add_second_haplotype_allele(single_haplotype1);
