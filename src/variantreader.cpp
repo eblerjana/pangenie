@@ -142,7 +142,7 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 			for (string& s : p){
 				// handle unknown genotypes '.'
 				if (s == ".") {
-					cerr << "Found undefined allele at position " << current_chrom << ":" << current_start_pos << endl;
+//					cerr << "Found undefined allele at position " << current_chrom << ":" << current_start_pos << endl;
 					// add "NNN" allele to the list of alleles
 					parse_line(alleles, undefined_allele, ',');
 					paths.push_back(undefined_index);

@@ -137,7 +137,7 @@ int main (int argc, char* argv[])
 	argument_parser.add_flag_argument('c', "count all read kmers instead of only those located in graph.");
 	argument_parser.add_flag_argument('u', "output genotype ./. for variants not covered by any unique kmers.");
 	argument_parser.add_flag_argument('d', "do not add reference as additional path.");
-	argument_parser.add_optional_argument('a', "10", "sample subsets of paths of this size.");
+	argument_parser.add_optional_argument('a', "0", "sample subsets of paths of this size.");
 
 	try {
 		argument_parser.parse(argc, argv);
@@ -267,6 +267,17 @@ int main (int argc, char* argv[])
 
 	// prepare subsets of paths to run on
 	unsigned short nr_paths = variant_reader.nr_of_paths();
+	// TODO: for too large panels, print waring
+	if (nr_paths > 200) cerr << "Warning: panel is large and PanGenie might take a long time genotyping. Try reducing the panel size prior to genotyping." << endl;
+	// handle case when sampling_size is not set
+	if (sampling_size == 0) {
+		if (nr_paths > 25) {
+			sampling_size = 15;
+		} else {
+			sampling_size = nr_paths;		
+		}
+	}
+
 	PathSampler path_sampler(nr_paths);
 	vector<vector<unsigned short>> subsets;
 	path_sampler.partition_samples(subsets, sampling_size);
