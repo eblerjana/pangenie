@@ -97,7 +97,7 @@ void HMM::index_columns(vector<unsigned short>* only_paths) {
 		// check whether there are any non-reference alleles in panel
 		bool all_absent = true;
 		for (unsigned short i = 0; i < nr_paths; ++i) {
-			if (current_alleles[i] != 0) all_absent = false;
+			if ((current_alleles[i] != 0) && (!this->unique_kmers->at(column_index)->is_undefined_allele(current_alleles[i])) ) all_absent = false;
 		}
 
 		if (!all_absent) {
