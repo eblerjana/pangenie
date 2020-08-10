@@ -175,11 +175,11 @@ ostream& operator<<(ostream& os, const GenotypingResult& res) {
 	return os;
 }
 
-void GenotypingResult::set_coverage(double coverage) {
+void GenotypingResult::set_coverage(unsigned short coverage) {
 	this->coverage = coverage;
 }
 	
-double GenotypingResult::get_coverage() const {
+unsigned short GenotypingResult::get_coverage() const {
 	return this->coverage;
 }
 
@@ -197,7 +197,19 @@ int GenotypingResult::get_allele_kmer_count(unsigned char allele) const {
 	}
 }
 
-void GenotypingResult::combine(GenotypingResult& likelihoods) { 
+void GenotypingResult::combine(GenotypingResult& likelihoods) {
+	if ((!this->genotype_to_likelihood.empty()) && (!likelihoods.genotype_to_likelihood.empty())) {
+		assert(this->nr_unique_kmers == likelihoods.nr_unique_kmers);
+		assert(this->kmer_counts == likelihoods.kmer_counts);
+		assert(this->coverage == likelihoods.coverage);
+	}
+
+	if (this->genotype_to_likelihood.empty()) {
+		this->nr_unique_kmers = likelihoods.nr_unique_kmers;
+		this->kmer_counts = likelihoods.kmer_counts;
+		this->coverage = likelihoods.coverage;
+	}
+
 	for (auto it = likelihoods.genotype_to_likelihood.begin(); it != likelihoods.genotype_to_likelihood.end(); ++it) {
 		pair<unsigned char, unsigned char> genotype = it->first;
 		this->genotype_to_likelihood[genotype] += it->second;

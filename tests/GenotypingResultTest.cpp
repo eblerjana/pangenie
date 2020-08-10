@@ -239,6 +239,58 @@ TEST_CASE("GenotypingResult combine", "[GenotypingResult combine]") {
 	
 }
 
+TEST_CASE("GenotypingResult combine_empty1", "[GenotypingResult combine_empty1]") {
+	// r1 is emty, all fields are 0
+	GenotypingResult r1;
+	GenotypingResult r2;
+	r2.add_to_likelihood(1,1,0.9);
+	r2.add_to_likelihood(0,1,0.06);
+	r2.add_to_likelihood(0,0,0.04);
+	r2.set_nr_unique_kmers(21);
+	map<unsigned char, int> counts = {{0,1}, {1,3}};
+	r2.set_allele_kmer_counts(counts);
+
+	r1.combine(r2);
+	REQUIRE(doubles_equal(r1.get_genotype_likelihood(1,1), 0.9));
+	REQUIRE(doubles_equal(r1.get_genotype_likelihood(0,1), 0.06));
+	REQUIRE(doubles_equal(r1.get_genotype_likelihood(0,0), 0.04));
+	REQUIRE(r1.get_nr_unique_kmers() == 21);
+	REQUIRE(r1.get_allele_kmer_count(0) == 1);
+	REQUIRE(r1.get_allele_kmer_count(1) == 3);
+}
+
+TEST_CASE("GenotypingResult combine_empty2", "[GenotypingResult combine_empty2]") {
+	// r2 is emty, all fields are 0
+	GenotypingResult r1;
+	r1.add_to_likelihood(1,1,0.9);
+	r1.add_to_likelihood(0,1,0.06);
+	r1.add_to_likelihood(0,0,0.04);
+	r1.set_nr_unique_kmers(21);
+	map<unsigned char, int> counts = {{0,1}, {1,3}};
+	r1.set_allele_kmer_counts(counts);
+	GenotypingResult r2;
+
+	r2.combine(r1);
+	REQUIRE(doubles_equal(r2.get_genotype_likelihood(1,1), 0.9));
+	REQUIRE(doubles_equal(r2.get_genotype_likelihood(0,1), 0.06));
+	REQUIRE(doubles_equal(r2.get_genotype_likelihood(0,0), 0.04));
+	REQUIRE(r2.get_nr_unique_kmers() == 21);
+	REQUIRE(r2.get_allele_kmer_count(0) == 1);
+	REQUIRE(r2.get_allele_kmer_count(1) == 3);
+}
+
+TEST_CASE("GenotypingResult combine_empty3", "[GenotypingResult combine_empty3]") {
+	GenotypingResult r1;
+	GenotypingResult r2;
+
+	r1.combine(r2);
+	REQUIRE(doubles_equal(r1.get_genotype_likelihood(1,1), 0.0));
+	REQUIRE(doubles_equal(r1.get_genotype_likelihood(0,1), 0.0));
+	REQUIRE(doubles_equal(r1.get_genotype_likelihood(0,0), 0.0));
+	REQUIRE(r1.get_nr_unique_kmers() == 0);
+	REQUIRE(r1.get_allele_kmer_count(0) == 0);
+	REQUIRE(r1.get_allele_kmer_count(1) == 0);
+}
 
 TEST_CASE("GenotypingResult normalize", "[GenotypingResult normalize]") {
 	GenotypingResult g;

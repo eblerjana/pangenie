@@ -38,9 +38,9 @@ public:
 	std::pair<int, int> get_likeliest_genotype() const;
 	friend std::ostream& operator<<(std::ostream& os, const GenotypingResult& res);
 	/** set coverage **/
-	void set_coverage(double coverage);
+	void set_coverage(unsigned short coverage);
 	/** get coverage **/
-	double get_coverage() const;
+	unsigned short get_coverage() const;
 	/** return number of unique kmers **/
 	size_t get_nr_unique_kmers() const;
 	/** set number of unique kmers **/
@@ -62,6 +62,6 @@ private:
 	unsigned char haplotype_2;
 	size_t nr_unique_kmers;
 	std::map<unsigned char, int> kmer_counts;
-	double coverage;
+	unsigned short coverage;
 };
 #endif // GENOTYPINGRESULT_HPP

@@ -285,10 +285,10 @@ void VariantReader::open_genotyping_outfile(string filename) {
 	this->genotyping_outfile << "##INFO=<ID=MA,Number=A,Type=Integer,Description=\"Number of alleles missing in panel haplotypes.\">" << endl;
 	this->genotyping_outfile << "##INFO=<ID=UK,Number=1,Type=Integer,Description=\"Total number of unique kmers.\">" << endl;
 	this->genotyping_outfile << "##INFO=<ID=AK,Number=R,Type=Integer,Description=\"Number of unique kmers per allele. Will be -1 for alleles not covered by any input haplotype path\">" << endl;
-	this->genotyping_outfile << "##INFO=<ID=KC,Number=1,Type=Float,Description=\"Local kmer coverage.\">" << endl;
 	this->genotyping_outfile << "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">" << endl;
 	this->genotyping_outfile << "##FORMAT=<ID=GQ,Number=1,Type=Integer,Description=\"Genotype quality: phred scaled probability that the genotype is wrong.\">" << endl;
 	this->genotyping_outfile << "##FORMAT=<ID=GL,Number=G,Type=Float,Description=\"Comma-separated log10-scaled genotype likelihoods for absent, heterozygous, homozygous.\">" << endl;
+	this->genotyping_outfile << "##FORMAT=<ID=KC,Number=1,Type=Float,Description=\"Local kmer coverage.\">" << endl;
 	this->genotyping_outfile << "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t" << this->sample << endl; 
 }
 
@@ -308,8 +308,8 @@ void VariantReader::open_phasing_outfile(string filename) {
 	this->phasing_outfile << "##INFO=<ID=MA,Number=A,Type=Integer,Description=\"Number of alleles missing in panel haplotypes.\">" << endl;
 	this->phasing_outfile << "##INFO=<ID=UK,Number=1,Type=Integer,Description=\"Total number of unique kmers.\">" << endl;
 	this->phasing_outfile << "##INFO=<ID=AK,Number=R,Type=Integer,Description=\"Number of unique kmers per allele. Will be -1 for alleles not covered by any input haplotype path.\">" << endl;
-	this->phasing_outfile << "##INFO=<ID=KC,Number=1,Type=Float,Description=\"Local kmer coverage.\">" << endl;
 	this->phasing_outfile << "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">" << endl;
+	this->phasing_outfile << "##FORMAT=<ID=KC,Number=1,Type=Float,Description=\"Local kmer coverage.\">" << endl;
 	this->phasing_outfile << "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t" << this->sample << endl;
 }
 
@@ -389,10 +389,9 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 			}
 
 			info << ";MA=" << nr_missing;
-			info << ";KC=" << setprecision(2) << genotype_likelihoods.get_coverage(); // KC
 
 			this->genotyping_outfile << info.str() << "\t"; // INFO
-			this->genotyping_outfile << "GT:GQ:GL" << "\t"; // FORMAT
+			this->genotyping_outfile << "GT:GQ:GL:KC" << "\t"; // FORMAT
 
 			// determine computed genotype
 			pair<int,int> genotype = genotype_likelihoods.get_likeliest_genotype();
@@ -422,7 +421,8 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 			for (size_t j = 1; j < likelihoods.size(); ++j) {
 				oss << "," << setprecision(4) << log10(likelihoods[j]);
 			}
-			this->genotyping_outfile << oss.str() << endl; // GL
+			this->genotyping_outfile << oss.str(); // GL
+			this->genotyping_outfile << ":" << genotype_likelihoods.get_coverage() << endl; // KC
 		}
 	}
 }
@@ -494,14 +494,13 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 			}
 
 			info << ";MA=" << nr_missing;
-			info << ";KC=" << setprecision(2) << genotype_likelihoods.get_coverage(); // KC
 
 			this->phasing_outfile << info.str() << "\t"; // INFO
-			this->phasing_outfile << "GT" << "\t"; // FORMAT
+			this->phasing_outfile << "GT:KC" << "\t"; // FORMAT
 
 			// determine phasing
 			if (ignore_imputed && (genotype_likelihoods.get_nr_unique_kmers()== 0)){
-				this->phasing_outfile << "./." << endl; ; // GT (phased)
+				this->phasing_outfile << "./."; // GT (phased)
 			} else {
 				pair<unsigned char,unsigned char> haplotype = singleton_likelihoods.at(j).get_haplotype();
 				// check if the haplotype allele is undefined
@@ -511,8 +510,9 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 				string hap2 (1, haplotype.second);
 				if (hap1_undefined) hap1 = ".";
 				if (hap2_undefined) hap2 = ".";
-				this->phasing_outfile << (unsigned int) haplotype.first << "|" << (unsigned int) haplotype.second << endl; // GT (phased)
+				this->phasing_outfile << (unsigned int) haplotype.first << "|" << (unsigned int) haplotype.second; // GT (phased)
 			}
+			this->phasing_outfile << ":" << genotype_likelihoods.get_coverage() << endl; // KC
 		}
 	}
 }
