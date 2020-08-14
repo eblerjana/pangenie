@@ -234,10 +234,6 @@ TEST_CASE("HMM undefined_alleles2", "[HMM get_undefined_alleles1]") {
 		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
 	}
 
-	for (size_t  i = 0; i < computed_likelihoods.size(); ++i) {
-		cout << computed_likelihoods[i] << " " << expected_likelihoods[i] << endl;
-	}
-
 	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
 
 	computed_likelihoods.clear();

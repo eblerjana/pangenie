@@ -1,8 +1,11 @@
 #include "catch.hpp"
+#define private public
 #include "../src/variantreader.hpp"
 #include <vector>
 #include <string>
 #include <algorithm> 
+#include <random>
+
 
 using namespace std;
 
@@ -18,7 +21,6 @@ TEST_CASE("VariantReader get_allele_string", "[VariantReader get_allele_string]"
 
 	REQUIRE(v.get_variant("chrA", 0).get_allele_string(0) == "GGAATTCCGACATAAGTTA");
 	REQUIRE(v.get_variant("chrA", 0).get_allele_string(1) == "GGAATTCCGTCATAAGTTA");
-	REQUIRE(v.get_variant("chrA", 0).get_id() == "var1");
 
 	REQUIRE(v.get_variant("chrA", 1).get_allele_string(0) == "CCTTAGCTACGAAGCCAGT");
 	REQUIRE(v.get_variant("chrA", 1).get_allele_string(1) == "CCTTAGCTAGGGGGAAGCCAGT");
@@ -27,7 +29,6 @@ TEST_CASE("VariantReader get_allele_string", "[VariantReader get_allele_string]"
 	REQUIRE(v.get_variant("chrA", 2).get_allele_string(1) == "GAAGCCAGTTCCCCGAGACGGCCAAA");
 	REQUIRE(v.get_variant("chrA", 2).get_allele_string(2) == "GAAGCCAGTTCCCCTACGGCCAAA");
 	REQUIRE(v.get_variant("chrA", 2).nr_of_paths() == 5);
-	REQUIRE(v.get_variant("chrA", 2).get_id() == "var2;var3;.");
 
 	REQUIRE(v.get_variant("chrA", 3).get_allele_string(0) == "ACGTCCGTTCAGCCTTAGC");
 	REQUIRE(v.get_variant("chrA", 3).get_allele_string(1) == "ACGTCCGTTTAGCCTTAGC");
@@ -274,4 +275,56 @@ TEST_CASE("VariantReader get_chromosomes", "[VariantReader get_chromosomes]") {
 	v2.get_chromosomes(&chromosomes);
 	vector<string> expected2 = {"chrB", "chrC", "chrA"};
 	REQUIRE(chromosomes == expected2);
+}
+
+TEST_CASE("VariantReader construct_index", "[VariantReader construct_index]") {
+	vector<string> sequences = {"TTTTT", "AATAGTAAAGTTATA", "AATAGTAAAGTGATA", "GGGTG", "TTG"};
+	vector<DnaSequence> alleles;
+	for (auto s : sequences) {
+		alleles.push_back(DnaSequence(s));
+	}
+	vector<unsigned char> expected = {1,0,2,3};
+	REQUIRE(construct_index(alleles, true) == expected);
+}
+
+TEST_CASE("VariantReader variant_ids1", "[VariantReader variant_ids1]") {
+	string vcf = "../tests/data/small1-ids.vcf";
+	string fasta = "../tests/data/small1.fa";
+	VariantReader v(vcf, fasta, 10, true);
+
+	vector<string> sequences_ref = {"TGGG", "AATAGTAAAGTTATA", "GTAGATAGATA", "AATAGTAAAGTGATA", "GGGTG", "TTG"};
+	vector<string> sequences = {"AATAGTAAAGTTATA", "GTAGATAGATA", "AATAGTAAAGTGATA", "GGGTG", "TTG"};
+	map<string,string> sequence_to_id = {{"AATAGTAAAGTTATA", "var1"}, {"GTAGATAGATA", "var2"}, {"AATAGTAAAGTGATA", "var3"}, {"GGGTG", "var4"}, {"TTG", "var5:var6"}};
+
+	vector<DnaSequence> alleles;
+	for (auto s : sequences_ref) {
+		alleles.push_back(DnaSequence(s));
+	}
+	string chromosome = "chr1";
+	vector<string> variant_ids = {"var1", "var2", "var3", "var4", "var5:var6"};
+	v.insert_ids(chromosome, alleles, variant_ids, true);
+
+	for (size_t i = 0; i < 10; ++i) {
+		// shuffle alleles
+		auto rng = std::default_random_engine {};
+		std::shuffle(std::begin(sequences), std::end(sequences), rng);
+		string expected = "";
+		size_t index = 0;
+		for (auto s : sequences) {
+			if (index > 0) expected += ',';
+			expected += sequence_to_id[s];
+			index += 1;
+		}
+		string result = v.get_ids(chromosome, sequences, 0 , false);
+		REQUIRE(result == expected);
+	}
+}
+
+TEST_CASE("VariantReader variant_ids2", "[VariantReader variant_ids2]") {
+	string vcf = "../tests/data/small1-ids.vcf";
+	string fasta = "../tests/data/small1.fa";
+	VariantReader v(vcf, fasta, 10, true);
+	vector<GenotypingResult> genotypes(2);
+	v.open_genotyping_outfile("../tests/data/small1-ids-genotypes.vcf");
+	v.write_genotypes_of("chrA", genotypes);
 }

@@ -5,9 +5,30 @@
 #include <map>
 #include <vector>
 #include <fstream>
+#include <numeric>
+#include <algorithm>
+#include <cassert>
 #include "fastareader.hpp"
 #include "variant.hpp"
 #include "genotypingresult.hpp"
+
+//std::vector<unsigned char> construct_index(std::vector<DnaSequence>& alleles, bool reference_added);
+//std::vector<unsigned char> construct_index(std::vector<std::string>& alleles, bool reference_added);
+
+template<class T>
+std::vector<unsigned char> construct_index(std::vector<T>& alleles, bool reference_added) {
+	size_t length = alleles.size();
+	unsigned char offset = 0;
+	if (reference_added) {
+		assert(length > 0);
+		length -= 1;
+		offset += 1;
+	}
+	std::vector<unsigned char> index(length);
+	std::iota(index.begin(), index.end(), 0);
+	std::sort(index.begin(), index.end(), [&](unsigned char a, unsigned char b) { return alleles[a+offset] < alleles[b+offset]; });
+	return index;
+}
 
 class VariantReader {
 public:
@@ -44,7 +65,10 @@ private:
 	bool genotyping_outfile_open;
 	bool phasing_outfile_open;
 	std::map< std::string, std::vector<Variant> > variants_per_chromosome;
+	std::map< std::string, std::vector<std::vector<std::string>>> variant_ids;
 	void add_variant_cluster(std::string& chromosome, std::vector<Variant>* cluster);
+	void insert_ids(std::string& chromosome, std::vector<DnaSequence>& alleles, std::vector<std::string>& variant_ids, bool reference_added);
+	std::string get_ids(std::string chromosome, std::vector<std::string>& alleles, size_t variant_index, bool reference_added);
 };
 
 #endif // VARIANT_READER_HPP

@@ -63,19 +63,23 @@ class Variant:
 	def get_missing_alleles(self):
 		return self._missing_alleles
 
-
-def determine_variant_type(record):
-	"""
-	Determines the variant type.
-	"""
-	alleles = [record.REF] + record.ALT
-	varlen = max([len(a) for a in alleles])
-
-	if record.is_snp:
+def determine_type_from_ids(ids):
+	vartypes = [i.split('-')[2] for i in ids]
+	if all([v == 'SNV' for v in vartypes]):
 		return VariantType.snp
 
-	is_deletion = record.var_subtype == 'del'
-	is_insertion = record.var_subtype == 'ins'
+	# determine variant length
+	allele_lengths = []
+	for var_id in ids:
+		if 'SNV' in var_id:
+			continue
+		assert var_id.split('-')[-2] in ['INS', 'DEL']
+		length = int(var_id.split('-')[-1])
+		allele_lengths.append(length)
+	varlen = max(allele_lengths)
+
+	is_insertion = 'INS' in vartypes and not 'DEL' in vartypes
+	is_deletion = 'DEL' in vartypes and not 'INS' in vartypes
 
 	if varlen < 20:
 		if is_insertion:
@@ -97,6 +101,50 @@ def determine_variant_type(record):
 		if is_deletion:
 			return VariantType.large_deletion
 		return VariantType.large_complex
+
+def determine_type_from_record(record):
+	"""
+	Determines the variant type.
+	"""
+	if 'ID' in record.INFO:
+		allele_ids = record.INFO['ID'].split(',')
+		# handle merged IDs
+		all_ids = []
+		for i in record.INFO['ID'].split(','):
+			for j in i.split(':'):
+				all_ids.append(j)
+
+		determine_type_from_ids(all_ids)
+	else:
+		alleles = [record.REF] + record.ALT
+		varlen = max([len(a) for a in alleles])
+
+		if record.is_snp:
+			return VariantType.snp
+
+		is_deletion = record.var_subtype == 'del'
+		is_insertion = record.var_subtype == 'ins'
+
+		if varlen < 20:
+			if is_insertion:
+				return VariantType.small_insertion
+			if is_deletion:
+				return VariantType.small_deletion
+			return VariantType.small_complex
+
+		if varlen >= 20 and varlen <= 50:
+			if is_insertion:
+				return VariantType.midsize_insertion
+			if is_deletion:
+				return VariantType.midsize_deletion
+			return VariantType.midsize_complex
+
+		if varlen > 50:
+			if is_insertion:
+				return VariantType.large_insertion
+			if is_deletion:
+				return VariantType.large_deletion
+			return VariantType.large_complex
 
 
 def extract_call(record, read_gl=False, read_qual=False):
@@ -370,6 +418,7 @@ if __name__ == "__main__":
 	header = '\t'.join(['quality',
 											'allele_frequency',
 											'unique_kmers',
+											'missing_alleles',
 											'total_baseline',
 											'total_baseline_biallelic',
 											'total_intersection',
