@@ -1,4 +1,3 @@
-#!/usr/bin/python
 
 import sys
 from collections import defaultdict
@@ -163,7 +162,7 @@ def extract_call(record, read_gl=False, read_qual=False):
 	unique_kmers = 0
 	missing_alleles = 0
 	# determine the type of variant
-	variant_type = determine_variant_type(record)
+	variant_type = determine_type_from_record(record)
 
 	if (record.samples[0]['GT'][0] != '.') and (record.samples[0]['GT'][-1] != '.'):
 
@@ -254,10 +253,10 @@ class GenotypingStatistics:
 																	str(self.total_intersection), # intersection of callsets
 																	str(self.correct_all/float(typed_all)), # correct
 																	str(self.wrong_all/float(typed_all)), # wrong
-																	str((self.not_typed_all+self.not_in_callset_all)/float(self.total_baseline if self.total_baseline is not 0 else 1)), # not typed
+																	str((self.not_typed_all+self.not_in_callset_all)/float(self.total_baseline if self.total_baseline != 0 else 1)), # not typed
 																	str(correct_biallelic/ float(typed_biallelic)), # correct biallelic
 																	str(wrong_biallelic/ float(typed_biallelic)), # wrong biallelic
-																	str((not_typed_biallelic+self.not_in_callset_biallelic)/float(self.total_baseline_biallelic if self.total_baseline_biallelic is not 0 else 1)),  # not typed biallelic
+																	str((not_typed_biallelic+self.not_in_callset_biallelic)/float(self.total_baseline_biallelic if self.total_baseline_biallelic != 0 else 1)),  # not typed biallelic
 																	str(self.correct_all),
 																	str(self.wrong_all),
 																	str(self.not_typed_all),
