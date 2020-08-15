@@ -106,10 +106,9 @@ def determine_type_from_record(record):
 	Determines the variant type.
 	"""
 	if 'ID' in record.INFO:
-		allele_ids = record.INFO['ID'].split(',')
 		# handle merged IDs
 		all_ids = []
-		for i in record.INFO['ID'].split(','):
+		for i in record.INFO['ID']:
 			for j in i.split(':'):
 				all_ids.append(j)
 
