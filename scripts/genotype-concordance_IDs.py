@@ -1,3 +1,4 @@
+#!/usr/bin/python
 
 import sys
 from collections import defaultdict
@@ -23,20 +24,16 @@ class VariantType(Enum):
 	large_complex = 9
 
 class Variant:
-	def __init__(self, genotype, binary_genotype, variant_type : VariantType, quality=None, allele_frequency=None, unique_kmers=None, missing_alleles=None):
+	def __init__(self, binary_genotype, variant_type : VariantType, quality=None, allele_frequency=None, unique_kmers=None, missing_alleles=None):
 		"""
 		Represents a genotyped variant.
 		"""
-		self._genotype=genotype
 		self._binary_genotype=binary_genotype
 		self._variant_type=variant_type
 		self._quality=quality
 		self._allele_frequency=allele_frequency
 		self._unique_kmers=unique_kmers
 		self._missing_alleles=missing_alleles
-
-	def get_genotype(self):
-		return self._genotype
 
 	def get_binary_genotype(self):
 		return self._binary_genotype
@@ -63,99 +60,85 @@ class Variant:
 		return self._missing_alleles
 
 def determine_type_from_ids(ids):
-	vartypes = [i.split('-')[2] for i in ids]
-	if all([v == 'SNV' for v in vartypes]):
+	ids = set(ids)
+	results = []
+	for var in ids:
+		results.append(id_to_vartype(var))	
+	return results
+
+def id_to_vartype(var):
+	var_type = var.split('-')[2]
+	var_len = 1 if var_type == "SNV" else int(var.split('-')[-1])
+	if var_type == "SNV":
 		return VariantType.snp
-
-	# determine variant length
-	allele_lengths = []
-	for var_id in ids:
-		if 'SNV' in var_id:
-			continue
-		assert var_id.split('-')[-2] in ['INS', 'DEL']
-		length = int(var_id.split('-')[-1])
-		allele_lengths.append(length)
-	varlen = max(allele_lengths)
-
-	is_insertion = 'INS' in vartypes and not 'DEL' in vartypes
-	is_deletion = 'DEL' in vartypes and not 'INS' in vartypes
-
-	if varlen < 20:
-		if is_insertion:
+	if var_len < 20:
+		if var_type == "INS":
 			return VariantType.small_insertion
-		if is_deletion:
+		elif var_type == "DEL":
 			return VariantType.small_deletion
-		return VariantType.small_complex
+		else:
+			return VariantType.small_complex
 
-	if varlen >= 20 and varlen <= 50:
-		if is_insertion:
+	if var_len >= 20 and var_len <= 50:
+		if var_type == "INS":
 			return VariantType.midsize_insertion
-		if is_deletion:
+		elif var_type == "DEL":
 			return VariantType.midsize_deletion
-		return VariantType.midsize_complex
+		else:
+			return VariantType.midsize_complex
 
-	if varlen > 50:
-		if is_insertion:
+	if var_len > 50:
+		if var_type == "INS":
 			return VariantType.large_insertion
-		if is_deletion:
+		elif var_type == "DEL":
 			return VariantType.large_deletion
-		return VariantType.large_complex
-	assert(False)
+		else:
+			return VariantType.large_complex
+
 
 def determine_type_from_record(record):
 	"""
 	Determines the variant type.
 	"""
 	if 'ID' in record.INFO:
+		allele_ids = record.INFO['ID'].split(',')
 		# handle merged IDs
 		all_ids = []
-		for i in record.INFO['ID']:
+		for i in record.INFO['ID'].split(','):
 			for j in i.split(':'):
 				all_ids.append(j)
 
-		return determine_type_from_ids(all_ids)
-	else:
-		alleles = [record.REF] + record.ALT
-		varlen = max([len(a) for a in alleles])
+		determine_type_from_ids(all_ids)
 
-		if record.is_snp:
-			return VariantType.snp
 
-		is_deletion = record.var_subtype == 'del'
-		is_insertion = record.var_subtype == 'ins'
+def determine_genotypes_from_record(record, call):
+	allele_to_variants = {0:[]}
+	variants_to_genotype = {}
+	assert 'ID' in record.INFO
+	for i,var_id in enumerate(record.INFO['ID']):
+		allele_to_variants[i+1] = []
+		for single_id in var_id.split(':'):
+			allele_to_variants[i+1].append( (single_id, id_to_vartype(single_id)) )
+			variants_to_genotype[single_id,id_to_vartype(single_id)] = 0
 
-		if varlen < 20:
-			if is_insertion:
-				return VariantType.small_insertion
-			if is_deletion:
-				return VariantType.small_deletion
-			return VariantType.small_complex
-
-		if varlen >= 20 and varlen <= 50:
-			if is_insertion:
-				return VariantType.midsize_insertion
-			if is_deletion:
-				return VariantType.midsize_deletion
-			return VariantType.midsize_complex
-
-		if varlen > 50:
-			if is_insertion:
-				return VariantType.large_insertion
-			if is_deletion:
-				return VariantType.large_deletion
-			return VariantType.large_complex
-		assert(False)
-
+	genotype_string = call['GT'].replace('/', '|')
+	genotype_list = genotype_string.split('|')
+	assert len(genotype_list) == 2
+	sample_name = call.sample
+	for allele in genotype_list:
+		if allele == '.':
+			continue
+		for (id,type) in allele_to_variants[int(allele)]:
+			variants_to_genotype[(id,type)] += 1
+			assert variants_to_genotype[(id,type)] < 3
+	return variants_to_genotype
 
 def extract_call(record, read_gl=False, read_qual=False):
 	"""
 	Extract genotype information from a VCF Record.
 	"""
+	result = {}
 
-	# genotype alleles
-	genotype_sequences = None
-	# binary genotype
-	binary_genotype = 3
 	# genotype quality
 	likelihood = 0
 	# allele frequency of least frequent allele
@@ -163,16 +146,13 @@ def extract_call(record, read_gl=False, read_qual=False):
 	unique_kmers = 0
 	missing_alleles = 0
 	# determine the type of variant
-	variant_type = determine_type_from_record(record)
+	assert 'ID' in record.INFO
+	allele_ids = set([])
+	for i in record.INFO['ID']:
+		for j in i.split(':'):
+			allele_ids.add(j)
 
 	if (record.samples[0]['GT'][0] != '.') and (record.samples[0]['GT'][-1] != '.'):
-
-		# extract genotype information
-		genotype_string = record.samples[0]['GT'].replace('/', '|')
-		genotype_list = genotype_string.split('|')
-		genotype = (int(genotype_list[0]), int(genotype_list[1]))
-		variant_alleles = [record.REF] + record.ALT
-		genotype_sequences = set([str(variant_alleles[genotype[0]]), str(variant_alleles[genotype[1]])])
 
 		# compute likelihood of genotype
 		if read_gl:
@@ -182,12 +162,6 @@ def extract_call(record, read_gl=False, read_qual=False):
 		if read_qual:
 			if record.QUAL is not None:
 				likelihood = int(record.QUAL)
-
-		# in case of bi-allelic SNP store binary gt
-		if len(variant_alleles) < 3:
-			binary_genotype = genotype[0] + genotype[1]
-		else:
-			binary_genotype = -1
 
 		# determine the allele frequency (of the least frequent genotype allele)
 		if 'AF' in record.INFO:
@@ -206,7 +180,17 @@ def extract_call(record, read_gl=False, read_qual=False):
 		if 'MA' in record.INFO:
 			missing_alleles = record.INFO['MA']
 
-	return Position(record.CHROM, record.POS), Variant(genotype_sequences, binary_genotype, variant_type, likelihood, allele_frequency, unique_kmers, missing_alleles)
+		# extract genotype information
+		all_genotypes = determine_genotypes_from_record(record, record.samples[0])
+		assert len(allele_ids) == len(all_genotypes)
+
+		for (var_id,var_type) in all_genotypes:
+			result[var_id] = Variant(all_genotypes[(var_id, var_type)], var_type, likelihood, allele_frequency, unique_kmers, missing_alleles)
+	else:
+		for i in allele_ids:
+			result[i] = Variant(3, id_to_vartype(i), likelihood, allele_frequency, unique_kmers, missing_alleles)
+
+	return Position(record.CHROM, record.POS), result
 
 
 class GenotypingStatistics:
@@ -221,7 +205,6 @@ class GenotypingStatistics:
 
 		# numbers of variants in baseline and callset
 		self.total_baseline = 0
-		self.total_baseline_biallelic = 0
 		self.total_intersection = 0
 
 		# fractions of correct, wrong and untyped variants
@@ -230,7 +213,6 @@ class GenotypingStatistics:
 		self.not_typed_all = 0
 
 		self.not_in_callset_all = 0
-		self.not_in_callset_biallelic = 0
 
 		# confusion matrix
 		self.confusion_matrix = [[0 for x in range(4)] for y in range(4)]
@@ -238,32 +220,21 @@ class GenotypingStatistics:
 	def print_stats_to_file(self, tsv_file):
 		typed_all = max(self.correct_all + self.wrong_all, 1)
 		assert self.total_baseline == self.correct_all + self.wrong_all + self.not_in_callset_all + self.not_typed_all
-		correct_biallelic = self.confusion_matrix[0][0] + self.confusion_matrix[1][1] + self.confusion_matrix[2][2]
-		wrong_biallelic = self.confusion_matrix[0][1] + self.confusion_matrix[0][2] + self.confusion_matrix[1][0] + self.confusion_matrix[1][2] + self.confusion_matrix[2][1] + self.confusion_matrix[2][0]
-		not_typed_biallelic = self.total_baseline_biallelic - correct_biallelic - wrong_biallelic - self.not_in_callset_biallelic
-		typed_biallelic = max(correct_biallelic + wrong_biallelic, 1)
+
 
 		tsv_file.write('\t'.join([str(self.quality), # quality
 																	str(self.allele_frequency), # allele freq
 																	str(self.unique_kmers), # unique kmer count
 																	str(self.missing_alleles), # nr of missing alleles
 																	str(self.total_baseline), # total baseline variants
-																	str(self.total_baseline_biallelic), # total biallelic variants
 																	str(self.total_intersection), # intersection of callsets
 																	str(self.correct_all/float(typed_all)), # correct
 																	str(self.wrong_all/float(typed_all)), # wrong
-																	str((self.not_typed_all+self.not_in_callset_all)/float(self.total_baseline if self.total_baseline != 0 else 1)), # not typed
-																	str(correct_biallelic/ float(typed_biallelic)), # correct biallelic
-																	str(wrong_biallelic/ float(typed_biallelic)), # wrong biallelic
-																	str((not_typed_biallelic+self.not_in_callset_biallelic)/float(self.total_baseline_biallelic if self.total_baseline_biallelic != 0 else 1)),  # not typed biallelic
+																	str((self.not_typed_all+self.not_in_callset_all)/float(self.total_baseline if self.total_baseline is not 0 else 1)), # not typed
 																	str(self.correct_all),
 																	str(self.wrong_all),
 																	str(self.not_typed_all),
 																	str(self.not_in_callset_all),
-																	str(correct_biallelic),
-																	str(wrong_biallelic),
-																	str(not_typed_biallelic),
-																	str(self.not_in_callset_biallelic)
 														]) + '\n'
 											)
 
@@ -297,7 +268,7 @@ class GenotypeConcordanceComputer:
 				sys.stderr.write('Warning: position ' + str(pos.chrom) + ' ' + str(pos.position) + ' occurs more than once and will be skipped.\n')
 				self._duplicated_positions[pos] = True
 				continue
-			self._total_baseline += 1
+			self._total_baseline += len(variant)
 			self._baseline_variants[pos] = variant
 
 		# read callset variants
@@ -307,7 +278,7 @@ class GenotypeConcordanceComputer:
 			else:
 				pos, variant = extract_call(record, read_gl = True)
 			self._callset_variants[pos].append(variant)
-			self._total_callset += 1
+			self._total_callset += len(variant)
 
 		sys.stderr.write('Read ' + str(self._total_baseline) + ' variants from the baseline VCF (including duplicates).\n')
 		sys.stderr.write('Read ' + str(self._total_callset) + ' variants from the callset VCF (including duplicates).\n')
@@ -332,51 +303,55 @@ class GenotypeConcordanceComputer:
 		statistics = { var_type : GenotypingStatistics(quality, allele_freq, uk_count, missing_count) for var_type in varianttypes }
 
 		# check genotype predictions
-		for pos, gt in self._baseline_variants.items():
+		for pos, variant_list in self._baseline_variants.items():
 
 			# if position was present multiple times in baseline, skip it
 			if self._duplicated_positions[pos]:
 				continue
 
-			vartype = gt.get_type()
-			statistics[vartype].total_baseline += 1
+			for var_id,var in variant_list.items():
+				statistics[var.get_type()].total_baseline += 1
 
 			callset_predictions = self._callset_variants[pos]
-
-			if gt.get_binary_genotype() != -1:
-				statistics[vartype].total_baseline_biallelic += 1
 
 			if len(callset_predictions) > 1:
 				print('Warning: multiple predictions for variant at position ' + str(pos.chrom) + ' ' + str(pos.position) + '. Using first.')
 
 			if len(callset_predictions) > 0:
-				callset_gt = callset_predictions[0]
-				statistics[vartype].total_intersection += 1
+				for var_id, gt in variant_list.items():
+					var_type = gt.get_type()
+					assert var_id in callset_predictions[0]
+					callset_gt = callset_predictions[0][var_id]
+					statistics[var_type].total_intersection += 1
 
-				if callset_gt.get_quality() < quality or callset_gt.get_allele_frequency() < allele_freq or callset_gt.get_unique_kmers() < uk_count or callset_gt.get_missing_alleles() < missing_count:
-					statistics[vartype].not_typed_all += 1
-					continue
+					if callset_gt.get_quality() < quality or callset_gt.get_allele_frequency() < allele_freq or callset_gt.get_unique_kmers() < uk_count or callset_gt.get_missing_alleles() < missing_count:
+						print('untyped', var_type.name, pos.chrom, pos.position, var_id, callset_gt.get_binary_genotype(), gt.get_binary_genotype())
+						statistics[var_type].not_typed_all += 1
+						continue
 
-				if (callset_gt.get_binary_genotype() != -1) and (gt.get_binary_genotype() != -1):
-					statistics[vartype].confusion_matrix[gt.get_binary_genotype()][callset_gt.get_binary_genotype()] += 1
+					statistics[var_type].confusion_matrix[gt.get_binary_genotype()][callset_gt.get_binary_genotype()] += 1
 
-				if (callset_gt.get_genotype() == None) or (gt.get_genotype() == None):
-					statistics[vartype].not_typed_all += 1
-					continue
+					if (callset_gt.get_binary_genotype() == 3) or (gt.get_binary_genotype() == 3):
+						statistics[var_type].not_typed_all += 1
+						print('untyped', var_type.name, pos.chrom, pos.position, var_id, callset_gt.get_binary_genotype(), gt.get_binary_genotype())
+						continue
 
-				# check if genotype predictions are identical
-				if callset_gt.get_genotype() == gt.get_genotype():
-					statistics[vartype].correct_all += 1
-				else:
-					print('wrong', vartype.name, pos.chrom, pos.position, callset_gt.get_genotype(), gt.get_genotype(), gt.get_binary_genotype())
-					statistics[vartype].wrong_all += 1
+					# check if genotype predictions are identical
+					if callset_gt.get_binary_genotype() == gt.get_binary_genotype():
+						statistics[var_type].correct_all += 1
+						print('correct', var_type.name, pos.chrom, pos.position, var_id, callset_gt.get_binary_genotype(), gt.get_binary_genotype())
+					else:
+						print('wrong', var_type.name, pos.chrom, pos.position, var_id, callset_gt.get_binary_genotype(), gt.get_binary_genotype())
+						statistics[var_type].wrong_all += 1
 			else:
-				statistics[vartype].not_in_callset_all += 1
-				if gt.get_binary_genotype() != -1:
-					statistics[vartype].confusion_matrix[gt.get_binary_genotype()][3] += 1
-					statistics[vartype].not_in_callset_biallelic += 1
+				for var_id,gt in variant_list.items():
+					var_type = gt.get_type()
+					statistics[var_type].not_in_callset_all += 1
+					if gt.get_binary_genotype() != -1:
+						statistics[var_type].confusion_matrix[gt.get_binary_genotype()][3] += 1
 
-		assert (statistics[vartype].correct_all + statistics[vartype].wrong_all + statistics[vartype].not_typed_all == statistics[vartype].total_intersection)
+		for vartype in VariantType:
+			assert (statistics[vartype].correct_all + statistics[vartype].wrong_all + statistics[vartype].not_typed_all == statistics[vartype].total_intersection)
 		# write statistics and confusion matrices to file
 		for i,vartype in enumerate(varianttypes):
 			statistics[vartype].print_stats_to_file(tsv_files[i])
@@ -418,22 +393,14 @@ if __name__ == "__main__":
 											'unique_kmers',
 											'missing_alleles',
 											'total_baseline',
-											'total_baseline_biallelic',
 											'total_intersection',
 											'correct_all',
 											'wrong_all',
 											'not_typed_all',
-											'correct_biallelic',
-											'wrong_biallelic',
-											'not_typed_biallelic',
 											'nr_correct_all',
 											'nr_wrong_all',
 											'nr_not_typed_all',
-											'nr_not_in_callset_all',
-											'nr_correct_biallelic',
-											'nr_wrong_biallelic',
-											'nr_not_typed_biallelic',
-											'nr_not_in_callset_biallelic'
+											'nr_not_in_callset_all'
 								]) + '\n'
 	for tsv_file in tsv_files:
 		tsv_file.write(header)
