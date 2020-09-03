@@ -87,14 +87,14 @@ def determine_type_from_ids(ids):
 			return VariantType.small_deletion
 		return VariantType.small_complex
 
-	if varlen >= 20 and varlen <= 50:
+	if varlen >= 20 and varlen < 50:
 		if is_insertion:
 			return VariantType.midsize_insertion
 		if is_deletion:
 			return VariantType.midsize_deletion
 		return VariantType.midsize_complex
 
-	if varlen > 50:
+	if varlen >= 50:
 		if is_insertion:
 			return VariantType.large_insertion
 		if is_deletion:
@@ -131,14 +131,14 @@ def determine_type_from_record(record):
 				return VariantType.small_deletion
 			return VariantType.small_complex
 
-		if varlen >= 20 and varlen <= 50:
+		if varlen >= 20 and varlen < 50:
 			if is_insertion:
 				return VariantType.midsize_insertion
 			if is_deletion:
 				return VariantType.midsize_deletion
 			return VariantType.midsize_complex
 
-		if varlen > 50:
+		if varlen >= 50:
 			if is_insertion:
 				return VariantType.large_insertion
 			if is_deletion:

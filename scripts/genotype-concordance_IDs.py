@@ -79,7 +79,7 @@ def id_to_vartype(var):
 		else:
 			return VariantType.small_complex
 
-	if var_len >= 20 and var_len <= 50:
+	if var_len >= 20 and var_len < 50:
 		if var_type == "INS":
 			return VariantType.midsize_insertion
 		elif var_type == "DEL":
@@ -87,7 +87,7 @@ def id_to_vartype(var):
 		else:
 			return VariantType.midsize_complex
 
-	if var_len > 50:
+	if var_len >= 50:
 		if var_type == "INS":
 			return VariantType.large_insertion
 		elif var_type == "DEL":
@@ -168,7 +168,7 @@ def extract_call(record, read_gl=False, read_qual=False):
 			info_fields = record.INFO['AF']
 			# add frequency of reference allele
 			frequencies = [1.0 - sum(info_fields)] + info_fields
-			allele_frequency = min(frequencies)
+			allele_frequency = max(min(frequencies),0.0)
 
 		# determine minimum number of kmers that cover each allele
 		if 'AK' in record.INFO:
