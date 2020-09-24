@@ -3,7 +3,7 @@
 A genotyper for various types of genetic variants (such as SNPs, indels and structural variants). Genotypes are computed based on read k-mer counts and a panel of known haplotypes.
 
 ## Requirements
-* gcc 4.7+
+* gcc 4.9+
 * cmake
 * jellyfish
 
@@ -27,9 +27,14 @@ VCF-file with haplotypes (named `` <outname>_phasing.vcf``). Flags `` -g `` and 
 
 ```bat
 
+
+program: PanGenie - genotyping and phasing based on kmer-counting and known haplotype sequences.
+author: Jana Ebler
+
 usage: PanGenie [options] -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf>
 
 options:
+	-a VAL	sample subsets of paths of this size. (default: 0).
 	-c	count all read kmers instead of only those located in graph.
 	-d	do not add reference as additional path.
 	-g	only run genotyping (Forward backward algorithm)
