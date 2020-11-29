@@ -272,7 +272,7 @@ int main (int argc, char* argv[])
 	// handle case when sampling_size is not set
 	if (sampling_size == 0) {
 		if (nr_paths > 25) {
-			sampling_size = 15;
+			sampling_size = 14;
 		} else {
 			sampling_size = nr_paths;		
 		}

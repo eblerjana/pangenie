@@ -94,7 +94,10 @@ def determine_genotypes_from_ids(ids, gt):
 
 	genotype_string = gt.replace('/', '|')
 	genotype_list = genotype_string.split('|')
-	assert len(genotype_list) == 2
+	assert 1 <= len(genotype_list) <= 2
+	if len(genotype_list) == 1:
+		# haploid genotype
+		genotype_list.append(genotype_list[0])
 	for allele in genotype_list:
 		if allele == '.':
 			continue
@@ -204,6 +207,8 @@ class GenotypingStatistics:
 		typed_all = max(self.correct_all + self.wrong_all, 1)
 		assert self.total_baseline == self.correct_all + self.wrong_all + self.not_in_callset_all + self.not_typed_all
 
+		non_ref_correct = (self.confusion_matrix[1][1] + self.confusion_matrix[2][2]) / max(1.0, float(sum(self.confusion_matrix[1][:-1]) + sum(self.confusion_matrix[2][:-1])))
+
 
 		tsv_file.write('\t'.join([	str(self.quality), # quality
 						str(self.allele_frequency), # allele freq
@@ -212,6 +217,7 @@ class GenotypingStatistics:
 						str(self.total_baseline), # total baseline variants
 						str(self.total_intersection), # intersection of callsets
 						str(self.correct_all/float(typed_all)), # correct
+						str(non_ref_correct), # correct non-ref
 						str(self.wrong_all/float(typed_all)), # wrong
 						str((self.not_typed_all+self.not_in_callset_all)/float(self.total_baseline if self.total_baseline is not 0 else 1)), # not typed
 						str(self.correct_all),
@@ -394,6 +400,7 @@ if __name__ == "__main__":
 					'total_baseline',
 					'total_intersection',
 					'correct_all',
+					'correct_non-ref',
 					'wrong_all',
 					'not_typed_all',
 					'nr_correct_all',
