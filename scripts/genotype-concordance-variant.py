@@ -89,7 +89,10 @@ def determine_genotypes_from_ids(ids, gt):
 
 	genotype_string = gt.replace('/', '|')
 	genotype_list = genotype_string.split('|')
-	assert len(genotype_list) == 2
+	assert 1 <= len(genotype_list) <= 2
+	if len(genotype_list) == 1:
+		# haploid genotype
+		genotype_list.append(genotype_list[0])
 	for allele in genotype_list:
 		if allele == '.':
 			continue
@@ -178,9 +181,9 @@ class GenotypingStatistics:
 			for typed in range(4):
 				matrix.append(str(self.confusion_matrix[true][typed]))
 		tsv_file.write('\t'.join([	self.var_id,
-						str(self.correct_all/float(typed_all)), # correct
-						str(self.wrong_all/float(typed_all)), # wrong
-						str((self.not_typed_all)/float(self.total_baseline if self.total_baseline is not 0 else 1)), # not typed
+						str((self.correct_all/float(typed_all))*100.0), # correct
+						str((self.wrong_all/float(typed_all))*100.0), # wrong
+						str(((self.not_typed_all)/float(self.total_baseline if self.total_baseline is not 0 else 1))*100.0), # not typed
 						str(self.correct_all),
 						str(self.wrong_all),
 						str(self.not_typed_all),
