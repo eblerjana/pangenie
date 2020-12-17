@@ -328,3 +328,10 @@ TEST_CASE("VariantReader variant_ids2", "[VariantReader variant_ids2]") {
 	v.open_genotyping_outfile("../tests/data/small1-ids-genotypes.vcf");
 	v.write_genotypes_of("chrA", genotypes);
 }
+
+
+TEST_CASE("VariantReader close_to_start", "[VariantReader close_to_start]") {
+	string vcf = "../tests/data/close.vcf";
+	string fasta = "../tests/data/close.fa";
+	VariantReader v(vcf, fasta, 31, true);
+}

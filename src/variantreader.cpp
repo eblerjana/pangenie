@@ -155,11 +155,11 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 		// get ALT alleles
 		vector<DnaSequence> alleles = {ref};
 		// make sure alt alleles are given explicitly
-		regex r("^[CAGTNcagtn,]+$");
+		regex r("^[CAGTcagt,]+$");
 		if (!matches_pattern(tokens[4], r)) {
 //		if (!regex_match(tokens[4], r)) {
 			// skip this position
-			cerr << "VariantReader: skip variant at " << current_chrom << ":" << current_start_pos << " with alternative alleles " << tokens[4] << endl;
+			cerr << "VariantReader: skip variant at " << current_chrom << ":" << current_start_pos << " since alleles contain undefined nucleotides: " << tokens[4] << endl;
 			continue;
 		}
 		parse_line(alleles, tokens[4], ',');
@@ -201,6 +201,11 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 		}
 
 		// determine left and right flanks
+		// TODO: handle cases where variant is less than kmersize from start or end of the chromosome
+		if ( (current_start_pos < kmer_size) || ( (current_end_pos + kmer_size) > this->fasta_reader.get_size_of(current_chrom)) ) {
+			cerr << "VariantReader: skip variant at " << current_chrom << ":" << current_start_pos << " since variant is less than kmer size from start or end of chromosome. " << endl;
+			continue;
+		}
 		DnaSequence left_flank;
 		this->fasta_reader.get_subsequence(current_chrom, current_start_pos - kmer_size + 1, current_start_pos, left_flank);
 		DnaSequence right_flank;
