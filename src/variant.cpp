@@ -53,8 +53,7 @@ Variant::Variant(string left_flank, string right_flank, string chromosome, size_
 	:left_flank(left_flank),
 	 right_flank(right_flank),
 	 chromosome(chromosome),
-	 start_positions({start_position}),
-	 end_positions({end_position}),
+	 start_position(start_position),
 	 paths(paths),
 	 flanks_added(false),
 	 variant_ids({variant_id})
@@ -65,15 +64,14 @@ Variant::Variant(string left_flank, string right_flank, string chromosome, size_
 		this->allele_combinations.push_back({i});
 	}
 
-	this->set_values();
+	this->set_values(end_position);
 }
 
 Variant::Variant(DnaSequence& left_flank, DnaSequence& right_flank, string chromosome, size_t start_position, size_t end_position, vector<DnaSequence>& alleles, vector<unsigned char>& paths, string variant_id)
 	:left_flank(left_flank),
 	 right_flank(right_flank),
 	 chromosome(chromosome),
-	 start_positions({start_position}),
-	 end_positions({end_position}),
+	 start_position(start_position),
 	 paths(paths),
 	 flanks_added(false),
 	 variant_ids({variant_id})
@@ -84,10 +82,10 @@ Variant::Variant(DnaSequence& left_flank, DnaSequence& right_flank, string chrom
 		this->allele_combinations.push_back({i});
 	}
 
-	this->set_values();
+	this->set_values(end_position);
 }
 
-void Variant::set_values() {
+void Variant::set_values(size_t end_position) {
 	// find out which alleles are not covered by any paths
 	vector<unsigned char> uncovered;
 	assert(allele_sequences.size() < 256);
@@ -98,8 +96,6 @@ void Variant::set_values() {
 		}
 	}
 	this->uncovered_alleles.push_back(uncovered);
-	size_t start_position = this->start_positions[0];
-	size_t end_position = this->end_positions[0];
 
 	// check if flanks have same length
 	if (this->left_flank.size() != this->right_flank.size()){
@@ -107,13 +103,13 @@ void Variant::set_values() {
 	}
 
 	// check if start and end positions are valid
-	if (end_position <= start_position) {
+	if (end_position <= this->start_position) {
 		throw runtime_error("Variant::Variant: end position is smaller or equal to start position.");
 	}
 
 	// check if length of ref allele matches end position
 	size_t ref_len = this->allele_sequences[0][0].size();
-	if (ref_len != (end_position-start_position)) {
+	if (ref_len != (end_position - this->start_position)) {
 		throw runtime_error("Variant::Variant: end position does not match length of reference allele.");
 	}
 
@@ -187,11 +183,18 @@ DnaSequence Variant::get_allele_sequence(size_t index) const {
 }
 
 size_t Variant::get_start_position() const {
-	return this->start_positions[0];
+	return this->start_position;
 }
 
 size_t Variant::get_end_position() const {
-	return this->end_positions[ this->end_positions.size() - 1];
+	size_t end_position = this->start_position;
+	for (size_t i = 0; i < this->allele_sequences.size(); ++i) {
+		end_position += this->allele_sequences.at(i).at(0).size();
+		if (i < (this->allele_sequences.size()-1)) {
+			end_position += this->inner_flanks.at(i).size();
+		}
+	}
+	return end_position;
 }
 
 string Variant::get_chromosome() const {
@@ -215,7 +218,8 @@ void Variant::get_paths_of_allele(unsigned char allele_index, std::vector<size_t
 }
 
 void Variant::combine_variants (Variant const &v2){
-	if (v2.get_start_position() < this->get_end_position()){
+	size_t end_position = this->get_end_position();
+	if (v2.get_start_position() < end_position){
 		throw runtime_error("Variant::combine_variants: Variants are overlapping.");
 	}
 	if (this->flanks_added || v2.flanks_added){
@@ -226,7 +230,7 @@ void Variant::combine_variants (Variant const &v2){
 	if (kmersize_v1 != kmersize_v2) {
 		throw runtime_error("Variant::combine_variants: kmersizes are not the same.");
 	}
-	unsigned int dist = v2.get_start_position() - this->get_end_position();
+	unsigned int dist = v2.get_start_position() - end_position;
 	if ( (dist > kmersize_v1) || (this->chromosome != v2.chromosome) ){
 		throw runtime_error("Variant::combine_variants: Variant objects are more that kmersize bases abart.");
 	}
@@ -269,14 +273,12 @@ void Variant::combine_variants (Variant const &v2){
 
 	// construct sequence between variants
 	DnaSequence flank;
-	this->right_flank.substr(0, v2.get_start_position() - this->get_end_position(), flank);
+	this->right_flank.substr(0, v2.get_start_position() - end_position, flank);
 	this->inner_flanks.push_back(flank);
 	this->inner_flanks.insert(this->inner_flanks.end(), v2.inner_flanks.begin(), v2.inner_flanks.end());
 
 	// update variant
-	this->start_positions.insert(this->start_positions.end(), v2.start_positions.begin(), v2.start_positions.end());
 	this->right_flank = v2.right_flank;
-	this->end_positions.insert(this->end_positions.end(), v2.end_positions.begin(), v2.end_positions.end());
 	this->allele_combinations = new_alleles;
 	this->allele_sequences.insert(this->allele_sequences.end(), v2.allele_sequences.begin(), v2.allele_sequences.end());
 	this->uncovered_alleles.insert(this->uncovered_alleles.end(), v2.uncovered_alleles.begin(), v2.uncovered_alleles.end());
@@ -285,7 +287,7 @@ void Variant::combine_variants (Variant const &v2){
 }
 
 void Variant::separate_variants (vector<Variant>* resulting_variants, const GenotypingResult* input_genotyping, vector<GenotypingResult>* resulting_genotyping) const {
-	size_t nr_variants = this->start_positions.size();
+	size_t nr_variants = this->allele_sequences.size();
 	assert (this->uncovered_alleles.size() == nr_variants);
 
 	// construct paths
@@ -315,13 +317,16 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 	reference_allele.insert(reference_allele.begin(), this->left_flank);
 	reference_allele.push_back(this->right_flank);
 
+	size_t current_start = this->start_position;
+
 	for (size_t i = 0; i < nr_variants; ++i) {
 		DnaSequence left = construct_left_flank(reference_allele, i*2 + 1, this->left_flank.size());
 		DnaSequence right = construct_right_flank(reference_allele, i*2 + 1, this->right_flank.size());
 		vector<DnaSequence> alleles = this->allele_sequences.at(i);
+		size_t current_end = current_start + alleles[0].size();
 
 		// construct new variant object
-		Variant v(left, right, this->chromosome, this->start_positions.at(i), this->end_positions.at(i), alleles, paths_per_variant.at(i), this->variant_ids.at(i));
+		Variant v(left, right, this->chromosome, current_start, current_end, alleles, paths_per_variant.at(i), this->variant_ids.at(i));
 
 		resulting_variants->push_back(v);
 		// new allele -> unique kmer counts map
@@ -369,17 +374,22 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 			g.set_allele_kmer_counts(new_kmer_counts);
 			resulting_genotyping->push_back(g);
 		}
+		// update start position
+		current_start = current_end;
+		if (i < (nr_variants-1)) {
+			current_start += this->inner_flanks[i].size();
+		}
 	}
 }
 
 bool Variant::is_combined() const {
-	return (this->start_positions.size() > 1);
+	return (this->allele_sequences.size() > 1);
 }
 
 ostream& operator<<(ostream& os, const Variant& var) {
 	os << "left flank:\t" << var.left_flank.to_string() << endl;
-	os << "right flank:\t" << var.right_flank.to_string() << endl;
-	os << "position:\t" << var.chromosome << ":" << var.start_positions[0] << "-" << var.end_positions[var.end_positions.size() - 1] << endl;
+	os << "right flank:\t" << var.right_flank.to_string() << endl;	
+	os << "position:\t" << var.chromosome << ":" << var.start_position << "-" << var.get_end_position() << endl;
 	os << "alleles:" << endl;
 	for (size_t i = 0; i < var.allele_combinations.size(); ++i) {
 		os << i << ":\t";
@@ -417,8 +427,8 @@ bool operator==(const Variant& v1, const Variant& v2) {
 	if (v1.chromosome != v2.chromosome) return false;
 
 	// check positions
-	if (v1.start_positions != v2.start_positions) return false;
-	if (v1.end_positions != v2.end_positions) return false;
+	if (v1.start_position != v2.start_position) return false;
+	if (v1.get_end_position() != v2.get_end_position()) return false;
 
 	// check alleles
 	if (v1.allele_sequences != v2.allele_sequences) return false;

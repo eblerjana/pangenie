@@ -74,10 +74,8 @@ private:
 	std::vector<DnaSequence> inner_flanks;
 	// chromosome
 	std::string chromosome;
-	// starting positions of individual variants
-	std::vector<size_t> start_positions;
-	// end positions of individual variants
-	std::vector<size_t> end_positions;
+	// starting position of variant
+	size_t start_position;
 	// IDs of individual variants
 	std::vector<std::string> variant_ids;
 	// allele sequences of individual variants
@@ -88,7 +86,7 @@ private:
 	std::vector<std::vector<unsigned char>> uncovered_alleles;
 	std::vector<unsigned char> paths;
 	bool flanks_added;
-	void set_values();
+	void set_values(size_t end_position);
 };
 
 #endif //VARIANT_HPP

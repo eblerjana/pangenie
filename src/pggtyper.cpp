@@ -174,9 +174,9 @@ int main (int argc, char* argv[])
 	VariantReader variant_reader (vcffile, reffile, kmersize, add_reference, sample_name);
 	
 	// TODO: only for analysis
-	struct rusage r_usage0;
-	getrusage(RUSAGE_SELF, &r_usage0);
-	cerr << "#### Memory usage until now: " << (r_usage0.ru_maxrss / 1E6) << " GB ####" << endl;
+	struct rusage r_usage00;
+	getrusage(RUSAGE_SELF, &r_usage00);
+	cerr << "#### Memory usage until now: " << (r_usage00.ru_maxrss / 1E6) << " GB ####" << endl;
 	
 	string segment_file = outname + "_path_segments.fasta";
 	cerr << "Write path segments to file: " << segment_file << " ..." << endl;
@@ -350,6 +350,7 @@ int main (int argc, char* argv[])
 	for (auto it = results.result.begin(); it != results.result.end(); ++it) {
 		if (!only_phasing) {
 			// output genotyping results
+			
 			variant_reader.write_genotypes_of(it->first, it->second, ignore_imputed);
 		}
 		if (!only_genotyping) {
