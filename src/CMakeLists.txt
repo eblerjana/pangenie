@@ -3,7 +3,6 @@ add_library(PanGenieLib SHARED
 	copynumber.cpp
 	commandlineparser.cpp
 	columnindexer.cpp
-	copynumberassignment.cpp
 	dnasequence.cpp
 	fastareader.cpp
 	genotypingresult.cpp

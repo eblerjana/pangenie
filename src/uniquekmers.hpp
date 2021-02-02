@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <utility>
 #include "copynumber.hpp"
 #include "kmerpath.hpp"
 
@@ -58,11 +59,9 @@ private:
 	size_t variant_pos;
 	size_t current_index;
 	std::vector<unsigned short> kmer_to_count;
-	std::map<unsigned char, KmerPath> alleles;
+	// stores kmers of each allele and whether the allele is undefined
+	std::map<unsigned char, std::pair<KmerPath, bool>> alleles;
 	std::map<unsigned short, unsigned char> path_to_allele;
-	/** keep track of whether an allele is undefined **/
-	std::map<unsigned char, bool> is_undefined;
-	CopyNumberAssignment combine_paths(unsigned char allele_id1, unsigned char allele_id2);
 	unsigned short local_coverage;
 	friend class EmissionProbabilityComputer;
 	

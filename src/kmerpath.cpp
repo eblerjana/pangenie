@@ -4,38 +4,59 @@
 using namespace std;
 
 KmerPath::KmerPath()
+	:kmers({0})
 {}
 
 void KmerPath::set_position(size_t index){
-	CopyNumberAssignment::set_position(index, 1);
+	size_t max_index = (this->kmers.size())*32 - 1;
+	while (index > max_index){
+		this->kmers.push_back(0);
+		max_index = (this->kmers.size())*32 - 1;
+	}
+	// determine which block we have to modify
+	size_t block = index / 32;
+	unsigned int number = this->kmers[block];
+	// determine which position we have to modify
+	size_t position = index - (block * 32);
+	// change the position to given value
+	this->kmers[block] |= (1 << position);
+}
+
+unsigned int KmerPath::get_position(size_t index) const {
+	size_t max_index = (this->kmers.size())*32 - 1;
+	if (index > max_index) {
+		return 0;
+	}
+	size_t block = index / 32;
+	unsigned int number = this->kmers[block];
+	size_t position = index - (block * 32);
+	if ((number) & (1<<(position))) {
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 size_t KmerPath::nr_kmers() const {
 	size_t result = 0;
 	for (size_t i = 0; i < this->kmers.size(); ++i) {
-		unsigned int factor = 1;
 		unsigned int assignment = this->kmers[i];
-		for (size_t j = 0; j < 20; ++j) {
-			result += ((assignment / factor) % 3);
-			factor *= 3;
-		}
+		assignment = assignment - ((assignment >> 1) & 0x55555555);
+		assignment = (assignment & 0x33333333) + ((assignment >> 2) & 0x33333333);
+		result += (((assignment + (assignment >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24;
 	}
 	return result;
 }
 
-CopyNumberAssignment operator+(KmerPath& p1, KmerPath& p2){
-	CopyNumberAssignment result;
-	vector<unsigned int> combined;
-	if (p1.kmers.size() > p2.kmers.size()){
-		combined = p1.kmers;
-		for (size_t i = 0; i < p2.kmers.size(); ++i){
-			combined[i] += p2.kmers[i];
-		}
-	} else {
-		combined = p2.kmers;
-		for (size_t i = 0; i < p1.kmers.size(); ++i){
-			combined[i] += p1.kmers[i];
-		}
+string KmerPath::convert_to_string() const {
+	string result = "";
+	for (size_t i = 0; i < this->kmers.size()*32; ++i) {
+		result += to_string(this->get_position(i));
 	}
-	return CopyNumberAssignment(combined);
+	return result;
+}
+
+ostream& operator<< (ostream& stream, const KmerPath& cna){
+	stream << cna.convert_to_string();
+	return stream;
 }

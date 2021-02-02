@@ -45,8 +45,8 @@ public:
 private:
 	/** store 2 bases per char (using 4 bits for each) **/
 	std::vector<unsigned char> sequence;
-	/** length of the sequence **/
-	size_t length;
+	/** true if the length is even **/
+	bool even_length;
 	/** is true if sequence contains any undefined bases (N,n) **/
 	bool is_undefined;
 };

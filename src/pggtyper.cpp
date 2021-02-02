@@ -172,6 +172,12 @@ int main (int argc, char* argv[])
 	// read allele sequences and unitigs inbetween, write them into file
 	cerr << "Determine allele sequences ..." << endl;
 	VariantReader variant_reader (vcffile, reffile, kmersize, add_reference, sample_name);
+	
+	// TODO: only for analysis
+	struct rusage r_usage0;
+	getrusage(RUSAGE_SELF, &r_usage0);
+	cerr << "#### Memory usage until now: " << (r_usage0.ru_maxrss / 1E6) << " GB ####" << endl;
+	
 	string segment_file = outname + "_path_segments.fasta";
 	cerr << "Write path segments to file: " << segment_file << " ..." << endl;
 	variant_reader.write_path_segments(segment_file);

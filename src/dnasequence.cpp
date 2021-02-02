@@ -6,12 +6,12 @@
 using namespace std;
 
 DnaSequence::DnaSequence() 
-	:length(0),
+	:even_length(true),
 	 is_undefined(false)
 {}
 
 DnaSequence::DnaSequence(string& sequence)
-	:length(0),
+	:even_length(true),
 	 is_undefined(false)
 {
 	this->append(sequence);	
@@ -22,19 +22,19 @@ void DnaSequence::append(string& seq) {
 		unsigned char number = encode(base);
 		// check whether base was defined
 		if (number == 4) this->is_undefined = true;
-		if (this->length % 2 == 0) {
+		if (this->even_length) {
 			this->sequence.push_back(number << 4);
 		} else {
-			size_t index = this->length / 2;
+			size_t index = this->size() / 2;
 			unsigned char updated = (this->sequence[index]) | number;
 			this->sequence[index] = updated;
 		}
-		this->length += 1;
+		this->even_length = !(this->even_length);
 	}
 }
 
 void DnaSequence::append(DnaSequence seq) {
-	if (this->length % 2 == 0) {
+	if (this->even_length) {
 		for (size_t i = 0; i < seq.sequence.size(); ++i) {
 			this->sequence.push_back(seq.sequence.at(i));
 		}
@@ -53,13 +53,13 @@ void DnaSequence::append(DnaSequence seq) {
 		}
 		if (seq.size() % 2 == 0) this->sequence.push_back(current);
 	}
-	this->length += seq.length;
+	this->even_length = this->even_length == (seq.size() % 2 == 0);
 	this->is_undefined = this->is_undefined || seq.contains_undefined();
 }
 
 void DnaSequence::reverse() {
 	vector<unsigned char> reversed;
-	if (this->length % 2 == 0) {
+	if (this->even_length) {
 		for (vector<unsigned char>::reverse_iterator it = this->sequence.rbegin(); it != this->sequence.rend(); ++it) {
 			unsigned char reversed_element = ((*it) >> 4) | ((*it) << 4);
 			reversed.push_back(reversed_element);
@@ -79,7 +79,7 @@ void DnaSequence::reverse() {
 
 void DnaSequence::reverse_complement() {
 	vector<unsigned char> reverse_compl;
-	if (this->length % 2 == 0) {
+	if (this->even_length) {
 		for (vector<unsigned char>::reverse_iterator it = this->sequence.rbegin(); it != this->sequence.rend(); ++it) {
 			unsigned char first = complement((*it) >> 4);
 			unsigned char second = complement((*it) & 15);
@@ -100,7 +100,7 @@ void DnaSequence::reverse_complement() {
 }
 
 char DnaSequence::operator[](size_t position) const {
-	if (position >= this->length) {
+	if (position >= this->size()) {
 		throw runtime_error("DnaSequence::operator[]: index out of bounds.");
 	}
 
@@ -113,7 +113,7 @@ char DnaSequence::operator[](size_t position) const {
 }
 
 DnaSequence DnaSequence::base_at(size_t position) const {
-	if (position >= this->length) {
+	if (position >= this->size()) {
 		throw runtime_error("DnaSequence::base_at: index out of bounds.");
 	}
 
@@ -124,12 +124,16 @@ DnaSequence DnaSequence::base_at(size_t position) const {
 	} else {
 		result.sequence.push_back(number << 4);
 	}
-	result.length = 1;
+	result.even_length = false;
 	return result;
 }
 
 size_t DnaSequence::size() const {
-	return this->length;
+	size_t result = this->sequence.size() * 2;
+	if (!this->even_length) {
+		result -= 1;
+	}
+	return result;
 }
 
 void DnaSequence::substr(size_t start, size_t end, string& result) const {
@@ -171,13 +175,13 @@ void DnaSequence::substr(size_t start, size_t end, DnaSequence& result) const {
 	}
 
 	result.sequence = move(substring); 
-	result.length = (end - start);
+	result.even_length = ((end - start) % 2 == 0);
 	result.is_undefined = undefined;
 }
 
 string DnaSequence::to_string() const {
 	string result;
-	for (size_t i = 0; i < this->length; ++i) {
+	for (size_t i = 0; i < this->size(); ++i) {
 		result += (*this)[i];
 	}
 	return result;
@@ -185,7 +189,7 @@ string DnaSequence::to_string() const {
 
 void DnaSequence::clear() {
 	this->sequence.clear();
-	this->length = 0;
+	this->even_length = true;
 }
 
 bool DnaSequence::operator<(const DnaSequence& dna) const {
@@ -193,7 +197,7 @@ bool DnaSequence::operator<(const DnaSequence& dna) const {
 }
 
 bool operator==(const DnaSequence& dna1, const DnaSequence& dna2) {
-	return (dna1.sequence == dna2.sequence) && (dna1.length == dna2.length);
+	return (dna1.sequence == dna2.sequence) && (dna1.size() == dna2.size());
 }
 
 bool operator!=(const DnaSequence& dna1, const DnaSequence& dna2) {

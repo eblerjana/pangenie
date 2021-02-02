@@ -131,6 +131,7 @@ TEST_CASE("Variant separate_variants", "[Variant separate_variants]") {
 	Variant v3("ACC", "GGC", "chr1", 18, 19, {"C", "CTA"}, {0,1,1});
 	Variant v4("AAA", "TAC", "chr1", 10, 14, {"ATGC", "ATT"}, {0,0,1});
 
+
 	// combine and sepatate 2 variants
 	v1.combine_variants(v2);
 	vector<Variant> single_variants;
@@ -505,7 +506,7 @@ TEST_CASE("Variant separate_variants_likelihoods_uncovered", "Variant separate_v
 
 	// expected genotype likelihoods
 	// order of alleles changes: uncovered allele has index 2 after separation
-	vector<vector<double>> expected = { {0.05,0.05,0.9}, {0.05, 0.05, 0.9, 0.0, 0.0, 0.0}};
+	vector<vector<double>> expected = { {0.05,0.05,0.9}, {0.05, 0.0, 0.0, 0.05, 0.0, 0.9}};
 	pair<unsigned char,unsigned char> expected_haplotype = make_pair(0,0);
 	vector<unsigned int> nr_alleles = {2,3};
 
@@ -522,8 +523,8 @@ TEST_CASE("Variant separate_variants_likelihoods_uncovered", "Variant separate_v
 	}
 
 	// uncovered allele should have count -1
-	vector<vector<int>> expected_counts = { {3,9}, {3,9,-1} };
-	vector<vector<string>> expected_alleles = { {"A", "T"}, {"G", "T", "C"} };
+	vector<vector<int>> expected_counts = { {3,9}, {3,-1,9} };
+	vector<vector<string>> expected_alleles = { {"A", "T"}, {"G", "C", "T"} };
 
 	REQUIRE(single_genotypes[0].get_allele_kmer_count(0) == expected_counts[0][0]);
 	REQUIRE(single_genotypes[0].get_allele_kmer_count(1) == expected_counts[0][1]);
