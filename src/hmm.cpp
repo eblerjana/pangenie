@@ -194,11 +194,6 @@ void HMM::compute_viterbi_path() {
 		this->genotyping_result.at(variant_id).add_first_haplotype_allele(allele1);
 		this->genotyping_result.at(variant_id).add_second_haplotype_allele(allele2);
 
-		// store number of unique kmers used at current position (stored in UniqueKmers)
-		this->genotyping_result.at(variant_id).set_nr_unique_kmers(this->unique_kmers->at(variant_id)->size());
-		this->genotyping_result.at(variant_id).set_coverage(this->unique_kmers->at(variant_id)->get_coverage());
-		this->genotyping_result.at(variant_id).set_allele_kmer_counts(this->unique_kmers->at(variant_id)->kmers_on_alleles());
-
 		if (column_index == 0) break;
 
 		// update best index 
@@ -430,11 +425,6 @@ void HMM::compute_backward_column(size_t column_index) {
 //		// normalize the GenotypingResults likelihoods 
 //		this->genotyping_result.at(column_index).divide_likelihoods_by(normalization_f_b);
 //	}
-
-	// store number of unique kmers used at current position (stored in UniqueKmers)
-	this->genotyping_result.at(variant_id).set_nr_unique_kmers(this->unique_kmers->at(variant_id)->size());
-	this->genotyping_result.at(variant_id).set_coverage(this->unique_kmers->at(variant_id)->get_coverage());
-	this->genotyping_result.at(variant_id).set_allele_kmer_counts(this->unique_kmers->at(variant_id)->kmers_on_alleles());
 }
 
 void HMM::compute_viterbi_column(size_t column_index) {

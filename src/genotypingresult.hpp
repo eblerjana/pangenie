@@ -37,18 +37,6 @@ public:
 	/** get genotype with highest likelihood **/
 	std::pair<int, int> get_likeliest_genotype() const;
 	friend std::ostream& operator<<(std::ostream& os, const GenotypingResult& res);
-	/** set coverage **/
-	void set_coverage(unsigned short coverage);
-	/** get coverage **/
-	unsigned short get_coverage() const;
-	/** return number of unique kmers **/
-	size_t get_nr_unique_kmers() const;
-	/** set number of unique kmers **/
-	size_t set_nr_unique_kmers(size_t nr_unique);
-	/** set allele specific numbers of unique kmers **/
-	void set_allele_kmer_counts(std::map<unsigned char, int> counts);
-	/** get allele specific number of unique kmers **/
-	int get_allele_kmer_count(unsigned char allele) const;
 	/** add the given likelihoods. Haplotypes, kmer_counts and coverage are not changed,
 	 ** only the likelihoods are modified and not normalized.
 	 **/
@@ -60,8 +48,5 @@ private:
 	std::map < std::pair<unsigned char,unsigned char>, long double > genotype_to_likelihood;
 	unsigned char haplotype_1;
 	unsigned char haplotype_2;
-	size_t nr_unique_kmers;
-	std::map<unsigned char, int> kmer_counts;
-	unsigned short coverage;
 };
 #endif // GENOTYPINGRESULT_HPP

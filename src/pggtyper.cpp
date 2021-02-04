@@ -351,11 +351,11 @@ int main (int argc, char* argv[])
 		if (!only_phasing) {
 			// output genotyping results
 			
-			variant_reader.write_genotypes_of(it->first, it->second, ignore_imputed);
+			variant_reader.write_genotypes_of(it->first, it->second, &unique_kmers_list.unique_kmers[it->first], ignore_imputed);
 		}
 		if (!only_genotyping) {
 			// output phasing results
-			variant_reader.write_phasing_of(it->first, it->second, ignore_imputed);
+			variant_reader.write_phasing_of(it->first, it->second, &unique_kmers_list.unique_kmers[it->first], ignore_imputed);
 		}
 	}
 

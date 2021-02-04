@@ -7,9 +7,7 @@ using namespace std;
 
 GenotypingResult::GenotypingResult()
 	:haplotype_1(0),
-	 haplotype_2(0),
-	 nr_unique_kmers(0),
-	 coverage(0.0)
+	 haplotype_2(0)
 {}
 
 pair<unsigned char, unsigned char> genotype_from_alleles (unsigned char allele1, unsigned char allele2) {
@@ -81,9 +79,6 @@ GenotypingResult GenotypingResult::get_specific_likelihoods (vector<unsigned cha
 			sum += likelihood;
 		}
 	}
-	result.nr_unique_kmers = this->nr_unique_kmers;
-	result.coverage = this->coverage;
-	result.kmer_counts = this->kmer_counts;
 	if (sum > 0) result.divide_likelihoods_by(sum);
 	return result;
 }
@@ -152,64 +147,16 @@ pair<int, int> GenotypingResult::get_likeliest_genotype() const {
 	}
 }
 
-size_t GenotypingResult::get_nr_unique_kmers() const {
-	return this->nr_unique_kmers;
-}
-
-size_t GenotypingResult::set_nr_unique_kmers(size_t nr_unique) {
-	this->nr_unique_kmers = nr_unique;
-}
-
 ostream& operator<<(ostream& os, const GenotypingResult& res) {
 	os << "haplotype allele 1: " << res.haplotype_1 << endl;
 	os << "haplotype allele 2: " << res.haplotype_2 << endl;
 	for (auto it = res.genotype_to_likelihood.begin(); it != res.genotype_to_likelihood.end(); ++it) {
 		os << (unsigned int) it->first.first << "/" << (unsigned int) it->first.second << ": " << it->second << endl;
 	}
-	os << "total unique kmers: " << res.nr_unique_kmers << endl;
-	os << "unique kmers per allele:" << endl;
-	for (auto it = res.kmer_counts.begin(); it != res.kmer_counts.end(); ++it) {
-		os << (unsigned int) it->first << ": " << it->second << endl; 
-	}
-	os << "computed coverage: " << res.coverage << endl;
 	return os;
 }
 
-void GenotypingResult::set_coverage(unsigned short coverage) {
-	this->coverage = coverage;
-}
-	
-unsigned short GenotypingResult::get_coverage() const {
-	return this->coverage;
-}
-
-void GenotypingResult::set_allele_kmer_counts (map<unsigned char, int> counts) {
-	this->kmer_counts = counts;
-}
-
-int GenotypingResult::get_allele_kmer_count(unsigned char allele) const {
-	// check if there is a count stored for the allele
-	map<unsigned char, int>::const_iterator it = this->kmer_counts.find(allele);
-	if (it != this->kmer_counts.end()) {
-		return it->second;
-	} else {
-		return 0;
-	}
-}
-
 void GenotypingResult::combine(GenotypingResult& likelihoods) {
-	if ((!this->genotype_to_likelihood.empty()) && (!likelihoods.genotype_to_likelihood.empty())) {
-		assert(this->nr_unique_kmers == likelihoods.nr_unique_kmers);
-		assert(this->kmer_counts == likelihoods.kmer_counts);
-		assert(this->coverage == likelihoods.coverage);
-	}
-
-	if (this->genotype_to_likelihood.empty()) {
-		this->nr_unique_kmers = likelihoods.nr_unique_kmers;
-		this->kmer_counts = likelihoods.kmer_counts;
-		this->coverage = likelihoods.coverage;
-	}
-
 	for (auto it = likelihoods.genotype_to_likelihood.begin(); it != likelihoods.genotype_to_likelihood.end(); ++it) {
 		pair<unsigned char, unsigned char> genotype = it->first;
 		this->genotype_to_likelihood[genotype] += it->second;

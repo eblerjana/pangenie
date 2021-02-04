@@ -6,10 +6,17 @@
 #include <iostream>
 #include "genotypingresult.hpp"
 #include "dnasequence.hpp"
+#include "uniquekmers.hpp"
 
 /** 
 * Represents a variant.
 **/
+
+struct VariantStats {
+	size_t nr_unique_kmers;
+	std::map<unsigned char, int> kmer_counts;
+	unsigned short coverage;
+};
 
 class Variant {
 public:
@@ -64,6 +71,8 @@ public:
 	bool is_undefined_allele(size_t allele_id) const;
 	/** return number of paths with missing alleles **/
 	size_t nr_missing_alleles() const;
+	/** determine statistics for each individual variant **/
+	void variant_statistics (UniqueKmers* unique_kmers, std::vector<VariantStats>& result) const;
 
 private:
 	// flanking sequence at left end

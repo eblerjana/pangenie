@@ -329,8 +329,6 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 		Variant v(left, right, this->chromosome, current_start, current_end, alleles, paths_per_variant.at(i), this->variant_ids.at(i));
 
 		resulting_variants->push_back(v);
-		// new allele -> unique kmer counts map
-		map<unsigned char, int> new_kmer_counts;
 		if (input_genotyping != nullptr) {
 			// construct GenotypingResult
 			GenotypingResult g;
@@ -344,8 +342,6 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 			for (size_t a0 = 0; a0 < this->nr_of_alleles(); ++a0) {
 				// determine allele a0 genotype corresponds to
 				unsigned char single_allele0 = precomputed_ids[a0];
-				// update unique kmer counts
-				new_kmer_counts[single_allele0] += input_genotyping->get_allele_kmer_count(a0);
 				for (size_t a1 = a0; a1 < this->nr_of_alleles(); ++a1) {
 					// determine allele a1 genotype corresponds to
 					unsigned char single_allele1 = precomputed_ids[a1];
@@ -362,16 +358,6 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 			// update result
 			g.add_first_haplotype_allele(single_haplotype0);
 			g.add_second_haplotype_allele(single_haplotype1);
-			g.set_nr_unique_kmers(input_genotyping->get_nr_unique_kmers());
-			g.set_coverage(input_genotyping->get_coverage());
-
-			// determine ids of uncovered paths
-			vector<unsigned char> uncovered_ids = this->uncovered_alleles[i];
-			// set kmer counts of uncovered alleles to -1
-			for (auto u: uncovered_ids) {
-				new_kmer_counts[u] = -1;
-			}
-			g.set_allele_kmer_counts(new_kmer_counts);
 			resulting_genotyping->push_back(g);
 		}
 		// update start position
@@ -381,6 +367,43 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 		}
 	}
 }
+
+
+void Variant::variant_statistics (UniqueKmers* unique_kmers, vector<VariantStats>& result) const {
+	size_t nr_variants = this->allele_sequences.size();
+	assert (this->uncovered_alleles.size() == nr_variants);
+
+	for (size_t i = 0; i < nr_variants; ++i) {
+		VariantStats v;
+		// new allele -> unique kmer counts map
+		map<unsigned char, int> new_kmer_counts;
+		vector<unsigned char> precomputed_ids (this->nr_of_alleles());
+		for (size_t a0 = 0; a0 < this->nr_of_alleles(); ++a0) {
+			unsigned char single_allele0 = this->allele_combinations[a0][i];
+			precomputed_ids[a0] = single_allele0;
+		}
+		// iterate through all alleles and determine number of unique kmers
+		for (size_t a0 = 0; a0 < this->nr_of_alleles(); ++a0) {
+			unsigned char single_allele0 = precomputed_ids[a0];
+			// update unique kmer counts
+			new_kmer_counts[single_allele0] += unique_kmers->kmers_on_alleles()[a0];
+		}
+
+		v.nr_unique_kmers = unique_kmers->size();
+		v.coverage = unique_kmers->get_coverage();
+
+		// determine ids of uncovered paths
+		vector<unsigned char> uncovered_ids = this->uncovered_alleles[i];
+		// set kmer counts of uncovered alleles to -1
+		for (auto u: uncovered_ids) {
+			new_kmer_counts[u] = -1;
+		}
+		
+		v.kmer_counts = new_kmer_counts;
+		result.push_back(v);
+	}
+}
+
 
 bool Variant::is_combined() const {
 	return (this->allele_sequences.size() > 1);
