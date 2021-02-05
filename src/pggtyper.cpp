@@ -58,11 +58,12 @@ void run_genotyping(string chromosome, vector<UniqueKmers*>* unique_kmers, Proba
 		lock_guard<mutex> lock_result (results->result_mutex);
 		// combine the new results to the already existing ones (if present)
 		if (results->result.find(chromosome) == results->result.end()) {
-			results->result.insert(pair<string, vector<GenotypingResult>> (chromosome, move(hmm.get_genotyping_result())));
+			results->result.insert(pair<string, vector<GenotypingResult>> (chromosome, hmm.move_genotyping_result()));
 		} else {
 			// combine newly computed likelihoods with already exisiting ones
 			size_t index = 0;
-			for (auto likelihoods : hmm.get_genotyping_result()) {
+			vector<GenotypingResult> genotypes = hmm.move_genotyping_result();
+			for (auto likelihoods : genotypes) {
 				results->result.at(chromosome).at(index).combine(likelihoods);
 				index += 1;
 			}
@@ -304,6 +305,11 @@ int main (int argc, char* argv[])
 	path_sampler.select_single_subset(phasing_paths, nr_phasing_paths);
 	if (!only_genotyping) cerr << "Sampled " << phasing_paths.size() << " paths to be used for phasing." << endl;
 	time_path_sampling = timer.get_interval_time();
+	
+	// TODO: only for analysis
+	struct rusage r_usage30;
+	getrusage(RUSAGE_SELF, &r_usage30);
+	cerr << "#### Memory usage until now: " << (r_usage30.ru_maxrss / 1E6) << " GB ####" << endl;
 
 	cerr << "Construct HMM and run core algorithm ..." << endl;
 
