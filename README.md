@@ -25,9 +25,7 @@ Note: we have observed that sometimes it is necessary to set ``export PKG_CONFIG
 
 Runtime and memory usage depend on the number of variants genotyped and the number of haplotypes present in the graph.
 
-[//]: # "
-With the data described here: https://www.biorxiv.org/content/10.1101/2020.11.11.378133v1, PanGenie ran in xx hours walltime using 24 cores (xx CPU hours) and used XX GB RAM.
-"
+[//]: # "With the data described here: https://www.biorxiv.org/content/10.1101/2020.11.11.378133v1, PanGenie ran in xx hours walltime using 24 cores (xx CPU hours) and used XX GB RAM."
 The largest dataset that we have tested contained around 16M variants, 64 haplotypes and around 30x read coverage. Using 24 cores, PanGenie run in 2 hours (25.9 CPU hours) and used 139 GB of RAM.
 
 ## Usage
