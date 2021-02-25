@@ -24,6 +24,8 @@ public:
 	**/
 	HMM(std::vector<UniqueKmers*>* unique_kmers, ProbabilityTable* probabilities, bool run_genotyping, bool run_phasing, double recombrate = 1.26, bool uniform = false, long double effective_N = 25000.0L, std::vector<unsigned short>* only_paths = nullptr, bool normalize = true);
 	std::vector<GenotypingResult> get_genotyping_result() const;
+	/** moves the GenotypingResults to the caller such that they will no longer be stored in the class. Use with care! **/
+	std::vector<GenotypingResult> move_genotyping_result();
 	~HMM();
 
 private:
@@ -34,9 +36,11 @@ private:
 	std::vector< std::vector<long double>* > viterbi_columns;
 	std::vector<UniqueKmers*>* unique_kmers;
 	ProbabilityTable* probabilities;
-	std::vector<TransitionProbabilityComputer*> transition_prob_computers;
 	std::vector< std::vector<size_t>* > viterbi_backtrace_columns;
 	std::vector< GenotypingResult > genotyping_result;
+	double recombrate;
+	bool uniform;
+	long double effective_N;
 	void compute_forward_prob();
 	void compute_backward_prob();
 	void compute_viterbi_path();

@@ -23,11 +23,9 @@ TEST_CASE("EmissionProbabilityComputer get_emission_probability", "EmissionProba
 		unique_kmers.insert_kmer(counts[i],  alleles[i]);
 		probs.modify_probability(0, counts[i], cns[i]);
 	}
-
 	vector<unsigned short> path_ids;
 	vector<unsigned char> allele_ids;
 	unique_kmers.get_path_ids(path_ids, allele_ids);
-
 	// construct EmissionProbabilityComputer
 	EmissionProbabilityComputer emission_prob_comp (&unique_kmers, &probs);
 	REQUIRE (doubles_equal(emission_prob_comp.get_emission_probability(0,0), 0.0));

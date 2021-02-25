@@ -1,6 +1,7 @@
 #include "catch.hpp"
 #define private public
 #include "../src/variantreader.hpp"
+#include "../src/uniquekmers.hpp"
 #include <vector>
 #include <string>
 #include <algorithm> 
@@ -190,6 +191,8 @@ TEST_CASE("VariantReader write_genotypes_of", "[VariantReader write_genotypes_of
 
 	// generate a GenotypingResult for chrA
 	vector<GenotypingResult> genotypes_chrA(7);
+	vector<UniqueKmers*> kmers_chrA(7);
+	
 	for (size_t i = 0; i < 7; ++i) {
 		if (i == 2) continue;
 		GenotypingResult r;
@@ -197,6 +200,10 @@ TEST_CASE("VariantReader write_genotypes_of", "[VariantReader write_genotypes_of
 		r.add_to_likelihood(0,1,0.7);
 		r.add_to_likelihood(1,1,0.1);
 		genotypes_chrA[i] = r;
+		UniqueKmers* u = new UniqueKmers(i);
+		u->insert_empty_allele(0);
+		u->insert_empty_allele(1);
+		kmers_chrA[i] = u;
 	}
 
 	// third variant is multiallelic
@@ -209,27 +216,51 @@ TEST_CASE("VariantReader write_genotypes_of", "[VariantReader write_genotypes_of
 	r.add_to_likelihood(2,2,0.1);
 	r.add_first_haplotype_allele(2);
 	r.add_second_haplotype_allele(1);
-	r.set_nr_unique_kmers(3);
 	genotypes_chrA[2] = r;
 
+	UniqueKmers* u = new UniqueKmers(2);
+	u->insert_empty_allele(0);
+	u->insert_empty_allele(1);
+	u->insert_empty_allele(2);
+	vector<unsigned char> allele_ids = {0};
+	u->insert_kmer(30, allele_ids);
+	u->insert_kmer(28, allele_ids);
+	u->insert_kmer(20, allele_ids);
+	kmers_chrA[2] = u;
+	
 	// generate a GenotypingResult for chrB
 	vector<GenotypingResult> genotypes_chrB(2);
+	vector<UniqueKmers*> kmers_chrB(2);
 	for (size_t i = 0; i < 2; ++i) {
 		GenotypingResult r;
 		r.add_to_likelihood(0,0,0.1);
 		r.add_to_likelihood(0,1,0.1);
 		r.add_to_likelihood(1,1,0.8);
 		genotypes_chrB[i] = r;
+		
+		UniqueKmers* u = new UniqueKmers(i);
+		u->insert_empty_allele(0);
+		u->insert_empty_allele(1);
+		kmers_chrB[i] = u;
 	}
+
 	v.open_genotyping_outfile("../tests/data/small1-genotypes.vcf");
-	v.write_genotypes_of("chrA", genotypes_chrA);
-	v.write_genotypes_of("chrB", genotypes_chrB);
+	v.write_genotypes_of("chrA", genotypes_chrA, &kmers_chrA);
+	v.write_genotypes_of("chrB", genotypes_chrB, &kmers_chrB);
 	v.close_genotyping_outfile();
 
 	v.open_phasing_outfile("../tests/data/small1-phasing.vcf");
-	v.write_phasing_of("chrA", genotypes_chrA);
-	v.write_phasing_of("chrB", genotypes_chrB);
+	v.write_phasing_of("chrA", genotypes_chrA, &kmers_chrA);
+	v.write_phasing_of("chrB", genotypes_chrB, &kmers_chrB);
 	v.close_genotyping_outfile();
+	
+	for (size_t i = 0; i < kmers_chrA.size(); ++i) {
+		delete kmers_chrA[i];
+	}
+	
+	for (size_t i = 0; i < kmers_chrB.size(); ++i) {
+		delete kmers_chrB[i];
+	}
 }
 
 TEST_CASE("VariantReader broken_vcfs", "[VariantReader broken_vcfs]") {
@@ -326,9 +357,12 @@ TEST_CASE("VariantReader variant_ids2", "[VariantReader variant_ids2]") {
 	VariantReader v(vcf, fasta, 10, true);
 	vector<GenotypingResult> genotypes(2);
 	v.open_genotyping_outfile("../tests/data/small1-ids-genotypes.vcf");
-	v.write_genotypes_of("chrA", genotypes);
+	
+	vector<UniqueKmers*> u = { new UniqueKmers(0), new UniqueKmers(1) };
+	v.write_genotypes_of("chrA", genotypes, &u);
+	delete u[0];
+	delete u[1];
 }
-
 
 TEST_CASE("VariantReader close_to_start", "[VariantReader close_to_start]") {
 	string vcf = "../tests/data/close.vcf";

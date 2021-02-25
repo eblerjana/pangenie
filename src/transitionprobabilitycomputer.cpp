@@ -10,7 +10,8 @@ TransitionProbabilityComputer::TransitionProbabilityComputer(size_t from_variant
 	assert(from_variant <= to_variant );
 	this->uniform = uniform;
 	// using same formula as in WhatsHap
-	long double distance = (to_variant - from_variant) * 0.000001 * ((long double) recomb_rate) * 4.0L * effective_N;
+//	long double distance = (to_variant - from_variant) * 0.000001 * ((long double) recomb_rate) * 4.0L * effective_N;
+	long double distance = (to_variant - from_variant) * 0.000004L * ((long double) recomb_rate) * effective_N;
 	// use Li-Stephans pair HMM transitions TODO: correct?
 	long double recomb_prob = (1.0L - exp(-distance / (long double) nr_paths) )* (1.0L / (long double) nr_paths);
 	long double no_recomb_prob = exp(-distance / (long double) nr_paths) + recomb_prob;

@@ -185,6 +185,14 @@ TEST_CASE("DnaSequence operators", "[DnaSequence operators]") {
 	REQUIRE(d == d3);
 }
 
+TEST_CASE("DnaSequence operators2", "[DnaSequence operators]") {
+	string seq = "ATG";
+	string seq2 = "ATGA";
+	DnaSequence d(seq);
+	DnaSequence d2(seq2);
+	REQUIRE(d != d2);
+}
+
 TEST_CASE("DnaSequence base_at", "[DnaSequence base_at]") {
 	string seq = "ATGGTC";
 	DnaSequence d(seq);

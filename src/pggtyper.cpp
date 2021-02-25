@@ -58,11 +58,12 @@ void run_genotyping(string chromosome, vector<UniqueKmers*>* unique_kmers, Proba
 		lock_guard<mutex> lock_result (results->result_mutex);
 		// combine the new results to the already existing ones (if present)
 		if (results->result.find(chromosome) == results->result.end()) {
-			results->result.insert(pair<string, vector<GenotypingResult>> (chromosome, move(hmm.get_genotyping_result())));
+			results->result.insert(pair<string, vector<GenotypingResult>> (chromosome, hmm.move_genotyping_result()));
 		} else {
 			// combine newly computed likelihoods with already exisiting ones
 			size_t index = 0;
-			for (auto likelihoods : hmm.get_genotyping_result()) {
+			vector<GenotypingResult> genotypes = hmm.move_genotyping_result();
+			for (auto likelihoods : genotypes) {
 				results->result.at(chromosome).at(index).combine(likelihoods);
 				index += 1;
 			}
@@ -172,6 +173,12 @@ int main (int argc, char* argv[])
 	// read allele sequences and unitigs inbetween, write them into file
 	cerr << "Determine allele sequences ..." << endl;
 	VariantReader variant_reader (vcffile, reffile, kmersize, add_reference, sample_name);
+	
+	// TODO: only for analysis
+	struct rusage r_usage00;
+	getrusage(RUSAGE_SELF, &r_usage00);
+	cerr << "#### Memory usage until now: " << (r_usage00.ru_maxrss / 1E6) << " GB ####" << endl;
+	
 	string segment_file = outname + "_path_segments.fasta";
 	cerr << "Write path segments to file: " << segment_file << " ..." << endl;
 	variant_reader.write_path_segments(segment_file);
@@ -298,6 +305,11 @@ int main (int argc, char* argv[])
 	path_sampler.select_single_subset(phasing_paths, nr_phasing_paths);
 	if (!only_genotyping) cerr << "Sampled " << phasing_paths.size() << " paths to be used for phasing." << endl;
 	time_path_sampling = timer.get_interval_time();
+	
+	// TODO: only for analysis
+	struct rusage r_usage30;
+	getrusage(RUSAGE_SELF, &r_usage30);
+	cerr << "#### Memory usage until now: " << (r_usage30.ru_maxrss / 1E6) << " GB ####" << endl;
 
 	cerr << "Construct HMM and run core algorithm ..." << endl;
 
@@ -344,11 +356,12 @@ int main (int argc, char* argv[])
 	for (auto it = results.result.begin(); it != results.result.end(); ++it) {
 		if (!only_phasing) {
 			// output genotyping results
-			variant_reader.write_genotypes_of(it->first, it->second, ignore_imputed);
+			
+			variant_reader.write_genotypes_of(it->first, it->second, &unique_kmers_list.unique_kmers[it->first], ignore_imputed);
 		}
 		if (!only_genotyping) {
 			// output phasing results
-			variant_reader.write_phasing_of(it->first, it->second, ignore_imputed);
+			variant_reader.write_phasing_of(it->first, it->second, &unique_kmers_list.unique_kmers[it->first], ignore_imputed);
 		}
 	}
 
