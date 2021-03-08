@@ -80,8 +80,8 @@ The result will be a VCF file named `` test_genotyping.vcf `` containing the sam
 
 To run only phasing, use the -p option instead to obtain phasing in a file that will be named `` test_phasing.vcf ``.
 
-`` ./build/src/PanGenie -i test-reads.fq -r test-reference.fasta -v test-variants.vcf -p -o test ``
+`` ./build/src/PanGenie -i test-reads.fq -r test-reference.fasta -v test-variants.vcf -p -o test -e 100000 ``
 
-If `` -g `` and `` -p `` are omitted, PanGenie will run both genotying and phasing (which will take a few seconds for this example). Note that when running PanGenie on a whole genome dataset, parameter `` -e `` should be omitted (so that the default value is used).
+If `` -g `` and `` -p `` are omitted, PanGenie will run both genotying and phasing (which will take a few seconds for this example). Parameter `` -e `` sets the hash size used by Jellyfish for k-mer counting. When running PanGenie on a whole genome dataset, this parameter can be omitted (so that PanGenie uses the default value).
 
 Per default, PanGenie uses a single thread. The number of threads used for k-mer counting and genotyping/phasing can be set via parameters ``-j`` and ``-t``, respectively. 
