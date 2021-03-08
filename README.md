@@ -46,6 +46,7 @@ options:
 	-a VAL	sample subsets of paths of this size. (default: 0).
 	-c	count all read kmers instead of only those located in graph.
 	-d	do not add reference as additional path.
+	-e VAL	size of hash used by jellyfish. (default: 3000000000).
 	-g	only run genotyping (Forward backward algorithm)
 	-i VAL	sequencing reads in FASTA/FASTQ format or Jellyfish database in jf format (required).
 	-j VAL	number of threads to use for kmer-counting (default: 1).
@@ -73,7 +74,7 @@ The typical use case is to run PanGenie on a whole genome dataset. The following
 
 We run PanGenie given a pangenome graph (VCF file,``test-variants.vcf``), sequencing reads (FASTA/FASTQ file, ``test-reads.fa``) and a reference sequence (FASTA file, ``test-reference.fa``) provided in the ``demo/`` folder. After installation, PanGenie's genotyping algorithm can be run using the following command:
 
-`` ./build/src/PanGenie -i test-reads.fq -r test-reference.fasta -v test-variants.vcf -g -o test ``
+`` ./build/src/PanGenie -i test-reads.fq -r test-reference.fasta -v test-variants.vcf -g -o test -e 100000 ``
 
 The result will be a VCF file named `` test_genotyping.vcf `` containing the same variants as the input VCF with additional genotype predictions, genotype likelihoods and genotype qualities.
 
@@ -81,6 +82,6 @@ To run only phasing, use the -p option instead to obtain phasing in a file that 
 
 `` ./build/src/PanGenie -i test-reads.fq -r test-reference.fasta -v test-variants.vcf -p -o test ``
 
-If `` -g `` and `` -p `` are omitted, PanGenie will run both genotying and phasing (which will take a few seconds for this example). 
+If `` -g `` and `` -p `` are omitted, PanGenie will run both genotying and phasing (which will take a few seconds for this example). Note that when running PanGenie on a whole genome dataset, parameter `` -e `` should be omitted (so that the default value is used).
 
 Per default, PanGenie uses a single thread. The number of threads used for k-mer counting and genotyping/phasing can be set via parameters ``-j`` and ``-t``, respectively. 

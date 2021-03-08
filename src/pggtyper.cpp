@@ -119,6 +119,7 @@ int main (int argc, char* argv[])
 	bool ignore_imputed = false;
 	bool add_reference = true;
 	size_t sampling_size = 10;
+	uint64_t hash_size = 3000000000;
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
@@ -139,6 +140,7 @@ int main (int argc, char* argv[])
 	argument_parser.add_flag_argument('u', "output genotype ./. for variants not covered by any unique kmers.");
 	argument_parser.add_flag_argument('d', "do not add reference as additional path.");
 	argument_parser.add_optional_argument('a', "0", "sample subsets of paths of this size.");
+	argument_parser.add_optional_argument('e', "3000000000", "size of hash used by jellyfish.");
 
 	try {
 		argument_parser.parse(argc, argv);
@@ -165,6 +167,10 @@ int main (int argc, char* argv[])
 	ignore_imputed = argument_parser.get_flag('u');
 	add_reference = !argument_parser.get_flag('d');
 	sampling_size = stoi(argument_parser.get_argument('a'));
+	cout << argument_parser.get_argument('e') << endl;
+	istringstream iss(argument_parser.get_argument('e'));
+	iss >> hash_size;
+	cout << hash_size << endl;
 
 	// print info
 	cerr << "Files and parameters used:" << endl;
@@ -209,9 +215,9 @@ int main (int argc, char* argv[])
 		} else {
 			cerr << "Count kmers in reads ..." << endl;
 			if (count_only_graph) {
-				read_kmer_counts = new JellyfishCounter(readfile, segment_file, kmersize, nr_jellyfish_threads);
+				read_kmer_counts = new JellyfishCounter(readfile, segment_file, kmersize, nr_jellyfish_threads, hash_size);
 			} else {
-				read_kmer_counts = new JellyfishCounter(readfile, kmersize, nr_jellyfish_threads);
+				read_kmer_counts = new JellyfishCounter(readfile, kmersize, nr_jellyfish_threads, hash_size);
 			}
 		}
 
@@ -220,7 +226,7 @@ int main (int argc, char* argv[])
 
 		// count kmers in allele + reference sequence
 		cerr << "Count kmers in genome ..." << endl;
-		JellyfishCounter genomic_kmer_counts (segment_file, kmersize, nr_jellyfish_threads);
+		JellyfishCounter genomic_kmer_counts (segment_file, kmersize, nr_jellyfish_threads, hash_size);
 
 		// TODO: only for analysis
 		struct rusage r_usage1;

@@ -23,10 +23,10 @@ vector<char*> to_args(string readfile) {
 }
 
 
-JellyfishCounter::JellyfishCounter (string readfile, size_t kmer_size, size_t nr_threads)
+JellyfishCounter::JellyfishCounter (string readfile, size_t kmer_size, size_t nr_threads, uint64_t hash)
 {
 	jellyfish::mer_dna::k(kmer_size); // Set length of mers
-	const uint64_t hash_size    = 3000000000; // Initial size of hash.
+	const uint64_t hash_size    = hash; // Initial size of hash, default = 3000000000.
 	const uint32_t num_reprobes = 126;
 	const uint32_t num_threads  = nr_threads; // Number of concurrent threads
 	const uint32_t counter_len  = 7;  // Minimum length of counting field
@@ -48,10 +48,10 @@ JellyfishCounter::JellyfishCounter (string readfile, size_t kmer_size, size_t nr
 
 }
 
-JellyfishCounter::JellyfishCounter (string readfile, string kmerfile, size_t kmer_size, size_t nr_threads)
+JellyfishCounter::JellyfishCounter (string readfile, string kmerfile, size_t kmer_size, size_t nr_threads, uint64_t hash)
 {
 	jellyfish::mer_dna::k(kmer_size); // Set length of mers
-	const uint64_t hash_size    = 3000000000; // Initial size of hash.
+	const uint64_t hash_size    = hash; // Initial size of hash.
 	const uint32_t num_reprobes = 126;
 	const uint32_t num_threads  = nr_threads; // Number of concurrent threads
 	const uint32_t counter_len  = 7;  // Minimum length of counting field
