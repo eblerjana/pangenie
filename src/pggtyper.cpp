@@ -167,10 +167,8 @@ int main (int argc, char* argv[])
 	ignore_imputed = argument_parser.get_flag('u');
 	add_reference = !argument_parser.get_flag('d');
 	sampling_size = stoi(argument_parser.get_argument('a'));
-	cout << argument_parser.get_argument('e') << endl;
 	istringstream iss(argument_parser.get_argument('e'));
 	iss >> hash_size;
-	cout << hash_size << endl;
 
 	// print info
 	cerr << "Files and parameters used:" << endl;
