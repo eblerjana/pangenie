@@ -452,7 +452,7 @@ if __name__ == "__main__":
 				'total_baseline_nonref',
 				'total_intersection',
 				'correct_all',
-				'correct_nonref',
+				'correct_non-ref',
 				'wrong_all',
 				'not_typed_all',
 				'correct_biallelic',
