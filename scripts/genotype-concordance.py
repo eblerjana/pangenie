@@ -233,9 +233,11 @@ class GenotypingStatistics:
 		self.wrong_all = 0
 		self.wrong_nonref = 0
 		self.not_typed_all = 0
+		self.not_typed_nonref = 0
 
 		self.not_in_callset_all = 0
 		self.not_in_callset_biallelic = 0
+		self.not_in_callset_nonref = 0
 		self.absent_truth = 0
 
 		# confusion matrix
@@ -245,6 +247,7 @@ class GenotypingStatistics:
 		typed_all = max(self.correct_all + self.wrong_all, 1)
 		typed_nonref = max(self.correct_nonref + self.wrong_nonref, 1)
 		assert self.total_baseline == self.correct_all + self.wrong_all + self.not_in_callset_all + self.not_typed_all
+		assert self.total_baseline_nonref == self.correct_nonref + self.wrong_nonref + self.not_in_callset_nonref + self.not_typed_nonref
 		correct_biallelic = self.confusion_matrix[0][0] + self.confusion_matrix[1][1] + self.confusion_matrix[2][2]
 		wrong_biallelic = self.confusion_matrix[0][1] + self.confusion_matrix[0][2] + self.confusion_matrix[1][0] + self.confusion_matrix[1][2] + self.confusion_matrix[2][1] + self.confusion_matrix[2][0]
 		not_typed_biallelic = self.total_baseline_biallelic - correct_biallelic - wrong_biallelic - self.not_in_callset_biallelic
@@ -260,12 +263,14 @@ class GenotypingStatistics:
 			str(self.total_baseline_nonref), # total nonref variants
 			str(self.total_intersection), # intersection of callsets
 			str(self.correct_all/float(typed_all)), # correct
-			str(self.correct_nonref/float(typed_nonref)), # correct nonref
 			str(self.wrong_all/float(typed_all)), # wrong
 			str((self.not_typed_all+self.not_in_callset_all)/float(self.total_baseline if self.total_baseline != 0 else 1)), # not typed
 			str(correct_biallelic/ float(typed_biallelic)), # correct biallelic
 			str(wrong_biallelic/ float(typed_biallelic)), # wrong biallelic
 			str((not_typed_biallelic+self.not_in_callset_biallelic)/float(self.total_baseline_biallelic if self.total_baseline_biallelic != 0 else 1)),  # not typed biallelic
+			str(self.correct_nonref/float(typed_nonref)), # correct nonref
+			str(self.wrong_nonref/float(typed_nonref)), # wrong nonref
+			str((self.not_typed_nonref+self.not_in_callset_nonref)/float(self.total_baseline_nonref if self.total_baseline_nonref != 0 else 1)),  # not typed nonref
 			str(self.correct_all),
 			str(self.wrong_all),
 			str(self.not_typed_all),
@@ -273,7 +278,11 @@ class GenotypingStatistics:
 			str(correct_biallelic),
 			str(wrong_biallelic),
 			str(not_typed_biallelic),
-			str(self.not_in_callset_biallelic)
+			str(self.not_in_callset_biallelic),
+			str(self.correct_nonref),
+			str(self.wrong_nonref),
+			str(self.not_typed_nonref),
+			str(self.not_in_callset_nonref)
 			]) + '\n'
 											)
 
@@ -376,6 +385,8 @@ class GenotypeConcordanceComputer:
 
 				if callset_gt.get_quality() < quality or callset_gt.get_allele_frequency() < allele_freq or callset_gt.get_unique_kmers() < uk_count or callset_gt.get_missing_alleles() < missing_count:
 					statistics[vartype].not_typed_all += 1
+					if gt.nonref:
+						statistics[vartype].not_typed_nonref += 1
 					continue
 
 				if (callset_gt.get_binary_genotype() != -1) and (gt.get_binary_genotype() != -1):
@@ -383,6 +394,8 @@ class GenotypeConcordanceComputer:
 
 				if (callset_gt.get_genotype() == None): # or (gt.get_genotype()==None):
 					statistics[vartype].not_typed_all += 1
+					if gt.nonref:
+						statistics[vartype].not_typed_nonref += 1
 					print(pos.position, vartype.name, callset_gt.get_genotype() == None, gt.get_genotype()==None)
 					continue
 
@@ -398,6 +411,8 @@ class GenotypeConcordanceComputer:
 						statistics[vartype].wrong_nonref += 1
 			else:
 				statistics[vartype].not_in_callset_all += 1
+				if gt.nonref:
+					statistics[vartype].not_in_callset_nonref += 1
 				if gt.get_binary_genotype() != -1:
 					statistics[vartype].confusion_matrix[gt.get_binary_genotype()][3] += 1
 					statistics[vartype].not_in_callset_biallelic += 1
@@ -452,12 +467,14 @@ if __name__ == "__main__":
 				'total_baseline_nonref',
 				'total_intersection',
 				'correct_all',
-				'correct_non-ref',
 				'wrong_all',
 				'not_typed_all',
 				'correct_biallelic',
 				'wrong_biallelic',
 				'not_typed_biallelic',
+				'correct_non-ref',
+				'wrong_non-ref',
+				'not_typed_non-ref',
 				'nr_correct_all',
 				'nr_wrong_all',
 				'nr_not_typed_all',
@@ -465,7 +482,12 @@ if __name__ == "__main__":
 				'nr_correct_biallelic',
 				'nr_wrong_biallelic',
 				'nr_not_typed_biallelic',
-				'nr_not_in_callset_biallelic'	]) + '\n'
+				'nr_not_in_callset_biallelic',
+				'nr_correct_non-ref',
+				'nr_wrong_non-ref',
+				'nr_not_typed_non-ref',
+				'nr_not_in_callset_non-ref', 
+	]) + '\n'
 		for tsv_file in tsv_files:
 			tsv_file.write(header)
 		vartypes = [vartype for vartype in VariantType]
