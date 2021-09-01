@@ -202,8 +202,8 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 
 		// determine left and right flanks
 		// TODO: handle cases where variant is less than kmersize from start or end of the chromosome
-		if ( (current_start_pos < kmer_size) || ( (current_end_pos + kmer_size) > this->fasta_reader.get_size_of(current_chrom)) ) {
-			cerr << "VariantReader: skip variant at " << current_chrom << ":" << current_start_pos << " since variant is less than kmer size from start or end of chromosome. " << endl;
+		if ( (current_start_pos < (kmer_size*2) ) || ( (current_end_pos + (kmer_size*2)) > this->fasta_reader.get_size_of(current_chrom)) ) {
+			cerr << "VariantReader: skip variant at " << current_chrom << ":" << current_start_pos << " since variant is less than 2 * kmer size from start or end of chromosome. " << endl;
 			continue;
 		}
 		DnaSequence left_flank;
