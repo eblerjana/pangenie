@@ -120,6 +120,7 @@ int main (int argc, char* argv[])
 	bool add_reference = true;
 	size_t sampling_size = 10;
 	uint64_t hash_size = 3000000000;
+	size_t phasing_size = 30;
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
@@ -141,6 +142,7 @@ int main (int argc, char* argv[])
 	argument_parser.add_flag_argument('d', "do not add reference as additional path.");
 	argument_parser.add_optional_argument('a', "0", "sample subsets of paths of this size.");
 	argument_parser.add_optional_argument('e', "3000000000", "size of hash used by jellyfish.");
+	argument_parser.add_optional_argument('x', "30", "number of haplotypes to subsample for phasing.");
 
 	try {
 		argument_parser.parse(argc, argv);
@@ -167,6 +169,7 @@ int main (int argc, char* argv[])
 	ignore_imputed = argument_parser.get_flag('u');
 	add_reference = !argument_parser.get_flag('d');
 	sampling_size = stoi(argument_parser.get_argument('a'));
+	phasing_size = stoi(argument_parser.get_argument('x'));
 	istringstream iss(argument_parser.get_argument('e'));
 	iss >> hash_size;
 
@@ -305,7 +308,7 @@ int main (int argc, char* argv[])
 	// for now, run phasing only once on largest set of paths that can still be handled.
 	// in order to use all paths, an iterative stradegie should be considered
 	vector<unsigned short> phasing_paths;
-	unsigned short nr_phasing_paths = min((unsigned short) nr_paths, (unsigned short) 30);
+	unsigned short nr_phasing_paths = min((unsigned short) nr_paths, (unsigned short) phasing_size);
 	path_sampler.select_single_subset(phasing_paths, nr_phasing_paths);
 	if (!only_genotyping) cerr << "Sampled " << phasing_paths.size() << " paths to be used for phasing." << endl;
 	time_path_sampling = timer.get_interval_time();
