@@ -74,13 +74,13 @@ The typical use case is to run PanGenie on a whole genome dataset. The following
 
 We run PanGenie given a pangenome graph (VCF file,``test-variants.vcf``), sequencing reads (FASTA/FASTQ file, ``test-reads.fa``) and a reference sequence (FASTA file, ``test-reference.fa``) provided in the ``demo/`` folder. After installation, PanGenie's genotyping algorithm can be run using the following command:
 
-`` ./build/src/PanGenie -i test-reads.fq -r test-reference.fasta -v test-variants.vcf -g -o test -e 100000 ``
+`` ./build/src/PanGenie -i test-reads.fa -r test-reference.fa -v test-variants.vcf -g -o test -e 100000 ``
 
 The result will be a VCF file named `` test_genotyping.vcf `` containing the same variants as the input VCF with additional genotype predictions, genotype likelihoods and genotype qualities.
 
 To run only phasing, use the -p option instead to obtain phasing in a file that will be named `` test_phasing.vcf ``.
 
-`` ./build/src/PanGenie -i test-reads.fq -r test-reference.fasta -v test-variants.vcf -p -o test -e 100000 ``
+`` ./build/src/PanGenie -i test-reads.fa -r test-reference.fa -v test-variants.vcf -p -o test -e 100000 ``
 
 If `` -g `` and `` -p `` are omitted, PanGenie will run both genotying and phasing (which will take a few seconds for this example). Parameter `` -e `` sets the hash size used by Jellyfish for k-mer counting. When running PanGenie on a whole genome dataset, this parameter can be omitted (so that PanGenie uses the default value).
 
