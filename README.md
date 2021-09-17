@@ -43,18 +43,15 @@ author: Jana Ebler
 usage: PanGenie [options] -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf>
 
 options:
-	-a VAL	sample subsets of paths of this size. (default: 0).
 	-c	count all read kmers instead of only those located in graph.
 	-d	do not add reference as additional path.
 	-e VAL	size of hash used by jellyfish. (default: 3000000000).
-	-g	only run genotyping (Forward backward algorithm)
+	-g	run genotyping (Forward backward algorithm, default behaviour).
 	-i VAL	sequencing reads in FASTA/FASTQ format or Jellyfish database in jf format (required).
 	-j VAL	number of threads to use for kmer-counting (default: 1).
 	-k VAL	kmer size (default: 31).
-	-m VAL	regularization constant for copynumber probabilities (default: 0.001).
-	-n VAL	effective population size (default: 0.00001).
 	-o VAL	prefix of the output files (default: result).
-	-p	only run phasing (Viterbi algorithm)
+	-p	run phasing (Viterbi algorithm). Experimental feature.
 	-r VAL	reference genome in FASTA format (required).
 	-s VAL	name of the sample (will be used in the output VCFs) (default: sample).
 	-t VAL	number of threads to use for core algorithm. Largest number of threads possible is the number of chromosomes given in the VCF (default: 1).
