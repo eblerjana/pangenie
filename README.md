@@ -29,9 +29,9 @@ With the data described here: https://www.biorxiv.org/content/10.1101/2020.11.11
 The largest dataset that we have tested contained around 16M variants, 64 haplotypes and around 30x read coverage. Using 24 cores, PanGenie run in 1 hour and 46 minutes (24 CPU hours) and used 120 GB of RAM.
 
 ## Usage
-Genotyping can be run as shown below. Required arguments are short read sequencing reads in FASTQ-format, the reference genome in FASTA-format and a fully-phased, multisample VCF-file that contains a panel of known haplotypes.
-Per default, the program will run genotyping (Forward-Backward algorithm) and phasing (Viterbi algorithm) and produces a VCF-file with genotypes for all variants in the input VCF (named `` <outname>_genotyping.vcf``) and a separate
-VCF-file with haplotypes (named `` <outname>_phasing.vcf``). Flags `` -g `` and `` -p `` can be used to run only genotyping or phasing, respectively.
+Genotyping can be run as shown below. Required arguments are short read sequencing reads in FASTQ-format, the reference genome in FASTA-format and a fully-phased, multisample VCF-file that contains a panel of known haplotypes (see next section).
+The program will run genotyping (Forward-Backward algorithm) and produces a VCF-file with genotypes for all variants in the input VCF (named `` <outname>_genotyping.vcf``).
+
 
 
 ```bat
@@ -63,25 +63,22 @@ options:
 ```
 
 
-## Pan-Genome graph
+## Input VCF
 
-PanGenie expects a directed and acyclic pangenome graph as input (-v option) which is represented as fully-phased, multisample VCF file. Variant records represent variant bubbles and each haplotype defines one path through this graph. We generate such graphs from haplotype-resolved assemblies using this pipeline: https://bitbucket.org/jana_ebler/vcf-merging. However, any fully-phased, multisample VCF file can be used as input. Important is, that variant records with overlapping coordinates are merged into a single, multiallelic VCF record, since otherwise PanGenie will filter them out. 
+PanGenie expects a directed and acyclic pangenome graph as input (-v option) which is represented as fully-phased, multisample VCF file. Variant records represent variant bubbles and each haplotype defines one path through this graph. We generate such graphs from haplotype-resolved assemblies using this pipeline: https://bitbucket.org/jana_ebler/vcf-merging. However, any ** fully-phased **, ** multisample ** VCF file with ** non-overlapping ** variants can be used as input. Important is, that variant records with overlapping coordinates are merged into a single, multiallelic VCF record, since otherwise PanGenie will filter them out. If your input VCF contains overlapping variants, the easiest way to run PanGenie is by using the Snakemake pipeline provided in ``pipelines/run-from-callset/``.
 
 
 ## Demo
 
 The typical use case is to run PanGenie on a whole genome dataset. The following example is just a little demo illustrating how to run PanGenie. 
 
-We run PanGenie given a pangenome graph (VCF file,``test-variants.vcf``), sequencing reads (FASTA/FASTQ file, ``test-reads.fa``) and a reference sequence (FASTA file, ``test-reference.fa``) provided in the ``demo/`` folder. After installation, PanGenie's genotyping algorithm can be run using the following command:
+We run PanGenie given a pangenome graph (VCF file,``test-variants.vcf``), sequencing reads (FASTA/FASTQ file, ``test-reads.fa``) and a reference sequence (FASTA file, ``test-reference.fa``) provided in the ``demo/`` folder. After installation, PanGenie's genotyping algorithm can be run using the following command (which will take a few seconds for this example):
 
-`` ./build/src/PanGenie -i test-reads.fa -r test-reference.fa -v test-variants.vcf -g -o test -e 100000 ``
+`` ./build/src/PanGenie -i test-reads.fa -r test-reference.fa -v test-variants.vcf -o test -e 100000 ``
+
 
 The result will be a VCF file named `` test_genotyping.vcf `` containing the same variants as the input VCF with additional genotype predictions, genotype likelihoods and genotype qualities.
 
-To run only phasing, use the -p option instead to obtain phasing in a file that will be named `` test_phasing.vcf ``.
-
-`` ./build/src/PanGenie -i test-reads.fa -r test-reference.fa -v test-variants.vcf -p -o test -e 100000 ``
-
-If `` -g `` and `` -p `` are omitted, PanGenie will run both genotying and phasing (which will take a few seconds for this example). Parameter `` -e `` sets the hash size used by Jellyfish for k-mer counting. When running PanGenie on a whole genome dataset, this parameter can be omitted (so that PanGenie uses the default value).
+Parameter `` -e `` sets the hash size used by Jellyfish for k-mer counting. When running PanGenie on a whole genome dataset, this parameter can be omitted (so that PanGenie uses the default value).
 
 Per default, PanGenie uses a single thread. The number of threads used for k-mer counting and genotyping/phasing can be set via parameters ``-j`` and ``-t``, respectively. 
