@@ -1,18 +1,13 @@
 # PanGenie
 
-A genotyper for various types of genetic variants (such as SNPs, indels and structural variants). Genotypes are computed based on read k-mer counts and a panel of known haplotypes. A description of the method can be found here: https://www.biorxiv.org/content/10.1101/2020.11.11.378133v1.
+A genotyper for various types of genetic variants (such as SNPs, indels and structural variants) represented in a pangenome graph. Genotypes are computed based on read k-mer counts and a panel of known haplotypes. A description of the method can be found here: https://www.biorxiv.org/content/10.1101/2020.11.11.378133v1.
 
 ## Requirements
 * gcc 4.9+
 * cmake
 * jellyfish
 
-## Installation
-`` git clone https://jana_ebler@bitbucket.org/jana_ebler/pangenie.git``  
-`` cd pangenie``  
-``mkdir build; cd build; cmake .. ; make``
-
-## Installing into a conda environment
+## Installing into a conda environment (recommended)
 `` git clone https://jana_ebler@bitbucket.org/jana_ebler/pangenie.git``  
 `` cd pangenie``  
 `` conda env create -f environment.yml``  
@@ -21,17 +16,39 @@ A genotyper for various types of genetic variants (such as SNPs, indels and stru
 
 Note: we have observed that sometimes it is necessary to set ``export PKG_CONFIG_PATH="<path-to-miniconda>/miniconda3/envs/pangenie/lib/pkgconfig"``   before building the software.
 
-## Runtime and memory usage
+## Installation without conda
+`` git clone https://jana_ebler@bitbucket.org/jana_ebler/pangenie.git``  
+`` cd pangenie``  
+``mkdir build; cd build; cmake .. ; make``
 
-Runtime and memory usage depend on the number of variants genotyped and the number of haplotypes present in the graph.
 
-With the data described here: https://www.biorxiv.org/content/10.1101/2020.11.11.378133v1, PanGenie ran in 1 hour and 25 minutes walltime using 22 cores (16 CPU hours) and used 68 GB RAM.
-The largest dataset that we have tested contained around 16M variants, 64 haplotypes and around 30x read coverage. Using 24 cores, PanGenie run in 1 hour and 46 minutes (24 CPU hours) and used 120 GB of RAM.
+## Required Input files
+
+PanGenie is a pangenome-based genotyper. It computes genotypes for variants represented as bubbles in a pangenome graph by taking information of already known haplotypes (represented as paths through the graph) into account. We describe the required
+input files below.
+
+### Input variants
+
+PanGenie expects a directed and acyclic pangenome graph as input (``-v`` option) which is represented as ** fully-phased **, ** multi-sample ** VCF file. Variant records represent variant bubbles and each haplotype defines one path through this graph. We generate such graphs from haplotype-resolved assemblies using this pipeline: https://bitbucket.org/jana_ebler/vcf-merging. However, any ** fully-phased **, ** multi-sample ** VCF file with ** non-overlapping ** variants can be used as input. Important is, that variant records with overlapping coordinates are merged into a single, multi-allelic VCF record, since otherwise PanGenie will filter them out. If your input VCF contains overlapping variants, the easiest way to run PanGenie is by using the Snakemake pipeline provided in ``pipelines/run-from-callset/``.
+
+
+### Input reads
+
+PanGenie is k-mer based and thus expects ** short reads ** as input. Reads must be provided in a single FASTA or FASTQ file using the ``-i`` option.
+
+### Input reference genome
+
+PanGenie also needs a reference genome in FASTA format which can be provided using option ``-r``.
+
 
 ## Usage
-Genotyping can be run as shown below. Required arguments are short read sequencing reads in FASTQ-format, the reference genome in FASTA-format and a fully-phased, multisample VCF-file that contains a panel of known haplotypes (see next section).
-The program will run genotyping (Forward-Backward algorithm) and produces a VCF-file with genotypes for all variants in the input VCF (named `` <outname>_genotyping.vcf``).
 
+PanGenie can be run using the command shown below:
+
+``./build/src/PanGenie -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf> -t <nr threads for genotyping> -j <nr threads for k-mer counting>``
+
+The result will be a VCF file containing genotypes for the variants provided in the input VCF. Per default, the name of the output VCF is `` result_genotyping.vcf ``. You can specify the prefix of the output file using option ``-o <prefix>``, i.e. the output file will be named as ``<prefix>_genotyping.vcf ``.
+The full list of options is provided below.
 
 
 ```bat
@@ -60,9 +77,13 @@ options:
 ```
 
 
-## Input VCF
+## Runtime and memory usage
 
-PanGenie expects a directed and acyclic pangenome graph as input (-v option) which is represented as fully-phased, multisample VCF file. Variant records represent variant bubbles and each haplotype defines one path through this graph. We generate such graphs from haplotype-resolved assemblies using this pipeline: https://bitbucket.org/jana_ebler/vcf-merging. However, any ** fully-phased **, ** multisample ** VCF file with ** non-overlapping ** variants can be used as input. Important is, that variant records with overlapping coordinates are merged into a single, multiallelic VCF record, since otherwise PanGenie will filter them out. If your input VCF contains overlapping variants, the easiest way to run PanGenie is by using the Snakemake pipeline provided in ``pipelines/run-from-callset/``.
+Runtime and memory usage depend on the number of variants genotyped and the number of haplotypes present in the graph.
+
+With the data described here: https://www.biorxiv.org/content/10.1101/2020.11.11.378133v1, PanGenie ran in 1 hour and 25 minutes walltime using 22 cores (16 CPU hours) and used 68 GB RAM.
+The largest dataset that we have tested contained around 16M variants, 64 haplotypes and around 30x read coverage. Using 24 cores, PanGenie run in 1 hour and 46 minutes (24 CPU hours) and used 120 GB of RAM.
+
 
 
 ## Demo
