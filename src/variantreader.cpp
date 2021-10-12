@@ -185,6 +185,9 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 			}
 			vector<string> p ;
 			parse_line(p, tokens[i], '|');
+			if (p.size() != 2) {
+				throw runtime_error("VariantReader::VariantReader: Found invalid genotype. Genotypes must be diploid (.|. if missing).");
+			}
 			for (string& s : p){
 				// handle unknown genotypes '.'
 				if (s == ".") {
