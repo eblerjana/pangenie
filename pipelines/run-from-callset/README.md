@@ -10,7 +10,7 @@ This pipeline prepares a given input VCF to be used as input for PanGenie, and t
 ## How to run
 
 * insert paths to the input data (reference genome, VCF, reads) into the config file (`` contig.yaml ``)
-* run pipeline: `` snakemake -j <n_cores>`` 
+* run pipeline: `` snakemake -j <n_cores> --use-conda `` 
 
 ## Output
 
