@@ -1,6 +1,6 @@
 # PanGenie
 
-A genotyper for various types of genetic variants (such as SNPs, indels and structural variants) represented in a pangenome graph. Genotypes are computed based on read k-mer counts and a panel of known haplotypes. A description of the method can be found here: https://www.biorxiv.org/content/10.1101/2020.11.11.378133v1.
+A genotyper for various types of genetic variants (such as SNPs, indels and structural variants) represented in a pangenome graph. Genotypes are computed based on read k-mer counts and a panel of known haplotypes. A description of the method can be found here: https://www.biorxiv.org/content/10.1101/2020.11.11.378133v1
 
 ## Requirements
 * gcc 4.9+
@@ -39,7 +39,7 @@ Note especially the third property listed above. See the figure below for an ill
 
 ![alt text](images/input-representation.png)
 
-We typically generate such VCFs from haplotype-resolved assemblies using this pipeline: https://bitbucket.org/jana_ebler/vcf-merging. However, any VCF with the properties listed above can be used as input. 
+We typically generate such VCFs from haplotype-resolved assemblies using this pipeline: https://bitbucket.org/jana_ebler/vcf-merging . However, any VCF with the properties listed above can be used as input. 
 
 #### What should I do if my input VCF contains overlapping variants?
 
