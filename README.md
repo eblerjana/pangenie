@@ -24,19 +24,32 @@ Note: we have observed that sometimes it is necessary to set ``export PKG_CONFIG
 
 ## Required Input files
 
-PanGenie is a pangenome-based genotyper. It computes genotypes for variants represented as bubbles in a pangenome graph by taking information of already known haplotypes (represented as paths through the graph) into account. We describe the required
-input files below.
+PanGenie is a pangenome-based genotyper. It computes genotypes for variants represented as bubbles in a pangenome graph by taking information of already known haplotypes (represented as paths through the graph) into account. The required input files are described in detail below.
 
 ### Input variants
 
-PanGenie expects a directed and acyclic pangenome graph as input (``-v`` option) which is represented as ** fully-phased **, ** multi-sample ** VCF file. Variant records represent variant bubbles and each haplotype defines one path through this graph. We generate such graphs from haplotype-resolved assemblies using this pipeline: https://bitbucket.org/jana_ebler/vcf-merging. However, any ** fully-phased **, ** multi-sample ** VCF file with ** non-overlapping ** variants can be used as input. Important is, that variant records with overlapping coordinates are merged into a single, multi-allelic VCF record, since otherwise PanGenie will filter them out. If your input VCF contains overlapping variants, the easiest way to run PanGenie is by using the Snakemake pipeline provided in ``pipelines/run-from-callset/``.
+PanGenie expects a directed and acyclic pangenome graph as input (``-v`` option).
+This graph is represented in terms of a VCF file that needs to have certain properties:
 
+- ** multi-sample ** - it needs to contain haplotype information of at least one known sample
+- ** fully-phased ** - haplotype information of the known panel samples are represented by phased genotypes and each sample must be phased in a single block (i.e. from start to end).
+- ** non-overlapping variants ** - the VCF represents a pangenome graph. Therefore, overlapping variation must be represented in a single, multi-allelic variant record.
+
+Note especially the third property listed above. See the figure below for an illustration of how overlapping variant alleles need to be represented in the input VCF provided to PanGenie.
+
+![alt text](images/input-representation.png)
+
+We typically generate such VCFs from haplotype-resolved assemblies using this pipeline: https://bitbucket.org/jana_ebler/vcf-merging. However, any VCF with the properties listed above can be used as input. 
+
+#### What should I do if my input VCF contains overlapping variants?
+
+In this case you can run PanGenie using the Snakemake pipeline provided in ``pipelines/run-from-callset/``. This automatically merges overlapping alleles into mult-allelic VCF, runs PanGenie and later converts the output VCF back to the original representation.
 
 ### Input reads
 
 PanGenie is k-mer based and thus expects ** short reads ** as input. Reads must be provided in a single FASTA or FASTQ file using the ``-i`` option.
 
-### Input reference genome
+### Input reference genomenput-representation.png
 
 PanGenie also needs a reference genome in FASTA format which can be provided using option ``-r``.
 
