@@ -1,5 +1,7 @@
 import sys
 
+allele_index = 0
+
 for line in sys.stdin:
 	if line.startswith('##'):
 		print(line[:-1])
@@ -17,9 +19,10 @@ for line in sys.stdin:
 	ids = []
 	for i,a in enumerate(alleles):
 		var_len = len(a)
-		var_type = 'allele' + str(i+1)
+		var_type = 'allele' + str(allele_index)
 		var_id = '-'.join([chrom, position, var_type, str(var_len)])
 		ids.append(var_id)
+		allele_index += 1
 	info_fields['ID'] = ','.join(ids)
 	updated_info = []
 	for k,v in info_fields.items():

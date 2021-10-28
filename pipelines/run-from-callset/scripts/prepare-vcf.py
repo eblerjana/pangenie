@@ -11,8 +11,6 @@ missing_records = 0
 missing_alleles = 0
 ns_records = 0
 ns_alleles = 0
-unphased_records = 0
-unphased_alleles = 0
 written_records = 0
 written_alleles = 0
 
@@ -45,12 +43,14 @@ for line in sys.stdin:
 			raise Exception('VCF contains unphased positions.')
 	frac_missing = n_missing / n_total
 	if frac_missing > args.missing:
+		missing_records += 1
+		missing_alleles += n_alt_alleles
 		continue
 	print(line.strip())
 	written_records += 1
 	written_alleles += n_alt_alleles
 
 # print statistics
-sys.stderr.write('skipped ' + str(missing_records) + ' (' + str(missing_alleles) + ') records (alleles) for which fraction of missing alleles exceeds threshold.')
-sys.stderr.write('skipped ' + str(ns_records) + ' (' + str(ns_alleles) + ') records (alleles) for which alternative alleles contained Ns.')
-sys.stderr.write('kept ' + str(written_records) + ' (' + str(written_alleles) + ') records (alleles) of ' + str(total_records) + ' (' + str(total_alleles) + ').')
+sys.stderr.write('skipped ' + str(missing_records) + ' (' + str(missing_alleles) + ') records (alleles) for which fraction of missing alleles exceeds threshold.\n')
+sys.stderr.write('skipped ' + str(ns_records) + ' (' + str(ns_alleles) + ') records (alleles) for which alternative alleles contained Ns\n.')
+sys.stderr.write('kept ' + str(written_records) + ' (' + str(written_alleles) + ') records (alleles) of ' + str(total_records) + ' (' + str(total_alleles) + ').\n')
