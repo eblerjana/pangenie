@@ -84,9 +84,9 @@ rule merge_haplotypes:
 	conda:
 		"env/merging.yml"
 	resources:
-		mem_total_mb=900000,
-		runtime_hrs=30,
-		runtime_min=1
+		mem_total_mb=10000,
+		runtime_hrs=4,
+		runtime_min=59
 	shell:
 		"""
 		python3 {scripts}/merge_vcfs.py merge -vcf {input.vcf} -r {input.reference} -ploidy 2  2> {log} 1> {output}
