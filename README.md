@@ -3,22 +3,14 @@
 A genotyper for various types of genetic variants (such as SNPs, indels and structural variants) represented in a pangenome graph. Genotypes are computed based on read k-mer counts and a panel of known haplotypes. A description of the method can be found here: https://www.biorxiv.org/content/10.1101/2020.11.11.378133v1
 
 ## Requirements
-* gcc 4.9+
-* cmake
-* jellyfish
+* conda
 
-## Installing into a conda environment (recommended)
+## Installation
 `` git clone https://jana_ebler@bitbucket.org/jana_ebler/pangenie.git``  
 `` cd pangenie``  
 `` conda env create -f environment.yml``  
 `` conda activate pangenie``   
-``mkdir build; cd build; cmake .. ; make``
-
-Note: we have observed that sometimes it is necessary to set ``export PKG_CONFIG_PATH="<path-to-miniconda>/miniconda3/envs/pangenie/lib/pkgconfig"``   before building the software.
-
-## Installation without conda
-`` git clone https://jana_ebler@bitbucket.org/jana_ebler/pangenie.git``  
-`` cd pangenie``  
+`` conda install pkgconfig``  
 ``mkdir build; cd build; cmake .. ; make``
 
 
