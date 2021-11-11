@@ -91,6 +91,9 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 		throw runtime_error("VariantReader::VariantReader: Uncompressed VCF-file is required.");
 	}
 	ifstream file(filename);
+	if (!file.good()) {
+		throw runtime_error("VariantReader::VariantReader: input VCF file cannot be opened.");
+	}
 	string line;
 	string previous_chrom("");
 	size_t previous_end_pos = 0;

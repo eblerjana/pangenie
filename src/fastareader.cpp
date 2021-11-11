@@ -13,6 +13,9 @@ FastaReader::FastaReader(string filename) {
 // std::map<std::string, DnaSequence*> name_to_sequence;
 void FastaReader::parse_file(string filename) {
 	ifstream file(filename);
+	if (!file.good()) {
+		throw runtime_error("FastaReader::parse_file: reference file cannot be opened.");
+	}
 	string line;
 	DnaSequence* dna_seq = nullptr;
 	while (getline(file, line)) {
