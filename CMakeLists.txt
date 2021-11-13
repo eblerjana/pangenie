@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.1)
 project(PanGenie)
 
 set (CMAKE_CXX_STANDARD 11)
-
+set (CMAKE_CXX_STANDARD_REQUIRED True)
 enable_testing()
 
 #find_package(Boost 1.67 REQUIRED system)
@@ -14,6 +14,8 @@ link_directories(${JELLYFISH_LIBRARY_DIRS})
 #include_directories(${JELLYFISH_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} ${CMAKE_BINARY_DIR}/src)
 include_directories(${JELLYFISH_INCLUDE_DIRS} ${CMAKE_BINARY_DIR}/src)
 add_compile_options(${JELLYFISH_CFLAGS_OTHER})
+
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-long-long -Wno-unknown-pragmas -O3")
 
 add_subdirectory(src)
 add_subdirectory(tests)

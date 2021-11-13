@@ -1,4 +1,3 @@
-set (CMAKE_CXX_STANDARD 11)
 set (PROGRAM_SOURCE_DIR ${PROJECT_SOURCE_DIR}/src)
 include_directories (${PROGRAM_SOURCE_DIR})
 file (GLOB_RECURSE  ProjectFiles  ${PROGRAM_SOURCE_DIR}/emissionprobabilitycomputer.cpp ${PROGRAM_SOURCE_DIR}/copynumber.cpp ${PROGRAM_SOURCE_DIR}/kmerpath.cpp ${PROGRAM_SOURCE_DIR}/uniquekmers.cpp ${PROGRAM_SOURCE_DIR}/variant.cpp ${PROGRAM_SOURCE_DIR}/variantreader.cpp ${PROGRAM_SOURCE_DIR}/probabilitycomputer.cpp ${PROGRAM_SOURCE_DIR}/transitionprobabilitycomputer.cpp ${PROGRAM_SOURCE_DIR}/hmm.cpp ${PROGRAM_SOURCE_DIR}/columnindexer.cpp ${PROGRAM_SOURCE_DIR}/columnindexer.cpp ${PROGRAM_SOURCE_DIR}/genotypingresult.cpp ${PROGRAM_SOURCE_DIR}/dnasequence.cpp ${PROGRAM_SOURCE_DIR}/fastareader.cpp ${PROGRAM_SOURCE_DIR}/jellyfishcounter.cpp ${PROGRAM_SOURCE_DIR}/jellyfishreader.cpp ${PROGRAM_SOURCE_DIR}/histogram.cpp ${PROGRAM_SOURCE_DIR}/sequenceutils.cpp ${PROGRAM_SOURCE_DIR}/pathsampler.cpp ${PROGRAM_SOURCE_DIR}/probabilitytable.cpp)
