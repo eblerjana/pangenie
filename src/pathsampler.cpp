@@ -51,7 +51,7 @@ void PathSampler::partition_paths(vector<vector<unsigned short>>& result, unsign
 	}
 
 	// if the last sample is shorter than the sample_size, randomly add additional paths
-	unsigned short missing = sample_size - result.at(result.size()-1).size();
+	unsigned short missing = sample_size - result[result.size()-1].size();
 	if (missing > 0) {
 		this->select_single_subset(result[result.size()-1], missing);
 	}
@@ -97,7 +97,7 @@ void PathSampler::partition_samples(vector<vector<unsigned short>>& result, unsi
 //	if (reference_added) {
 //		missing = sample_size - (result.at(result.size()-1).size() - 1);
 //	} else {
-	missing = sample_size - result.at(result.size()-1).size();
+	missing = sample_size - result[result.size()-1].size();
 //	}
 
 	if (missing > 0) {

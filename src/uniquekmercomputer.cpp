@@ -132,8 +132,6 @@ void UniqueKmerComputer::compute_empty(vector<UniqueKmers*>* result) const {
 	for (size_t v = 0; v < nr_variants; ++v) {
 		const Variant& variant = this->variants->get_variant(this->chromosome, v);
 		UniqueKmers* u = new UniqueKmers(variant.get_start_position());
-		size_t nr_alleles = variant.nr_of_alleles();
-
 		// insert empty alleles and paths
 		assert(variant.nr_of_paths() < 65535);
 		for (unsigned short p = 0; p < variant.nr_of_paths(); ++p) {

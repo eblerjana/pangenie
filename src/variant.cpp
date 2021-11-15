@@ -54,13 +54,14 @@ Variant::Variant(string left_flank, string right_flank, string chromosome, size_
 	 right_flank(right_flank),
 	 chromosome(chromosome),
 	 start_position(start_position),
+	 variant_ids({variant_id}),
 	 paths(paths),
-	 flanks_added(false),
-	 variant_ids({variant_id})
+	 flanks_added(false)
 {
-	this->allele_sequences.push_back(vector<DnaSequence>());
-	for (unsigned char i = 0; i < alleles.size(); ++i) {
-		this->allele_sequences[0].push_back(DnaSequence(alleles[i]));
+	size_t nr_alleles = alleles.size();
+	this->allele_sequences.push_back(vector<DnaSequence>(nr_alleles));
+	for (unsigned char i = 0; i < nr_alleles; ++i) {
+		this->allele_sequences[0][i] = DnaSequence(alleles[i]);
 		this->allele_combinations.push_back({i});
 	}
 
@@ -72,13 +73,15 @@ Variant::Variant(DnaSequence& left_flank, DnaSequence& right_flank, string chrom
 	 right_flank(right_flank),
 	 chromosome(chromosome),
 	 start_position(start_position),
+	 variant_ids({variant_id}),
 	 paths(paths),
-	 flanks_added(false),
-	 variant_ids({variant_id})
+	 flanks_added(false)
+
 {
-	this->allele_sequences.push_back(vector<DnaSequence>());
+	size_t nr_alleles = alleles.size();
+	this->allele_sequences.push_back(vector<DnaSequence>(nr_alleles));
 	for (unsigned char i = 0; i < alleles.size(); ++i) {
-		this->allele_sequences[0].push_back(alleles[i]);
+		this->allele_sequences[0][i] = alleles[i];
 		this->allele_combinations.push_back({i});
 	}
 
@@ -296,11 +299,10 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 		unsigned char a = this->get_allele_on_path(i);
 		vector<unsigned char> allele = this->allele_combinations.at(a);
 		assert (allele.size() == nr_variants);
-		size_t start_index = 0;
 		for (size_t v = 0; v < nr_variants; v++) {
 			// get allele at this position
-			unsigned char allele_id = allele.at(v);
-			paths_per_variant.at(v).push_back(allele_id);
+			unsigned char allele_id = allele[v];
+			paths_per_variant[v].push_back(allele_id);
 		}
 	}
 
@@ -326,7 +328,7 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 		size_t current_end = current_start + alleles[0].size();
 
 		// construct new variant object
-		Variant v(left, right, this->chromosome, current_start, current_end, alleles, paths_per_variant.at(i), this->variant_ids.at(i));
+		Variant v(left, right, this->chromosome, current_start, current_end, alleles, paths_per_variant[i], this->variant_ids.at(i));
 
 		resulting_variants->push_back(v);
 		if (input_genotyping != nullptr) {

@@ -33,7 +33,7 @@ void FastaReader::parse_file(string filename) {
 
 			if (this->name_to_sequence.find(name) != this->name_to_sequence.end()) {
 				// sequence with same name already seen, replace it
-				delete this->name_to_sequence.at(name);
+				delete this->name_to_sequence[name];
 			}
 			dna_seq = new DnaSequence;
 			this->name_to_sequence[name] = dna_seq;

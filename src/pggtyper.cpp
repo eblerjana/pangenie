@@ -4,9 +4,6 @@
 #include <mutex>
 #include <thread>
 #include <algorithm>
-//#include <boost/asio/thread_pool.hpp>
-//#include <boost/asio/post.hpp>
-//#include <boost/bind.hpp>
 #include "kmercounter.hpp"
 #include "jellyfishreader.hpp"
 #include "jellyfishcounter.hpp"
@@ -64,13 +61,13 @@ void run_genotyping(string chromosome, vector<UniqueKmers*>* unique_kmers, Proba
 			size_t index = 0;
 			vector<GenotypingResult> genotypes = hmm.move_genotyping_result();
 			for (auto likelihoods : genotypes) {
-				results->result.at(chromosome).at(index).combine(likelihoods);
+				results->result[chromosome][index].combine(likelihoods);
 				index += 1;
 			}
 		}
 		// normalize the likelihoods after they have been combined
-		for (size_t i = 0; i < results->result.at(chromosome).size(); ++i) {
-			results->result.at(chromosome).at(i).normalize();
+		for (size_t i = 0; i < results->result[chromosome].size(); ++i) {
+			results->result[chromosome][i].normalize();
 		}
 	}
 	// store runtime

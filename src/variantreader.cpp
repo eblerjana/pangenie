@@ -82,10 +82,10 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 	:fasta_reader(reference_filename),
 	 kmer_size(kmer_size),
 	 nr_variants(0),
+	 add_reference(add_reference),
 	 sample(sample),
 	 genotyping_outfile_open(false),
-	 phasing_outfile_open(false),
-	 add_reference(add_reference)
+	 phasing_outfile_open(false)
 {
 	if (filename.substr(filename.size()-3,3).compare(".gz") == 0) {
 		throw runtime_error("VariantReader::VariantReader: Uncompressed VCF-file is required.");
@@ -177,7 +177,8 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 		}
 
 		// construct paths
-		vector<unsigned char> paths = {};
+		vector<unsigned char> paths;
+		paths.reserve(this->nr_paths);
 		if (add_reference) paths.push_back((unsigned char) 0);
 		unsigned char undefined_index = alleles.size();
 		string undefined_allele = "N";

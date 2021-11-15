@@ -58,43 +58,53 @@ void DnaSequence::append(DnaSequence seq) {
 }
 
 void DnaSequence::reverse() {
-	vector<unsigned char> reversed;
+	size_t len = this->sequence.size();
+	vector<unsigned char> reversed(len);
 	if (this->even_length) {
+		size_t index = 0;
 		for (vector<unsigned char>::reverse_iterator it = this->sequence.rbegin(); it != this->sequence.rend(); ++it) {
 			unsigned char reversed_element = ((*it) >> 4) | ((*it) << 4);
-			reversed.push_back(reversed_element);
+			reversed[index] = reversed_element;
+			index += 1;
 		}
 	} else {
-		unsigned char current = this->sequence[this->sequence.size() - 1];
+		unsigned char current = this->sequence[len - 1];
 		this->sequence.pop_back();
+		size_t index = 0;
 		for (vector<unsigned char>::reverse_iterator it = this->sequence.rbegin(); it != this->sequence.rend(); ++it) {
 			unsigned char second = (*it) << 4;
-			reversed.push_back( (second >> 4) | current );
+			reversed[index] = (second >> 4) | current;
+			index += 1;
 			current = (*it) & 240;
 		}
-		reversed.push_back(current);
+		reversed[index] = current;
 	}
 	this->sequence = move(reversed);
 }
 
 void DnaSequence::reverse_complement() {
-	vector<unsigned char> reverse_compl;
+	size_t len = this->sequence.size();
+	vector<unsigned char> reverse_compl(len);
 	if (this->even_length) {
+		size_t index = 0;
 		for (vector<unsigned char>::reverse_iterator it = this->sequence.rbegin(); it != this->sequence.rend(); ++it) {
 			unsigned char first = complement((*it) >> 4);
 			unsigned char second = complement((*it) & 15);
-			reverse_compl.push_back( (second << 4) | first);
+			reverse_compl[index] = (second << 4) | first;
+			index += 1;
 		}
 	} else {
-		unsigned char current = complement(this->sequence[this->sequence.size() - 1] >> 4) << 4;
+		unsigned char current = complement(this->sequence[len - 1] >> 4) << 4;
 		this->sequence.pop_back();
+		size_t index = 0;
 		for (vector<unsigned char>::reverse_iterator it = this->sequence.rbegin(); it != this->sequence.rend(); ++it) {
 			unsigned char second = complement((*it) & 15);
 			unsigned char first = complement((*it) >> 4);
-			reverse_compl.push_back(current | second);
+			reverse_compl[index] = (current | second);
 			current = (first << 4);
+			index += 1;
 		}
-		reverse_compl.push_back(current);
+		reverse_compl[index] = current;
 	}
 	this->sequence = move(reverse_compl);
 }
