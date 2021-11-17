@@ -1,56 +1,60 @@
 name: pangenie
 channels:
-  - anaconda
   - conda-forge
   - bioconda
-  - defaults
-  - r
+  - main
 dependencies:
-  - binutils_impl_linux-64=2.31.1=h6176602_1
-  - binutils_linux-64=2.31.1=h6176602_6
-  - blas=1.0=mkl
-  - boost=1.67.0=py37_4
-  - bzip2=1.0.6=h14c3975_1002
-  - ca-certificates=2019.5.15=1
-  - certifi=2019.6.16=py37_1
-  - cmake=3.14.0=h52cb24c_0
-  - curl=7.64.1=hf8cf82a_0
-  - expat=2.2.6=he6710b0_0
-  - gcc_impl_linux-64=7.3.0=habb00fd_1
-  - gcc_linux-64=7.3.0=h553295d_6
-  - gxx_impl_linux-64=7.3.0=hdf63c60_1
-  - gxx_linux-64=7.3.0=h553295d_6
-  - icu=58.2=h211956c_0
-  - intel-openmp=2019.4=243
+  - _libgcc_mutex=0.1=conda_forge
+  - _openmp_mutex=4.5=1_gnu
+  - binutils_impl_linux-64=2.36.1=h193b22a_2
+  - binutils_linux-64=2.36=hf3e587d_1
+  - bzip2=1.0.8=h7b6447c_0
+  - c-ares=1.17.1=h27cfd23_0
+  - ca-certificates=2021.10.8=ha878542_0
+  - certifi=2021.10.8=py39hf3d152e_1
+  - cmake=3.19.6=h973ab73_0
+  - expat=2.4.1=h2531618_2
+  - gcc=11.2.0=h702ea55_1
+  - gcc_impl_linux-64=11.2.0=h82a94d6_11
+  - gcc_linux-64=11.2.0=h39a9532_1
+  - gxx_impl_linux-64=11.2.0=h82a94d6_11
+  - gxx_linux-64=11.2.0=hacbe6df_1
   - jellyfish=2.2.10=h6bb024c_1
   - jemalloc=4.5.0=0
-  - krb5=1.16.3=h05b26f9_1001
-  - libboost=1.67.0=h46d08c1_4
-  - libcurl=7.64.1=hda55be3_0
-  - libedit=3.1.20170329=hf8c457e_1001
-  - libffi=3.2.1=h4deb6c0_3
+  - jsoncpp=1.9.5=h4bd325d_0
+  - kernel-headers_linux-64=2.6.32=he073ed8_15
+  - krb5=1.19.2=hac12032_0
+  - ld_impl_linux-64=2.36.1=hea4e1c9_2
+  - libcurl=7.78.0=h0b77cf5_0
+  - libedit=3.1.20210910=h7f8727e_0
+  - libev=4.33=h7f8727e_1
+  - libffi=3.3=he6710b0_2
   - libgcc=7.2.0=h69d50b8_2
-  - libgcc-ng=8.2.0=hdf63c60_1
-  - libgfortran-ng=7.3.0=hdf63c60_0
-  - libssh2=1.8.2=h22169c7_2
-  - libstdcxx-ng=8.2.0=hdf63c60_1
-  - libuv=1.28.0=h516909a_0
-  - mkl=2019.4=243
-  - mkl-service=2.0.2=py37h7b6447c_0
-  - mkl_fft=1.0.14=py37ha843d7b_0
-  - mkl_random=1.0.2=py37hd81dba3_0
-  - ncurses=6.1=hf484d3e_1002
-  - numpy=1.16.4=py37h7e9f1db_0
-  - numpy-base=1.16.4=py37hde5b4d6_0
-  - pip=19.2.2=py37_0
-  - py-boost=1.67.0=py37h04863e7_4
-  - python=3.7.3=h33d41f4_1
-  - readline=8.0=hf8c457e_0
-  - rhash=1.3.8=h1ba5d50_0
-  - setuptools=41.0.1=py37_0
-  - six=1.12.0=py37_0
-  - sqlite=3.29.0=hcee41ef_1
-  - tk=8.6.9=h84994c4_1001
-  - wheel=0.33.4=py37_0
-  - xz=5.2.4=h14c3975_1001
+  - libgcc-devel_linux-64=11.2.0=h0952999_11
+  - libgcc-ng=11.2.0=h1d223b6_11
+  - libgomp=11.2.0=h1d223b6_11
+  - libnghttp2=1.41.0=hf8bcb03_2
+  - libsanitizer=11.2.0=he4da1e4_11
+  - libssh2=1.9.0=h1ba5d50_1
+  - libstdcxx-devel_linux-64=11.2.0=h0952999_11
+  - libstdcxx-ng=11.2.0=he4da1e4_11
+  - libuv=1.40.0=h7b6447c_0
+  - lz4-c=1.9.3=h295c915_1
+  - ncurses=6.3=h7f8727e_2
+  - openssl=1.1.1l=h7f98852_0
+  - pip=21.2.4=py39h06a4308_0
+  - pkg-config=0.29.2=h1bed415_8
+  - pkgconfig=1.5.4=py39h06a4308_0
+  - python=3.9.7=h12debd9_1
+  - python_abi=3.9=2_cp39
+  - readline=8.1=h27cfd23_0
+  - rhash=1.4.1=h3c74f83_1
+  - setuptools=58.0.4=py39h06a4308_0
+  - sqlite=3.36.0=hc218d9a_0
+  - sysroot_linux-64=2.12=he073ed8_15
+  - tk=8.6.11=h1ccaba5_0
+  - tzdata=2021e=hda174b7_0
+  - wheel=0.37.0=pyhd3eb1b0_1
+  - xz=5.2.5=h7b6447c_0
   - zlib=1.2.11=h7b6447c_3
+  - zstd=1.4.9=haebb681_0

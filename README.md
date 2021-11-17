@@ -10,7 +10,6 @@ A genotyper for various types of genetic variants (such as SNPs, indels and stru
 `` cd pangenie``  
 `` conda env create -f environment.yml``  
 `` conda activate pangenie``   
-`` conda install pkgconfig``  
 ``mkdir build; cd build; cmake .. ; make``
 
 
