@@ -1,0 +1,20 @@
+H1 0000
+H2 1111
+H3 0101
+H4 1010
+
+In both cases, I initialized the models in a way that genotype 0/0 has probability 1 for the first variant (mimicking a very strong signal from the kmers at this position). For the other positions, I assumed that there is no kmer signals available (so that genotypes are derived purely based on the haplotypes). Using the old version, we get genotype likelihoods of (0/0, 0/1, 1/1):
+
+v1: (1.0, 0.0, 0.0)
+v2: (0.25, 0.5, 0.25)
+v3: (1.0, 0.0, 0.0)
+v4: (0.25, 0.5, 0.25)
+
+For the collapsed HMM, we get
+
+v1: (1.0, 0.0, 0.0)
+v2: (0.25, 0.5, 0.25)
+v3: (0.25, 0.5, 0.25)
+v4: (0.25, 0.5, 0.25)
+
+So the latter version loses the information that the 0/0 genotype at the first and third position must have come from a combination of H1 and H3 haplotypes.
