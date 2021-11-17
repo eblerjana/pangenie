@@ -167,15 +167,6 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 		}
 		parse_line(alleles, tokens[4], ',');
 
-		// store mapping of alleles to variant ids
-		vector<string> var_ids;
-		parse_info_fields(var_ids, tokens[7]);
-		if (!var_ids.empty()) {
-			insert_ids(current_chrom, alleles, var_ids, true);
-		} else {
-			this->variant_ids[current_chrom].push_back(vector<string>());
-		}
-
 		// construct paths
 		vector<unsigned char> paths = {};
 		if (add_reference) paths.push_back((unsigned char) 0);
@@ -212,6 +203,16 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 			cerr << "VariantReader: skip variant at " << current_chrom << ":" << current_start_pos << " since variant is less than 2 * kmer size from start or end of chromosome. " << endl;
 			continue;
 		}
+
+		// store mapping of alleles to variant ids
+		vector<string> var_ids;
+		parse_info_fields(var_ids, tokens[7]);
+		if (!var_ids.empty()) {
+			insert_ids(current_chrom, alleles, var_ids, true);
+		} else {
+			this->variant_ids[current_chrom].push_back(vector<string>());
+		}
+
 		DnaSequence left_flank;
 		this->fasta_reader.get_subsequence(current_chrom, current_start_pos - kmer_size + 1, current_start_pos, left_flank);
 		DnaSequence right_flank;

@@ -2,6 +2,8 @@
 #define PROBABILITYCOMPUTER_HPP
 
 #include <vector>
+#include <stdio.h>
+#include <stdlib.h>
 
 /** 
 * Computes probabilities for kmer copy numbers.

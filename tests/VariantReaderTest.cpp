@@ -367,5 +367,9 @@ TEST_CASE("VariantReader variant_ids2", "[VariantReader variant_ids2]") {
 TEST_CASE("VariantReader close_to_start", "[VariantReader close_to_start]") {
 	string vcf = "../tests/data/close.vcf";
 	string fasta = "../tests/data/close.fa";
+	vector<GenotypingResult> genotypes(1);
+	vector<UniqueKmers*> u = { new UniqueKmers(0) };
 	VariantReader v(vcf, fasta, 31, true);
+	v.open_genotyping_outfile("../tests/data/small1-ids-close.vcf");
+	v.write_genotypes_of("chr10", genotypes, &u);
 }
