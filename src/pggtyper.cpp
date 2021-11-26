@@ -4,9 +4,8 @@
 #include <mutex>
 #include <thread>
 #include <algorithm>
-//#include <boost/asio/thread_pool.hpp>
-//#include <boost/asio/post.hpp>
-//#include <boost/bind.hpp>
+#include <fstream>
+#include <stdexcept>
 #include "kmercounter.hpp"
 #include "jellyfishreader.hpp"
 #include "jellyfishcounter.hpp"
@@ -21,6 +20,31 @@
 #include "pathsampler.hpp"
 
 using namespace std;
+
+
+bool ends_with (string const &filename, string const &ending) {
+    if (filename.length() >= ending.length()) {
+        return (0 == filename.compare (filename.length() - ending.length(), ending.length(), ending));
+    } else {
+        return false;
+    }
+}
+
+void check_input_file(string &filename) {
+	// check if file exists and can be opened
+	ifstream file(filename);
+	if (!file.good()) {
+		stringstream ss;
+		ss << "File " << filename << " cannot be opened." << endl;
+		throw runtime_error(ss.str());
+	}
+	// make sure file is not compressed
+	if (ends_with(filename, ".gz")) {
+		stringstream ss;
+		ss << "File " << filename << " seems to be gzip-compressed. PanGenie requires an uncompressed file." << endl;
+		throw runtime_error(ss.str());
+	}
+}
 
 struct UniqueKmersMap {
 	mutex kmers_mutex;
@@ -124,9 +148,9 @@ int main (int argc, char* argv[])
 	// parse the command line arguments
 	CommandLineParser argument_parser;
 	argument_parser.add_command("PanGenie [options] -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf>");
-	argument_parser.add_mandatory_argument('i', "sequencing reads in FASTA/FASTQ format or Jellyfish database in jf format");
-	argument_parser.add_mandatory_argument('r', "reference genome in FASTA format");
-	argument_parser.add_mandatory_argument('v', "variants in VCF format");
+	argument_parser.add_mandatory_argument('i', "sequencing reads in FASTA/FASTQ format (uncompressed) or Jellyfish database in jf format");
+	argument_parser.add_mandatory_argument('r', "reference genome in FASTA format (uncompressed)");
+	argument_parser.add_mandatory_argument('v', "variants in VCF format (uncompressed)");
 	argument_parser.add_optional_argument('o', "result", "prefix of the output files");
 	argument_parser.add_optional_argument('k', "31", "kmer size");
 	argument_parser.add_optional_argument('s', "sample", "name of the sample (will be used in the output VCFs)");
@@ -184,6 +208,11 @@ int main (int argc, char* argv[])
 	// print info
 	cerr << "Files and parameters used:" << endl;
 	argument_parser.info();
+
+	// check if input files exist and are uncompressed
+	check_input_file(reffile);
+	check_input_file(vcffile);
+	check_input_file(readfile);
 
 	// read allele sequences and unitigs inbetween, write them into file
 	cerr << "Determine allele sequences ..." << endl;
