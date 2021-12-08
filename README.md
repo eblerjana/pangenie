@@ -44,7 +44,6 @@ PanGenie is k-mer based and thus expects ** short reads ** as input. Reads must 
 
 PanGenie also needs a reference genome in FASTA format which can be provided using option ``-r``.
 
-
 ## Usage
 
 PanGenie can be run using the command shown below:
