@@ -88,13 +88,13 @@ void run_genotyping(string chromosome, vector<UniqueKmers*>* unique_kmers, Proba
 			size_t index = 0;
 			vector<GenotypingResult> genotypes = hmm.move_genotyping_result();
 			for (auto likelihoods : genotypes) {
-				results->result.at(chromosome).at(index).combine(likelihoods);
+				results->result[chromosome][index].combine(likelihoods);
 				index += 1;
 			}
 		}
 		// normalize the likelihoods after they have been combined
-		for (size_t i = 0; i < results->result.at(chromosome).size(); ++i) {
-			results->result.at(chromosome).at(i).normalize();
+		for (size_t i = 0; i < results->result[chromosome].size(); ++i) {
+			results->result[chromosome][i].normalize();
 		}
 	}
 	// store runtime
@@ -243,73 +243,71 @@ int main (int argc, char* argv[])
 	UniqueKmersMap unique_kmers_list;
 	ProbabilityTable probabilities;
 
-	{
-		KmerCounter* read_kmer_counts = nullptr;
-		// determine kmer copynumbers in reads
-		if (readfile.substr(std::max(3, (int) readfile.size())-3) == std::string(".jf")) {
-			cerr << "Read pre-computed read kmer counts ..." << endl;
-			jellyfish::mer_dna::k(kmersize);
-			read_kmer_counts = new JellyfishReader(readfile, kmersize);
+	KmerCounter* read_kmer_counts = nullptr;
+	// determine kmer copynumbers in reads
+	if (readfile.substr(std::max(3, (int) readfile.size())-3) == std::string(".jf")) {
+		cerr << "Read pre-computed read kmer counts ..." << endl;
+		jellyfish::mer_dna::k(kmersize);
+		read_kmer_counts = new JellyfishReader(readfile, kmersize);
+	} else {
+		cerr << "Count kmers in reads ..." << endl;
+		if (count_only_graph) {
+			read_kmer_counts = new JellyfishCounter(readfile, segment_file, kmersize, nr_jellyfish_threads, hash_size);
 		} else {
-			cerr << "Count kmers in reads ..." << endl;
-			if (count_only_graph) {
-				read_kmer_counts = new JellyfishCounter(readfile, segment_file, kmersize, nr_jellyfish_threads, hash_size);
-			} else {
-				read_kmer_counts = new JellyfishCounter(readfile, kmersize, nr_jellyfish_threads, hash_size);
-			}
+			read_kmer_counts = new JellyfishCounter(readfile, kmersize, nr_jellyfish_threads, hash_size);
 		}
-
-		size_t kmer_abundance_peak = read_kmer_counts->computeHistogram(10000, count_only_graph, outname + "_histogram.histo");
-		cerr << "Computed kmer abundance peak: " << kmer_abundance_peak << endl;
-
-		// count kmers in allele + reference sequence
-		cerr << "Count kmers in genome ..." << endl;
-		JellyfishCounter genomic_kmer_counts (segment_file, kmersize, nr_jellyfish_threads, hash_size);
-
-		// TODO: only for analysis
-		struct rusage r_usage1;
-		getrusage(RUSAGE_SELF, &r_usage1);
-		cerr << "#### Memory usage until now: " << (r_usage1.ru_maxrss / 1E6) << " GB ####" << endl;
-
-		// prepare output files
-		if (! only_phasing) variant_reader.open_genotyping_outfile(outname + "_genotyping.vcf");
-		if (! only_genotyping) variant_reader.open_phasing_outfile(outname + "_phasing.vcf");
-
-		time_kmer_counting = timer.get_interval_time();
-
-		cerr << "Determine unique kmers ..." << endl;
-		// determine number of cores to use
-		size_t available_threads_uk = min(thread::hardware_concurrency(), (unsigned int) chromosomes.size());
-		size_t nr_cores_uk = min(nr_core_threads, available_threads_uk);
-		if (nr_cores_uk < nr_core_threads) {
-			cerr << "Warning: using " << nr_cores_uk << " for determining unique kmers." << endl;
-		}
-
-		// precompute probabilities
-		probabilities = ProbabilityTable(kmer_abundance_peak / 4, kmer_abundance_peak*4, 2*kmer_abundance_peak, regularization);
-
-		{
-			// create thread pool with at most nr_chromosomes threads
-			ThreadPool threadPool (nr_cores_uk);
-			for (auto chromosome : chromosomes) {
-				VariantReader* variants = &variant_reader;
-				UniqueKmersMap* result = &unique_kmers_list;
-				KmerCounter* genomic_counts = &genomic_kmer_counts;
-				ProbabilityTable* probs = &probabilities;
-				function<void()> f_unique_kmers = bind(prepare_unique_kmers, chromosome, genomic_counts, read_kmer_counts, variants, probs, result, kmer_abundance_peak);
-				threadPool.submit(f_unique_kmers);
-			}
-		}
-
-		// TODO: only for analysis
-		struct rusage r_usage2;
-		getrusage(RUSAGE_SELF, &r_usage2);
-		cerr << "#### Memory usage until now: " << (r_usage2.ru_maxrss / 1E6) << " GB ####" << endl;
-
-		delete read_kmer_counts;
-		read_kmer_counts = nullptr;
-		time_unique_kmers = timer.get_interval_time();
 	}
+
+	size_t kmer_abundance_peak = read_kmer_counts->computeHistogram(10000, count_only_graph, outname + "_histogram.histo");
+	cerr << "Computed kmer abundance peak: " << kmer_abundance_peak << endl;
+
+	// count kmers in allele + reference sequence
+	cerr << "Count kmers in genome ..." << endl;
+	JellyfishCounter genomic_kmer_counts (segment_file, kmersize, nr_jellyfish_threads, hash_size);
+
+	// TODO: only for analysis
+	struct rusage r_usage1;
+	getrusage(RUSAGE_SELF, &r_usage1);
+	cerr << "#### Memory usage until now: " << (r_usage1.ru_maxrss / 1E6) << " GB ####" << endl;
+
+	// prepare output files
+	if (! only_phasing) variant_reader.open_genotyping_outfile(outname + "_genotyping.vcf");
+	if (! only_genotyping) variant_reader.open_phasing_outfile(outname + "_phasing.vcf");
+
+	time_kmer_counting = timer.get_interval_time();
+
+	cerr << "Determine unique kmers ..." << endl;
+	// determine number of cores to use
+	size_t available_threads_uk = min(thread::hardware_concurrency(), (unsigned int) chromosomes.size());
+	size_t nr_cores_uk = min(nr_core_threads, available_threads_uk);
+	if (nr_cores_uk < nr_core_threads) {
+		cerr << "Warning: using " << nr_cores_uk << " for determining unique kmers." << endl;
+	}
+
+	// precompute probabilities
+	probabilities = ProbabilityTable(kmer_abundance_peak / 4, kmer_abundance_peak*4, 2*kmer_abundance_peak, regularization);
+
+	{
+		// create thread pool with at most nr_chromosomes threads
+		ThreadPool threadPool (nr_cores_uk);
+		for (auto chromosome : chromosomes) {
+			VariantReader* variants = &variant_reader;
+			UniqueKmersMap* result = &unique_kmers_list;
+			KmerCounter* genomic_counts = &genomic_kmer_counts;
+			ProbabilityTable* probs = &probabilities;
+			function<void()> f_unique_kmers = bind(prepare_unique_kmers, chromosome, genomic_counts, read_kmer_counts, variants, probs, result, kmer_abundance_peak);
+			threadPool.submit(f_unique_kmers);
+		}
+	}
+
+	// TODO: only for analysis
+	struct rusage r_usage2;
+	getrusage(RUSAGE_SELF, &r_usage2);
+	cerr << "#### Memory usage until now: " << (r_usage2.ru_maxrss / 1E6) << " GB ####" << endl;
+	delete read_kmer_counts;
+	read_kmer_counts = nullptr;
+	time_unique_kmers = timer.get_interval_time();
+
 
 	// TODO: only for analysis
 	struct rusage r_usage3;
