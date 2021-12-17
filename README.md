@@ -3,14 +3,45 @@
 A genotyper for various types of genetic variants (such as SNPs, indels and structural variants) represented in a pangenome graph. Genotypes are computed based on read k-mer counts and a panel of known haplotypes. A description of the method can be found here: https://www.biorxiv.org/content/10.1101/2020.11.11.378133v1
 
 ## Requirements
-* conda
+* conda or Singularity
 
 ## Installation
+
+### Building from source using Conda
+
 `` git clone https://jana_ebler@bitbucket.org/jana_ebler/pangenie.git``  
 `` cd pangenie``  
 `` conda env create -f environment.yml``  
 `` conda activate pangenie``   
 ``mkdir build; cd build; cmake .. ; make``
+
+### Building from source using Singularity
+
+Use the Singularity definition file located in ``container/`` to build an (Ubuntu-based) container as follows (requires root privileges):
+
+``[sudo] singularity build pangenie.sif pangenie.def``
+
+In all usage examples below, call the ``PanGenie`` executable as follows:
+
+``singularity exec pangenie.sif PanGenie <PARAMETERS>``
+
+For example, to show ``PanGenie``'s command line help, use the following command:
+
+``singularity exec pangenie.sif PanGenie --help``
+
+You can check which versions of ``PanGenie`` (git hash) and of the ``jellyfish`` library have been installed in the container by running the following commands:
+
+``singularity exec pangenie.sif cat /metadata/jellyfish.lib.version``
+
+should produce a line like this (so, here, v2.3.0):
+
+``$ libjellyfish-2.0-2:amd64 2.3.0-4build1 libjellyfish-2.0-dev:amd64 2.3.0-4build1``
+
+``singularity exec pangenie.sif cat /metadata/pangenie.git.version``
+
+should produce a line like this:
+
+``$ 5a1f9c5``
 
 
 ## Required Input files
