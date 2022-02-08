@@ -3,7 +3,7 @@
 
 #include <string>
 #include <vector>
-
+#include "cereal/access.hpp"
 /** 
 * Represents a DNA sequence.
 **/
@@ -41,8 +41,13 @@ public:
 	friend bool operator!=(const DnaSequence& dna1, const DnaSequence& dna2);
 	/** returns true if the sequence contains at least one undefined base (different from A,T,C,G,a,t,c,g) **/
 	bool contains_undefined() const;
+    template<class Archive>
+    void serialize(Archive& archive) {  // NOLINT
+      archive(sequence, even_length, is_undefined);
+    }
 
 private:
+    friend cereal::access;
 	/** store 2 bases per char (using 4 bits for each) **/
 	std::vector<unsigned char> sequence;
 	/** true if the length is even **/

@@ -5,6 +5,7 @@
 #include <regex>
 #include "variantreader.hpp"
 
+#include "cereal/archives/binary.hpp"
 
 using namespace std;
 
@@ -22,6 +23,27 @@ void parse_line(vector<string>& result, string line, char sep) {
 	while (getline(iss, token, sep)) {
 		result.push_back(token);
 	}
+}
+
+void VariantReader::Store() const {
+  std::ofstream os("raven.cereal");
+  try {
+    cereal::BinaryOutputArchive archive(os);
+    archive(*this);
+  } catch (std::exception&) {
+    throw std::logic_error(
+        "[raven::Graph::Store] error: unable to store archive");
+  }
+}
+void VariantReader::Load() {
+  std::ifstream is("raven.cereal");
+  try {
+    cereal::BinaryInputArchive archive(is);
+    archive(*this);
+  } catch (std::exception&) {
+    throw std::logic_error(
+        "[raven::Graph::Load] error: unable to load archive");
+  }
 }
 
 void VariantReader::insert_ids(string& chromosome, vector<DnaSequence>& alleles, vector<string>& variant_ids, bool reference_added) {
@@ -239,7 +261,9 @@ void VariantReader::write_path_segments(std::string filename) const {
 	// make sure to capture all chromosomes in the reference (including such for which no variants are given)
 	vector<string> chromosome_names;
 	this->fasta_reader.get_sequence_names(chromosome_names);
-	for (auto element : chromosome_names) {
+    
+
+    for (auto element : chromosome_names) {
 		size_t prev_end = 0;
 		// check if chromosome was present in VCF and write allele sequences in this case
 		auto it = this->variants_per_chromosome.find(element);
@@ -264,7 +288,7 @@ void VariantReader::write_path_segments(std::string filename) const {
 		size_t chr_len = this->fasta_reader.get_size_of(element);
 		string ref_segment;
 		this->fasta_reader.get_subsequence(element, prev_end, chr_len, ref_segment);
-		outfile << ref_segment << endl;
+        outfile << ref_segment << endl;
 	}
 	outfile.close();
 }

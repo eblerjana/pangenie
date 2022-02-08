@@ -62,14 +62,14 @@ void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, K
 	Timer timer;
 	UniqueKmerComputer kmer_computer(genomic_kmer_counts, read_kmer_counts, variant_reader, chromosome, kmer_coverage);
 	std::vector<UniqueKmers*> unique_kmers;
-	kmer_computer.compute_unique_kmers(&unique_kmers, probs);
+    kmer_computer.compute_unique_kmers(&unique_kmers, probs);
 	// store the results
 	{
 		lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
 		unique_kmers_map->unique_kmers.insert(pair<string, vector<UniqueKmers*>> (chromosome, move(unique_kmers)));
 	}
 	// store runtime
-	lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
+    lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
 	unique_kmers_map->runtimes.insert(pair<string, double>(chromosome, timer.get_total_time()));
 }
 
@@ -130,7 +130,8 @@ int main (int argc, char* argv[])
 	string readfile = "";
 	string reffile = "";
 	string vcffile = "";
-	size_t kmersize = 31;
+	string cereal = "";
+    size_t kmersize = 31;
 	string outname = "result";
 	string sample_name = "sample";
 	size_t nr_jellyfish_threads = 1;
@@ -151,6 +152,7 @@ int main (int argc, char* argv[])
 	argument_parser.add_mandatory_argument('i', "sequencing reads in FASTA/FASTQ format (uncompressed) or Jellyfish database in jf format");
 	argument_parser.add_mandatory_argument('r', "reference genome in FASTA format (uncompressed)");
 	argument_parser.add_mandatory_argument('v', "variants in VCF format (uncompressed)");
+    argument_parser.add_optional_argument('T', "","PGGBTYPER");
 	argument_parser.add_optional_argument('o', "result", "prefix of the output files");
 	argument_parser.add_optional_argument('k', "31", "kmer size");
 	argument_parser.add_optional_argument('s', "sample", "name of the sample (will be used in the output VCFs)");
@@ -178,6 +180,7 @@ int main (int argc, char* argv[])
 	readfile = argument_parser.get_argument('i');
 	reffile = argument_parser.get_argument('r');
 	vcffile = argument_parser.get_argument('v');
+    cereal = argument_parser.get_argument('T');
 	kmersize = stoi(argument_parser.get_argument('k'));
 	outname = argument_parser.get_argument('o');
 	sample_name = argument_parser.get_argument('s');
@@ -208,28 +211,31 @@ int main (int argc, char* argv[])
 	// print info
 	cerr << "Files and parameters used:" << endl;
 	argument_parser.info();
+    VariantReader variant_reader;
+    vector<string> chromosomes;
 
-	// check if input files exist and are uncompressed
-	check_input_file(reffile);
+    string segment_file = outname + "_path_segments.fasta";
+
+    if (cereal.empty()) {
+    // check if input files exist and are uncompressed
+    check_input_file(reffile);
 	check_input_file(vcffile);
 	check_input_file(readfile);
 
 	// read allele sequences and unitigs inbetween, write them into file
 	cerr << "Determine allele sequences ..." << endl;
-	VariantReader variant_reader (vcffile, reffile, kmersize, add_reference, sample_name);
+	VariantReader variant_reader2(vcffile, reffile, kmersize, add_reference, sample_name);
 	
 	// TODO: only for analysis
 	struct rusage r_usage00;
 	getrusage(RUSAGE_SELF, &r_usage00);
 	cerr << "#### Memory usage until now: " << (r_usage00.ru_maxrss / 1E6) << " GB ####" << endl;
 	
-	string segment_file = outname + "_path_segments.fasta";
 	cerr << "Write path segments to file: " << segment_file << " ..." << endl;
-	variant_reader.write_path_segments(segment_file);
-
+	variant_reader2.write_path_segments(segment_file);
+    std::cout << "debugging here POST WRITE " << std::endl;
 	// determine chromosomes present in VCF
-	vector<string> chromosomes;
-	variant_reader.get_chromosomes(&chromosomes);
+	variant_reader2.get_chromosomes(&chromosomes);
 	cerr << "Found " << chromosomes.size() << " chromosome(s) in the VCF." << endl;
 
 	// TODO: only for analysis
@@ -238,6 +244,19 @@ int main (int argc, char* argv[])
 	cerr << "#### Memory usage until now: " << (r_usage0.ru_maxrss / 1E6) << " GB ####" << endl;
 
 	time_preprocessing = timer.get_interval_time();
+        variant_reader2.Store();
+        std::cout << "stored" <<std::endl;
+        return 0;
+    }
+    else {
+    std::cout << "LOADING" <<std::endl;
+   
+    variant_reader.Load();
+    //variant_reader.fasta_reader = FastaReader(reffile);
+    variant_reader.fasta_reader.parse_file(reffile);
+    variant_reader.get_chromosomes(&chromosomes);
+    }
+    
 
 	// UniqueKmers for each chromosome
 	UniqueKmersMap unique_kmers_list;
@@ -282,7 +301,7 @@ int main (int argc, char* argv[])
 		size_t available_threads_uk = min(thread::hardware_concurrency(), (unsigned int) chromosomes.size());
 		size_t nr_cores_uk = min(nr_core_threads, available_threads_uk);
 		if (nr_cores_uk < nr_core_threads) {
-			cerr << "Warning: using " << nr_cores_uk << " for determining unique kmers." << endl;
+			cerr << "Warning: using " << nr_cores_uk << " cores for determining unique kmers." << endl;
 		}
 
 		// precompute probabilities

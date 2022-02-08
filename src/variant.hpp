@@ -7,7 +7,7 @@
 #include "genotypingresult.hpp"
 #include "dnasequence.hpp"
 #include "uniquekmers.hpp"
-
+#include "cereal/access.hpp"
 /** 
 * Represents a variant.
 **/
@@ -28,6 +28,7 @@ public:
 	* @param paths vector containing the allele each path covers (i-th path covers allele at paths[i])
 	* @param variant_id ID of the variant (ID column of the VCF)
 	**/
+    Variant() = default;  
 	Variant(std::string left_flank, std::string right_flank, std::string chromosome, size_t start_position, size_t end_position, std::vector<std::string> alleles, std::vector<unsigned char> paths, std::string variant_id = ".");
 	Variant(DnaSequence& left_flank, DnaSequence& right_flank, std::string chromosome, size_t start_position, size_t end_position, std::vector<DnaSequence>& alleles, std::vector<unsigned char>& paths, std::string variant_id = ".");
 	/** add flanking sequences left and right of variant **/
@@ -73,8 +74,13 @@ public:
 	size_t nr_missing_alleles() const;
 	/** determine statistics for each individual variant **/
 	void variant_statistics (UniqueKmers* unique_kmers, std::vector<VariantStats>& result) const;
+    template<class Archive>
+    void serialize(Archive& archive) {  // NOLINT
+      archive(left_flank, right_flank, inner_flanks, chromosome, start_position, variant_ids, allele_sequences, allele_combinations, uncovered_alleles, paths, flanks_added);
+    }
 
 private:
+    friend cereal::access;
 	// flanking sequence at left end
 	DnaSequence left_flank;
 	// flanking sequence at right end

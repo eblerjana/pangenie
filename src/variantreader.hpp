@@ -13,6 +13,13 @@
 #include "genotypingresult.hpp"
 #include "uniquekmers.hpp"
 
+#include "cereal/access.hpp"
+#include "cereal/types/memory.hpp"
+#include "cereal/types/string.hpp"
+#include "cereal/types/unordered_set.hpp"
+#include "cereal/types/vector.hpp"
+#include "cereal/types/map.hpp"
+
 //std::vector<unsigned char> construct_index(std::vector<DnaSequence>& alleles, bool reference_added);
 //std::vector<unsigned char> construct_index(std::vector<std::string>& alleles, bool reference_added);
 
@@ -33,10 +40,12 @@ std::vector<unsigned char> construct_index(std::vector<T>& alleles, bool referen
 
 class VariantReader {
 public:
+    VariantReader() = default;
 	VariantReader (std::string filename, std::string reference_filename, size_t kmer_size, bool add_reference, std::string sample = "sample");
 	/**  writes all path segments (allele sequences + reference sequences in between)
 	*    to the given file.
 	**/
+    FastaReader fasta_reader;
 	size_t get_kmer_size() const;
 	void write_path_segments(std::string filename) const;
 	void get_chromosomes(std::vector<std::string>* result) const;
@@ -53,9 +62,17 @@ public:
 	size_t nr_of_paths() const;
 	void get_left_overhang(std::string chromosome, size_t index, size_t length, DnaSequence& result) const;
 	void get_right_overhang(std::string chromosome, size_t index, size_t length, DnaSequence& result) const;
+    void Store() const;
+    void Load();
 
 private:
-	FastaReader fasta_reader;
+    friend cereal::access;
+    template<class Archive>
+    void serialize(Archive & archive)
+    {
+    archive(kmer_size, nr_paths, nr_variants, add_reference, sample, variants_per_chromosome, variant_ids); 
+    }
+
 	size_t kmer_size;
 	size_t nr_paths;
 	size_t nr_variants;
