@@ -33,12 +33,8 @@ endif ()
 link_directories(${JELLYFISH_LIBRARY_DIRS} cereal:cereal)
 
 include_directories(${JELLYFISH_INCLUDE_DIRS} ${CMAKE_BINARY_DIR}/src /cluster/work/pausch/alex/software/Alex-pangenie/build/_deps/cereal-src/include)
-#add_compile_options(${JELLYFISH_CFLAGS_OTHER})
-#target_link_libraries(PanGenie
-#  cereal::cereal)
+add_compile_options(${JELLYFISH_CFLAGS_OTHER})
 
-#target_include_directories(PanGenie PUBLIC
-#  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-long-long -Wno-unknown-pragmas -std=gnu++2a -O3 -flto -pipe -mavx2")
 

@@ -166,7 +166,7 @@ int main (int argc, char* argv[])
 	argument_parser.add_flag_argument('d', "do not add reference as additional path.");
 //	argument_parser.add_optional_argument('a', "0", "sample subsets of paths of this size.");
 	argument_parser.add_optional_argument('e', "3000000000", "size of hash used by jellyfish.");
-    argument_parser.add_flag_argument('T', "Build index but don't run PanGenie");
+    argument_parser.add_flag_argument('B', "Build index but don't run PanGenie");
 
 	try {
 		argument_parser.parse(argc, argv);
@@ -203,7 +203,7 @@ int main (int argc, char* argv[])
 	count_only_graph = !argument_parser.get_flag('c');
 	ignore_imputed = argument_parser.get_flag('u');
 	add_reference = !argument_parser.get_flag('d');
-    build_index = argument_parser.get_flag('T');
+    build_index = argument_parser.get_flag('B');
 //	sampling_size = stoi(argument_parser.get_argument('a'));
 	istringstream iss(argument_parser.get_argument('e'));
 	iss >> hash_size;
@@ -215,7 +215,8 @@ int main (int argc, char* argv[])
     vector<string> chromosomes;
 
     const std::string REF_VCF_HASH_NAME = hash_filenames(reffile,vcffile);
-    string segment_file = REF_VCF_HASH_NAME + "_path_segments.fasta";
+    std::cout<<"Using file hash of " << REF_VCF_HASH_NAME << std::endl;
+    string segment_file = "pangenie."+REF_VCF_HASH_NAME + ".path_segments.fasta";
     //string segment_file = outname + "_path_segments.fasta";
 
     if (build_index) {
