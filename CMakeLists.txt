@@ -9,6 +9,7 @@ enable_testing()
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(JELLYFISH REQUIRED jellyfish-2.0)
 
+set(JUST_INSTALL_CEREAL ON CACHE BOOL "skip boost")
 find_package(cereal 1.3.1 QUIET)
 if (NOT cereal_FOUND)
   FetchContent_Declare(
