@@ -130,7 +130,6 @@ int main (int argc, char* argv[])
 	string readfile = "";
 	string reffile = "";
 	string vcffile = "";
-	string cereal = "";
     size_t kmersize = 31;
 	string outname = "result";
 	string sample_name = "sample";
@@ -143,7 +142,8 @@ int main (int argc, char* argv[])
 	bool count_only_graph = true;
 	bool ignore_imputed = false;
 	bool add_reference = true;
-	size_t sampling_size = 0;
+	bool build_index = false;
+    size_t sampling_size = 0;
 	uint64_t hash_size = 3000000000;
 
 	// parse the command line arguments
@@ -152,7 +152,6 @@ int main (int argc, char* argv[])
 	argument_parser.add_mandatory_argument('i', "sequencing reads in FASTA/FASTQ format (uncompressed) or Jellyfish database in jf format");
 	argument_parser.add_mandatory_argument('r', "reference genome in FASTA format (uncompressed)");
 	argument_parser.add_mandatory_argument('v', "variants in VCF format (uncompressed)");
-    argument_parser.add_optional_argument('T', "","PGGBTYPER");
 	argument_parser.add_optional_argument('o', "result", "prefix of the output files");
 	argument_parser.add_optional_argument('k', "31", "kmer size");
 	argument_parser.add_optional_argument('s', "sample", "name of the sample (will be used in the output VCFs)");
@@ -167,6 +166,7 @@ int main (int argc, char* argv[])
 	argument_parser.add_flag_argument('d', "do not add reference as additional path.");
 //	argument_parser.add_optional_argument('a', "0", "sample subsets of paths of this size.");
 	argument_parser.add_optional_argument('e', "3000000000", "size of hash used by jellyfish.");
+    argument_parser.add_flag_argument('T', "Build index but don't run PanGenie");
 
 	try {
 		argument_parser.parse(argc, argv);
@@ -180,7 +180,6 @@ int main (int argc, char* argv[])
 	readfile = argument_parser.get_argument('i');
 	reffile = argument_parser.get_argument('r');
 	vcffile = argument_parser.get_argument('v');
-    cereal = argument_parser.get_argument('T');
 	kmersize = stoi(argument_parser.get_argument('k'));
 	outname = argument_parser.get_argument('o');
 	sample_name = argument_parser.get_argument('s');
@@ -204,6 +203,7 @@ int main (int argc, char* argv[])
 	count_only_graph = !argument_parser.get_flag('c');
 	ignore_imputed = argument_parser.get_flag('u');
 	add_reference = !argument_parser.get_flag('d');
+    build_index = argument_parser.get_flag('T');
 //	sampling_size = stoi(argument_parser.get_argument('a'));
 	istringstream iss(argument_parser.get_argument('e'));
 	iss >> hash_size;
@@ -214,9 +214,11 @@ int main (int argc, char* argv[])
     VariantReader variant_reader;
     vector<string> chromosomes;
 
-    string segment_file = outname + "_path_segments.fasta";
+    const std::string REF_VCF_HASH_NAME = hash_filenames(reffile,vcffile);
+    string segment_file = REF_VCF_HASH_NAME + "_path_segments.fasta";
+    //string segment_file = outname + "_path_segments.fasta";
 
-    if (cereal.empty()) {
+    if (build_index) {
     // check if input files exist and are uncompressed
     check_input_file(reffile);
 	check_input_file(vcffile);
@@ -244,14 +246,14 @@ int main (int argc, char* argv[])
 	cerr << "#### Memory usage until now: " << (r_usage0.ru_maxrss / 1E6) << " GB ####" << endl;
 
 	time_preprocessing = timer.get_interval_time();
-        variant_reader2.Store();
-        std::cout << "stored" <<std::endl;
-        return 0;
+    variant_reader2.Store();
+    std::cout << "stored" <<std::endl;
+    return 0;
     }
     else {
     std::cout << "LOADING" <<std::endl;
    
-    variant_reader.Load();
+    variant_reader.Load(REF_VCF_HASH_NAME);
     //variant_reader.fasta_reader = FastaReader(reffile);
     variant_reader.fasta_reader.parse_file(reffile);
     variant_reader.get_chromosomes(&chromosomes);

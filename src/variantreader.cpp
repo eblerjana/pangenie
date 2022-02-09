@@ -4,10 +4,13 @@
 #include <math.h>
 #include <regex>
 #include "variantreader.hpp"
-
 #include "cereal/archives/binary.hpp"
 
 using namespace std;
+
+std::string hash_filenames(std::string reference, std::string vcf) {
+    return std::to_string(std::hash<std::string>{}(std::string(std::filesystem::canonical(reference)) + std::string(std::filesystem::canonical(vcf))));
+}
 
 void parse_line(vector<DnaSequence>& result, string line, char sep) {
 	string token;
@@ -26,7 +29,7 @@ void parse_line(vector<string>& result, string line, char sep) {
 }
 
 void VariantReader::Store() const {
-  std::ofstream os("raven.cereal");
+  std::ofstream os("pangenie."+this->REF_VCF_HASH_NAME + ".cereal");
   try {
     cereal::BinaryOutputArchive archive(os);
     archive(*this);
@@ -35,8 +38,9 @@ void VariantReader::Store() const {
         "[raven::Graph::Store] error: unable to store archive");
   }
 }
-void VariantReader::Load() {
-  std::ifstream is("raven.cereal");
+void VariantReader::Load(std::string name) {
+  std::cout<< "attempting to read name: " << "pangenie."+name+".cereal" << std::endl;
+  std::ifstream is("pangenie."+name+".cereal");
   try {
     cereal::BinaryInputArchive archive(is);
     archive(*this);
@@ -116,8 +120,11 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 	if (!file.good()) {
 		throw runtime_error("VariantReader::VariantReader: input VCF file cannot be opened.");
 	}
+    //
+    REF_VCF_HASH_NAME = hash_filenames(reference_filename,filename);
+
 	string line;
-	string previous_chrom("");
+    string previous_chrom("");
 	size_t previous_end_pos = 0;
 	map<unsigned int, string> fields = { {0, "#CHROM"}, {1, "POS"}, {2, "ID"}, {3, "REF"}, {4, "ALT"}, {5, "QUAL"}, {6, "FILTER"}, {7, "INFO"}, {8, "FORMAT"} };
 	vector<Variant> variant_cluster;

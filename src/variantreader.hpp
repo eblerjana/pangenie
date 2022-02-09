@@ -12,11 +12,12 @@
 #include "variant.hpp"
 #include "genotypingresult.hpp"
 #include "uniquekmers.hpp"
+#include <functional>
+#include <filesystem>
 
 #include "cereal/access.hpp"
 #include "cereal/types/memory.hpp"
 #include "cereal/types/string.hpp"
-#include "cereal/types/unordered_set.hpp"
 #include "cereal/types/vector.hpp"
 #include "cereal/types/map.hpp"
 
@@ -37,6 +38,8 @@ std::vector<unsigned char> construct_index(std::vector<T>& alleles, bool referen
 	std::sort(index.begin(), index.end(), [&](unsigned char a, unsigned char b) { return alleles[a+offset] < alleles[b+offset]; });
 	return index;
 }
+
+std::string hash_filenames(std::string reference, std::string vcf);
 
 class VariantReader {
 public:
@@ -63,7 +66,7 @@ public:
 	void get_left_overhang(std::string chromosome, size_t index, size_t length, DnaSequence& result) const;
 	void get_right_overhang(std::string chromosome, size_t index, size_t length, DnaSequence& result) const;
     void Store() const;
-    void Load();
+    void Load(std::string name);
 
 private:
     friend cereal::access;
@@ -72,7 +75,7 @@ private:
     {
     archive(kmer_size, nr_paths, nr_variants, add_reference, sample, variants_per_chromosome, variant_ids); 
     }
-
+    std::string REF_VCF_HASH_NAME;
 	size_t kmer_size;
 	size_t nr_paths;
 	size_t nr_variants;
