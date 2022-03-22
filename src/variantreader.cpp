@@ -236,6 +236,11 @@ size_t VariantReader::get_kmer_size() const {
 void VariantReader::write_path_segments(std::string filename) const {
 	ofstream outfile;
 	outfile.open(filename);
+	if (!outfile.good()) {
+		stringstream ss;
+		ss << "VariantReader::write_path_segments: File " << filename << " cannot be created. Note that the filename must not contain non-existing directories." << endl;
+		throw runtime_error(ss.str());
+	}
 	// make sure to capture all chromosomes in the reference (including such for which no variants are given)
 	vector<string> chromosome_names;
 	this->fasta_reader.get_sequence_names(chromosome_names);
@@ -332,7 +337,7 @@ string get_date() {
 void VariantReader::open_genotyping_outfile(string filename) {
 	this->genotyping_outfile.open(filename);
 	if (! this->genotyping_outfile.is_open()) {
-		throw runtime_error("VariantReader::open_genotyping_outfile: genotyping output file cannot be opened.");
+		throw runtime_error("VariantReader::open_genotyping_outfile: genotyping output file cannot be opened. Note that the filename must not contain non-existing directories.");
 	}
 
 	this->genotyping_outfile_open = true;

@@ -98,16 +98,19 @@ options:
 	-d	do not add reference as additional path.
 	-e VAL	size of hash used by jellyfish. (default: 3000000000).
 	-g	run genotyping (Forward backward algorithm, default behaviour).
-	-i VAL	sequencing reads in FASTA/FASTQ format or Jellyfish database in jf format (required).
+	-i VAL	sequencing reads in FASTA/FASTQ format or Jellyfish database in jf format.
+		NOTE: INPUT FASTA/Q FILE MUST NOT BE COMPRESSED. (required).
 	-j VAL	number of threads to use for kmer-counting (default: 1).
 	-k VAL	kmer size (default: 31).
-	-o VAL	prefix of the output files (default: result).
+	-o VAL	prefix of the output files. NOTE: the given path must not include non-existent folders. (default: result).
 	-p	run phasing (Viterbi algorithm). Experimental feature.
-	-r VAL	reference genome in FASTA format (required).
+	-r VAL	reference genome in FASTA format.
+		NOTE: INPUT FASTA FILE MUST NOT BE COMPRESSED. (required).
 	-s VAL	name of the sample (will be used in the output VCFs) (default: sample).
 	-t VAL	number of threads to use for core algorithm. Largest number of threads possible is the number of chromosomes given in the VCF (default: 1).
 	-u	output genotype ./. for variants not covered by any unique kmers.
-	-v VAL	variants in VCF format (required).
+	-v VAL	variants in VCF format. 
+		NOTE: INPUT VCF FILE MUST NOT BE COMPRESSED. (required).
 ```
 
 

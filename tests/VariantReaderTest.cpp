@@ -48,7 +48,7 @@ TEST_CASE("VariantReader get_allele_string", "[VariantReader get_allele_string]"
 	// there should be 4+1 paths (since the reference path is added)
 	REQUIRE(v.nr_of_paths() == 5);
 
-	v.write_path_segments("/MMCI/TM/scratch/jebler/pgg-typer/pggtyper/pggtyper/tests/data/small1-segments.fa");
+	v.write_path_segments("small1-segments.fa");
 }
 
 TEST_CASE("VariantReader get_overhang", "[VariantReader get_overhang]") {
@@ -372,4 +372,12 @@ TEST_CASE("VariantReader close_to_start", "[VariantReader close_to_start]") {
 	VariantReader v(vcf, fasta, 31, true);
 	v.open_genotyping_outfile("../tests/data/small1-ids-close.vcf");
 	v.write_genotypes_of("chr10", genotypes, &u);
+}
+
+
+TEST_CASE("VariantReader non_existing_path", "[VariantReader non_existing_path]") {
+	string vcf = "../tests/data/small1.vcf";
+	string fasta = "../tests/data/small1.fa";
+	VariantReader v(vcf, fasta, 10, false);
+	CHECK_THROWS(v.write_path_segments("nonexistent/paths_segments.fasta"));
 }

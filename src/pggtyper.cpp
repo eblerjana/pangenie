@@ -1,6 +1,7 @@
 #include <iostream>
 #include <sstream>
 #include <sys/resource.h>
+#include <sys/stat.h>
 #include <mutex>
 #include <thread>
 #include <algorithm>
@@ -148,10 +149,10 @@ int main (int argc, char* argv[])
 	// parse the command line arguments
 	CommandLineParser argument_parser;
 	argument_parser.add_command("PanGenie [options] -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf>");
-	argument_parser.add_mandatory_argument('i', "sequencing reads in FASTA/FASTQ format (uncompressed) or Jellyfish database in jf format");
-	argument_parser.add_mandatory_argument('r', "reference genome in FASTA format (uncompressed)");
-	argument_parser.add_mandatory_argument('v', "variants in VCF format (uncompressed)");
-	argument_parser.add_optional_argument('o', "result", "prefix of the output files");
+	argument_parser.add_mandatory_argument('i', "sequencing reads in FASTA/FASTQ format or Jellyfish database in jf format. NOTE: INPUT FASTA/Q FILE MUST NOT BE COMPRESSED.");
+	argument_parser.add_mandatory_argument('r', "reference genome in FASTA format. NOTE: INPUT FASTA FILE MUST NOT BE COMPRESSED.");
+	argument_parser.add_mandatory_argument('v', "variants in VCF format. NOTE: INPUT VCF FILE MUST NOT BE COMPRESSED.");
+	argument_parser.add_optional_argument('o', "result", "prefix of the output files. NOTE: the given path must not include non-existent folders.");
 	argument_parser.add_optional_argument('k', "31", "kmer size");
 	argument_parser.add_optional_argument('s', "sample", "name of the sample (will be used in the output VCFs)");
 	argument_parser.add_optional_argument('j', "1", "number of threads to use for kmer-counting");
@@ -183,7 +184,7 @@ int main (int argc, char* argv[])
 	sample_name = argument_parser.get_argument('s');
 	nr_jellyfish_threads = stoi(argument_parser.get_argument('j'));
 	nr_core_threads = stoi(argument_parser.get_argument('t'));
-	
+
 	bool genotyping_flag = argument_parser.get_flag('g');
 	bool phasing_flag = argument_parser.get_flag('p');
 	
