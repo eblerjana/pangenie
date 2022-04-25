@@ -8,6 +8,7 @@
 
 using namespace std;
 
+/*
 vector<char*> to_args(string readfile) {
 	vector<char*> args;
 	istringstream iss (readfile);
@@ -21,7 +22,7 @@ vector<char*> to_args(string readfile) {
 	args.push_back(0);
 	return args;
 }
-
+*/
 
 JellyfishCounter::JellyfishCounter (string readfile, size_t kmer_size, size_t nr_threads, uint64_t hash)
 {
@@ -34,17 +35,20 @@ JellyfishCounter::JellyfishCounter (string readfile, size_t kmer_size, size_t nr
 
 	// create the hash
 	this->jellyfish_hash = new mer_hash_type(hash_size, jellyfish::mer_dna::k()*2, counter_len, num_threads, num_reprobes);
-
 	// convert the readfile to char**
-	vector<char*> args = to_args(readfile);
+	//vector<char*> args = to_args(readfile);
 
 	// count kmers
-	mer_counter jellyfish_counter(num_threads, (*jellyfish_hash), &args[0], (&args[0])+1, canonical, COUNT);
+    
+    stream_manager_type streams(true);
+    file_vector X{readfile.c_str()};
+    streams.paths(X.begin(), X.end());
+	mer_counter jellyfish_counter(num_threads, (*jellyfish_hash), streams, canonical, COUNT);
 	jellyfish_counter.exec_join(num_threads);
 
 	// delete the readfile char**
-	for(size_t i = 0; i < args.size(); i++)
-		delete[] args[i];
+	//for(size_t i = 0; i < args.size(); i++)
+    //  delete[] args[i];
 
 }
 
@@ -61,19 +65,27 @@ JellyfishCounter::JellyfishCounter (string readfile, string kmerfile, size_t kme
 	this->jellyfish_hash = new mer_hash_type(hash_size, jellyfish::mer_dna::k()*2, counter_len, num_threads, num_reprobes);
 
 	// convert the filenames to char**
-	vector<char*> reads_args = to_args(readfile);
-	vector<char*> kmer_args = to_args(kmerfile);
-
+	//vector<char*> reads_args = to_args(readfile);
+	//vector<char*> kmer_args = to_args(kmerfile);
+    
+    {
+    stream_manager_type streams(true);
+    file_vector X{kmerfile.c_str()};
+    streams.paths(X.begin(), X.end());
 	// process input kmers
-	{
-		mer_counter jellyfish_counter(num_threads, (*jellyfish_hash), &kmer_args[0], (&kmer_args[0])+1, canonical, PRIME);
+        std::cout<< "about to count graph kmer" << std::endl;
+		mer_counter jellyfish_counter(num_threads, (*jellyfish_hash), streams, canonical, PRIME);
 		jellyfish_counter.exec_join(num_threads);
 	}
 
 	// process read kmers
-	mer_counter jellyfish_counter(num_threads, (*jellyfish_hash), &reads_args[0], (&reads_args[0])+1, canonical, UPDATE);
+    stream_manager_type streams(true);
+    file_vector X{readfile.c_str()};
+	streams.paths(X.begin(), X.end());
+    std::cout << "about to read read kmer" << std::endl;
+    mer_counter jellyfish_counter(num_threads, (*jellyfish_hash), streams, canonical, UPDATE);
 	jellyfish_counter.exec_join(num_threads);
-
+    /*
 	// delete the kmerfile char**
 	for(size_t i = 0; i < kmer_args.size(); i++)
 		delete[] kmer_args[i];
@@ -81,7 +93,7 @@ JellyfishCounter::JellyfishCounter (string readfile, string kmerfile, size_t kme
 	// delete the readfile char**
 	for(size_t i = 0; i < reads_args.size(); i++)
 		delete[] reads_args[i];
-
+    */
 }
 
 size_t JellyfishCounter::getKmerAbundance(string kmer){

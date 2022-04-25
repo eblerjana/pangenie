@@ -167,6 +167,7 @@ int main (int argc, char* argv[])
 //	argument_parser.add_optional_argument('a', "0", "sample subsets of paths of this size.");
 	argument_parser.add_optional_argument('e', "3000000000", "size of hash used by jellyfish.");
     argument_parser.add_flag_argument('B', "Build index but don't run PanGenie");
+    argument_parser.add_flag_argument('D', "debug");
 
 	try {
 		argument_parser.parse(argc, argv);
@@ -177,7 +178,6 @@ int main (int argc, char* argv[])
 	} catch (const exception& e) {
 		return 0;
 	}
-	readfile = argument_parser.get_argument('i');
 	reffile = argument_parser.get_argument('r');
 	vcffile = argument_parser.get_argument('v');
 	kmersize = stoi(argument_parser.get_argument('k'));
@@ -216,14 +216,15 @@ int main (int argc, char* argv[])
 
     const std::string REF_VCF_HASH_NAME = hash_filenames(reffile,vcffile);
     std::cout<<"Using file hash of " << REF_VCF_HASH_NAME << std::endl;
+    //string segment_file = "pangenie.debug.fasta"; //"pangenie."+REF_VCF_HASH_NAME + ".path_segments.fasta";
     string segment_file = "pangenie."+REF_VCF_HASH_NAME + ".path_segments.fasta";
     //string segment_file = outname + "_path_segments.fasta";
+    
+    check_input_file(vcffile);
+    check_input_file(reffile);
 
     if (build_index) {
     // check if input files exist and are uncompressed
-    check_input_file(reffile);
-	check_input_file(vcffile);
-	check_input_file(readfile);
 
 	// read allele sequences and unitigs inbetween, write them into file
 	cerr << "Determine allele sequences ..." << endl;
@@ -236,7 +237,6 @@ int main (int argc, char* argv[])
 	
 	cerr << "Write path segments to file: " << segment_file << " ..." << endl;
 	variant_reader2.write_path_segments(segment_file);
-    std::cout << "debugging here POST WRITE " << std::endl;
 	// determine chromosomes present in VCF
 	variant_reader2.get_chromosomes(&chromosomes);
 	cerr << "Found " << chromosomes.size() << " chromosome(s) in the VCF." << endl;
@@ -252,12 +252,16 @@ int main (int argc, char* argv[])
     return 0;
     }
     else {
-    std::cout << "LOADING" <<std::endl;
+    if (!argument_parser.get_flag('D')) {
+    readfile = argument_parser.get_argument('i');
+    check_input_file(readfile);
+    std::cout << "LOADING previous" <<std::endl;
    
     variant_reader.Load(REF_VCF_HASH_NAME);
-    //variant_reader.fasta_reader = FastaReader(reffile);
     variant_reader.fasta_reader.parse_file(reffile);
     variant_reader.get_chromosomes(&chromosomes);
+    variant_reader.sample = sample_name;
+    }
     }
     
 
@@ -276,7 +280,7 @@ int main (int argc, char* argv[])
 			cerr << "Count kmers in reads ..." << endl;
 			if (count_only_graph) {
 				read_kmer_counts = new JellyfishCounter(readfile, segment_file, kmersize, nr_jellyfish_threads, hash_size);
-			} else {
+            } else {
 				read_kmer_counts = new JellyfishCounter(readfile, kmersize, nr_jellyfish_threads, hash_size);
 			}
 		}
@@ -292,13 +296,13 @@ int main (int argc, char* argv[])
 		struct rusage r_usage1;
 		getrusage(RUSAGE_SELF, &r_usage1);
 		cerr << "#### Memory usage until now: " << (r_usage1.ru_maxrss / 1E6) << " GB ####" << endl;
-
-		// prepare output files
+		
+        // prepare output files
 		if (! only_phasing) variant_reader.open_genotyping_outfile(outname + "_genotyping.vcf");
 		if (! only_genotyping) variant_reader.open_phasing_outfile(outname + "_phasing.vcf");
 
 		time_kmer_counting = timer.get_interval_time();
-
+        
 		cerr << "Determine unique kmers ..." << endl;
 		// determine number of cores to use
 		size_t available_threads_uk = min(thread::hardware_concurrency(), (unsigned int) chromosomes.size());
@@ -337,8 +341,8 @@ int main (int argc, char* argv[])
 	struct rusage r_usage3;
 	getrusage(RUSAGE_SELF, &r_usage3);
 	cerr << "#### Memory usage until now: " << (r_usage3.ru_maxrss / 1E6) << " GB ####" << endl;
-
-	// prepare subsets of paths to run on
+	
+    // prepare subsets of paths to run on
 	unsigned short nr_paths = variant_reader.nr_of_paths();
 	// TODO: for too large panels, print waring
 	if (nr_paths > 200) cerr << "Warning: panel is large and PanGenie might take a long time genotyping. Try reducing the panel size prior to genotyping." << endl;

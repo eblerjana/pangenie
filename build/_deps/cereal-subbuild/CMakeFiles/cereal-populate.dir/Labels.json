@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/cluster/work/pausch/alex/software/Alex-pangenie/build/_deps/cereal-subbuild/CMakeFiles/cereal-populate"
+		},
+		{
+			"file" : "/cluster/work/pausch/alex/software/Alex-pangenie/build/_deps/cereal-subbuild/CMakeFiles/cereal-populate.rule"
+		},
+		{
+			"file" : "/cluster/work/pausch/alex/software/Alex-pangenie/build/_deps/cereal-subbuild/CMakeFiles/cereal-populate-complete.rule"
+		},
+		{
+			"file" : "/cluster/work/pausch/alex/software/Alex-pangenie/build/_deps/cereal-subbuild/cereal-populate-prefix/src/cereal-populate-stamp/cereal-populate-build.rule"
+		},
+		{
+			"file" : "/cluster/work/pausch/alex/software/Alex-pangenie/build/_deps/cereal-subbuild/cereal-populate-prefix/src/cereal-populate-stamp/cereal-populate-configure.rule"
+		},
+		{
+			"file" : "/cluster/work/pausch/alex/software/Alex-pangenie/build/_deps/cereal-subbuild/cereal-populate-prefix/src/cereal-populate-stamp/cereal-populate-download.rule"
+		},
+		{
+			"file" : "/cluster/work/pausch/alex/software/Alex-pangenie/build/_deps/cereal-subbuild/cereal-populate-prefix/src/cereal-populate-stamp/cereal-populate-install.rule"
+		},
+		{
+			"file" : "/cluster/work/pausch/alex/software/Alex-pangenie/build/_deps/cereal-subbuild/cereal-populate-prefix/src/cereal-populate-stamp/cereal-populate-mkdir.rule"
+		},
+		{
+			"file" : "/cluster/work/pausch/alex/software/Alex-pangenie/build/_deps/cereal-subbuild/cereal-populate-prefix/src/cereal-populate-stamp/cereal-populate-patch.rule"
+		},
+		{
+			"file" : "/cluster/work/pausch/alex/software/Alex-pangenie/build/_deps/cereal-subbuild/cereal-populate-prefix/src/cereal-populate-stamp/cereal-populate-test.rule"
+		},
+		{
+			"file" : "/cluster/work/pausch/alex/software/Alex-pangenie/build/_deps/cereal-subbuild/cereal-populate-prefix/src/cereal-populate-stamp/cereal-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"cereal-populate"
+		],
+		"name" : "cereal-populate"
+	}
+}

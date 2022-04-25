@@ -507,7 +507,7 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 				this->genotyping_outfile << genotype_likelihoods.get_genotype_quality(genotype.first, genotype.second) << ":"; // GQ
 			} else {
 				// genotype could not be determined 
-				this->genotyping_outfile << ".:.:"; // GT:GQ
+				this->genotyping_outfile << "./.:.:"; // GT:GQ
 			}
 
 			// output genotype likelihoods

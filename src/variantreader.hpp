@@ -67,6 +67,7 @@ public:
 	void get_right_overhang(std::string chromosome, size_t index, size_t length, DnaSequence& result) const;
     void Store() const;
     void Load(std::string name);
+    std::string sample;
 
 private:
     friend cereal::access;
@@ -80,7 +81,7 @@ private:
 	size_t nr_paths;
 	size_t nr_variants;
 	bool add_reference;
-	std::string sample;
+	//std::string sample;
 	std::ofstream genotyping_outfile;
 	std::ofstream phasing_outfile;
 	bool genotyping_outfile_open;
