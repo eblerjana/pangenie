@@ -1,6 +1,6 @@
 # PanGenie
 
-A genotyper for various types of genetic variants (such as SNPs, indels and structural variants) represented in a pangenome graph. Genotypes are computed based on read k-mer counts and a panel of known haplotypes. A description of the method can be found here: https://www.biorxiv.org/content/10.1101/2020.11.11.378133v1
+A short-read genotyper for various types of genetic variants (such as SNPs, indels and structural variants) represented in a pangenome graph. Genotypes are computed based on read k-mer counts and a panel of known haplotypes. A description of the method can be found here: https://doi.org/10.1038/s41588-022-01043-w
 
 ## Requirements
 * conda or Singularity
@@ -46,16 +46,16 @@ should produce a line like this:
 
 ## Required Input files
 
-PanGenie is a pangenome-based genotyper. It computes genotypes for variants represented as bubbles in a pangenome graph by taking information of already known haplotypes (represented as paths through the graph) into account. The required input files are described in detail below.
+PanGenie is a pangenome-based genotyper using short-read data. It computes genotypes for variants represented as bubbles in a pangenome graph by taking information of already known haplotypes (represented as paths through the graph) into account. The required input files are described in detail below.
 
 ### Input variants
 
 PanGenie expects a directed and acyclic pangenome graph as input (``-v`` option).
 This graph is represented in terms of a VCF file that needs to have certain properties:
 
-- ** multi-sample ** - it needs to contain haplotype information of at least one known sample
-- ** fully-phased ** - haplotype information of the known panel samples are represented by phased genotypes and each sample must be phased in a single block (i.e. from start to end).
-- ** non-overlapping variants ** - the VCF represents a pangenome graph. Therefore, overlapping variation must be represented in a single, multi-allelic variant record.
+- **multi-sample** - it needs to contain haplotype information of at least one known sample
+- **fully-phased** - haplotype information of the known panel samples are represented by phased genotypes and each sample must be phased in a single block (i.e. from start to end).
+- **non-overlapping variants** - the VCF represents a pangenome graph. Therefore, overlapping variation must be represented in a single, multi-allelic variant record.
 
 Note especially the third property listed above. See the figure below for an illustration of how overlapping variant alleles need to be represented in the input VCF provided to PanGenie.
 
@@ -69,7 +69,7 @@ In this case you can run PanGenie using the Snakemake pipeline provided in ``pip
 
 ### Input reads
 
-PanGenie is k-mer based and thus expects ** short reads ** as input. Reads must be provided in a single FASTA or FASTQ file using the ``-i`` option.
+PanGenie is k-mer based and thus expects **short reads** as input. Reads must be provided in a single FASTA or FASTQ file using the ``-i`` option.
 
 ### Input reference genomenput-representation.png
 
@@ -118,7 +118,7 @@ options:
 
 Runtime and memory usage depend on the number of variants genotyped and the number of haplotypes present in the graph.
 
-With the data described here: https://www.biorxiv.org/content/10.1101/2020.11.11.378133v1, PanGenie ran in 1 hour and 25 minutes walltime using 22 cores (16 CPU hours) and used 68 GB RAM.
+With the data described here: https://doi.org/10.1038/s41588-022-01043-w, PanGenie ran in 1 hour and 25 minutes walltime using 22 cores (16 CPU hours) and used 68 GB RAM.
 The largest dataset that we have tested contained around 16M variants, 64 haplotypes and around 30x read coverage. Using 24 cores, PanGenie run in 1 hour and 46 minutes (24 CPU hours) and used 120 GB of RAM.
 
 
@@ -137,3 +137,10 @@ The result will be a VCF file named `` test_genotyping.vcf `` containing the sam
 Parameter `` -e `` sets the hash size used by Jellyfish for k-mer counting. When running PanGenie on a whole genome dataset, this parameter can be omitted (so that PanGenie uses the default value).
 
 Per default, PanGenie uses a single thread. The number of threads used for k-mer counting and genotyping/phasing can be set via parameters ``-j`` and ``-t``, respectively. 
+
+
+## Citation
+
+J. Ebler, P. Ebert, W. E. Clarke, T. Rausch, P. A. Audano, T. Houwaart, Y. Mao, J. Korbel, E. E. Eichler,
+M. C. Zody, A. T. Dilthey, and T. Marschall. Pangenome-based genome inference. Nature genetics,
+54(4):518–525, 2022.
