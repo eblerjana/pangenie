@@ -14,6 +14,7 @@ public:
 	/** 
 	* @param filename name of the FASTA-file.
 	**/
+    FastaReader() = default;
 	FastaReader(std::string filename);
 	~FastaReader();
 	/** check if sequence with given name exists in file. **/
@@ -27,8 +28,8 @@ public:
 	/** get a subsequence **/
 	void get_subsequence(std::string name, size_t start, size_t end, std::string& result) const;
 	void get_subsequence(std::string name, size_t start, size_t end, DnaSequence& result) const; 
+    void parse_file(std::string filename);   
 private:
-	void parse_file(std::string filename);
 	std::map<std::string, DnaSequence*> name_to_sequence;
 };
 

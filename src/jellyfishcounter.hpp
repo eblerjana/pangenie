@@ -21,22 +21,27 @@ enum OPERATION { COUNT, PRIME, UPDATE };
 
 // using example from: Jellyfish-2/examples/jf_count_dump/jf_count_dump.cc
 typedef jellyfish::cooperative::hash_counter<jellyfish::mer_dna>	mer_hash_type;
-typedef jellyfish::mer_overlap_sequence_parser<jellyfish::stream_manager<char**>>	sequence_parser_type;
-typedef jellyfish::mer_iterator<sequence_parser_type, jellyfish::mer_dna>	mer_iterator_type;
+//typedef jellyfish::mer_overlap_sequence_parser<jellyfish::stream_manager<char**>>	sequence_parser_type;
+
+
+typedef std::vector<const char*> file_vector;
+typedef jellyfish::stream_manager<file_vector::const_iterator> stream_manager_type;
+typedef jellyfish::mer_overlap_sequence_parser<stream_manager_type> sequence_parser_type;
+typedef jellyfish::mer_iterator<sequence_parser_type, jellyfish::mer_dna>   mer_iterator_type;
 
 class mer_counter : public jellyfish::thread_exec {
 	mer_hash_type& mer_hash_;
-	jellyfish::stream_manager<char**> streams_;
-	sequence_parser_type parser_;
+	//jellyfish::stream_manager<char**> streams_;
+	//stream_manager_type& streams_;
+    sequence_parser_type parser_;
   const bool canonical_;
 	OPERATION op_;
 
 public:
-	mer_counter(int nb_threads, mer_hash_type& mer_hash,
-	char** file_begin, char** file_end,
+	mer_counter(int nb_threads, mer_hash_type& mer_hash, stream_manager_type& streams_,
 	bool canonical, OPERATION op)
 	: mer_hash_(mer_hash)
-	, streams_(file_begin, file_end)
+
 	, parser_(jellyfish::mer_dna::k(), streams_.nb_streams(), 3 * nb_threads, 4096, streams_)
 	, canonical_(canonical)
 	, op_(op)
@@ -52,8 +57,9 @@ public:
 				break;
 
 			case PRIME:
-				for( ; mers; ++mers)
-					mer_hash_.set(*mers);
+				for( ; mers; ++mers) {
+                    mer_hash_.set(*mers);
+                }
 				break;
 
 			case UPDATE:

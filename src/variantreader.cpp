@@ -4,9 +4,13 @@
 #include <math.h>
 #include <regex>
 #include "variantreader.hpp"
-
+#include "cereal/archives/binary.hpp"
 
 using namespace std;
+
+std::string hash_filenames(std::string reference, std::string vcf) {
+    return std::to_string(std::hash<std::string>{}(std::string(std::filesystem::canonical(reference)) + std::string(std::filesystem::canonical(vcf))));
+}
 
 void parse_line(vector<DnaSequence>& result, string line, char sep) {
 	string token;
@@ -22,6 +26,28 @@ void parse_line(vector<string>& result, string line, char sep) {
 	while (getline(iss, token, sep)) {
 		result.push_back(token);
 	}
+}
+
+void VariantReader::Store() const {
+  std::ofstream os("pangenie."+this->REF_VCF_HASH_NAME + ".cereal");
+  try {
+    cereal::BinaryOutputArchive archive(os);
+    archive(*this);
+  } catch (std::exception&) {
+    throw std::logic_error(
+        "[raven::Graph::Store] error: unable to store archive");
+  }
+}
+void VariantReader::Load(std::string name) {
+  std::cout<< "attempting to read name: " << "pangenie."+name+".cereal" << std::endl;
+  std::ifstream is("pangenie."+name+".cereal");
+  try {
+    cereal::BinaryInputArchive archive(is);
+    archive(*this);
+  } catch (std::exception&) {
+    throw std::logic_error(
+        "[raven::Graph::Load] error: unable to load archive");
+  }
 }
 
 void VariantReader::insert_ids(string& chromosome, vector<DnaSequence>& alleles, vector<string>& variant_ids, bool reference_added) {
@@ -94,8 +120,11 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 	if (!file.good()) {
 		throw runtime_error("VariantReader::VariantReader: input VCF file cannot be opened.");
 	}
+    //
+    REF_VCF_HASH_NAME = hash_filenames(reference_filename,filename);
+
 	string line;
-	string previous_chrom("");
+    string previous_chrom("");
 	size_t previous_end_pos = 0;
 	map<unsigned int, string> fields = { {0, "#CHROM"}, {1, "POS"}, {2, "ID"}, {3, "REF"}, {4, "ALT"}, {5, "QUAL"}, {6, "FILTER"}, {7, "INFO"}, {8, "FORMAT"} };
 	vector<Variant> variant_cluster;
@@ -244,7 +273,9 @@ void VariantReader::write_path_segments(std::string filename) const {
 	// make sure to capture all chromosomes in the reference (including such for which no variants are given)
 	vector<string> chromosome_names;
 	this->fasta_reader.get_sequence_names(chromosome_names);
-	for (auto element : chromosome_names) {
+    
+
+    for (auto element : chromosome_names) {
 		size_t prev_end = 0;
 		// check if chromosome was present in VCF and write allele sequences in this case
 		auto it = this->variants_per_chromosome.find(element);
@@ -269,7 +300,7 @@ void VariantReader::write_path_segments(std::string filename) const {
 		size_t chr_len = this->fasta_reader.get_size_of(element);
 		string ref_segment;
 		this->fasta_reader.get_subsequence(element, prev_end, chr_len, ref_segment);
-		outfile << ref_segment << endl;
+        outfile << ref_segment << endl;
 	}
 	outfile.close();
 }
@@ -481,7 +512,7 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 				this->genotyping_outfile << genotype_likelihoods.get_genotype_quality(genotype.first, genotype.second) << ":"; // GQ
 			} else {
 				// genotype could not be determined 
-				this->genotyping_outfile << ".:.:"; // GT:GQ
+				this->genotyping_outfile << "./.:.:"; // GT:GQ
 			}
 
 			// output genotype likelihoods
