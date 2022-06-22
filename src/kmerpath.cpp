@@ -15,7 +15,6 @@ void KmerPath::set_position(size_t index){
 	}
 	// determine which block we have to modify
 	size_t block = index / 32;
-	unsigned int number = this->kmers[block];
 	// determine which position we have to modify
 	size_t position = index - (block * 32);
 	// change the position to given value

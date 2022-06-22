@@ -54,10 +54,19 @@ Variant::Variant(string left_flank, string right_flank, string chromosome, size_
 	 right_flank(right_flank),
 	 chromosome(chromosome),
 	 start_position(start_position),
+	 variant_ids({variant_id}),
 	 paths(paths),
-	 flanks_added(false),
-	 variant_ids({variant_id})
+	 flanks_added(false)
+
 {
+	if (alleles.size() > 255) {
+		throw runtime_error("Variant::Variant: number of alleles per variant exceeds 256. Current implementation does not support higher numbers.");
+	}
+
+	if (paths.size() > 255) {
+		throw runtime_error("Variant::Variant: number of paths exceeds 256. Current implementation does not support higher numbers.");
+	}
+
 	this->allele_sequences.push_back(vector<DnaSequence>());
 	for (unsigned char i = 0; i < alleles.size(); ++i) {
 		this->allele_sequences[0].push_back(DnaSequence(alleles[i]));
@@ -72,10 +81,18 @@ Variant::Variant(DnaSequence& left_flank, DnaSequence& right_flank, string chrom
 	 right_flank(right_flank),
 	 chromosome(chromosome),
 	 start_position(start_position),
+	 variant_ids({variant_id}),
 	 paths(paths),
-	 flanks_added(false),
-	 variant_ids({variant_id})
+	 flanks_added(false)
 {
+	if (alleles.size() > 255) {
+		throw runtime_error("Variant::Variant: number of alleles per variant exceeds 256. Current implementation does not support higher numbers.");
+	}
+
+	if (paths.size() > 255) {
+		throw runtime_error("Variant::Variant: number of paths exceeds 256. Current implementation does not support higher numbers.");
+	}
+
 	this->allele_sequences.push_back(vector<DnaSequence>());
 	for (unsigned char i = 0; i < alleles.size(); ++i) {
 		this->allele_sequences[0].push_back(alleles[i]);
@@ -95,6 +112,7 @@ void Variant::set_values(size_t end_position) {
 			uncovered.push_back(i);
 		}
 	}
+
 	this->uncovered_alleles.push_back(uncovered);
 
 	// check if flanks have same length
@@ -258,9 +276,10 @@ void Variant::combine_variants (Variant const &v2){
 	vector<vector<unsigned char>> new_alleles;
 	unsigned char allele_index = 0;
 	
+	assert (path_to_index.size() < 256);
+	
 	// construct new allele sequences
-	for (auto it = path_to_index.begin(); it != path_to_index.end(); ++it) {
-		assert(allele_index < 256);
+	for (auto it = path_to_index.begin(); it != path_to_index.end(); ++it) {	
 		for (auto e : it->second) {
 			new_paths[e] = allele_index;
 		}
@@ -296,7 +315,6 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 		unsigned char a = this->get_allele_on_path(i);
 		vector<unsigned char> allele = this->allele_combinations.at(a);
 		assert (allele.size() == nr_variants);
-		size_t start_index = 0;
 		for (size_t v = 0; v < nr_variants; v++) {
 			// get allele at this position
 			unsigned char allele_id = allele.at(v);
