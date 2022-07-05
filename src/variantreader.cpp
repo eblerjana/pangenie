@@ -26,6 +26,7 @@ void parse_line(vector<string>& result, string line, char sep) {
 
 void VariantReader::insert_ids(string& chromosome, vector<DnaSequence>& alleles, vector<string>& variant_ids, bool reference_added) {
 	vector<unsigned char> index = construct_index(alleles, reference_added);
+	assert(index.size() < 256);
 	// insert IDs in the lex. order of their corresponding alleles
 	vector<string> sorted_ids;
 	for (auto id : index) {
@@ -36,6 +37,7 @@ void VariantReader::insert_ids(string& chromosome, vector<DnaSequence>& alleles,
 
 string VariantReader::get_ids(string chromosome, vector<string>& alleles, size_t variant_index, bool reference_added) {
 	vector<unsigned char> index = construct_index(alleles, reference_added);
+	assert(index.size() < 256);
 	vector<string> sorted_ids(index.size());
 	for (unsigned char i = 0; i < index.size(); ++i) {
 		sorted_ids[index[i]] = this->variant_ids.at(chromosome).at(variant_index)[i];
@@ -82,10 +84,10 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 	:fasta_reader(reference_filename),
 	 kmer_size(kmer_size),
 	 nr_variants(0),
+	 add_reference(add_reference),
 	 sample(sample),
 	 genotyping_outfile_open(false),
-	 phasing_outfile_open(false),
-	 add_reference(add_reference)
+	 phasing_outfile_open(false)
 {
 	if (filename.substr(filename.size()-3,3).compare(".gz") == 0) {
 		throw runtime_error("VariantReader::VariantReader: Uncompressed VCF-file is required.");
@@ -167,6 +169,11 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 		}
 		parse_line(alleles, tokens[4], ',');
 
+		// currently, number of alleles is limited to 256
+		if (alleles.size() > 255) {
+			throw runtime_error("VariantReader: number of alternative alleles is limited to 254 in current implementation. Make sure the VCF contains only alternative alleles covered by at least one of the haplotypes.");
+		}
+
 		// TODO: handle cases where variant is less than kmersize from start or end of the chromosome
 		if ( (current_start_pos < (kmer_size*2) ) || ( (current_end_pos + (kmer_size*2)) > this->fasta_reader.get_size_of(current_chrom)) ) {
 			cerr << "VariantReader: skip variant at " << current_chrom << ":" << current_start_pos << " since variant is less than 2 * kmer size from start or end of chromosome. " << endl;
@@ -182,11 +189,18 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 			this->variant_ids[current_chrom].push_back(vector<string>());
 		}
 
+		// make sure that there are at most 255 paths (including reference path in case it is requested)
+		if (this->nr_paths > 255) {
+			throw runtime_error("VariantReader: number of paths is limited to 254 in current implementation.");
+		}
+
+
 		// construct paths
 		vector<unsigned char> paths = {};
 		if (add_reference) paths.push_back((unsigned char) 0);
 		unsigned char undefined_index = alleles.size();
 		string undefined_allele = "N";
+
 		for (size_t i = 9; i < tokens.size(); ++i) {
 			// make sure all genotypes are phased
 			if (tokens[i].find('/') != string::npos) {
@@ -200,17 +214,23 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 			for (string& s : p){
 				// handle unknown genotypes '.'
 				if (s == ".") {
-//					cerr << "Found undefined allele at position " << current_chrom << ":" << current_start_pos << endl;
 					// add "NNN" allele to the list of alleles
 					parse_line(alleles, undefined_allele, ',');
 					paths.push_back(undefined_index);
+					assert(undefined_index < 255);
 					undefined_index += 1;
 					undefined_allele += "N";
 				} else {
-					paths.push_back( (unsigned char) atoi(s.c_str()));
+					unsigned int p_index = atoi(s.c_str());
+					if (p_index >= alleles.size()) {
+						throw runtime_error("VariantReader::VariantReader: invalid genotype in VCF.");
+					}
+					assert(p_index < 255);
+					paths.push_back( (unsigned char) p_index);
 				}
 			}
 		}
+
 
 		// determine left and right flanks
 		DnaSequence left_flank;

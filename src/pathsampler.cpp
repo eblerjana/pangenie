@@ -59,15 +59,17 @@ void PathSampler::partition_paths(vector<vector<unsigned short>>& result, unsign
 
 void PathSampler::partition_samples(vector<vector<unsigned short>>& result, unsigned short sample_size) const {
 	vector<pair<unsigned short,unsigned short>> all_samples;
+	assert(this->total_number > 0);
+	unsigned short n = this->total_number - 1;
 	bool reference_added = this->total_number % 2 != 0;
 
 	if (reference_added) {
 		// reference not part of the panel
-		for (size_t i = 1; i < this->total_number-1; i+=2) {
+		for (size_t i = 1; i < n; i+=2) {
 			all_samples.push_back(pair<size_t,size_t>(i,i+1));
 		}
 	} else {
-		for (size_t i = 0; i < this->total_number-1; i+=2) {
+		for (size_t i = 0; i < n; i+=2) {
 			all_samples.push_back(pair<size_t,size_t>(i,i+1));
 		}
 	}
@@ -88,17 +90,12 @@ void PathSampler::partition_samples(vector<vector<unsigned short>>& result, unsi
 	for (unsigned short i = 0; i < all_paths.size(); i += sample_size) {
 		auto last = min(all_paths.size(), (size_t) i+sample_size);
 		vector<unsigned short> subset(all_paths.begin()+i, all_paths.begin()+last);
-//		if (reference_added) subset.push_back(0); 
 		sort(subset.begin(), subset.end());
 		result.push_back(subset);
 	}
 	// if the last sample is shorter than the sample_size, randomly add additional paths
 	unsigned short missing;
-//	if (reference_added) {
-//		missing = sample_size - (result.at(result.size()-1).size() - 1);
-//	} else {
 	missing = sample_size - result.at(result.size()-1).size();
-//	}
 
 	if (missing > 0) {
 		this->select_single_subset(result[result.size()-1], missing);

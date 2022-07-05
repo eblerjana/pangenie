@@ -37,12 +37,9 @@ HMM::HMM(vector<UniqueKmers*>* unique_kmers, ProbabilityTable* probabilities, bo
 	// initialize forward normalization sums
 	this->forward_normalization_sums = vector<long double>(size, 0.0L);
 	this->previous_backward_column = nullptr;
-//	cerr << "Indexing the columns ..." << endl;
 
 	if (run_genotyping) {
-//		cerr << "Computing forward probabilities ..." << endl;
 		compute_forward_prob();
-//		cerr << "Computing backward probabilities ..." << endl;
 		compute_backward_prob();
 
 		if (normalize) {
@@ -53,7 +50,6 @@ HMM::HMM(vector<UniqueKmers*>* unique_kmers, ProbabilityTable* probabilities, bo
 	}
 
 	if (run_phasing) {
-//		cerr << "Computing Viterbi path ..." << endl;
 		compute_viterbi_path();
 	}
 }
@@ -427,11 +423,6 @@ void HMM::compute_backward_column(size_t column_index) {
 	if (transition_probability_computer != nullptr) {
 		delete transition_probability_computer;
 	}
-	
-//	if (normalization_f_b > 0.0L) {
-//		// normalize the GenotypingResults likelihoods 
-//		this->genotyping_result.at(column_index).divide_likelihoods_by(normalization_f_b);
-//	}
 }
 
 void HMM::compute_viterbi_column(size_t column_index) {
