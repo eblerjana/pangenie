@@ -7,13 +7,6 @@ A short-read genotyper for various types of genetic variants (such as SNPs, inde
 
 ## Installation
 
-### Building from source using Conda
-
-`` git clone https://jana_ebler@bitbucket.org/jana_ebler/pangenie.git``  
-`` cd pangenie``  
-`` conda env create -f environment.yml``  
-`` conda activate pangenie``   
-``mkdir build; cd build; cmake .. ; make``
 
 ### Building from source using Singularity
 
@@ -44,9 +37,27 @@ should produce a line like this:
 ``$ 5a1f9c5``
 
 
+
+### Building from source using Conda
+
+`` git clone https://jana_ebler@bitbucket.org/jana_ebler/pangenie.git``  
+`` cd pangenie``  
+`` conda env create -f environment.yml``  
+`` conda activate pangenie``   
+``mkdir build; cd build; cmake .. ; make``
+
+
+
+### Building from source (requires jellyfish to be installed)
+
+`` git clone https://jana_ebler@bitbucket.org/jana_ebler/pangenie.git``  
+`` cd pangenie``  
+``mkdir build; cd build; cmake .. ; make``
+
+
 ## Required Input files
 
-PanGenie is a pangenome-based genotyper using short-read data. It computes genotypes for variants represented as bubbles in a pangenome graph by taking information of already known haplotypes (represented as paths through the graph) into account. The required input files are described in detail below. 
+PanGenie is a pangenome-based genotyper using short-read data. It computes genotypes for variants represented as bubbles in a pangenome graph by taking information of already known haplotypes (represented as paths through the graph) into account. The required input files are described in detail below.
 
 ### Input variants
 
@@ -121,14 +132,7 @@ Runtime and memory usage depend on the number of variants genotyped and the numb
 With the data described here: https://doi.org/10.1038/s41588-022-01043-w, PanGenie ran in 1 hour and 25 minutes walltime using 22 cores (16 CPU hours) and used 68 GB RAM.
 The largest dataset that we have tested contained around 16M variants, 64 haplotypes and around 30x read coverage. Using 24 cores, PanGenie run in 1 hour and 46 minutes (24 CPU hours) and used 120 GB of RAM.
 
-## Notes
 
-The largest panel we have run PanGenie on so far consisted of 44 samples (88 haplotypes). On this data, PanGenie needed 53 CPU hours (03:15 h wallclock time using 24 cores) and 153 GB of memory in order to genotype 20,661,169 variants.
-
-## Limitations
-
-The runtime of PanGenie gets slow as the number of haplotype paths increases. Due to technical reasons, the current implementation of PanGenie cannot handle more than 254 input haplotypes (127 diploid samples).
-In order to efficiently handle panels of this size and larger, the underlying model needs to be optimized.
 
 ## Demo
 
