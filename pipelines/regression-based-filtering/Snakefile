@@ -1,0 +1,221 @@
+configfile: "config.yaml"
+
+scripts = "scripts"
+
+
+rule all:
+	input:
+		expand("{outdir}/filtered-vcfs/filtered_{filter}.vcf.gz", outdir=config["outdir"], filter=["lenient", "strict"])
+
+
+
+########################################################
+#    preprocessing
+########################################################
+
+
+
+# assign an ID to each allele in panel specifying type and length (needed by the analysis.py script later)
+rule assign_ids_panel:
+	input:
+		config["biallelic_panel"]
+	output:
+		"{outdir}/panel_with_ids.vcf.gz"
+	shell:
+		"""
+		zcat {input} | python3 {scripts}/assign-variant-ids.py | bgzip > {output}
+		tabix -p vcf {output}
+		"""
+
+
+# annotate genotyped VCF with same IDs
+rule assign_ids:
+	input:
+		panel = "{outdir}/panel_with_ids.vcf.gz",
+		genotypes = config["biallelic_vcf"]
+	output:
+		"{outdir}/callset_with_ids.vcf.gz"
+	shell:
+		"""
+		zcat {input.genotypes} | python3 {scripts}/annotate.py {input.panel} | bgzip > {output}
+		tabix -p vcf {output}
+		"""
+
+
+
+# generate lists of all, unrelated and related samples based on the provided PED file
+rule collect_samples:
+	input:
+		config['ped']
+	output:
+		all = "{outdir}/sample-index.tsv",
+		related = "{outdir}/sample-index-related.tsv",
+		unrelated = "{outdir}/sample-index-unrelated.tsv"
+	shell:
+		"""
+		awk '($3 == \"0\") && ($4 == \"0\")' {input} | cut -f 2 > {output.unrelated}
+		awk '($3 != \"0\") || ($4 != \"0\")' {input} | cut -f 2 > {output.related}
+		cat {output.unrelated} {output.related} > {output.all}
+		"""		
+
+
+
+####################################################################
+# extract necessary subsets of samples (e.g. all unrelated samples)
+####################################################################
+
+rule extract_samples:
+	input:
+		vcf="{outdir}/callset_with_ids.vcf.gz",
+		samples="{outdir}/sample-index-unrelated.tsv"
+	output:
+		"{outdir}/unrelated-samples.vcf.gz"
+	resources:
+		mem_total_mb = 50000,
+		runtime_hrs = 10
+	conda:
+		"env/genotyping.yml"
+	shell:
+		"bcftools view --samples-file {input.samples} --force-samples {input.vcf} | bgzip -c > {output}"
+
+
+
+###################################################
+# compute mendelian consistency
+###################################################
+
+# count variants mendelian consistent in 0,1,2,...,nr_trios trios
+rule check_consistent_trios:
+	input:
+		vcf="{outdir}/callset_with_ids.vcf.gz",
+		ped=config["ped"],
+		samples= "{outdir}/sample-index.tsv"
+	output:
+		variant_stats="{outdir}/stats/mendelian-stats.tsv",
+		trio_stats="{outdir}/stats/trio-stats.tsv"
+	log:
+		"{outdir}/stats/mendelian.log"
+	conda:
+		"env/genotyping.yml"
+	resources:
+		mem_total_mb=300000,
+		runtime_hrs=96,
+	#	runtime_hrs=23,
+		runtime_min=59
+	shell:
+		"python3 {scripts}/mendelian-consistency.py statistics -vcf {input.vcf} -ped {input.ped} -samples {input.samples} -table {output.variant_stats} -column-prefix pangenie > {output.trio_stats}"
+
+
+###################################################
+# compute allele frequency/genotype statistics
+###################################################
+
+rule compute_statistics:
+	input:
+		vcf="{outdir}/unrelated-samples.vcf.gz",
+		vcf_all="{outdir}/callset_with_ids.vcf.gz",
+		panel= "{outdir}/panel_with_ids.vcf.gz"
+	output:
+		"{outdir}/stats/genotyping-stats.tsv"
+	conda:
+		'env/genotyping.yml'
+	resources:
+		mem_total_mb=200000,
+		runtime_hrs=96,
+		runtime_min=59
+	shell:
+		"python3 {scripts}/collect-vcf-stats.py {input.panel} {input.vcf} {input.vcf_all} > {output}"
+
+
+
+#########################################################################################
+# self-genotyping evaluation: evaluate genotyping of samples that are part of the graph
+#########################################################################################
+
+	
+# genotyping concordance for each ID (over all provided graph samples)
+rule genotype_concordance_variants:
+	input:
+		computed="{outdir}/callset_with_ids.vcf.gz",
+		true= "{outdir}/panel_with_ids.vcf.gz"
+	output:
+		"{outdir}/stats/self_variant-stats.tsv"
+	params:
+		file_prefix="{outdir}/stats/self",
+		column_prefix="pangenie_self-genotyping",
+		samples=','.join( config["graph_samples"] )
+	conda:
+		"env/genotyping.yml"
+	resources:
+		mem_total_mb=500000,
+		runtime_hrs=40,
+		runtime_min=59
+	log:
+		"{outdir}/stats/self_variant-stats.log"
+	shell:
+		"python3 {scripts}/genotype-concordance-variant.py {input.true} {input.computed} {params.file_prefix} {params.samples} {params.column_prefix} &> {log}"
+
+
+
+
+
+#################################################
+# generate filtered callset and some plots
+#################################################
+
+
+rule merge_table:
+	input:
+		"{outdir}/stats/mendelian-stats.tsv",
+		"{outdir}/stats/genotyping-stats.tsv",
+		"{outdir}/stats/self_variant-stats.tsv"
+	output:
+		"{outdir}/stats/all-stats.tsv"
+	conda:
+		"env/plotting.yml"
+	resources:
+		mem_total_mb=50000,
+		runtime_hrs=5,
+		runtime_min=1
+	shell:
+		"python3 {scripts}/merge-tables.py {input} {output}"
+
+
+rule plot_statistics:
+	input:
+		"{outdir}/stats/all-stats.tsv"
+	output: 
+		expand("{{outdir}}/filters/filtered_{vartype}_{filter}_{region}.pdf", vartype=["snps", "indels", "large_insertions", "large_deletions", "large_complex"], filter=['unfiltered', 'strict'], region=["all-regions"]),
+		expand("{{outdir}}/filters/filtered_{vartype}_{filter}_{region}.pdf", vartype=["large_insertions", "large_deletions", "large_complex"], filter=['lenient_-0.5'], region=["all-regions"]),
+		"{outdir}/filters/filtered_filters.tsv"
+	params:
+		outprefix="{outdir}/filters/filtered"
+	log:
+		"{outdir}/filters/filtered.log"
+	conda:
+		'env/plotting.yml'
+	resources:
+		mem_total_mb=200000,
+		runtime_hrs=8,
+		runtime_min=59
+	shell:
+		"python3 {scripts}/analysis.py {input} {params.outprefix} &> {log}"
+
+
+# compute filtered callsets
+rule filtered_callsets:
+	input:
+		vcf="{outdir}/callset_with_ids.vcf.gz",
+		filters="{outdir}/filters/filtered_filters.tsv"
+	output:
+		"{outdir}/filtered-vcfs/filtered_{filter}.vcf.gz"
+	resources:
+		mem_total_mb=20000,
+		runtime_hrs=10,
+		runtime_min=59
+	wildcard_constraints:
+		filter="unfiltered|lenient|strict"
+	shell:
+		"zcat {input.vcf} | python3 {scripts}/select_ids.py {input.filters} {wildcards.filter} | bgzip -c > {output}"
+
+

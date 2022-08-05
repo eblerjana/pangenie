@@ -1,0 +1,15 @@
+
+# biallelic, multisample VCF with all genotypes
+biallelic_vcf: ""
+biallelic_panel: ""
+
+# list of graph samples
+graph_samples:
+ - HG00438
+ - HG00621
+ - HG02622
+ - HG03098
+
+ped: ""
+
+outdir: "results"
