@@ -40,7 +40,7 @@ should produce a line like this:
 
 ### Building from source using Conda
 
-`` git clone https://jana_ebler@bitbucket.org/jana_ebler/pangenie.git``  
+`` git clone git@github.com:eblerjana/pangenie.git``  
 `` cd pangenie``  
 `` conda env create -f environment.yml``  
 `` conda activate pangenie``   
@@ -50,7 +50,7 @@ should produce a line like this:
 
 ### Building from source (requires jellyfish to be installed)
 
-`` git clone https://jana_ebler@bitbucket.org/jana_ebler/pangenie.git``  
+`` git clone git@github.com:eblerjana/pangenie.git``  
 `` cd pangenie``  
 ``mkdir build; cd build; cmake .. ; make``
 
