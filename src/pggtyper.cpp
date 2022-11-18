@@ -142,7 +142,7 @@ int main (int argc, char* argv[])
 	bool count_only_graph = true;
 	bool ignore_imputed = false;
 	bool add_reference = true;
-	bool build_index = false;
+	string index_path = "";
     size_t sampling_size = 0;
 	uint64_t hash_size = 3000000000;
 
@@ -157,6 +157,7 @@ int main (int argc, char* argv[])
 	argument_parser.add_optional_argument('s', "sample", "name of the sample (will be used in the output VCFs)");
 	argument_parser.add_optional_argument('j', "1", "number of threads to use for kmer-counting");
 	argument_parser.add_optional_argument('t', "1", "number of threads to use for core algorithm. Largest number of threads possible is the number of chromosomes given in the VCF");
+    argument_parser.add_optional_argument('B',"","Build index but don't run PanGenie");
 //	argument_parser.add_optional_argument('n', "0.00001", "effective population size");
 	argument_parser.add_flag_argument('g', "run genotyping (Forward backward algorithm, default behaviour).");
 	argument_parser.add_flag_argument('p', "run phasing (Viterbi algorithm). Experimental feature.");
@@ -166,7 +167,6 @@ int main (int argc, char* argv[])
 	argument_parser.add_flag_argument('d', "do not add reference as additional path.");
 //	argument_parser.add_optional_argument('a', "0", "sample subsets of paths of this size.");
 	argument_parser.add_optional_argument('e', "3000000000", "size of hash used by jellyfish.");
-    argument_parser.add_flag_argument('B', "Build index but don't run PanGenie");
     argument_parser.add_flag_argument('D', "debug");
 
 	try {
@@ -185,6 +185,7 @@ int main (int argc, char* argv[])
 	sample_name = argument_parser.get_argument('s');
 	nr_jellyfish_threads = stoi(argument_parser.get_argument('j'));
 	nr_core_threads = stoi(argument_parser.get_argument('t'));
+    index_path = argument_parser.get_flag('B');
 	
 	bool genotyping_flag = argument_parser.get_flag('g');
 	bool phasing_flag = argument_parser.get_flag('p');
@@ -203,7 +204,6 @@ int main (int argc, char* argv[])
 	count_only_graph = !argument_parser.get_flag('c');
 	ignore_imputed = argument_parser.get_flag('u');
 	add_reference = !argument_parser.get_flag('d');
-    build_index = argument_parser.get_flag('B');
 //	sampling_size = stoi(argument_parser.get_argument('a'));
 	istringstream iss(argument_parser.get_argument('e'));
 	iss >> hash_size;
@@ -214,16 +214,14 @@ int main (int argc, char* argv[])
     VariantReader variant_reader;
     vector<string> chromosomes;
 
-    const std::string REF_VCF_HASH_NAME = hash_filenames(reffile,vcffile);
-    std::cout<<"Using file hash of " << REF_VCF_HASH_NAME << std::endl;
     //string segment_file = "pangenie.debug.fasta"; //"pangenie."+REF_VCF_HASH_NAME + ".path_segments.fasta";
-    string segment_file = "pangenie."+REF_VCF_HASH_NAME + ".path_segments.fasta";
+    string segment_file = index_path;//"pangenie."+REF_VCF_HASH_NAME + ".path_segments.fasta";
     //string segment_file = outname + "_path_segments.fasta";
     
     check_input_file(vcffile);
     check_input_file(reffile);
 
-    if (build_index) {
+    if (!index_path.empty()) {
     // check if input files exist and are uncompressed
 
 	// read allele sequences and unitigs inbetween, write them into file
@@ -251,13 +249,14 @@ int main (int argc, char* argv[])
     std::cout << "stored" <<std::endl;
     return 0;
     }
+
     else {
     if (!argument_parser.get_flag('D')) {
     readfile = argument_parser.get_argument('i');
     check_input_file(readfile);
     std::cout << "LOADING previous" <<std::endl;
    
-    variant_reader.Load(REF_VCF_HASH_NAME);
+    variant_reader.Load(vcffile);
     variant_reader.fasta_reader.parse_file(reffile);
     variant_reader.get_chromosomes(&chromosomes);
     variant_reader.sample = sample_name;

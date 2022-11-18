@@ -39,7 +39,7 @@ std::vector<unsigned char> construct_index(std::vector<T>& alleles, bool referen
 	return index;
 }
 
-std::string hash_filenames(std::string reference, std::string vcf);
+//std::string hash_filenames(std::string reference, std::string vcf);
 
 class VariantReader {
 public:

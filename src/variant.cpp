@@ -117,7 +117,7 @@ void Variant::set_values(size_t end_position) {
 	size_t nr_alleles = this->allele_sequences[0].size();
 	for (auto p : this->paths) {
 		if (p >= nr_alleles) {
-			throw runtime_error("Variant::Variant: allele ids given in paths are invalid.");
+			throw runtime_error("Variant::Variant: allele ids given in paths are invalid. "+std::to_string(p) + " "+std::to_string(nr_alleles)+ " "+std::to_string(this->start_position));
 		}
 	}
 }

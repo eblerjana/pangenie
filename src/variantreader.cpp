@@ -8,9 +8,9 @@
 
 using namespace std;
 
-std::string hash_filenames(std::string reference, std::string vcf) {
-    return std::to_string(std::hash<std::string>{}(std::string(std::filesystem::canonical(reference)) + std::string(std::filesystem::canonical(vcf))));
-}
+//std::string hash_filenames(std::string reference, std::string vcf) {
+//    return std::to_string(std::hash<std::string>{}(std::string(std::filesystem::canonical(reference)) + std::string(std::filesystem::canonical(vcf))));
+//}
 
 void parse_line(vector<DnaSequence>& result, string line, char sep) {
 	string token;
@@ -121,7 +121,7 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 		throw runtime_error("VariantReader::VariantReader: input VCF file cannot be opened.");
 	}
     //
-    REF_VCF_HASH_NAME = hash_filenames(reference_filename,filename);
+    //REF_VCF_HASH_NAME = hash_filenames(reference_filename,filename);
 
 	string line;
     string previous_chrom("");
