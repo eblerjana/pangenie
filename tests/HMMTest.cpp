@@ -46,7 +46,6 @@ TEST_CASE("HMM get_genotyping_result", "[HMM get_genotyping_result]") {
 //		REQUIRE(result.get_allele_kmer_count(0) == 1);
 //		REQUIRE(result.get_allele_kmer_count(1) == 1);
 	}
-
 	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
 }
 
@@ -62,8 +61,8 @@ TEST_CASE("HMM skip_reference_position", "[HMM skip_reference_position]") {
 
 	// position only covered by reference alleles and should be skipped
 	UniqueKmers u2(2500);
-	u2.insert_path(0,0);
 	u2.insert_path(1,0);
+	u2.insert_path(0,0);
 	u2.insert_kmer(10, a1);
 	u2.insert_kmer(20, a2);
 
