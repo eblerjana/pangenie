@@ -10,18 +10,15 @@
 using namespace std;
 
 TEST_CASE("HMM get_genotyping_result", "[HMM get_genotyping_result]") {
-	UniqueKmers u1(2000);
+	vector<unsigned char> path_to_allele = {0, 1};
+	UniqueKmers u1(2000, path_to_allele);
 	vector<unsigned char> a1 = {0};
 	vector<unsigned char> a2 = {1};
-	u1.insert_path(0,0);
-	u1.insert_path(1,1);
 	u1.insert_kmer(10, a1);
 	u1.insert_kmer(10, a2);
 	u1.set_coverage(5);
 
-	UniqueKmers u2(3000);
-	u2.insert_path(0,0);
-	u2.insert_path(1,1);
+	UniqueKmers u2(3000, path_to_allele);
 	u2.insert_kmer(20, a1);
 	u2.insert_kmer(5, a2);
 	u2.set_coverage(5);
@@ -50,25 +47,22 @@ TEST_CASE("HMM get_genotyping_result", "[HMM get_genotyping_result]") {
 }
 
 TEST_CASE("HMM skip_reference_position", "[HMM skip_reference_position]") {
-	UniqueKmers u1(2000);
+	vector<unsigned char> path_to_allele = {0, 1};
+	UniqueKmers u1(2000, path_to_allele);
 	vector<unsigned char> a1 = {0};
 	vector<unsigned char> a2 = {1};
-	u1.insert_path(0,0);
-	u1.insert_path(1,1);
 	u1.insert_kmer(10, a1);
 	u1.insert_kmer(10, a2);
 	u1.set_coverage(5);
 
 	// position only covered by reference alleles and should be skipped
-	UniqueKmers u2(2500);
-	u2.insert_path(1,0);
-	u2.insert_path(0,0);
+	path_to_allele = {0, 0};
+	UniqueKmers u2(2500, path_to_allele);
 	u2.insert_kmer(10, a1);
 	u2.insert_kmer(20, a2);
 
-	UniqueKmers u3(3000);
-	u3.insert_path(0,0);
-	u3.insert_path(1,1);
+	path_to_allele = {0, 1};
+	UniqueKmers u3(3000, path_to_allele);
 	u3.insert_kmer(20, a1);
 	u3.insert_kmer(5, a2);
 	u3.set_coverage(5);
@@ -106,17 +100,14 @@ TEST_CASE("HMM skip_reference_position", "[HMM skip_reference_position]") {
 
 
 TEST_CASE("HMM get_genotyping_result_normalized", "[HMM get_genotyping_result_normalized]") {
-	UniqueKmers u1(2000);
+	vector<unsigned char> path_to_allele = {0, 1};
+	UniqueKmers u1(2000, path_to_allele);
 	vector<unsigned char> a1 = {0};
 	vector<unsigned char> a2 = {1};
-	u1.insert_path(0,0);
-	u1.insert_path(1,1);
 	u1.insert_kmer(10, a1);
 	u1.insert_kmer(10, a2);
 
-	UniqueKmers u2(3000);
-	u2.insert_path(0,0);
-	u2.insert_path(1,1);
+	UniqueKmers u2(3000, path_to_allele);
 	u2.insert_kmer(20, a1);
 	u2.insert_kmer(1, a2);
 	
@@ -145,19 +136,16 @@ TEST_CASE("HMM get_genotyping_result_normalized", "[HMM get_genotyping_result_no
 }
 
 TEST_CASE("HMM undefined_alleles1", "[HMM get_undefined_alleles1]") {
-	UniqueKmers u1(2000);
+	vector<unsigned char> path_to_allele = {0, 1};
+	UniqueKmers u1(2000, path_to_allele);
 	vector<unsigned char> a1 = {0};
 	vector<unsigned char> a2 = {1};
-	u1.insert_empty_allele(0, true);
-	u1.insert_empty_allele(1);
+	u1.set_undefined_allele(0);
 	REQUIRE (u1.is_undefined_allele(0));
-	u1.insert_path(0,0);
-	u1.insert_path(1,1);
 	u1.insert_kmer(10, a1);
 
-	UniqueKmers u2(3000);
-	u2.insert_path(0,1);
-	u2.insert_path(1,0);
+	path_to_allele = {1, 0};
+	UniqueKmers u2(3000, path_to_allele);
 	u2.insert_kmer(20, a1);
 	u2.insert_kmer(1, a2);
 
@@ -198,20 +186,15 @@ TEST_CASE("HMM undefined_alleles1", "[HMM get_undefined_alleles1]") {
 }
 
 TEST_CASE("HMM undefined_alleles2", "[HMM get_undefined_alleles1]") {
-	UniqueKmers u1(2000);
+	vector<unsigned char> path_to_allele = {0, 0};
+	UniqueKmers u1(2000, path_to_allele);
 	vector<unsigned char> a1 = {0};
 	vector<unsigned char> a2 = {1};
-	u1.insert_empty_allele(0);
-	u1.insert_empty_allele(1);
-	u1.insert_path(0,0);
-	u1.insert_path(1,0);
 
-	UniqueKmers u2(3000);
-	u2.insert_empty_allele(0, true);
-	u2.insert_empty_allele(1);
+	path_to_allele = {1, 0};
+	UniqueKmers u2(3000, path_to_allele);
+	u2.set_undefined_allele(0);
 	REQUIRE (u2.is_undefined_allele(0));
-	u2.insert_path(0,1);
-	u2.insert_path(1,0);
 	u2.insert_kmer(20, a2);
 	u2.insert_kmer(1, a1);
 
@@ -252,27 +235,21 @@ TEST_CASE("HMM undefined_alleles2", "[HMM get_undefined_alleles1]") {
 }
 
 TEST_CASE("HMM only_undefined_alleles", "[HMM only_undefined_alleles]") {
-	UniqueKmers u1(2000);
+	vector<unsigned char> path_to_allele = {0, 1};
+	UniqueKmers u1(2000, path_to_allele);
 	vector<unsigned char> a1 = {0};
 	vector<unsigned char> a2 = {1};
 	// set both alleles to undefined
-	u1.insert_empty_allele(0, true);
-	u1.insert_empty_allele(1, true);
-	u1.insert_path(0,0);
-	u1.insert_path(1,1);
-//	u1.insert_kmer(CopyNumber(0.1,0.9,0.1), a1);
-//	u1.insert_kmer(CopyNumber(0.1,0.9,0.1), a2);
+	u1.set_undefined_allele(0);
+	u1.set_undefined_allele(1);
 	u1.insert_kmer(10, a1);
 	u1.insert_kmer(10, a2);
 
-	UniqueKmers u2(3000);
+	path_to_allele = {1, 0};
+	UniqueKmers u2(3000, path_to_allele);
 	// set both alleles to undefined
-	u2.insert_empty_allele(0, true);
-	u2.insert_empty_allele(1, true);
-	u2.insert_path(0,1);
-	u2.insert_path(1,0);
-//	u2.insert_kmer(CopyNumber(0.01,0.01,0.9), a1);
-//	u2.insert_kmer(CopyNumber(0.9,0.3,0.1), a2);
+	u2.set_undefined_allele(0);
+	u2.set_undefined_allele(1);
 	u2.insert_kmer(20, a1);
 	u2.insert_kmer(1, a2);
 
@@ -317,15 +294,11 @@ TEST_CASE("HMM only_undefined_alleles", "[HMM only_undefined_alleles]") {
 
 
 TEST_CASE("HMM no_alt_allele", "[HMM no_alt_allele]") {
-	UniqueKmers u(2000);
+	vector<unsigned char> path_to_allele = {0, 0, 0};
+	UniqueKmers u(2000, path_to_allele);
 	vector<unsigned char> a1 = {0,1};
 	vector<unsigned char> a2 = {};
-	u.insert_path(0,0);
-	u.insert_path(1,0);
-	u.insert_path(2,0);
 
-//	u.insert_kmer(CopyNumber(0.1,0.2,0.9), a1);
-//	u.insert_kmer(CopyNumber(0.3,0.4,0.1), a2);
 	u.insert_kmer(10, a1);
 	u.insert_kmer(5, a2);
 
@@ -349,14 +322,10 @@ TEST_CASE("HMM no_alt_allele", "[HMM no_alt_allele]") {
 
 
 TEST_CASE("HMM no_ref_allele", "[HMM no_ref_allele]") {
-	UniqueKmers u (2000);
+	vector<unsigned char> path_to_allele = {1, 1, 1};
+	UniqueKmers u (2000, path_to_allele);
 	vector<unsigned char> a1 = {0,1};
 	vector<unsigned char> a2 = {};
-	u.insert_path(0,1);
-	u.insert_path(1,1);
-	u.insert_path(2,1);
-//	u.insert_kmer(CopyNumber(0.1,0.2,0.9), a1);
-//	u.insert_kmer(CopyNumber(0.3,0.4,0.1), a2);
 	u.insert_kmer (20, a1);
 	u.insert_kmer (10, a2);
 
@@ -378,17 +347,9 @@ TEST_CASE("HMM no_ref_allele", "[HMM no_ref_allele]") {
 
 
 TEST_CASE("HMM no_unique_kmers", "[HMM no_unique_kmers]") {
-	UniqueKmers u1(2000);
-	u1.insert_path(0,0);
-	u1.insert_path(1,1);
-	u1.insert_empty_allele(0);
-	u1.insert_empty_allele(1);
-
-	UniqueKmers u2(3000);
-	u2.insert_path(0,0);
-	u2.insert_path(1,1);
-	u2.insert_empty_allele(0);
-	u2.insert_empty_allele(1);
+	vector<unsigned char> path_to_allele = {0, 1};
+	UniqueKmers u1(2000, path_to_allele);
+	UniqueKmers u2(3000, path_to_allele);
 
 	ProbabilityTable probs;
 
@@ -419,18 +380,10 @@ TEST_CASE("HMM no_unique_kmers", "[HMM no_unique_kmers]") {
 
 
 TEST_CASE("HMM no_unique_kmers2", "[HMM no_unique_kmers2]") {
-	UniqueKmers u1(2000);
-	u1.insert_path(0,0);
-	u1.insert_path(1,0);
-	u1.insert_path(2,1);
-	u1.insert_empty_allele(0);
-	u1.insert_empty_allele(1);
-	UniqueKmers u2(3000);
-	u2.insert_path(0,0);
-	u2.insert_path(1,1);
-	u2.insert_path(2,1);
-	u2.insert_empty_allele(0);
-	u2.insert_empty_allele(1);
+	vector<unsigned char> path_to_allele = {0, 0, 1};
+	UniqueKmers u1(2000, path_to_allele);
+	path_to_allele = {0, 1, 1};
+	UniqueKmers u2(3000, path_to_allele);
 
 	ProbabilityTable probs;
 
@@ -461,9 +414,8 @@ TEST_CASE("HMM no_unique_kmers2", "[HMM no_unique_kmers2]") {
 
 
 TEST_CASE("HMM no_unique_kmers3", "[HMM no_unique_kmers3]") {
-	UniqueKmers u1(2000);
-	u1.insert_path(0,0);
-	u1.insert_path(1,1);
+	vector<unsigned char> path_to_allele = {0, 1};
+	UniqueKmers u1(2000, path_to_allele);
 	vector<unsigned char> a1 = {0};
 	vector<unsigned char> a2 = {1};
 //	u1.insert_kmer(CopyNumber(0.1,0.9,0.1), a1);
@@ -472,17 +424,8 @@ TEST_CASE("HMM no_unique_kmers3", "[HMM no_unique_kmers3]") {
 	u1.insert_kmer(10, a2);
 
 	// no unique kmers for second variant
-	UniqueKmers u2(3000);
-	u2.insert_path(0,0);
-	u2.insert_path(1,1);
-	u2.insert_empty_allele(0);
-	u2.insert_empty_allele(1);
-
-	UniqueKmers u3(4000);
-	u3.insert_path(0,0);
-	u3.insert_path(1,1);
-//	u3.insert_kmer(CopyNumber(0.1,0.9,0.1), a1);
-//	u3.insert_kmer(CopyNumber(0.1,0.8,0.1), a2);
+	UniqueKmers u2(3000, path_to_allele);
+	UniqueKmers u3(4000, path_to_allele);
 	u3.insert_kmer(10, a1);
 	u3.insert_kmer(9, a2);
 
@@ -528,19 +471,10 @@ TEST_CASE("HMM no_unique_kmers3", "[HMM no_unique_kmers3]") {
 
 
 TEST_CASE("HMM no_unique_kmers_uniform", "[HMM no_unique_kmers_uniorm]") {
-	UniqueKmers u1 (2000);
-	u1.insert_path(0,0);
-	u1.insert_path(1,1);
-	u1.insert_path(2,1);
-	u1.insert_empty_allele(0);
-	u1.insert_empty_allele(1);
-
-	UniqueKmers u2 (3000);
-	u2.insert_path(0,0);
-	u2.insert_path(1,0);
-	u2.insert_path(2,1);
-	u2.insert_empty_allele(0);
-	u2.insert_empty_allele(1);
+	vector<unsigned char> path_to_allele = {0, 1, 1};
+	UniqueKmers u1 (2000, path_to_allele);
+	path_to_allele = {0, 0, 1};
+	UniqueKmers u2 (3000, path_to_allele);
 
 	ProbabilityTable probs;
 
@@ -564,9 +498,8 @@ TEST_CASE("HMM no_unique_kmers_uniform", "[HMM no_unique_kmers_uniorm]") {
 
 TEST_CASE("HMM only_kmers", "[HMM only_kmers]") {
 	// PGGTyper-kmers: insert one ref and one alt path and allow uniform transitions between paths
-	UniqueKmers u1 (2000);
-	u1.insert_path(0,0);
-	u1.insert_path(1,1);
+	vector<unsigned char> path_to_allele = {0, 1};
+	UniqueKmers u1 (2000, path_to_allele);
 	vector<unsigned char> a1 = {0};
 	vector<unsigned char> a2 = {1};
 //	u1.insert_kmer(CopyNumber(0.05,0.9,0.05), a1);
@@ -574,17 +507,13 @@ TEST_CASE("HMM only_kmers", "[HMM only_kmers]") {
 	u1.insert_kmer(10, a1);
 	u1.insert_kmer(12, a2);
 
-	UniqueKmers u2 (3000);
-	u2.insert_path(0,0);
-	u2.insert_path(1,1);
+	UniqueKmers u2 (3000, path_to_allele);
 //	u2.insert_kmer(CopyNumber(0.9,0.07,0.03), a1);
 //	u2.insert_kmer(CopyNumber(0.1,0.2,0.7), a2);
 	u2.insert_kmer(1, a1);
 	u2.insert_kmer(20, a2);
 
-	UniqueKmers u3 (4000);
-	u3.insert_path(0,0);
-	u3.insert_path(1,1);
+	UniqueKmers u3 (4000, path_to_allele);
 //	u3.insert_kmer(CopyNumber(0.6,0.3,0.1), a1);
 //	u3.insert_kmer(CopyNumber(0.3,0.4,0.3), a2);
 	u3.insert_kmer(5, a1);
@@ -620,30 +549,20 @@ TEST_CASE("HMM only_kmers", "[HMM only_kmers]") {
 
 
 TEST_CASE("HMM emissions_zero", "[HMM emissions_zero]") {
-	UniqueKmers u1 (1000);
-	u1.insert_path(0,0);
-	u1.insert_path(1,1);
+	vector<unsigned char> path_to_allele = {0, 1};
+	UniqueKmers u1 (1000, path_to_allele);
 	vector<unsigned char> a1 = {0};
 	vector<unsigned char> a2 = {1};
-//	u1.insert_kmer(CopyNumber(0.0,1.0,0.0), a1);
-//	u1.insert_kmer(CopyNumber(0.0,1.0,0.0), a2);
 	u1.insert_kmer(10, a1);
 	u1.insert_kmer(10, a2);
 
-	UniqueKmers u2(2000);
-	u2.insert_path(0,1);
-	u2.insert_path(1,1);
-	u2.insert_empty_allele(0);
-//	u2.insert_kmer(CopyNumber(1.0,0.0,0.0), a1);
-//	u2.insert_kmer(CopyNumber(1.0,0.0,0.0), a1);
+	path_to_allele = {1, 1};
+	UniqueKmers u2(2000, path_to_allele);
 	u2.insert_kmer(0, a2);
 	u2.insert_kmer(0, a2);
 
-	UniqueKmers u3(3000);
-	u3.insert_path(0,0);
-	u3.insert_path(1,1);
-//	u3.insert_kmer(CopyNumber(0.0,1.0,0.0), a1);
-//	u3.insert_kmer(CopyNumber(0.0,1.0,0.0), a2);
+	path_to_allele = {0, 1};
+	UniqueKmers u3(3000, path_to_allele);
 	u3.insert_kmer(10, a1);
 	u3.insert_kmer(10, a2);
 
@@ -672,34 +591,27 @@ TEST_CASE("HMM emissions_zero", "[HMM emissions_zero]") {
 		index += 1;
 	}
 
+	for (unsigned int i = 0; i < expected_likelihoods.size(); ++i) {
+		cout << expected_likelihoods[i] << " " << computed_likelihoods[i] << endl;
+	}
+
 	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
 }
 
 
 TEST_CASE("HMM underflow", "[HMM underflow]") {
-	UniqueKmers u1 (1000);
-	u1.insert_path(0,0);
-	u1.insert_path(1,1);
+	vector<unsigned char> path_to_allele = {0, 1};
+	UniqueKmers u1 (1000, path_to_allele);
 	vector<unsigned char> a1 = {0};
 	vector<unsigned char> a2 = {1};
-//	u1.insert_kmer(CopyNumber(0.0,1.0,0.0), a1);
-//	u1.insert_kmer(CopyNumber(0.0,1.0,0.0), a2);
 	u1.insert_kmer(10, a1);
 	u1.insert_kmer(10, a2);
 
-	UniqueKmers u2 (2000);
-	u2.insert_path(0,0);
-	u2.insert_path(1,1);
-//	u2.insert_kmer(CopyNumber(0.0,0.0,1.0), a1);
-//	u2.insert_kmer(CopyNumber(1.0,0.0,0.0), a2);
+	UniqueKmers u2 (2000, path_to_allele);
 	u2.insert_kmer(20, a1);
 	u2.insert_kmer(0, a2);
 
-	UniqueKmers u3 (3000);
-	u3.insert_path(0,0);
-	u3.insert_path(1,1);
-//	u3.insert_kmer(CopyNumber(0.0,1.0,0.0), a1);
-//	u3.insert_kmer(CopyNumber(0.0,1.0,0.0), a2);
+	UniqueKmers u3 (3000, path_to_allele);
 	u3.insert_kmer(10, a1);
 	u3.insert_kmer(10, a2);
 
@@ -728,31 +640,17 @@ TEST_CASE("HMM underflow", "[HMM underflow]") {
 
 
 TEST_CASE("HMM get_genotyping_result_neutral_kmers", "[HMM get_genotyping_result_with_kmer]") {
-	UniqueKmers u1(2000);
+	vector<unsigned char> path_to_allele = {0, 1};
+	UniqueKmers u1(2000, path_to_allele);
 	vector<unsigned char> a1 = {0};
 	vector<unsigned char> a2 = {1};
 	vector<unsigned char> a3 = {0,1};
-	u1.insert_path(0,0);
-	u1.insert_path(1,1);
-//	u1.insert_kmer(CopyNumber(0.1,0.9,0.1), a1);
-//	u1.insert_kmer(CopyNumber(0.1,0.9,0.1), a2);
-	// these kmers are located on all alleles
-//	u1.insert_kmer(CopyNumber(0.05, 0.45, 0.5), a3);
-//	u1.insert_kmer(CopyNumber(0.4, 0.5, 0.1), a3);
-
 	u1.insert_kmer(10, a1);
 	u1.insert_kmer(10, a2);
 	u1.insert_kmer(12, a3);
 	u1.insert_kmer(5, a3);
 
-	UniqueKmers u2(3000);
-	u2.insert_path(0,0);
-	u2.insert_path(1,1);
-//	u2.insert_kmer(CopyNumber(0.01,0.01,0.9), a1);
-//	u2.insert_kmer(CopyNumber(0.9,0.3,0.1), a2);
-//	u2.insert_kmer(CopyNumber(0.01, 0.49, 0.5), a3);
-//	u2.insert_kmer(CopyNumber(0.3, 0.4, 0.3), a3);
-
+	UniqueKmers u2(3000, path_to_allele);
 	u2.insert_kmer(20, a1);
 	u2.insert_kmer(1, a2);
 	u2.insert_kmer(15, a3);
@@ -794,33 +692,17 @@ TEST_CASE("HMM get_genotyping_result_neutral_kmers", "[HMM get_genotyping_result
 
 TEST_CASE("HMM only_paths", "[HMM only_paths]") {
 	// want to only consider the following paths. All others should be ignored.
+	vector<unsigned char> path_to_allele = {0, 2, 1, 1};
 	vector<unsigned short> only_paths = {0,3};
-	UniqueKmers u1(2000);
+	UniqueKmers u1(2000, path_to_allele);
 	vector<unsigned char> a1 = {0};
 	vector<unsigned char> a2 = {1};
 	vector<unsigned char> a3 = {2};
-	u1.insert_empty_allele(0);
-	u1.insert_empty_allele(1);
-	u1.insert_empty_allele(2);
-	u1.insert_path(0,0);
-	u1.insert_path(1,2);
-	u1.insert_path(2,1);
-	u1.insert_path(3,1);
-//	u1.insert_kmer(CopyNumber(0.1,0.9,0.1), a1);
-//	u1.insert_kmer(CopyNumber(0.1,0.9,0.1), a2);
 	u1.insert_kmer(10, a1);
 	u1.insert_kmer(10, a2);
 
-	UniqueKmers u2(3000);
-	u2.insert_empty_allele(0);
-	u2.insert_empty_allele(1);
-	u2.insert_empty_allele(2);
-	u2.insert_path(0,0);
-	u2.insert_path(1,0);
-	u2.insert_path(2,2);
-	u2.insert_path(3,1);
-//	u2.insert_kmer(CopyNumber(0.01,0.01,0.9), a1);
-//	u2.insert_kmer(CopyNumber(0.9,0.3,0.1), a2);
+	path_to_allele = {0, 0, 2, 1};
+	UniqueKmers u2(3000, path_to_allele);
 	u2.insert_kmer(20, a1);
 	u2.insert_kmer(1, a2);
 
@@ -854,27 +736,13 @@ TEST_CASE("HMM only_paths", "[HMM only_paths]") {
 }
 
 TEST_CASE("HMM no_only_paths2", "[HMM only_paths2]") {
+	vector<unsigned char> path_to_allele = {0, 1, 2};
 	vector<unsigned char> a2 = {2};
-	UniqueKmers u1(2000);
-	u1.insert_path(0,0);
-	u1.insert_path(1,1);
-	u1.insert_path(2,2);
-	u1.insert_empty_allele(0);
-	u1.insert_empty_allele(1);
-	u1.insert_empty_allele(2);
-//	u1.insert_kmer(CopyNumber(0.05, 0.8, 0.15), a2);
+	UniqueKmers u1(2000, path_to_allele);
 	u1.insert_kmer(12, a2);
 
-	UniqueKmers u2(3000);
-	u2.insert_path(0,0);
-	u2.insert_path(1,1);
-	u2.insert_empty_allele(0);
-	u2.insert_empty_allele(1);
-	u2.insert_empty_allele(2);
-
-//	u2.insert_kmer(CopyNumber(0.05, 0.8, 0.15), a2);
+	UniqueKmers u2(3000, path_to_allele);
 	u2.insert_kmer(12,a2);
-	u2.insert_path(2,2);
 
 	ProbabilityTable probs (0,1,13,0.0L);
 	probs.modify_probability(0,12,CopyNumber(0.05, 0.8, 0.15));
