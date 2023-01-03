@@ -82,7 +82,7 @@ In this case you can run PanGenie using the Snakemake pipeline provided in ``pip
 
 PanGenie is k-mer based and thus expects **short reads** as input. Reads must be provided in a single FASTA or FASTQ file using the ``-i`` option.
 
-### Input reference genomenput-representation.png
+### Input reference
 
 PanGenie also needs a reference genome in FASTA format which can be provided using option ``-r``.
 
