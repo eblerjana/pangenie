@@ -162,5 +162,5 @@ Per default, PanGenie uses a single thread. The number of threads used for k-mer
 ## Citation
 
 J. Ebler, P. Ebert, W. E. Clarke, T. Rausch, P. A. Audano, T. Houwaart, Y. Mao, J. Korbel, E. E. Eichler,
-M. C. Zody, A. T. Dilthey, and T. Marschall. Pangenome-based genome inference. Nature genetics,
+M. C. Zody, A. T. Dilthey, and T. Marschall. Pangenome-based genome inference. *Nature Genetics*,
 54(4):518–525, 2022.
