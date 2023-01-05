@@ -46,9 +46,7 @@ private:
 	void compute_viterbi_path();
 	void index_columns(std::vector<unsigned short>* only_paths = nullptr);
 	void compute_forward_column(size_t column_index);
-	void compute_forward_column_quartic(size_t column_index);
 	void compute_backward_column(size_t column_index);
-	void compute_backward_column_quartic(size_t column_index);
 	void compute_viterbi_column(size_t column_index);
 
 	template<class T>
