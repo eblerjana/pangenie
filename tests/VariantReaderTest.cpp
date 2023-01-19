@@ -200,9 +200,8 @@ TEST_CASE("VariantReader write_genotypes_of", "[VariantReader write_genotypes_of
 		r.add_to_likelihood(0,1,0.7);
 		r.add_to_likelihood(1,1,0.1);
 		genotypes_chrA[i] = r;
-		UniqueKmers* u = new UniqueKmers(i);
-		u->insert_empty_allele(0);
-		u->insert_empty_allele(1);
+		vector<unsigned char> path_to_allele;
+		UniqueKmers* u = new UniqueKmers(i, path_to_allele);
 		kmers_chrA[i] = u;
 	}
 
@@ -218,10 +217,8 @@ TEST_CASE("VariantReader write_genotypes_of", "[VariantReader write_genotypes_of
 	r.add_second_haplotype_allele(1);
 	genotypes_chrA[2] = r;
 
-	UniqueKmers* u = new UniqueKmers(2);
-	u->insert_empty_allele(0);
-	u->insert_empty_allele(1);
-	u->insert_empty_allele(2);
+	vector<unsigned char> path_to_allele;
+	UniqueKmers* u = new UniqueKmers(2, path_to_allele);
 	vector<unsigned char> allele_ids = {0};
 	u->insert_kmer(30, allele_ids);
 	u->insert_kmer(28, allele_ids);
@@ -238,9 +235,8 @@ TEST_CASE("VariantReader write_genotypes_of", "[VariantReader write_genotypes_of
 		r.add_to_likelihood(1,1,0.8);
 		genotypes_chrB[i] = r;
 		
-		UniqueKmers* u = new UniqueKmers(i);
-		u->insert_empty_allele(0);
-		u->insert_empty_allele(1);
+		vector<unsigned char> path_to_allele;
+		UniqueKmers* u = new UniqueKmers(i, path_to_allele);
 		kmers_chrB[i] = u;
 	}
 
@@ -358,7 +354,8 @@ TEST_CASE("VariantReader variant_ids2", "[VariantReader variant_ids2]") {
 	vector<GenotypingResult> genotypes(2);
 	v.open_genotyping_outfile("../tests/data/small1-ids-genotypes.vcf");
 	
-	vector<UniqueKmers*> u = { new UniqueKmers(0), new UniqueKmers(1) };
+	vector<unsigned char> path_to_allele;
+	vector<UniqueKmers*> u = { new UniqueKmers(0, path_to_allele), new UniqueKmers(1, path_to_allele) };
 	v.write_genotypes_of("chrA", genotypes, &u);
 	delete u[0];
 	delete u[1];
@@ -368,7 +365,8 @@ TEST_CASE("VariantReader close_to_start", "[VariantReader close_to_start]") {
 	string vcf = "../tests/data/close.vcf";
 	string fasta = "../tests/data/close.fa";
 	vector<GenotypingResult> genotypes(1);
-	vector<UniqueKmers*> u = { new UniqueKmers(0) };
+	vector<unsigned char> path_to_allele;
+	vector<UniqueKmers*> u = { new UniqueKmers(0, path_to_allele) };
 	VariantReader v(vcf, fasta, 31, true);
 	v.open_genotyping_outfile("../tests/data/small1-ids-close.vcf");
 	v.write_genotypes_of("chr10", genotypes, &u);

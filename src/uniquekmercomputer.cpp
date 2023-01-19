@@ -52,17 +52,17 @@ void UniqueKmerComputer::compute_unique_kmers(vector<UniqueKmers*>* result, Prob
 		
 		map <jellyfish::mer_dna, vector<unsigned char>> occurences;
 		const Variant& variant = this->variants->get_variant(this->chromosome, v);
-		UniqueKmers* u = new UniqueKmers(variant.get_start_position());
-		u->set_coverage(kmer_coverage);
-		size_t nr_alleles = variant.nr_of_alleles();
-
-		// insert empty alleles (to also capture paths for which no unique kmers exist)
+	
+		vector<unsigned char> path_to_alleles;
 		assert(variant.nr_of_paths() < 65535);
 		for (unsigned short p = 0; p < variant.nr_of_paths(); ++p) {
 			unsigned char a = variant.get_allele_on_path(p);
-			u->insert_empty_allele(a);
-			u->insert_path(p,a);
+			path_to_alleles.push_back(a);
 		}
+
+		UniqueKmers* u = new UniqueKmers(variant.get_start_position(), path_to_alleles);
+		u->set_coverage(kmer_coverage);
+		size_t nr_alleles = variant.nr_of_alleles();
 
 		for (unsigned char a = 0; a < nr_alleles; ++a) {
 			// consider all alleles not undefined
@@ -131,16 +131,13 @@ void UniqueKmerComputer::compute_empty(vector<UniqueKmers*>* result) const {
 	size_t nr_variants = this->variants->size_of(this->chromosome);
 	for (size_t v = 0; v < nr_variants; ++v) {
 		const Variant& variant = this->variants->get_variant(this->chromosome, v);
-		UniqueKmers* u = new UniqueKmers(variant.get_start_position());
-		size_t nr_alleles = variant.nr_of_alleles();
-
-		// insert empty alleles and paths
+		vector<unsigned char> path_to_alleles;
 		assert(variant.nr_of_paths() < 65535);
 		for (unsigned short p = 0; p < variant.nr_of_paths(); ++p) {
 			unsigned char a = variant.get_allele_on_path(p);
-			u->insert_empty_allele(a);
-			u->insert_path(p,a);
+			path_to_alleles.push_back(a);
 		}
+		UniqueKmers* u = new UniqueKmers(variant.get_start_position(), path_to_alleles);
 		result->push_back(u);
 	}
 }

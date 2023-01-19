@@ -16,15 +16,12 @@
 class UniqueKmers {
 public:
 	/**
-	* @param variant_id variant identifier
 	* @param variant_position genomic variant position
+	* @param alleles defines which path (= index) covers each allele (= alleles[index])
 	**/
-	UniqueKmers(size_t variant_position);
+	UniqueKmers(size_t variant_position, std::vector<unsigned char>& alleles);
+	/** returns the variant position **/
 	size_t get_variant_position();
-	/** insert empty allele (no kmers) **/
-	void insert_empty_allele(unsigned char allele_id, bool is_undefined = false);
-	/** insert a path covering the given allele **/
-	void insert_path(unsigned short path_id, unsigned char allele_id);
 	/** insert a kmer
 	* @param cn copy number probabilities of kmer
 	* @param allele_ids on which alleles this kmer occurs
@@ -61,9 +58,9 @@ private:
 	std::vector<unsigned short> kmer_to_count;
 	// stores kmers of each allele and whether the allele is undefined
 	std::map<unsigned char, std::pair<KmerPath, bool>> alleles;
-	std::map<unsigned short, unsigned char> path_to_allele;
+	// defines which alleles are carried by each path (=index)
+	std::vector<unsigned char> path_to_allele;
 	unsigned short local_coverage;
 	friend class EmissionProbabilityComputer;
-	
 };
 # endif // UNIQUEKMERS_HPP

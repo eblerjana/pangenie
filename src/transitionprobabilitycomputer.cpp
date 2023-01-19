@@ -23,9 +23,17 @@ long double TransitionProbabilityComputer::compute_transition_prob(unsigned shor
 		return 1.0L;
 	} else {
 		// determine number of recombination events
-		unsigned int nr_events = 0;
-		if (path_id1 != path_id3) nr_events += 1;
-		if (path_id2 != path_id4) nr_events += 1;
-		return this->probabilities[nr_events];
+		unsigned int nr_switches = 0;
+		if (path_id1 != path_id3) nr_switches += 1;
+		if (path_id2 != path_id4) nr_switches += 1;
+		return this->probabilities[nr_switches];
+	}
+}
+
+long double TransitionProbabilityComputer::compute_transition_prob(unsigned short nr_switches) {
+	if (this->uniform) {
+		return 1.0L;
+	} else {
+		return this->probabilities[nr_switches];
 	}
 }
