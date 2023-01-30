@@ -89,7 +89,7 @@ size_t JellyfishReader::computeHistogram(size_t max_count, bool largest_peak, st
 
 	// identify the largest and second largest (if it exists)
 	if (peak_ids.size() == 0) {
-		throw runtime_error("JellyfishCounter: no peak found in kmer-count histogram.");
+		throw runtime_error("JellyfishReader::computeHistogram: no peak found in kmer-count histogram.");
 	}
 	size_t kmer_coverage_estimate = -1;
 	if (peak_ids.size() < 2) {
@@ -129,6 +129,11 @@ size_t JellyfishReader::computeHistogram(size_t max_count, bool largest_peak, st
 	if (filename != "") {
 		ofstream histofile;
 		histofile.open(filename, ios::app);
+		if (!histofile.good()) {
+			stringstream ss;
+			ss << "JellyfishReader::computeHistogram: File " << filename << " cannot be created. Note that the filename must not contain non-existing directories." << endl;
+			throw runtime_error(ss.str());
+		}
 		histofile << "parameters\t" << kmer_coverage_estimate/2.0 << '\t' << kmer_coverage_estimate << endl;
 		histofile.close();
 	}

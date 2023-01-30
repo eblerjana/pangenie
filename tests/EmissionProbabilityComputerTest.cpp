@@ -15,10 +15,8 @@ TEST_CASE("EmissionProbabilityComputer get_emission_probability", "EmissionProba
 	vector<unsigned short> counts = {4, 6, 8, 2, 5};
 	vector<CopyNumber> cns = { CopyNumber(0.01, 0.2, 0.0), CopyNumber(0.001,0.5,0.001), CopyNumber(0.0,0.3,0.02), CopyNumber(0.05,0.6,0.0), CopyNumber(0.01,0.2,0.01)};
 	ProbabilityTable probs (0,10,10,0.0);
-	UniqueKmers unique_kmers(1000);
-	unique_kmers.insert_path(0,0);
-	unique_kmers.insert_path(1,1);
-	unique_kmers.insert_path(2,1);
+	vector<unsigned char> path_to_allele = {0, 1, 1};
+	UniqueKmers unique_kmers(1000, path_to_allele);
 	for (unsigned int i = 0; i < kmers.size(); ++i) {
 		unique_kmers.insert_kmer(counts[i],  alleles[i]);
 		probs.modify_probability(0, counts[i], cns[i]);
@@ -42,11 +40,9 @@ TEST_CASE("EmissionProbabilityComputer get_emission_probability_undefined1", "Em
 	vector<unsigned short> counts = {4, 6, 8, 2, 5};
 	vector<CopyNumber> cns = { CopyNumber(0.01, 0.2, 0.0), CopyNumber(0.001,0.5,0.001), CopyNumber(0.0,0.3,0.02), CopyNumber(0.05,0.6,0.0), CopyNumber(0.01,0.2,0.01)};
 	ProbabilityTable probs (0,10,10,0.0);
-	UniqueKmers unique_kmers(1000);
-	unique_kmers.insert_empty_allele(2, true);
-	unique_kmers.insert_path(0,0);
-	unique_kmers.insert_path(1,1);
-	unique_kmers.insert_path(2,2);
+	vector<unsigned char> path_to_allele = {0, 1, 2};
+	UniqueKmers unique_kmers(1000, path_to_allele);
+	unique_kmers.set_undefined_allele(2);
 	for (unsigned int i = 0; i < kmers.size(); ++i) {
 		unique_kmers.insert_kmer(counts[i],  alleles[i]);
 		probs.modify_probability(0, counts[i], cns[i]);

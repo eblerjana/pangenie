@@ -1,3 +1,0 @@
-repository='https://github.com/USCiLab/cereal'
-module=''
-tag='origin'

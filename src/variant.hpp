@@ -27,6 +27,9 @@ public:
 	* @param alleles list of alleles (first one is reference allele)
 	* @param paths vector containing the allele each path covers (i-th path covers allele at paths[i])
 	* @param variant_id ID of the variant (ID column of the VCF)
+	*
+	* Currently, the largest number of alleles and paths supported is 256. This is because unsigned chars are used to store allele ids. For merged variants, the number of alleles can get as
+	* high as the number of paths (if every path carries a different allele), therefore the limit on the number of paths is also 256 to avoid overflows.
 	**/
     Variant() = default;  
 	Variant(std::string left_flank, std::string right_flank, std::string chromosome, size_t start_position, size_t end_position, std::vector<std::string> alleles, std::vector<unsigned char> paths, std::string variant_id = ".");

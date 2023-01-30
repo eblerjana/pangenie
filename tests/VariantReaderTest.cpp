@@ -48,7 +48,7 @@ TEST_CASE("VariantReader get_allele_string", "[VariantReader get_allele_string]"
 	// there should be 4+1 paths (since the reference path is added)
 	REQUIRE(v.nr_of_paths() == 5);
 
-	v.write_path_segments("/MMCI/TM/scratch/jebler/pgg-typer/pggtyper/pggtyper/tests/data/small1-segments.fa");
+	v.write_path_segments("small1-segments.fa");
 }
 
 TEST_CASE("VariantReader get_overhang", "[VariantReader get_overhang]") {
@@ -200,9 +200,8 @@ TEST_CASE("VariantReader write_genotypes_of", "[VariantReader write_genotypes_of
 		r.add_to_likelihood(0,1,0.7);
 		r.add_to_likelihood(1,1,0.1);
 		genotypes_chrA[i] = r;
-		UniqueKmers* u = new UniqueKmers(i);
-		u->insert_empty_allele(0);
-		u->insert_empty_allele(1);
+		vector<unsigned char> path_to_allele;
+		UniqueKmers* u = new UniqueKmers(i, path_to_allele);
 		kmers_chrA[i] = u;
 	}
 
@@ -218,10 +217,8 @@ TEST_CASE("VariantReader write_genotypes_of", "[VariantReader write_genotypes_of
 	r.add_second_haplotype_allele(1);
 	genotypes_chrA[2] = r;
 
-	UniqueKmers* u = new UniqueKmers(2);
-	u->insert_empty_allele(0);
-	u->insert_empty_allele(1);
-	u->insert_empty_allele(2);
+	vector<unsigned char> path_to_allele;
+	UniqueKmers* u = new UniqueKmers(2, path_to_allele);
 	vector<unsigned char> allele_ids = {0};
 	u->insert_kmer(30, allele_ids);
 	u->insert_kmer(28, allele_ids);
@@ -238,9 +235,8 @@ TEST_CASE("VariantReader write_genotypes_of", "[VariantReader write_genotypes_of
 		r.add_to_likelihood(1,1,0.8);
 		genotypes_chrB[i] = r;
 		
-		UniqueKmers* u = new UniqueKmers(i);
-		u->insert_empty_allele(0);
-		u->insert_empty_allele(1);
+		vector<unsigned char> path_to_allele;
+		UniqueKmers* u = new UniqueKmers(i, path_to_allele);
 		kmers_chrB[i] = u;
 	}
 
@@ -358,7 +354,8 @@ TEST_CASE("VariantReader variant_ids2", "[VariantReader variant_ids2]") {
 	vector<GenotypingResult> genotypes(2);
 	v.open_genotyping_outfile("../tests/data/small1-ids-genotypes.vcf");
 	
-	vector<UniqueKmers*> u = { new UniqueKmers(0), new UniqueKmers(1) };
+	vector<unsigned char> path_to_allele;
+	vector<UniqueKmers*> u = { new UniqueKmers(0, path_to_allele), new UniqueKmers(1, path_to_allele) };
 	v.write_genotypes_of("chrA", genotypes, &u);
 	delete u[0];
 	delete u[1];
@@ -368,8 +365,36 @@ TEST_CASE("VariantReader close_to_start", "[VariantReader close_to_start]") {
 	string vcf = "../tests/data/close.vcf";
 	string fasta = "../tests/data/close.fa";
 	vector<GenotypingResult> genotypes(1);
-	vector<UniqueKmers*> u = { new UniqueKmers(0) };
+	vector<unsigned char> path_to_allele;
+	vector<UniqueKmers*> u = { new UniqueKmers(0, path_to_allele) };
 	VariantReader v(vcf, fasta, 31, true);
 	v.open_genotyping_outfile("../tests/data/small1-ids-close.vcf");
 	v.write_genotypes_of("chr10", genotypes, &u);
 }
+
+
+TEST_CASE("VariantReader non_existing_path", "[VariantReader non_existing_path]") {
+	string vcf = "../tests/data/small1.vcf";
+	string fasta = "../tests/data/small1.fa";
+	VariantReader v(vcf, fasta, 10, false);
+	CHECK_THROWS(v.write_path_segments("nonexistent/paths_segments.fasta"));
+}
+
+
+TEST_CASE("VariantReader too_large_panel", "[VariantReader too_large_panel]") {
+	string vcf = "../tests/data/large-panel.vcf";
+	string fasta = "../tests/data/small1.fa";
+	// there are more than 256 paths in the VCF, the implementation cannot handle this and should throw an error
+	CHECK_THROWS(VariantReader (vcf, fasta, 10, false));
+	CHECK_THROWS(VariantReader (vcf, fasta, 10, true));
+}
+
+
+TEST_CASE("VariantReader too_many_alleles", "[VariantReader too_many_alleles]") {
+	string vcf = "../tests/data/many-alleles.vcf";
+	string fasta = "../tests/data/small1.fa";
+	// there are more than 256 alleles in the VCF, the implementation cannot handle this and should throw an error
+	CHECK_THROWS(VariantReader (vcf, fasta, 10, false));
+}
+
+

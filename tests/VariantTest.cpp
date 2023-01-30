@@ -181,14 +181,8 @@ TEST_CASE("Variant separate_variants_likelihoods", "Variant separate_variants_li
 	g.add_first_haplotype_allele(0);
 	g.add_second_haplotype_allele(2);
 
-	UniqueKmers u(0);
-	u.insert_empty_allele(0);
-	u.insert_empty_allele(1);
-	u.insert_empty_allele(2);
-	u.insert_path(0,0);
-	u.insert_path(1,0);
-	u.insert_path(2,2);
-	u.insert_path(3,1);
+	vector<unsigned char> path_to_allele = {0, 0, 2, 1};
+	UniqueKmers u(0, path_to_allele);
 	vector<unsigned char> alleles1 = {0};
 	vector<unsigned char> alleles2 = {1};
 	vector<unsigned char> alleles3 = {2};
@@ -251,13 +245,8 @@ TEST_CASE("Variant separate_variants_single", "[Variants separate_variants_singl
 	g.add_to_likelihood(0,1,0.7);
 	g.add_to_likelihood(1,1,0.2);
 
-	UniqueKmers u(0);
-	u.insert_empty_allele(0);
-	u.insert_empty_allele(1);
-	u.insert_path(0,0);
-	u.insert_path(1,0);
-	u.insert_path(2,1);
-	u.insert_path(3,1);
+	vector<unsigned char> allele_paths = {0, 0, 1, 1};
+	UniqueKmers u(0, allele_paths);
 	vector<unsigned char> alleles1 = {0,1};
 	vector<unsigned char> alleles2 = {1};
 	for (size_t i = 0; i < 10; ++i) {
@@ -308,11 +297,8 @@ TEST_CASE("Variant separate_variants_single2", "[Variants separate_variants_sing
 	g.add_to_likelihood(0,1,0.7);
 	g.add_to_likelihood(1,1,0.2);
 
-	UniqueKmers u(0);
-	u.insert_empty_allele(0);
-	u.insert_empty_allele(1);
-	u.insert_path(0,1);
-	u.insert_path(1,1);
+	vector<unsigned char> path_to_allele = {1, 1};
+	UniqueKmers u(0, path_to_allele);
 	vector<unsigned char> alleles1 = {0};
 	vector<unsigned char> alleles2 = {1};
 	u.insert_kmer(20, alleles1);
@@ -457,19 +443,8 @@ TEST_CASE("Variant combine_combined2", "[Variant combine_combined]") {
 	g.add_first_haplotype_allele(0);
 	g.add_second_haplotype_allele(2);
 
-	UniqueKmers u(0);
-	u.insert_empty_allele(0);
-	u.insert_empty_allele(1);
-	u.insert_empty_allele(2);
-	u.insert_path(0,0);
-	u.insert_path(1,0);
-	u.insert_path(2,0);
-	u.insert_path(3,0);
-	u.insert_path(4,0);
-	u.insert_path(5,0);
-	u.insert_path(6,2);
-	u.insert_path(7,1);
-	u.insert_path(8,0);
+	vector<unsigned char> path_to_allele = {0, 0, 0, 0, 0, 0, 2, 1, 0};
+	UniqueKmers u(0, path_to_allele);
 	vector<unsigned char> alleles1 = {0};
 	vector<unsigned char> alleles2 = {1};
 	vector<unsigned char> alleles3 = {2};	
@@ -567,11 +542,8 @@ TEST_CASE("Variant separate_variants_likelihoods_uncovered", "Variant separate_v
 	g.add_first_haplotype_allele(0);
 	g.add_second_haplotype_allele(0);
 
-	UniqueKmers u(0);
-	u.insert_empty_allele(0);
-	u.insert_empty_allele(1);
-	u.insert_path(0,0);
-	u.insert_path(1,1);
+	vector<unsigned char> path_to_allele = {0, 1};
+	UniqueKmers u(0, path_to_allele);
 	vector<unsigned char> alleles1 = {0};
 	vector<unsigned char> alleles2 = {1};
 	for (size_t i = 0; i < 3; ++i) {
@@ -635,11 +607,8 @@ TEST_CASE("Variant separate_variants_likelihoods_single_uncovered", "[Variant se
 	g.add_first_haplotype_allele(1);
 	g.add_second_haplotype_allele(1);
 	
-	UniqueKmers u(0);
-	u.insert_empty_allele(0);
-	u.insert_empty_allele(1);
-	u.insert_path(0,1);
-	u.insert_path(1,1);
+	vector<unsigned char> path_to_allele = {1, 1};
+	UniqueKmers u(0, path_to_allele);
 	vector<unsigned char> alleles1 = {0};
 	vector<unsigned char> alleles2 = {1};
 	u.insert_kmer(20, alleles1);

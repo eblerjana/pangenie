@@ -37,12 +37,9 @@ HMM::HMM(vector<UniqueKmers*>* unique_kmers, ProbabilityTable* probabilities, bo
 	// initialize forward normalization sums
 	this->forward_normalization_sums = vector<long double>(size, 0.0L);
 	this->previous_backward_column = nullptr;
-//	cerr << "Indexing the columns ..." << endl;
 
 	if (run_genotyping) {
-//		cerr << "Computing forward probabilities ..." << endl;
 		compute_forward_prob();
-//		cerr << "Computing backward probabilities ..." << endl;
 		compute_backward_prob();
 
 		if (normalize) {
@@ -53,7 +50,6 @@ HMM::HMM(vector<UniqueKmers*>* unique_kmers, ProbabilityTable* probabilities, bo
 	}
 
 	if (run_phasing) {
-//		cerr << "Computing Viterbi path ..." << endl;
 		compute_viterbi_path();
 	}
 }
@@ -191,6 +187,8 @@ void HMM::compute_viterbi_path() {
 }
 
 void HMM::compute_forward_column(size_t column_index) {
+	// NOTE: this implementation assumes that all variant positions are covered by the same set of paths
+
 	assert(column_index < this->column_indexers.size());
 	size_t variant_id = this->column_indexers.at(column_index)->get_variant_id();
 
@@ -216,7 +214,6 @@ void HMM::compute_forward_column(size_t column_index) {
 		size_t prev_pos = this->unique_kmers->at(prev_index)->get_variant_position();
 		size_t cur_pos = this->unique_kmers->at(cur_index)->get_variant_position();
 		transition_probability_computer = new TransitionProbabilityComputer(prev_pos, cur_pos, this->recombrate, nr_paths, this->uniform, this->effective_N);
-		
 	}
 
 	// construct new column
@@ -225,41 +222,48 @@ void HMM::compute_forward_column(size_t column_index) {
 	// emission probability computer
 	EmissionProbabilityComputer emission_probability_computer(this->unique_kmers->at(variant_id), this->probabilities);
 
+	// pre-compute helper variables
+	unsigned short nr_prev_paths = 0;
+	if (column_index > 0) {
+		nr_prev_paths = previous_indexer->nr_paths();
+		// the assumption is that all variants are covered by the same set of paths, therefore these numbers must be equal
+		assert(nr_prev_paths == nr_paths);
+	}
+
+	vector<long double> helper_i(nr_prev_paths);
+	vector<long double> helper_j(nr_prev_paths);
+	long double helper_ij = 0.0;
+
+	if (column_index > 0) {
+		size_t i = 0;
+		for (unsigned short path_id1 = 0; path_id1 < nr_prev_paths; ++path_id1) {
+			for (unsigned short path_id2 = 0; path_id2 < nr_prev_paths; ++path_id2) {
+				long double prev_forward = previous_column->at(i);
+				helper_i[path_id1] += prev_forward;
+				helper_j[path_id2] += prev_forward;
+				helper_ij += prev_forward;
+				i += 1;
+			}
+		}
+	}
+
 	// normalization
 	long double normalization_sum = 0.0L;
 
 	// state index
 	size_t i = 0;
-	unsigned short nr_prev_paths = 0;
-	if (column_index > 0) nr_prev_paths = previous_indexer->nr_paths();
 	// iterate over all pairs of current paths
 	for (unsigned short path_id1 = 0; path_id1 < nr_paths; ++path_id1) {
 		for (unsigned short path_id2 = 0; path_id2 < nr_paths; ++path_id2) {
-			// get paths corresponding to path indices
-			unsigned short path1 = column_indexer->get_path(path_id1);
-			unsigned short path2 = column_indexer->get_path(path_id2);
 			long double previous_cell = 0.0L;
 			if (column_index > 0) {
-				// previous state index
-				size_t j = 0;
-				// iterate over all pairs of previous paths
-				for (unsigned short prev_path_id1 = 0; prev_path_id1 < nr_prev_paths; ++prev_path_id1) {
-					for (unsigned short prev_path_id2 = 0; prev_path_id2 < nr_prev_paths; ++prev_path_id2) {
-						// forward probability of previous cell
-						long double prev_forward = previous_column->at(j);
-						// paths corresponding to path indices
-						unsigned short prev_path1 = previous_indexer->get_path(prev_path_id1);
-						unsigned short prev_path2 = previous_indexer->get_path(prev_path_id2);
-
-						// determine transition probability
-						long double transition_prob = transition_probability_computer->compute_transition_prob(prev_path1, prev_path2, path1, path2);
-						previous_cell += prev_forward * transition_prob;
-						j += 1;
-					}
-				}
+				previous_cell = transition_probability_computer->compute_transition_prob(0) * previous_column->at(i) +
+								transition_probability_computer->compute_transition_prob(1) * (helper_i[path_id1] + helper_j[path_id2] - 2*previous_column->at(i)) + 
+								transition_probability_computer->compute_transition_prob(2) * (helper_ij - helper_i[path_id1] - helper_j[path_id2] + previous_column->at(i));
 			} else {
 				previous_cell = 1.0L;
 			}
+
 			// determine alleles current paths (ids) correspond to
 			unsigned char allele1 = column_indexer->get_allele(path_id1);
 			unsigned char allele2 = column_indexer->get_allele(path_id2);
@@ -338,6 +342,31 @@ void HMM::compute_backward_column(size_t column_index) {
 		assert (forward_column != nullptr);
 	}
 
+	// pre-compute helper variables
+	unsigned short nr_prev_paths = 0;
+	if (column_index < column_count - 1) {
+		nr_prev_paths = previous_indexer->nr_paths();
+		assert (nr_prev_paths == nr_paths);
+	}
+
+	vector<long double> helper_i(nr_prev_paths);
+	vector<long double> helper_j(nr_prev_paths);
+	long double helper_ij = 0.0;
+
+	if (column_index < column_count - 1) {
+		size_t i = 0;
+		for (unsigned short path_id1 = 0; path_id1 < nr_prev_paths; ++path_id1) {
+			unsigned char prev_allele1 = previous_indexer->get_allele(path_id1);
+			for (unsigned short path_id2 = 0; path_id2 < nr_prev_paths; ++path_id2) {
+				unsigned char prev_allele2 = previous_indexer->get_allele(path_id2);
+				helper_i[path_id1] += this->previous_backward_column->at(i) * emission_probability_computer->get_emission_probability(prev_allele1, prev_allele2);
+				helper_j[path_id2] += this->previous_backward_column->at(i) * emission_probability_computer->get_emission_probability(prev_allele1, prev_allele2);
+				helper_ij += this->previous_backward_column->at(i) * emission_probability_computer->get_emission_probability(prev_allele1, prev_allele2);
+				i += 1;
+			}
+		}
+	}
+
 	// construct new column
 	vector<long double>* current_column = new vector<long double>();
 
@@ -349,36 +378,22 @@ void HMM::compute_backward_column(size_t column_index) {
 
 	// state index
 	size_t i = 0;
-	unsigned short nr_prev_paths = 0;
-	if (column_index < column_count - 1) nr_prev_paths = previous_indexer->nr_paths();
 	// iterate over all pairs of current paths
 	for (unsigned short path_id1 = 0; path_id1 < nr_paths; ++path_id1) {
 		for (unsigned short path_id2 = 0; path_id2 < nr_paths; ++path_id2) {
-			// get paths corresponding to path indices
-			unsigned short path1 = column_indexer->get_path(path_id1);
-			unsigned short path2 = column_indexer->get_path(path_id2);
 			// get alleles on current paths
 			unsigned char allele1 = column_indexer->get_allele(path_id1);
 			unsigned char allele2 = column_indexer->get_allele(path_id2);
 			long double current_cell = 0.0L;
 			if (column_index < column_count - 1) {
+				// get alleles on previous paths, assuming indexes are same as current column
+				unsigned char prev_allele1 = previous_indexer->get_allele(path_id1);
+				unsigned char prev_allele2 = previous_indexer->get_allele(path_id2);
+				long double helper_cell = this->previous_backward_column->at(i) * emission_probability_computer->get_emission_probability(prev_allele1, prev_allele2);
 				// iterate over previous column (ahead of this)
-				size_t j = 0;
-				for (unsigned short prev_path_id1 = 0; prev_path_id1 < nr_prev_paths; ++prev_path_id1) {
-					for (unsigned short prev_path_id2 = 0; prev_path_id2 < nr_prev_paths; ++prev_path_id2) {
-						// paths corresponding to path indices
-						unsigned short prev_path1 = previous_indexer->get_path(prev_path_id1);
-						unsigned short prev_path2 = previous_indexer->get_path(prev_path_id2);
-						// alleles on previous paths
-						unsigned char prev_allele1 = previous_indexer->get_allele(prev_path_id1);
-						unsigned char prev_allele2 = previous_indexer->get_allele(prev_path_id2);
-						long double prev_backward = this->previous_backward_column->at(j);
-						// determine transition probability
-						long double transition_prob = transition_probability_computer->compute_transition_prob(path1, path2, prev_path1, prev_path2);
-						current_cell += prev_backward * transition_prob * emission_probability_computer->get_emission_probability(prev_allele1, prev_allele2);
-						j += 1;
-					}
-				}
+				current_cell =	transition_probability_computer->compute_transition_prob(0) * helper_cell +
+								transition_probability_computer->compute_transition_prob(1) * (helper_i[path_id1] + helper_j[path_id2] - 2*helper_cell) +
+								transition_probability_computer->compute_transition_prob(2) * (helper_ij - helper_i[path_id1] - helper_j[path_id2] + helper_cell);
 			} else {
 				current_cell = 1.0L;
 			}
@@ -395,6 +410,7 @@ void HMM::compute_backward_column(size_t column_index) {
 			i += 1;
 		}
 	}
+
 
 	if (normalization_sum > 0.0L) {
 		transform(current_column->begin(), current_column->end(), current_column->begin(), bind(divides<long double>(), placeholders::_1, normalization_sum));
@@ -427,12 +443,8 @@ void HMM::compute_backward_column(size_t column_index) {
 	if (transition_probability_computer != nullptr) {
 		delete transition_probability_computer;
 	}
-	
-//	if (normalization_f_b > 0.0L) {
-//		// normalize the GenotypingResults likelihoods 
-//		this->genotyping_result.at(column_index).divide_likelihoods_by(normalization_f_b);
-//	}
 }
+
 
 void HMM::compute_viterbi_column(size_t column_index) {
 	assert(column_index < this->column_indexers.size());

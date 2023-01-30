@@ -27,7 +27,6 @@ TEST_CASE("PathSampler select_single_subset", "[PathSampler select_single_subset
 		// make sure all selected paths are contained in original set
 		for (auto s : sample) {
 			REQUIRE(s <= 10);
-			REQUIRE(s >= 0);
 		}
 	}
 }
@@ -52,7 +51,6 @@ TEST_CASE("PathSampler select_multiple_subsets", "[PathSampler select_multiple_s
 			// make sure all selected paths are contained in original set
 			for (auto s : sample) {
 				REQUIRE(s <= 20);
-				REQUIRE(s >= 0);
 			}
 		}
 	}

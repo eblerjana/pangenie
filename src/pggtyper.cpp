@@ -1,6 +1,7 @@
 #include <iostream>
 #include <sstream>
 #include <sys/resource.h>
+#include <sys/stat.h>
 #include <mutex>
 #include <thread>
 #include <algorithm>
@@ -75,7 +76,9 @@ void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, K
 
 void run_genotyping(string chromosome, vector<UniqueKmers*>* unique_kmers, ProbabilityTable* probs, bool only_genotyping, bool only_phasing, long double effective_N, vector<unsigned short>* only_paths, Results* results) {
 	Timer timer;
-	// construct HMM and run genotyping/phasing
+	/* construct HMM and run genotyping/phasing. Genotyping is run without normalizing the final alpha*beta values.
+	These values are first added up across different subsets of paths, and the resulting probabilities are normalized
+	at the end. This is done so that genotyping runs on disjoint sets of paths are better comparable. */
 	HMM hmm(unique_kmers, probs, !only_phasing, !only_genotyping, 1.26, false, effective_N, only_paths, false);
 	// store the results
 	{
@@ -91,10 +94,6 @@ void run_genotyping(string chromosome, vector<UniqueKmers*>* unique_kmers, Proba
 				results->result.at(chromosome).at(index).combine(likelihoods);
 				index += 1;
 			}
-		}
-		// normalize the likelihoods after they have been combined
-		for (size_t i = 0; i < results->result.at(chromosome).size(); ++i) {
-			results->result.at(chromosome).at(i).normalize();
 		}
 	}
 	// store runtime
@@ -149,10 +148,10 @@ int main (int argc, char* argv[])
 	// parse the command line arguments
 	CommandLineParser argument_parser;
 	argument_parser.add_command("PanGenie [options] -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf>");
-	argument_parser.add_mandatory_argument('i', "sequencing reads in FASTA/FASTQ format (uncompressed) or Jellyfish database in jf format");
-	argument_parser.add_mandatory_argument('r', "reference genome in FASTA format (uncompressed)");
-	argument_parser.add_mandatory_argument('v', "variants in VCF format (uncompressed)");
-	argument_parser.add_optional_argument('o', "result", "prefix of the output files");
+	argument_parser.add_mandatory_argument('i', "sequencing reads in FASTA/FASTQ format or Jellyfish database in jf format. NOTE: INPUT FASTA/Q FILE MUST NOT BE COMPRESSED.");
+	argument_parser.add_mandatory_argument('r', "reference genome in FASTA format. NOTE: INPUT FASTA FILE MUST NOT BE COMPRESSED.");
+	argument_parser.add_mandatory_argument('v', "variants in VCF format. NOTE: INPUT VCF FILE MUST NOT BE COMPRESSED.");
+	argument_parser.add_optional_argument('o', "result", "prefix of the output files. NOTE: the given path must not include non-existent folders.");
 	argument_parser.add_optional_argument('k', "31", "kmer size");
 	argument_parser.add_optional_argument('s', "sample", "name of the sample (will be used in the output VCFs)");
 	argument_parser.add_optional_argument('j', "1", "number of threads to use for kmer-counting");
@@ -165,7 +164,7 @@ int main (int argc, char* argv[])
 	argument_parser.add_flag_argument('c', "count all read kmers instead of only those located in graph.");
 	argument_parser.add_flag_argument('u', "output genotype ./. for variants not covered by any unique kmers.");
 	argument_parser.add_flag_argument('d', "do not add reference as additional path.");
-//	argument_parser.add_optional_argument('a', "0", "sample subsets of paths of this size.");
+	argument_parser.add_optional_argument('a', "0", "sample subsets of paths of this size.");
 	argument_parser.add_optional_argument('e', "3000000000", "size of hash used by jellyfish.");
     argument_parser.add_flag_argument('D', "debug");
 
@@ -204,7 +203,7 @@ int main (int argc, char* argv[])
 	count_only_graph = !argument_parser.get_flag('c');
 	ignore_imputed = argument_parser.get_flag('u');
 	add_reference = !argument_parser.get_flag('d');
-//	sampling_size = stoi(argument_parser.get_argument('a'));
+	sampling_size = stoi(argument_parser.get_argument('a'));
 	istringstream iss(argument_parser.get_argument('e'));
 	iss >> hash_size;
 
@@ -412,6 +411,15 @@ int main (int argc, char* argv[])
 					function<void()> f_genotyping = bind(run_genotyping, chromosome, unique_kmers, probs, true, false, effective_N, only_paths, r);
 					threadPool.submit(f_genotyping);
 				}
+			}
+		}
+	}
+
+	// in case genotyping was run, normalize the combined likelihoods
+	if (!only_phasing){
+		for (auto chromosome : chromosomes) {
+			for (size_t i = 0; i < results.result.at(chromosome).size(); ++i) {
+				results.result.at(chromosome).at(i).normalize();
 			}
 		}
 	}

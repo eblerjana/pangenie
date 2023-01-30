@@ -4,22 +4,21 @@
 
 using namespace std;
 
-UniqueKmers::UniqueKmers(size_t variant_position)
+UniqueKmers::UniqueKmers(size_t variant_position, vector<unsigned char>& alleles)
 	:variant_pos(variant_position),
 	 current_index(0),
-	 local_coverage(0)
-{}
+	 local_coverage(0),
+	 path_to_allele(alleles.size())
+{
+	for (size_t i = 0; i < alleles.size(); ++i) {
+		unsigned char a = alleles[i];
+		this->path_to_allele[i] = a;
+		this->alleles[a] = make_pair(KmerPath(), false);
+	}
+}
 
 size_t UniqueKmers::get_variant_position() {
 	return this->variant_pos;
-}
-
-void UniqueKmers::insert_empty_allele(unsigned char allele_id, bool is_undefined) {
-	this->alleles[allele_id] = make_pair(KmerPath(), is_undefined); 
-}
-
-void UniqueKmers::insert_path(unsigned short path_id, unsigned char allele_id) {
-	this->path_to_allele[path_id] = allele_id;
 }
 
 void UniqueKmers::insert_kmer(unsigned short readcount,  vector<unsigned char>& alleles){
@@ -33,9 +32,10 @@ void UniqueKmers::insert_kmer(unsigned short readcount,  vector<unsigned char>& 
 
 bool UniqueKmers::kmer_on_path(size_t kmer_index, size_t path_index) const {
 	// check if path_id exists
-	if (this->path_to_allele.find(path_index) == this->path_to_allele.end()) {
+	if (path_index >= this->path_to_allele.size()) {
 		throw runtime_error("UniqueKmers::kmer_on_path: path_index " + to_string(path_index) + " does not exist.");
 	}
+
 	// check if kmer_index is valid and look up position
 	if (kmer_index < this->current_index) {
 		unsigned char allele_id = this->path_to_allele.at(path_index);
@@ -66,17 +66,16 @@ void UniqueKmers::get_path_ids(vector<unsigned short>& p, vector<unsigned char>&
 		// only return paths that are also contained in only_include
 		for (auto p_it = only_include->begin(); p_it != only_include->end(); ++p_it) {
 			// check if path is in path_to_allele
-			auto it = this->path_to_allele.find(*p_it);
-			if (it != this->path_to_allele.end()) {
+			if (*p_it < this->path_to_allele.size()) {
 				p.push_back(*p_it);
-				a.push_back(it->second);
+				a.push_back(this->path_to_allele.at(*p_it));
 			}
 		}
 	} else {
 		// return all paths and corresponding alleles
-		for (auto it = this->path_to_allele.begin(); it != this->path_to_allele.end(); ++it) {
-			p.push_back(it->first);
-			a.push_back(it->second);
+		for (size_t i = 0; i < this->path_to_allele.size(); ++i) {
+			p.push_back(i);
+			a.push_back(this->path_to_allele.at(i));
 		}
 	}
 }
@@ -109,8 +108,8 @@ ostream& operator<< (ostream& stream, const UniqueKmers& uk) {
 	}
 
 	stream << "paths:" << endl;
-	for (auto it = uk.path_to_allele.begin(); it != uk.path_to_allele.end(); ++it) {
-		stream << it->first << " covers allele " << (unsigned int) it->second << endl;
+	for (size_t  i = 0; i < uk.path_to_allele.size(); ++i) {
+		stream << i << " covers allele " << (unsigned int) uk.path_to_allele.at(i) << endl;
 	}
 	return stream;
 }

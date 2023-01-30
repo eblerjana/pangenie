@@ -29,12 +29,12 @@ enable_testing()
 #endif ()
 
 set(JUST_INSTALL_CEREAL ON CACHE BOOL "skip boost")
-find_package(cereal 1.3.1 QUIET)
+find_package(cereal 1.3.2 QUIET)
 if (NOT cereal_FOUND)
   FetchContent_Declare(
     cereal
     GIT_REPOSITORY https://github.com/USCiLab/cereal
-    GIT_TAG v1.3.1)
+    GIT_TAG v1.3.2)
 
   FetchContent_GetProperties(cereal)
   if (NOT cereal_POPULATED)
