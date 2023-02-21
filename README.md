@@ -78,6 +78,14 @@ We typically generate such VCFs from haplotype-resolved assemblies using this pi
 
 In this case you can run PanGenie using the Snakemake pipeline provided in ``pipelines/run-from-callset/``. This automatically merges overlapping alleles into mult-allelic VCF, runs PanGenie and later converts the output VCF back to the original representation.
 
+#### Existing reference panels to use with PanGenie
+
+We have already produced input reference panels for several datasets from high-quality, haplotype-resolved assemblies that can be used as input to PanGenie:
+
+- HGSVC (GRCh38, 64 haplotypes): http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/HGSVC2/release/v2.0/PanGenie_PAV-panel/20210311_pav-panel-freeze4.vcf.gz
+- HPRC (GRCh38, 88 haplotypes): https://zenodo.org/record/6797328/files/cactus_filtered_ids.vcf.gz?download=1
+- HPRC (CHM13, 88 haplotypes): https://zenodo.org/record/7660118/files/cactus_filtered_ids_chm13.vcf.gz?download=1
+
 ### Input reads
 
 PanGenie is k-mer based and thus expects **short reads** as input. Reads must be provided in a single FASTA or FASTQ file using the ``-i`` option.
