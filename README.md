@@ -65,7 +65,7 @@ PanGenie expects a directed and acyclic pangenome graph as input (``-v`` option)
 This graph is represented in terms of a VCF file that needs to have certain properties:
 
 - **multi-sample** - it needs to contain haplotype information of at least one known sample
-- **fully-phased** - haplotype information of the known panel samples are represented by phased genotypes and each sample must be phased in a single block (i.e. from start to end).
+- **fully-phased** - haplotype information of the known panel samples are represented by phased genotypes and each sample must be phased in **one single block** (i.e. from start to end).
 - **non-overlapping variants** - the VCF represents a pangenome graph. Therefore, overlapping variation must be represented in a single, multi-allelic variant record.
 
 Note especially the third property listed above. See the figure below for an illustration of how overlapping variant alleles need to be represented in the input VCF provided to PanGenie.
