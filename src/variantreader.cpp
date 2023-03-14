@@ -214,12 +214,11 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 			for (string& s : p){
 				// handle unknown genotypes '.'
 				if (s == ".") {
-					// add "NNN" allele to the list of alleles
+					// add "N" allele to the list of alleles
 					parse_line(alleles, undefined_allele, ',');
 					paths.push_back(undefined_index);
 					assert(undefined_index < 255);
 					undefined_index += 1;
-					undefined_allele += "N";
 				} else {
 					unsigned int p_index = atoi(s.c_str());
 					if (p_index >= alleles.size()) {

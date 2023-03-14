@@ -4,12 +4,12 @@
 using namespace std;
 
 KmerPath::KmerPath()
-	:kmers({0})
+	:kmers({})
 {}
 
 void KmerPath::set_position(size_t index){
-	size_t max_index = (this->kmers.size())*32 - 1;
-	while (index > max_index){
+	int max_index = int((this->kmers.size())*32) - 1;
+	while ( (int) index > max_index){
 		this->kmers.push_back(0);
 		max_index = (this->kmers.size())*32 - 1;
 	}
@@ -22,8 +22,8 @@ void KmerPath::set_position(size_t index){
 }
 
 unsigned int KmerPath::get_position(size_t index) const {
-	size_t max_index = (this->kmers.size())*32 - 1;
-	if (index > max_index) {
+	int max_index = int((this->kmers.size())*32) - 1;
+	if ( (int) index > max_index) {
 		return 0;
 	}
 	size_t block = index / 32;
