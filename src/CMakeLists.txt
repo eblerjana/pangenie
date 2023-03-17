@@ -23,20 +23,7 @@ add_library(PanGenieLib SHARED
 	variant.cpp
 	variantreader.cpp)
 
-add_executable(PanGenie pggtyper.cpp)
-#add_executable(PanGenie-kmers pggtyper-kmers.cpp)
-#add_executable(PanGenie-paths pggtyper-paths.cpp)
-add_executable(PanGenie-graph pggtyper-graph.cpp)
-
+add_executable(PanGenie pangenie.cpp)
 
 target_link_libraries(PanGenie PanGenieLib ${JELLYFISH_LDFLAGS_OTHER})
 target_link_libraries(PanGenie PanGenieLib ${JELLYFISH_LIBRARIES})
-
-#target_link_libraries(PanGenie-kmers PanGenieLib ${JELLYFISH_LDFLAGS_OTHER})
-#target_link_libraries(PanGenie-kmers PanGenieLib ${JELLYFISH_LIBRARIES})
-
-#target_link_libraries(PanGenie-paths PanGenieLib ${JELLYFISH_LDFLAGS_OTHER})
-#target_link_libraries(PanGenie-paths PanGenieLib ${JELLYFISH_LIBRARIES})
-
-target_link_libraries(PanGenie-graph PanGenieLib ${JELLYFISH_LDFLAGS_OTHER})
-target_link_libraries(PanGenie-graph PanGenieLib ${JELLYFISH_LIBRARIES})

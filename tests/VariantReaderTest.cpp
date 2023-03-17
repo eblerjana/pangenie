@@ -14,7 +14,6 @@ TEST_CASE("VariantReader get_allele_string", "[VariantReader get_allele_string]"
 	string vcf = "../tests/data/small1.vcf";
 	string fasta = "../tests/data/small1.fa";
 	VariantReader v(vcf, fasta, 10, true);
-	REQUIRE(v.nr_of_genomic_kmers() == 2516);
 	REQUIRE(v.get_kmer_size() == 10);
 	REQUIRE(v.size_of("chrA") == 7);
 	REQUIRE(v.size_of("chrB") == 2);

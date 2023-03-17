@@ -47,14 +47,18 @@ void check_input_file(string &filename) {
 	}
 }
 
+struct UniqueKmersMap {
+	mutex kmers_mutex;
+	map<string, vector<UniqueKmers*>> unique_kmers;
+	map<string, double> runtimes;
+};
+
 int main (int argc, char* argv[])
 {
 	Timer timer;
 	double time_preprocessing;
-	double time_kmer_counting;
+	double time_graph_counting;
 	double time_unique_kmers;
-	double time_path_sampling;
-	double time_writing;
 	double time_total;
 
 	cerr << endl;
@@ -144,53 +148,100 @@ int main (int argc, char* argv[])
 	check_input_file(vcffile);
 	check_input_file(readfile);
 
-
-	/** 
-	*   Step 1: read variants, merge variants that are closer than kmersize apart,
-	*   and write allele sequences and unitigs inbetween to a file.
-	*   TODO: store Variant objects as pointers and implement function to delete them (in order to save memory)
-	**/ 
-	cerr << "Determine allele sequences ..." << endl;
-	VariantReader variant_reader (vcffile, reffile, kmersize, add_reference, sample_name);
-
-	string segment_file = outname + "_path_segments.fasta";
-	cerr << "Write path segments to file: " << segment_file << " ..." << endl;
-	variant_reader.write_path_segments(segment_file);
-
-	// determine chromosomes present in VCF
-	vector<string> chromosomes;
-	variant_reader.get_chromosomes(&chromosomes);
-	cerr << "Found " << chromosomes.size() << " chromosome(s) in the VCF." << endl;
-
-	// print RSS up to now
-	struct rusage r_usage00;
-	getrusage(RUSAGE_SELF, &r_usage00);
-	cerr << "#### Max RSS after determing allele sequences: " << (r_usage00.ru_maxrss / 1E6) << " GB ####" << endl;
-
-	time_preprocessing = timer.get_interval_time();
-
+	UniqueKmersMap unique_kmers_list;
 
 	/**
-	*  Step 2: count graph k-mers. Needed to determine unique k-mers in subsequent steps.
-	**/ 
-	cerr << "Count kmers in graph ..." << endl;
-	JellyfishCounter genomic_kmer_counts (segment_file, kmersize, nr_jellyfish_threads, hash_size);
+	*  1) Indexing step. Read variant information and determine unique kmers.
+	*/
+
+	{
+		/** 
+		*   Step 1: read variants, merge variants that are closer than kmersize apart,
+		*   and write allele sequences and unitigs inbetween to a file.
+		*   TODO: store Variant objects as pointers and implement function to delete them (in order to save memory)
+		**/ 
+		cerr << "Determine allele sequences ..." << endl;
+		VariantReader variant_reader (vcffile, reffile, kmersize, add_reference, sample_name);
+
+		string segment_file = outname + "_path_segments.fasta";
+		cerr << "Write path segments to file: " << segment_file << " ..." << endl;
+		variant_reader.write_path_segments(segment_file);
+
+		// determine chromosomes present in VCF
+		vector<string> chromosomes;
+		variant_reader.get_chromosomes(&chromosomes);
+		cerr << "Found " << chromosomes.size() << " chromosome(s) in the VCF." << endl;
+
+		// print RSS up to now
+		struct rusage r_usage00;
+		getrusage(RUSAGE_SELF, &r_usage00);
+		cerr << "#### Max RSS after determing allele sequences: " << (r_usage00.ru_maxrss / 1E6) << " GB ####" << endl;
+
+		time_preprocessing = timer.get_interval_time();
+
+
+		/**
+		*  Step 2: count graph k-mers. Needed to determine unique k-mers in subsequent steps.
+		**/ 
+		cerr << "Count kmers in graph ..." << endl;
+		JellyfishCounter genomic_kmer_counts (segment_file, kmersize, nr_jellyfish_threads, hash_size);
+
+		// print RSS up to now
+		struct rusage r_usage1;
+		getrusage(RUSAGE_SELF, &r_usage1);
+		cerr << "#### Max RSS after counting graph kmers: " << (r_usage1.ru_maxrss / 1E6) << " GB ####" << endl;
+
+		time_graph_counting = timer.get_interval_time();
+
+
+		/**
+		* Step 3: determine unique k-mers for each variant bubble and prepare datastructure storing
+		* that information. It will later be used for the genotyping step. 
+		* This step will delete information from the VariantReader that will no longer be used.
+		* TODO: store actual k-mer sequences and leave an empty structure for counts to be filled later once read-kmer counts are available
+		* TODO: in old version, kmers were selected taking kmer_coverage into account. This is no longer possible, because the step
+		*       counting kmers in the reads happens later.
+		* TODO: write an output file which lists unique kmers per variant, as well as left + right overhangs (needed in subsequent steps + usefull information anyways)
+		*       the UniqueKmers object therefore does not need to store any unique kmers or overhang information
+		**/
+
+		cerr << "Determine unique kmers ..." << endl;
+		size_t available_threads_uk = min(thread::hardware_concurrency(), (unsigned int) chromosomes.size());
+		size_t nr_cores_uk = min(nr_core_threads, available_threads_uk);
+		if (nr_cores_uk < nr_core_threads) {
+			cerr << "Warning: using " << nr_cores_uk << " for determining unique kmers." << endl;
+		}
+
+
+		{
+			// create thread pool with at most nr_chromosome threads
+			ThreadPool threadPool (nr_cores_uk);
+			for (auto chromosome : chromosomes) {
+				VariantReader* variants = &variant_reader;
+				UniqueKmersMap* result = &unique_kmers_list;
+				KmerCounter* genomic_counts = &genomic_kmer_counts;
+				function<void()> f_unique_kmers = bind(prepare_unique_kmers, chromosome, genomic_counts, variants, result);
+				threadPool.submit(f_unique_kmers);
+			}
+		}
+
+		// print RSS up to now
+		struct rusage r_usage2;
+		getrusage(RUSAGE_SELF, &r_usage2);
+		cerr << "#### Max RSS after determing unique kmers: " << (r_usage2.ru_maxrss / 1E6) << " GB ####" << endl;
+
+		// determine the total runtime needed to compute unique kmers
+		time_unique_kmers = 0.0;
+		for (auto it = unique_kmers_list.runtimes.begin(); it != unique_kmers_list.runtimes.end(); ++it) {
+			time_unique_kmers += it->second;
+		}
+		timer.get_interval_time();
+	}
 
 	// print RSS up to now
-	struct rusage r_usage1;
-	getrusage(RUSAGE_SELF, &r_usage1);
-	cerr << "#### Max RSS after counting graph kmers: " << (r_usage1.ru_maxrss / 1E6) << " GB ####" << endl;
-
-
-	/**
-	* Step 3: determine unique k-mers for each variant bubble and prepare datastructure storing
-	* that information. It will later be used for the genotyping step. 
-	* This step will delete information from the VariantReader that will no longer be used.
-	* TODO: store actual k-mer sequences and leave an empty structure for counts to be filled later once read-kmer counts are available
-	* TODO: 
-	**/
-
-
+	struct rusage r_usage3;
+	getrusage(RUSAGE_SELF, &r_usage3);
+	cerr << "#### Max RSS after Indexing is done and objects are deleted: " << (r_usage3.ru_maxrss / 1E6) << " GB ####" << endl;
 
 	return 0;
 }
