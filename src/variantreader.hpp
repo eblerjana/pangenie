@@ -8,6 +8,7 @@
 #include <numeric>
 #include <algorithm>
 #include <cassert>
+#include <memory>
 #include "fastareader.hpp"
 #include "variant.hpp"
 #include "genotypingresult.hpp"
@@ -54,7 +55,7 @@ public:
 	* NOTE: most class functions can no longer be called on an object modified by this function,
 	* resulting in an error message.
 	*/
-	void delete_variant(std__string chromosome, size_t index);
+	void delete_variant(std::string chromosome, size_t index);
 
 private:
 	FastaReader fasta_reader;
@@ -69,9 +70,9 @@ private:
 	bool phasing_outfile_open;
 	// indicates whether variants were deleted by delete_variant function
 	bool variants_deleted;
-	std::map< std::string, std::vector<Variant*> > variants_per_chromosome;
+	std::map< std::string, std::vector< std::shared_ptr<Variant> > > variants_per_chromosome;
 	std::map< std::string, std::vector<std::vector<std::string>>> variant_ids;
-	void add_variant_cluster(std::string& chromosome, std::vector<Variant>* cluster);
+	void add_variant_cluster(std::string& chromosome, std::vector< std::shared_ptr<Variant> >* cluster);
 	void insert_ids(std::string& chromosome, std::vector<DnaSequence>& alleles, std::vector<std::string>& variant_ids, bool reference_added);
 	std::string get_ids(std::string chromosome, std::vector<std::string>& alleles, size_t variant_index, bool reference_added);
 };

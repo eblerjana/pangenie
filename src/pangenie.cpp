@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <fstream>
 #include <stdexcept>
+#include <memory>
 #include "kmercounter.hpp"
 #include "jellyfishreader.hpp"
 #include "jellyfishcounter.hpp"
@@ -49,9 +50,27 @@ void check_input_file(string &filename) {
 
 struct UniqueKmersMap {
 	mutex kmers_mutex;
-	map<string, vector<UniqueKmers*>> unique_kmers;
+	map<string, vector<shared_ptr<UniqueKmers>>> unique_kmers;
 	map<string, double> runtimes;
 };
+
+
+void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, VariantReader* variant_reader, UniqueKmersMap* unique_kmers_map, string outname) {
+	Timer timer;
+	UniqueKmerComputer kmer_computer(genomic_kmer_counts, variant_reader, chromosome);
+	std::vector<shared_ptr<UniqueKmers>> unique_kmers;
+	string filename = outname + "_" + chromosome + "_kmers.tsv";
+	kmer_computer.compute_unique_kmers(&unique_kmers, filename, true);
+	// store the results
+	{
+		lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
+		unique_kmers_map->unique_kmers.insert(pair<string, vector<shared_ptr<UniqueKmers>>> (chromosome, move(unique_kmers)));
+	}
+	// store runtime
+	lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
+	unique_kmers_map->runtimes.insert(pair<string, double>(chromosome, timer.get_total_time()));
+}
+
 
 int main (int argc, char* argv[])
 {
@@ -180,6 +199,7 @@ int main (int argc, char* argv[])
 		time_preprocessing = timer.get_interval_time();
 
 
+	
 		/**
 		*  Step 2: count graph k-mers. Needed to determine unique k-mers in subsequent steps.
 		**/ 
@@ -192,6 +212,7 @@ int main (int argc, char* argv[])
 		cerr << "#### Max RSS after counting graph kmers: " << (r_usage1.ru_maxrss / 1E6) << " GB ####" << endl;
 
 		time_graph_counting = timer.get_interval_time();
+
 
 
 		/**
@@ -220,7 +241,7 @@ int main (int argc, char* argv[])
 				VariantReader* variants = &variant_reader;
 				UniqueKmersMap* result = &unique_kmers_list;
 				KmerCounter* genomic_counts = &genomic_kmer_counts;
-				function<void()> f_unique_kmers = bind(prepare_unique_kmers, chromosome, genomic_counts, variants, result);
+				function<void()> f_unique_kmers = bind(prepare_unique_kmers, chromosome, genomic_counts, variants, result, outname);
 				threadPool.submit(f_unique_kmers);
 			}
 		}

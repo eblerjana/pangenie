@@ -273,7 +273,7 @@ TEST_CASE("VariantReader no-alt-alleles", "[VariantReader no-alt-alleles]") {
 
 	VariantReader v (vcf, fasta, 10, false);
 	// should have skipped variant for which no alt alleles are given
-	REQUIRE(v.get_variants_on_chromosome("chrA").size() == 1);	
+	REQUIRE(v.size_of("chrA") == 1);
 }
 
 TEST_CASE("VariantReader overlapping variants", "[VariantReader overlapping variants]") {
@@ -282,7 +282,7 @@ TEST_CASE("VariantReader overlapping variants", "[VariantReader overlapping vari
 
 	VariantReader v (vcf, fasta, 10, false);
 	// should have skipped variant that is contained in another
-	REQUIRE(v.get_variants_on_chromosome("chrA").size() == 1);
+	REQUIRE(v.size_of("chrA") == 1);
 }
 
 TEST_CASE("VariantReader get_chromosomes", "[VariantReader get_chromosomes]") {
@@ -369,6 +369,7 @@ TEST_CASE("VariantReader close_to_start", "[VariantReader close_to_start]") {
 	VariantReader v(vcf, fasta, 31, true);
 	v.open_genotyping_outfile("../tests/data/small1-ids-close.vcf");
 	v.write_genotypes_of("chr10", genotypes, &u);
+	delete u [0];
 }
 
 

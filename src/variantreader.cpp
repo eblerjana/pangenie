@@ -86,7 +86,8 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 	 add_reference(add_reference),
 	 sample(sample),
 	 genotyping_outfile_open(false),
-	 phasing_outfile_open(false)
+	 phasing_outfile_open(false),
+	 variants_deleted(false)
 {
 	if (filename.substr(filename.size()-3,3).compare(".gz") == 0) {
 		throw runtime_error("VariantReader::VariantReader: Uncompressed VCF-file is required.");
@@ -99,7 +100,7 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 	string previous_chrom("");
 	size_t previous_end_pos = 0;
 	map<unsigned int, string> fields = { {0, "#CHROM"}, {1, "POS"}, {2, "ID"}, {3, "REF"}, {4, "ALT"}, {5, "QUAL"}, {6, "FILTER"}, {7, "INFO"}, {8, "FORMAT"} };
-	vector<Variant*> variant_cluster;
+	vector<shared_ptr<Variant>> variant_cluster;
 	// read VCF-file line by line
 	while (getline(file, line)) {
 		if (line.size() == 0) continue;
@@ -213,7 +214,7 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 			for (string& s : p){
 				// handle unknown genotypes '.'
 				if (s == ".") {
-					// add "NNN" allele to the list of alleles
+					// add "N" allele to the list of alleles
 					parse_line(alleles, undefined_allele, ',');
 					paths.push_back(undefined_index);
 					assert(undefined_index < 255);
@@ -237,7 +238,7 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 		DnaSequence right_flank;
 		this->fasta_reader.get_subsequence(current_chrom, current_end_pos, current_end_pos + kmer_size - 1, right_flank);
 		// add Variant to variant_cluster
-		Variant* variant = new Variant(left_flank, right_flank, current_chrom, current_start_pos, current_end_pos, alleles, paths);
+		shared_ptr<Variant> variant = shared_ptr<Variant>(new Variant(left_flank, right_flank, current_chrom, current_start_pos, current_end_pos, alleles, paths));
 		variant_cluster.push_back(variant);
 		previous_chrom = current_chrom;
 		previous_end_pos = current_end_pos;
@@ -252,7 +253,6 @@ VariantReader::~VariantReader() {
 	for (auto it = this->variants_per_chromosome.begin(); it != this->variants_per_chromosome.end(); ++it) {
 		for (size_t i = 0; i < it->second.size(); ++i) {
 			if (this->variants_per_chromosome[it->first][i] != nullptr){
-				delete this->variants_per_chromosome[it->first][i];
 				this->variants_per_chromosome[it->first][i] = nullptr;
 			}
 		}
@@ -343,14 +343,13 @@ const Variant& VariantReader::get_variant(string chromosome, size_t index) const
 	}
 }
 
-void VariantReader::add_variant_cluster(string& chromosome, vector<Variant*>* cluster) {
+void VariantReader::add_variant_cluster(string& chromosome, vector<shared_ptr<Variant>>* cluster) {
 	if (!cluster->empty()) {
 		// merge all variants in cluster
-		Variant* combined = cluster->at(0);
+		shared_ptr<Variant> combined = cluster->at(0);
 		for (size_t v = 1; v < cluster->size(); ++v) {
 			combined->combine_variants(*cluster->at(v));
-			delete cluster[v];
-			cluster[v] = nullptr;
+			cluster->operator[](v) = nullptr;
 		}
 		combined->add_flanking_sequence();
 		this->variants_per_chromosome[chromosome].push_back(combined);
@@ -432,7 +431,7 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 
 	size_t counter = 0;
 	for (size_t i = 0; i < size_of(chromosome); ++i) {
-		Variant* variant = this->variants_per_chromosome.at(chromosome)[i];
+		shared_ptr<Variant> variant = this->variants_per_chromosome.at(chromosome)[i];
 
 		// separate (possibly combined) variant into single variants and print a line for each
 		vector<Variant> singleton_variants;
@@ -553,7 +552,7 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 
 	size_t counter = 0;
 	for (size_t i = 0; i < size_of(chromosome); ++i) {
-		Variant* variant = this->variants_per_chromosome.at(chromosome)[i];
+		shared_ptr<Variant> variant = this->variants_per_chromosome.at(chromosome)[i];
 
 		// separate (possibly combined) variant into single variants and print a line for each
 		vector<Variant> singleton_variants;
@@ -659,9 +658,16 @@ size_t VariantReader::nr_of_paths() const {
 }
 
 void VariantReader::get_left_overhang(std::string chromosome, size_t index, size_t length, DnaSequence& result) const {
-	if (this->variants_deleted) {
+	if (this->variants_per_chromosome.at(chromosome).at(index) == nullptr) {
 		throw runtime_error("VariantReader::get_left_overhang: variants have been deleted by delete_variant funtion. Re-build object.");
 	}
+
+	if (index > 0) {
+		if  (this->variants_per_chromosome.at(chromosome).at(index-1) == nullptr) {
+			throw runtime_error("VariantReader::get_left_overhang: variants have been deleted by delete_variant funtion. Re-build object.");
+		}
+	}
+
 	size_t cur_start = this->variants_per_chromosome.at(chromosome).at(index)->get_start_position();
 	size_t prev_end = 0;
 	if (index > 0) prev_end = this->variants_per_chromosome.at(chromosome).at(index-1)->get_end_position();
@@ -672,9 +678,16 @@ void VariantReader::get_left_overhang(std::string chromosome, size_t index, size
 }
 
 void VariantReader::get_right_overhang(std::string chromosome, size_t index, size_t length, DnaSequence& result) const {
-	if (this->variants_deleted) {
+	if (this->variants_per_chromosome.at(chromosome).at(index) == nullptr) {
 		throw runtime_error("VariantReader::get_right_overhang: variants have been deleted by delete_variant funtion. Re-build object.");
 	}
+
+	if (index < (this->variants_per_chromosome.at(chromosome).size() - 1)) {
+		if (this->variants_per_chromosome.at(chromosome).at(index+1) == nullptr){
+			throw runtime_error("VariantReader::get_right_overhang: variants have been deleted by delete_variant funtion. Re-build object.");
+		}
+	}
+
 	size_t cur_end = this->variants_per_chromosome.at(chromosome).at(index)->get_end_position();
 	size_t next_start = this->fasta_reader.get_size_of(chromosome);
 	if (index < (this->variants_per_chromosome.at(chromosome).size() - 1)) next_start = this->variants_per_chromosome.at(chromosome).at(index+1)->get_start_position();
@@ -687,10 +700,10 @@ void VariantReader::get_right_overhang(std::string chromosome, size_t index, siz
 void VariantReader::delete_variant(string chromosome, size_t index) {
 	if (index < size_of(chromosome)) {
 		if (this->variants_per_chromosome.at(chromosome)[index] != nullptr) {
-			delete this->variants_per_chromosome.at(chromosome)[index];
 			this->variants_per_chromosome.at(chromosome)[index] = nullptr;
 			this->variants_deleted = true;
 		}
 	} else {
 		throw runtime_error("VariantReader::get_variant: index out of bounds.");
 	}
+}
