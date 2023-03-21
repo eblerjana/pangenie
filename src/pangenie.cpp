@@ -20,9 +20,9 @@
 #include "timer.hpp"
 #include "threadpool.hpp"
 #include "pathsampler.hpp"
+#include "kmerparser.hpp"
 
 using namespace std;
-
 
 bool ends_with (string const &filename, string const &ending) {
     if (filename.length() >= ending.length()) {
@@ -72,12 +72,52 @@ void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, V
 }
 
 
+void fill_read_kmercounts(string chromosome, UniqueKmersMap* unique_kmers_map, shared_ptr<KmerCounter> read_kmer_counts, ProbabilityTable* probabilities, string outname, size_t kmer_coverage) {
+	Timer timer;
+	// read unique kmers from file and look up their counts
+	ifstream file(outname + "_" + chromosome + "_kmers.tsv");
+	if (!file.good()) {
+		throw runtime_error("pangenie.cpp: kmer file cannot be opened.");
+	}
+	string line;
+	size_t var_index = 0;
+	while(getline(file, line)) {
+		vector<string> kmers;
+		vector<string> flanking_kmers;
+		bool is_header = false;
+		parse_kmer_line(line, kmers, flanking_kmers, is_header);
+		if (is_header) continue; // header line
+
+		{
+			lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
+			// add counts to UniqueKmers object
+			for (size_t i = 0; i < kmers.size(); ++i) {
+				size_t count = read_kmer_counts->getKmerAbundance(kmers[i]);
+				unique_kmers_map->unique_kmers[chromosome][var_index]->update_readcount(i, count);
+			}
+		}
+
+		// determine local kmer coverage
+		unsigned short local_coverage = compute_local_coverage(flanking_kmers, read_kmer_counts, kmer_coverage);
+
+		lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
+		unique_kmers_map->unique_kmers[chromosome][var_index]->set_coverage(local_coverage);
+		var_index += 1;
+	}
+	// store runtime
+	lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
+	unique_kmers_map->runtimes[chromosome] += timer.get_total_time();
+}
+
+
 int main (int argc, char* argv[])
 {
 	Timer timer;
 	double time_preprocessing;
 	double time_graph_counting;
 	double time_unique_kmers;
+	double time_unique_kmers_updating;
+	double time_kmer_counting;
 	double time_total;
 
 	cerr << endl;
@@ -168,6 +208,11 @@ int main (int argc, char* argv[])
 	check_input_file(readfile);
 
 	UniqueKmersMap unique_kmers_list;
+	ProbabilityTable probabilities;
+	vector<string> chromosomes;
+	string segment_file = outname + "_path_segments.fasta";
+	size_t available_threads_uk;
+	size_t nr_cores_uk;
 
 	/**
 	*  1) Indexing step. Read variant information and determine unique kmers.
@@ -177,17 +222,15 @@ int main (int argc, char* argv[])
 		/** 
 		*   Step 1: read variants, merge variants that are closer than kmersize apart,
 		*   and write allele sequences and unitigs inbetween to a file.
-		*   TODO: store Variant objects as pointers and implement function to delete them (in order to save memory)
 		**/ 
 		cerr << "Determine allele sequences ..." << endl;
 		VariantReader variant_reader (vcffile, reffile, kmersize, add_reference, sample_name);
 
-		string segment_file = outname + "_path_segments.fasta";
+
 		cerr << "Write path segments to file: " << segment_file << " ..." << endl;
 		variant_reader.write_path_segments(segment_file);
 
 		// determine chromosomes present in VCF
-		vector<string> chromosomes;
 		variant_reader.get_chromosomes(&chromosomes);
 		cerr << "Found " << chromosomes.size() << " chromosome(s) in the VCF." << endl;
 
@@ -219,16 +262,13 @@ int main (int argc, char* argv[])
 		* Step 3: determine unique k-mers for each variant bubble and prepare datastructure storing
 		* that information. It will later be used for the genotyping step. 
 		* This step will delete information from the VariantReader that will no longer be used.
-		* TODO: store actual k-mer sequences and leave an empty structure for counts to be filled later once read-kmer counts are available
 		* TODO: in old version, kmers were selected taking kmer_coverage into account. This is no longer possible, because the step
 		*       counting kmers in the reads happens later.
-		* TODO: write an output file which lists unique kmers per variant, as well as left + right overhangs (needed in subsequent steps + usefull information anyways)
-		*       the UniqueKmers object therefore does not need to store any unique kmers or overhang information
 		**/
 
 		cerr << "Determine unique kmers ..." << endl;
-		size_t available_threads_uk = min(thread::hardware_concurrency(), (unsigned int) chromosomes.size());
-		size_t nr_cores_uk = min(nr_core_threads, available_threads_uk);
+		available_threads_uk = min(thread::hardware_concurrency(), (unsigned int) chromosomes.size());
+		nr_cores_uk = min(nr_core_threads, available_threads_uk);
 		if (nr_cores_uk < nr_core_threads) {
 			cerr << "Warning: using " << nr_cores_uk << " for determining unique kmers." << endl;
 		}
@@ -263,6 +303,84 @@ int main (int argc, char* argv[])
 	struct rusage r_usage3;
 	getrusage(RUSAGE_SELF, &r_usage3);
 	cerr << "#### Max RSS after Indexing is done and objects are deleted: " << (r_usage3.ru_maxrss / 1E6) << " GB ####" << endl;
+
+
+
+	/**
+	*  2) K-mer counting in sequencing reads
+	*/
+
+	{
+		/**
+		* Step 1: Count kmers in the sequencing reads of the sample using Jellyfish,
+		* or read already computed counts from .jf file.
+		*/
+
+		shared_ptr<KmerCounter> read_kmer_counts = nullptr;
+		// determine kmer copynumbers in reads
+		if (readfile.substr(std::max(3, (int) readfile.size())-3) == std::string(".jf")) {
+			cerr << "Read pre-computed read kmer counts ..." << endl;
+			jellyfish::mer_dna::k(kmersize);
+			read_kmer_counts = shared_ptr<JellyfishReader>(new JellyfishReader(readfile, kmersize));
+		} else {
+			cerr << "Count kmers in reads ..." << endl;
+			if (count_only_graph) {
+				read_kmer_counts = shared_ptr<JellyfishCounter>(new JellyfishCounter(readfile, segment_file, kmersize, nr_jellyfish_threads, hash_size));
+			} else {
+				read_kmer_counts = shared_ptr<JellyfishCounter>(new JellyfishCounter(readfile, kmersize, nr_jellyfish_threads, hash_size));
+			}
+		}
+
+		/**
+		* Step 2: Compute k-mer coverage and precompute probabilities.
+		*/
+		size_t kmer_abundance_peak = read_kmer_counts->computeHistogram(10000, count_only_graph, outname + "_histogram.histo");
+		cerr << "Computed kmer abundance peak: " << kmer_abundance_peak << endl;
+		probabilities = ProbabilityTable(kmer_abundance_peak / 4, kmer_abundance_peak*4, 2*kmer_abundance_peak, regularization);
+	
+		time_kmer_counting = timer.get_interval_time();
+
+		// print RSS up to now
+		struct rusage r_usage3;
+		getrusage(RUSAGE_SELF, &r_usage3);
+		cerr << "#### Max RSS after counting read kmers: " << (r_usage3.ru_maxrss / 1E6) << " GB ####" << endl;
+
+
+		/**
+		* Step 3: Fill the UniqueKmers object with sample-specific kmer counts.
+		* Also, estimate the local kmer coverage from nearby kmers.
+		*/
+
+		{
+			ThreadPool threadPool (nr_cores_uk);
+			for (auto chromosome : chromosomes) {
+				UniqueKmersMap* unique_kmers = &unique_kmers_list;
+				ProbabilityTable* probs = &probabilities;
+				function<void()> f_fill_readkmers = bind(fill_read_kmercounts, chromosome, unique_kmers, read_kmer_counts, probs, outname, kmer_abundance_peak);
+				threadPool.submit(f_fill_readkmers);
+			}
+		}
+
+		// determine the total runtime needed to update kmer information
+		time_unique_kmers_updating = 0.0;
+		for (auto it = unique_kmers_list.runtimes.begin(); it != unique_kmers_list.runtimes.end(); ++it) {
+			time_unique_kmers_updating += it->second;
+		}
+		// subract time spend determining unique kmers (since runtimes were added up)
+		time_unique_kmers_updating -= time_unique_kmers;
+		timer.get_interval_time();
+
+	}
+
+	/**
+	* 3) Genotyping. Construct a HMM and run the Forward-Backward algorithm to compute genotype likelihoods.
+	*/
+
+	{
+		// TODO: implement this
+	}
+
+
 
 	return 0;
 }

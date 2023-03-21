@@ -50,7 +50,7 @@ void UniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKmers>>* r
 	}
 
 	// write header of output file
-	outfile << "#chromosome\tstart\tend\tunique_kmers\tleft_overhang\tright_overhang" << endl;
+	outfile << "#chromosome\tstart\tend\tunique_kmers\tunique_kmers_overhang" << endl;
 	size_t kmer_size = this->variants->get_kmer_size();
 	size_t overhang_size = 2*kmer_size;
 
@@ -105,11 +105,13 @@ void UniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKmers>>* r
 
 				// skip kmer that does not occur on any path (uncovered allele)
 				if (paths.size() == 0) {
+					not_first = true;
 					continue;
 				}
 
 				// skip kmer that occurs on all paths (they do not give any information about a genotype)
 				if (paths.size() == variant.nr_of_paths()) {
+					not_first = true;
 					continue;
 				}
 
@@ -123,23 +125,34 @@ void UniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKmers>>* r
 			not_first = true;
 		}
 
-		// write left and right overhang sequences to file
-		DnaSequence left_overhang;
-		DnaSequence right_overhang;
-		this->variants->get_left_overhang(variant.get_chromosome(), v, overhang_size, left_overhang);
-		this->variants->get_right_overhang(variant.get_chromosome(), v, overhang_size, right_overhang);
-		outfile << "\t" << left_overhang.to_string() << "\t" << right_overhang.to_string() << endl;
+		// write unique kmers of left and right overhang to file
+		vector<string> flanking_kmers;
+		determine_unique_flanking_kmers(variant.get_chromosome(), v, overhang_size, flanking_kmers);
+		not_first = false;
+		outfile << "\t";
+		for (auto& kmer : flanking_kmers) {
+			if (not_first) outfile << ",";
+			outfile << kmer;
+			not_first = true;
+		}
+		outfile << endl;
 
 		result->push_back(u);
+
+		// if requested, delete variant objects once they are no longer needed
+		if (delete_processed_variants) {
+			if (v > 0) {
+				// previous variant object no longer needed
+				this->variants->delete_variant(chromosome, v - 1);
+			}
+			if (v == (nr_variants - 1)) {
+				// last variant object, can be deleted
+				this->variants->delete_variant(chromosome, v);
+			}
+		}
+
 	}
 	outfile.close();
-
-	if (delete_processed_variants) {
-		// in order to save space, delete Variant objects no longer needed
-		for (size_t v = 0; v < nr_variants; ++v) {
-			this->variants->delete_variant(chromosome, v);
-		}
-	}
 }
 
 void UniqueKmerComputer::compute_empty(vector<shared_ptr<UniqueKmers>>* result) const {
@@ -154,5 +167,26 @@ void UniqueKmerComputer::compute_empty(vector<shared_ptr<UniqueKmers>>* result) 
 		}
 		shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers>(new UniqueKmers(variant.get_start_position(), path_to_alleles));
 		result->push_back(u);
+	}
+}
+
+
+void UniqueKmerComputer::determine_unique_flanking_kmers(string chromosome, size_t var_index, size_t length, vector<string>& result) {
+	DnaSequence left_overhang;
+	DnaSequence right_overhang;
+
+	this->variants->get_left_overhang(chromosome, var_index, length, left_overhang);
+	this->variants->get_right_overhang(chromosome, var_index, length, right_overhang);
+
+	size_t kmer_size = this->variants->get_kmer_size();
+	map <jellyfish::mer_dna, vector<unsigned char>> occurences;
+	unique_kmers(left_overhang, 0, kmer_size, occurences);
+	unique_kmers(right_overhang, 1, kmer_size, occurences);
+
+	for (auto& kmer : occurences) {
+		size_t genomic_count = this->genomic_kmers->getKmerAbundance(kmer.first);
+		if (genomic_count == 1) {
+			result.push_back(kmer.first.to_str());
+		}
 	}
 }

@@ -700,6 +700,8 @@ void VariantReader::get_right_overhang(std::string chromosome, size_t index, siz
 void VariantReader::delete_variant(string chromosome, size_t index) {
 	if (index < size_of(chromosome)) {
 		if (this->variants_per_chromosome.at(chromosome)[index] != nullptr) {
+			assert(this->variants_per_chromosome.at(chromosome)[index].unique());
+			this->variants_per_chromosome.at(chromosome)[index].reset();
 			this->variants_per_chromosome.at(chromosome)[index] = nullptr;
 			this->variants_deleted = true;
 		}

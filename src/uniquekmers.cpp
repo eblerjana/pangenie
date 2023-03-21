@@ -53,6 +53,14 @@ unsigned short UniqueKmers::get_readcount_of(size_t kmer_index) {
 	}
 }
 
+void UniqueKmers::update_readcount(size_t kmer_index, unsigned short new_count) {
+	if (kmer_index <  this->current_index) {
+		this->kmer_to_count[kmer_index] = new_count;
+	} else {
+		throw runtime_error("UniqueKmers::update_readcount: requested kmer index: " + to_string(kmer_index) + " does not exist.");
+	}
+}
+
 size_t UniqueKmers::size() const {
 	return this->current_index;
 }

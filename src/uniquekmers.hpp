@@ -30,6 +30,8 @@ public:
 	/** checks if kmer at index kmer_index is on path path_id **/
 	bool kmer_on_path(size_t kmer_index, size_t path_id) const;
 	unsigned short get_readcount_of(size_t kmer_index);
+	/** modify kmer count of an already inserted kmer **/
+	void update_readcount(size_t kmer_index, unsigned short new_count);
 	/** number of unique kmers **/
 	size_t size() const;
 	/** return number of paths **/
