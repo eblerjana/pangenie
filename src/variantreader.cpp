@@ -411,7 +411,7 @@ void VariantReader::open_phasing_outfile(string filename) {
 	this->phasing_outfile << "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t" << this->sample << endl;
 }
 
-void VariantReader::write_genotypes_of(string chromosome, const vector<GenotypingResult>& genotyping_result, vector<UniqueKmers*>* unique_kmers, bool ignore_imputed) {
+void VariantReader::write_genotypes_of(string chromosome, const vector<GenotypingResult>& genotyping_result, vector<shared_ptr<UniqueKmers>>* unique_kmers, bool ignore_imputed) {
 	if (this->variants_deleted) {
 		throw runtime_error("VariantReader::write_genotypes_of: variants have been deleted by delete_variant funtion. Re-build object.");
 	}
@@ -538,7 +538,7 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 	}
 }
 
-void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingResult>& genotyping_result, vector<UniqueKmers*>* unique_kmers, bool ignore_imputed) {
+void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingResult>& genotyping_result, vector<shared_ptr<UniqueKmers>>* unique_kmers, bool ignore_imputed) {
 	if (this->variants_deleted) {
 		throw runtime_error("VariantReader::write_phasing_of: variants have been deleted by delete_variant funtion. Re-build object.");
 	}

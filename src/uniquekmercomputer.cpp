@@ -41,16 +41,16 @@ UniqueKmerComputer::UniqueKmerComputer (KmerCounter* genomic_kmers, VariantReade
 }
 
 void UniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKmers>>* result, string filename , bool delete_processed_variants) {
-	ofstream outfile;
-	outfile.open(filename);
-	if (!outfile.good()) {
+	gzFile outfile = gzopen(filename.c_str(), "wb");
+	if (!outfile) {
 		stringstream ss;
 		ss << "UniqueKmerComputer::compute_unique_kmers: File " << filename << " cannot be created. Note that the filename must not contain non-existing directories." << endl;
 		throw runtime_error(ss.str());
 	}
 
 	// write header of output file
-	outfile << "#chromosome\tstart\tend\tunique_kmers\tunique_kmers_overhang" << endl;
+	string header = "#chromosome\tstart\tend\tunique_kmers\tunique_kmers_overhang\n";
+	gzwrite(outfile, header.c_str(), header.length());
 	size_t kmer_size = this->variants->get_kmer_size();
 	size_t overhang_size = 2*kmer_size;
 
@@ -61,7 +61,8 @@ void UniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKmers>>* r
 		
 		map <jellyfish::mer_dna, vector<unsigned char>> occurences;
 		const Variant& variant = this->variants->get_variant(this->chromosome, v);
-		outfile << variant.get_chromosome() << "\t" << variant.get_start_position() << "\t" << variant.get_end_position() << "\t";
+		stringstream outline;
+		outline << variant.get_chromosome() << "\t" << variant.get_start_position() << "\t" << variant.get_end_position() << "\t";
 	
 		vector<unsigned char> path_to_alleles;
 		assert(variant.nr_of_paths() < 65535);
@@ -94,7 +95,6 @@ void UniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKmers>>* r
 
 			size_t genomic_count = this->genomic_kmers->getKmerAbundance(kmer.first);
 			size_t local_count = kmer.second.size();
-
 			if ( (genomic_count - local_count) == 0 ) {
 				// kmer unique to this region
 				// determine on which paths kmer occurs
@@ -105,37 +105,40 @@ void UniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKmers>>* r
 
 				// skip kmer that does not occur on any path (uncovered allele)
 				if (paths.size() == 0) {
-					not_first = true;
 					continue;
 				}
 
 				// skip kmer that occurs on all paths (they do not give any information about a genotype)
 				if (paths.size() == variant.nr_of_paths()) {
-					not_first = true;
 					continue;
 				}
 
 				// set read kmer count to 0 for now, since we don't know it yet
 				u->insert_kmer(0, kmer.second);
-				if (not_first) outfile << ",";
-				outfile << kmer.first;
+				if (not_first) outline << ",";
+				outline << kmer.first;
+				not_first = true;
 				nr_kmers_used += 1;
 
 			}
-			not_first = true;
 		}
+
+		// in case no kmers were written, print "nan"
+		if (!not_first) outline << "nan";
 
 		// write unique kmers of left and right overhang to file
 		vector<string> flanking_kmers;
 		determine_unique_flanking_kmers(variant.get_chromosome(), v, overhang_size, flanking_kmers);
 		not_first = false;
-		outfile << "\t";
+		outline << "\t";
 		for (auto& kmer : flanking_kmers) {
-			if (not_first) outfile << ",";
-			outfile << kmer;
+			if (not_first) outline << ",";
+			outline << kmer;
 			not_first = true;
 		}
-		outfile << endl;
+		if (!not_first) outline << "nan";
+		outline << endl;
+		gzwrite(outfile, outline.str().c_str(), outline.str().size());
 
 		result->push_back(u);
 
@@ -152,7 +155,7 @@ void UniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKmers>>* r
 		}
 
 	}
-	outfile.close();
+	gzclose(outfile);
 }
 
 void UniqueKmerComputer::compute_empty(vector<shared_ptr<UniqueKmers>>* result) const {

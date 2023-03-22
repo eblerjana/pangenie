@@ -119,6 +119,8 @@ ostream& operator<< (ostream& stream, const UniqueKmers& uk) {
 	for (size_t  i = 0; i < uk.path_to_allele.size(); ++i) {
 		stream << i << " covers allele " << (unsigned int) uk.path_to_allele.at(i) << endl;
 	}
+
+	stream << "local coverage: " << uk.local_coverage << endl;
 	return stream;
 }
 

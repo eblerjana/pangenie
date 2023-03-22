@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <memory>
 #include "genotypingresult.hpp"
 #include "dnasequence.hpp"
 #include "uniquekmers.hpp"
@@ -75,7 +76,7 @@ public:
 	/** return number of paths with missing alleles **/
 	size_t nr_missing_alleles() const;
 	/** determine statistics for each individual variant **/
-	void variant_statistics (UniqueKmers* unique_kmers, std::vector<VariantStats>& result) const;
+	void variant_statistics (std::shared_ptr<UniqueKmers> unique_kmers, std::vector<VariantStats>& result) const;
 
 private:
 	// flanking sequence at left end

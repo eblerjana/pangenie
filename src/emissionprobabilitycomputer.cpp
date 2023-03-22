@@ -6,7 +6,7 @@
 
 using namespace std;
 
-EmissionProbabilityComputer::EmissionProbabilityComputer(UniqueKmers* uniquekmers, ProbabilityTable* probabilities)
+EmissionProbabilityComputer::EmissionProbabilityComputer(shared_ptr<UniqueKmers> uniquekmers, ProbabilityTable* probabilities)
 	:uniquekmers(uniquekmers),
 	 probabilities(probabilities),
 	 all_zeros(true)

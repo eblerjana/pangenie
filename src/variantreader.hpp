@@ -44,8 +44,8 @@ public:
 	const Variant& get_variant(std::string chromosome, size_t index) const;
 	void open_genotyping_outfile(std::string outfile_name);
 	void open_phasing_outfile(std::string outfile_name);
-	void write_genotypes_of(std::string chromosome, const std::vector<GenotypingResult>& genotyping_result, std::vector<UniqueKmers*>* unique_kmers, bool ignore_imputed = false);
-	void write_phasing_of(std::string chromosome, const std::vector<GenotypingResult>& genotyping_result, std::vector<UniqueKmers*>* unique_kmers, bool ignore_imputed = false);
+	void write_genotypes_of(std::string chromosome, const std::vector<GenotypingResult>& genotyping_result, std::vector<std::shared_ptr<UniqueKmers>>* unique_kmers, bool ignore_imputed = false);
+	void write_phasing_of(std::string chromosome, const std::vector<GenotypingResult>& genotyping_result, std::vector<std::shared_ptr<UniqueKmers>>* unique_kmers, bool ignore_imputed = false);
 	void close_genotyping_outfile();
 	void close_phasing_outfile();
 	size_t nr_of_paths() const;

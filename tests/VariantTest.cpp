@@ -182,19 +182,19 @@ TEST_CASE("Variant separate_variants_likelihoods", "Variant separate_variants_li
 	g.add_second_haplotype_allele(2);
 
 	vector<unsigned char> path_to_allele = {0, 0, 2, 1};
-	UniqueKmers u(0, path_to_allele);
+	shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers> (new UniqueKmers(0, path_to_allele));
 	vector<unsigned char> alleles1 = {0};
 	vector<unsigned char> alleles2 = {1};
 	vector<unsigned char> alleles3 = {2};
 	
 	for (size_t i = 0; i < 3; ++i) {
-		u.insert_kmer(20, alleles1);
+		u->insert_kmer(20, alleles1);
 	}
 	for (size_t i = 0; i < 9; ++i) {
-		u.insert_kmer(20, alleles2);
+		u->insert_kmer(20, alleles2);
 	}
 	for (size_t i = 0; i < 2; ++i) {
-		u.insert_kmer(20, alleles3);
+		u->insert_kmer(20, alleles3);
 	}
 
 	v1.combine_variants(v2);
@@ -203,7 +203,7 @@ TEST_CASE("Variant separate_variants_likelihoods", "Variant separate_variants_li
 	vector<GenotypingResult> single_genotypes;
 	vector<VariantStats> single_stats;
 	v1.separate_variants(&single_variants, &g, &single_genotypes);
-	v1.variant_statistics(&u, single_stats);
+	v1.variant_statistics(u, single_stats);
 	REQUIRE(single_variants.size() == 3);
 	REQUIRE(single_variants[0] == v4);
 	REQUIRE(single_variants[1] == v2);
@@ -246,14 +246,14 @@ TEST_CASE("Variant separate_variants_single", "[Variants separate_variants_singl
 	g.add_to_likelihood(1,1,0.2);
 
 	vector<unsigned char> allele_paths = {0, 0, 1, 1};
-	UniqueKmers u(0, allele_paths);
+	shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers> (new UniqueKmers(0, allele_paths));
 	vector<unsigned char> alleles1 = {0,1};
 	vector<unsigned char> alleles2 = {1};
 	for (size_t i = 0; i < 10; ++i) {
-		u.insert_kmer(20, alleles1);
+		u->insert_kmer(20, alleles1);
 	}
 	for (size_t i = 0; i < 20; ++i) {
-		u.insert_kmer(30, alleles2);
+		u->insert_kmer(30, alleles2);
 	}
 
 	// separate single variant
@@ -261,7 +261,7 @@ TEST_CASE("Variant separate_variants_single", "[Variants separate_variants_singl
 	vector<GenotypingResult> single_genotypes;
 	vector<VariantStats> single_stats;
 	v.separate_variants(&single_variants, &g, &single_genotypes);
-	v.variant_statistics(&u, single_stats);
+	v.variant_statistics(u, single_stats);
 
 	REQUIRE(single_variants.size() == 1);
 	REQUIRE(single_genotypes.size() == 1);
@@ -298,22 +298,22 @@ TEST_CASE("Variant separate_variants_single2", "[Variants separate_variants_sing
 	g.add_to_likelihood(1,1,0.2);
 
 	vector<unsigned char> path_to_allele = {1, 1};
-	UniqueKmers u(0, path_to_allele);
+	shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers> (new UniqueKmers (0, path_to_allele));
 	vector<unsigned char> alleles1 = {0};
 	vector<unsigned char> alleles2 = {1};
-	u.insert_kmer(20, alleles1);
-	u.insert_kmer(20, alleles1);
-	u.insert_kmer(20, alleles2);
-	u.insert_kmer(20, alleles2);
-	u.insert_kmer(20, alleles2);
-	u.insert_kmer(20, alleles2);
+	u->insert_kmer(20, alleles1);
+	u->insert_kmer(20, alleles1);
+	u->insert_kmer(20, alleles2);
+	u->insert_kmer(20, alleles2);
+	u->insert_kmer(20, alleles2);
+	u->insert_kmer(20, alleles2);
 
 	// separate single variant
 	vector<Variant> single_variants;
 	vector<GenotypingResult> single_genotypes;
 	vector<VariantStats> single_stats;
 	v.separate_variants(&single_variants, &g, &single_genotypes);
-	v.variant_statistics(&u, single_stats);
+	v.variant_statistics(u, single_stats);
 
 	REQUIRE(single_variants.size() == 1);
 	REQUIRE(single_genotypes.size() == 1);
@@ -444,25 +444,25 @@ TEST_CASE("Variant combine_combined2", "[Variant combine_combined]") {
 	g.add_second_haplotype_allele(2);
 
 	vector<unsigned char> path_to_allele = {0, 0, 0, 0, 0, 0, 2, 1, 0};
-	UniqueKmers u(0, path_to_allele);
+	shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers>( new UniqueKmers(0, path_to_allele));
 	vector<unsigned char> alleles1 = {0};
 	vector<unsigned char> alleles2 = {1};
 	vector<unsigned char> alleles3 = {2};	
 	for (size_t i = 0; i < 10; i++) {
-		u.insert_kmer(20, alleles1);
+		u->insert_kmer(20, alleles1);
 	}
 	for (size_t i = 0; i < 2; ++i) {
-		u.insert_kmer(30, alleles2);
+		u->insert_kmer(30, alleles2);
 	}
 	for (size_t i = 0; i < 4; ++i) {
-		u.insert_kmer(25, alleles3);
+		u->insert_kmer(25, alleles3);
 	}
 
 	vector<Variant> single_vars;
 	vector<GenotypingResult> single_genotypes;
 	vector<VariantStats> single_stats;
 	v1.separate_variants(&single_vars, &g, &single_genotypes);
-	v1.variant_statistics(&u, single_stats);
+	v1.variant_statistics(u, single_stats);
 	REQUIRE(single_vars.size() == 3);
 	REQUIRE(single_vars[0] == v4);
 	REQUIRE(single_vars[1] == v2);
@@ -543,14 +543,14 @@ TEST_CASE("Variant separate_variants_likelihoods_uncovered", "Variant separate_v
 	g.add_second_haplotype_allele(0);
 
 	vector<unsigned char> path_to_allele = {0, 1};
-	UniqueKmers u(0, path_to_allele);
+	shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers> (new UniqueKmers (0, path_to_allele));
 	vector<unsigned char> alleles1 = {0};
 	vector<unsigned char> alleles2 = {1};
 	for (size_t i = 0; i < 3; ++i) {
-		u.insert_kmer(20, alleles1);
+		u->insert_kmer(20, alleles1);
 	}
 	for (size_t i = 0; i < 9; ++i) {
-		u.insert_kmer(20, alleles2);
+		u->insert_kmer(20, alleles2);
 	}
 
 	v1.combine_variants(v2);
@@ -559,7 +559,7 @@ TEST_CASE("Variant separate_variants_likelihoods_uncovered", "Variant separate_v
 	vector<VariantStats> variant_stats;
 	REQUIRE(v1.get_id() == "VAR1;VAR2");
 	v1.separate_variants(&single_variants, &g, &single_genotypes);
-	v1.variant_statistics(&u, variant_stats);
+	v1.variant_statistics(u, variant_stats);
 	REQUIRE(single_variants.size() == 2);
 	REQUIRE(single_genotypes.size() == 2);
 	REQUIRE(variant_stats.size() == 2);
@@ -608,13 +608,13 @@ TEST_CASE("Variant separate_variants_likelihoods_single_uncovered", "[Variant se
 	g.add_second_haplotype_allele(1);
 	
 	vector<unsigned char> path_to_allele = {1, 1};
-	UniqueKmers u(0, path_to_allele);
+	shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers> (new UniqueKmers(0, path_to_allele));
 	vector<unsigned char> alleles1 = {0};
 	vector<unsigned char> alleles2 = {1};
-	u.insert_kmer(20, alleles1);
-	u.insert_kmer(30, alleles2);
-	u.insert_kmer(25, alleles2);
-	u.insert_kmer(20, alleles2);
+	u->insert_kmer(20, alleles1);
+	u->insert_kmer(30, alleles2);
+	u->insert_kmer(25, alleles2);
+	u->insert_kmer(20, alleles2);
 
 	vector<Variant> single_variants;
 	vector<GenotypingResult> single_genotypes;
@@ -626,7 +626,7 @@ TEST_CASE("Variant separate_variants_likelihoods_single_uncovered", "[Variant se
 	REQUIRE(single_variants[0].get_allele_string(1) == "T");
 
 	vector<VariantStats> stats;
-	v.variant_statistics(&u, stats);
+	v.variant_statistics(u, stats);
 	REQUIRE(stats.size() == 1);
 	REQUIRE(stats[0].nr_unique_kmers == 4);
 	// allele 0 is not covered by any path and its kmer count should therefore be -1 

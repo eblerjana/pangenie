@@ -6,28 +6,29 @@
 #include "utils.hpp"
 #include <vector>
 #include <string>
+#include <memory>
 
 using namespace std;
 
 TEST_CASE("HMM get_genotyping_result", "[HMM get_genotyping_result]") {
 	vector<unsigned char> path_to_allele = {0, 1};
-	UniqueKmers u1(2000, path_to_allele);
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers(2000, path_to_allele));
 	vector<unsigned char> a1 = {0};
 	vector<unsigned char> a2 = {1};
-	u1.insert_kmer(10, a1);
-	u1.insert_kmer(10, a2);
-	u1.set_coverage(5);
+	u1->insert_kmer(10, a1);
+	u1->insert_kmer(10, a2);
+	u1->set_coverage(5);
 
-	UniqueKmers u2(3000, path_to_allele);
-	u2.insert_kmer(20, a1);
-	u2.insert_kmer(5, a2);
-	u2.set_coverage(5);
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers(3000, path_to_allele));
+	u2->insert_kmer(20, a1);
+	u2->insert_kmer(5, a2);
+	u2->set_coverage(5);
 
 	ProbabilityTable probs(5, 10, 30, 0.0L);
 	probs.modify_probability(5, 10, CopyNumber(0.1,0.9,0.1));
 	probs.modify_probability(5, 20, CopyNumber(0.01,0.01,0.9));
 	probs.modify_probability(5, 5, CopyNumber(0.9,0.3,0.1));
-	vector<UniqueKmers*> unique_kmers = {&u1,&u2};
+	vector<shared_ptr<UniqueKmers>> unique_kmers = {u1,u2};
 
 	// recombination rate leads to recombination probability of 0.1
 	HMM hmm (&unique_kmers, &probs, true, true, 446.287102628, false, 0.25);
@@ -45,30 +46,30 @@ TEST_CASE("HMM get_genotyping_result", "[HMM get_genotyping_result]") {
 
 TEST_CASE("HMM skip_reference_position", "[HMM skip_reference_position]") {
 	vector<unsigned char> path_to_allele = {0, 1};
-	UniqueKmers u1(2000, path_to_allele);
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
 	vector<unsigned char> a1 = {0};
 	vector<unsigned char> a2 = {1};
-	u1.insert_kmer(10, a1);
-	u1.insert_kmer(10, a2);
-	u1.set_coverage(5);
+	u1->insert_kmer(10, a1);
+	u1->insert_kmer(10, a2);
+	u1->set_coverage(5);
 
 	// position only covered by reference alleles and should be skipped
 	path_to_allele = {0, 0};
-	UniqueKmers u2(2500, path_to_allele);
-	u2.insert_kmer(10, a1);
-	u2.insert_kmer(20, a2);
+	shared_ptr<UniqueKmers> u2 =  shared_ptr<UniqueKmers> ( new UniqueKmers (2500, path_to_allele));
+	u2->insert_kmer(10, a1);
+	u2->insert_kmer(20, a2);
 
 	path_to_allele = {0, 1};
-	UniqueKmers u3(3000, path_to_allele);
-	u3.insert_kmer(20, a1);
-	u3.insert_kmer(5, a2);
-	u3.set_coverage(5);
+	shared_ptr<UniqueKmers> u3 = shared_ptr<UniqueKmers> (new UniqueKmers (3000, path_to_allele));
+	u3->insert_kmer(20, a1);
+	u3->insert_kmer(5, a2);
+	u3->set_coverage(5);
 
 	ProbabilityTable probs(5, 10, 30, 0.0L);
 	probs.modify_probability(5, 10, CopyNumber(0.1,0.9,0.1));
 	probs.modify_probability(5, 20, CopyNumber(0.01,0.01,0.9));
 	probs.modify_probability(5, 5, CopyNumber(0.9,0.3,0.1));
-	vector<UniqueKmers*> unique_kmers = {&u1,&u2,&u3};
+	vector<shared_ptr<UniqueKmers>> unique_kmers = {u1,u2,u3};
 
 	// recombination rate leads to recombination probability of 0.1
 	HMM hmm (&unique_kmers, &probs, true, true, 446.287102628, false, 0.25);
@@ -89,22 +90,22 @@ TEST_CASE("HMM skip_reference_position", "[HMM skip_reference_position]") {
 
 TEST_CASE("HMM get_genotyping_result_normalized", "[HMM get_genotyping_result_normalized]") {
 	vector<unsigned char> path_to_allele = {0, 1};
-	UniqueKmers u1(2000, path_to_allele);
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers> (new UniqueKmers (2000, path_to_allele));
 	vector<unsigned char> a1 = {0};
 	vector<unsigned char> a2 = {1};
-	u1.insert_kmer(10, a1);
-	u1.insert_kmer(10, a2);
+	u1->insert_kmer(10, a1);
+	u1->insert_kmer(10, a2);
 
-	UniqueKmers u2(3000, path_to_allele);
-	u2.insert_kmer(20, a1);
-	u2.insert_kmer(1, a2);
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
+	u2->insert_kmer(20, a1);
+	u2->insert_kmer(1, a2);
 	
 	ProbabilityTable probs (0, 5, 30, 0.0L);
 	probs.modify_probability(0, 10, CopyNumber(0.1,0.9,0.1,0.0));
 	probs.modify_probability(0, 20, CopyNumber(0.01,0.01,0.9,0.0));
 	probs.modify_probability(0, 1, CopyNumber(0.9,0.3,0.1,0.0));
 
-	vector<UniqueKmers*> unique_kmers = {&u1,&u2};
+	vector<shared_ptr<UniqueKmers>> unique_kmers = {u1,u2};
 
 	// recombination rate leads to recombination probability of 0.1
 	HMM hmm (&unique_kmers, &probs, true, true, 446.287102628, false, 0.25);
@@ -122,24 +123,24 @@ TEST_CASE("HMM get_genotyping_result_normalized", "[HMM get_genotyping_result_no
 
 TEST_CASE("HMM undefined_alleles1", "[HMM get_undefined_alleles1]") {
 	vector<unsigned char> path_to_allele = {0, 1};
-	UniqueKmers u1(2000, path_to_allele);
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers> (new UniqueKmers (2000, path_to_allele));
 	vector<unsigned char> a1 = {0};
 	vector<unsigned char> a2 = {1};
-	u1.set_undefined_allele(0);
-	REQUIRE (u1.is_undefined_allele(0));
-	u1.insert_kmer(10, a1);
+	u1->set_undefined_allele(0);
+	REQUIRE (u1->is_undefined_allele(0));
+	u1->insert_kmer(10, a1);
 
 	path_to_allele = {1, 0};
-	UniqueKmers u2(3000, path_to_allele);
-	u2.insert_kmer(20, a1);
-	u2.insert_kmer(1, a2);
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers> (new UniqueKmers (3000, path_to_allele));
+	u2->insert_kmer(20, a1);
+	u2->insert_kmer(1, a2);
 
 	ProbabilityTable probs(0,1,21,0.0L);
 	probs.modify_probability(0,10,CopyNumber(0.1,0.9,0.1));
 	probs.modify_probability(0,20,CopyNumber(0.01,0.01,0.9));
 	probs.modify_probability(0,1,CopyNumber(0.9,0.3,0.1));
 
-	vector<UniqueKmers*> unique_kmers = {&u1,&u2};
+	vector<shared_ptr<UniqueKmers>> unique_kmers = {u1,u2};
 	// recombination rate leads to recombination probability of 0.1
 	// TODO: this currently runs ONLY the genotyping
 	HMM hmm (&unique_kmers, &probs, true, true, 446.287102628, false, 0.25);
@@ -172,22 +173,22 @@ TEST_CASE("HMM undefined_alleles1", "[HMM get_undefined_alleles1]") {
 
 TEST_CASE("HMM undefined_alleles2", "[HMM get_undefined_alleles1]") {
 	vector<unsigned char> path_to_allele = {0, 0};
-	UniqueKmers u1(2000, path_to_allele);
+	shared_ptr<UniqueKmers> u1 =  shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
 	vector<unsigned char> a1 = {0};
 	vector<unsigned char> a2 = {1};
 
 	path_to_allele = {1, 0};
-	UniqueKmers u2(3000, path_to_allele);
-	u2.set_undefined_allele(0);
-	REQUIRE (u2.is_undefined_allele(0));
-	u2.insert_kmer(20, a2);
-	u2.insert_kmer(1, a1);
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
+	u2->set_undefined_allele(0);
+	REQUIRE (u2->is_undefined_allele(0));
+	u2->insert_kmer(20, a2);
+	u2->insert_kmer(1, a1);
 
 	ProbabilityTable probs (0,1,21,0.0L);
 	probs.modify_probability(0, 20, CopyNumber(0.01,0.01,0.9));
 	probs.modify_probability(0, 1, CopyNumber(0.9,0.3,0.1));
 
-	vector<UniqueKmers*> unique_kmers = {&u1,&u2};
+	vector<shared_ptr<UniqueKmers>> unique_kmers = {u1,u2};
 	// recombination rate leads to recombination probability of 0.1
 	// TODO: this currently runs ONLY the genotyping
 	HMM hmm (&unique_kmers, &probs, true, true, 446.287102628, false, 0.25);
@@ -221,29 +222,29 @@ TEST_CASE("HMM undefined_alleles2", "[HMM get_undefined_alleles1]") {
 
 TEST_CASE("HMM only_undefined_alleles", "[HMM only_undefined_alleles]") {
 	vector<unsigned char> path_to_allele = {0, 1};
-	UniqueKmers u1(2000, path_to_allele);
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
 	vector<unsigned char> a1 = {0};
 	vector<unsigned char> a2 = {1};
 	// set both alleles to undefined
-	u1.set_undefined_allele(0);
-	u1.set_undefined_allele(1);
-	u1.insert_kmer(10, a1);
-	u1.insert_kmer(10, a2);
+	u1->set_undefined_allele(0);
+	u1->set_undefined_allele(1);
+	u1->insert_kmer(10, a1);
+	u1->insert_kmer(10, a2);
 
 	path_to_allele = {1, 0};
-	UniqueKmers u2(3000, path_to_allele);
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
 	// set both alleles to undefined
-	u2.set_undefined_allele(0);
-	u2.set_undefined_allele(1);
-	u2.insert_kmer(20, a1);
-	u2.insert_kmer(1, a2);
+	u2->set_undefined_allele(0);
+	u2->set_undefined_allele(1);
+	u2->insert_kmer(20, a1);
+	u2->insert_kmer(1, a2);
 
 	ProbabilityTable probs (0,1,21,0.0L);
 	probs.modify_probability(0,10,CopyNumber(0.1,0.9,0.1));
 	probs.modify_probability(0,20,CopyNumber(0.01,0.01,0.9));
 	probs.modify_probability(0,1,CopyNumber(0.9,0.3,0.1));
 
-	vector<UniqueKmers*> unique_kmers = {&u1,&u2};
+	vector<shared_ptr<UniqueKmers>> unique_kmers = {u1,u2};
 	// recombination rate leads to recombination probability of 0.1
 	// TODO: this currently runs ONLY the genotyping
 	HMM hmm (&unique_kmers, &probs, true, false, 446.287102628, false, 0.25);
@@ -277,18 +278,18 @@ TEST_CASE("HMM only_undefined_alleles", "[HMM only_undefined_alleles]") {
 
 TEST_CASE("HMM no_alt_allele", "[HMM no_alt_allele]") {
 	vector<unsigned char> path_to_allele = {0, 0, 0};
-	UniqueKmers u(2000, path_to_allele);
+	shared_ptr<UniqueKmers> u =  shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
 	vector<unsigned char> a1 = {0,1};
 	vector<unsigned char> a2 = {};
 
-	u.insert_kmer(10, a1);
-	u.insert_kmer(5, a2);
+	u->insert_kmer(10, a1);
+	u->insert_kmer(5, a2);
 
 	ProbabilityTable probs (0,1,11, 0.0L);
 	probs.modify_probability(0,10,CopyNumber(0.1,0.2,0.9));
 	probs.modify_probability(0,5,CopyNumber(0.3,0.4,0.1));
 
-	vector<UniqueKmers*> unique_kmers = {&u};
+	vector<shared_ptr<UniqueKmers>> unique_kmers = {u};
 //	vector<Variant> variants;
 //	variants.push_back(Variant("ATGC", "TGGG", "chr1", 2000, 2003, {"AAT", "ATT"}, {0,0,0}));
 	HMM hmm (&unique_kmers, &probs, true, true, 1.26, false, 0.25);
@@ -303,17 +304,17 @@ TEST_CASE("HMM no_alt_allele", "[HMM no_alt_allele]") {
 
 TEST_CASE("HMM no_ref_allele", "[HMM no_ref_allele]") {
 	vector<unsigned char> path_to_allele = {1, 1, 1};
-	UniqueKmers u (2000, path_to_allele);
+	shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
 	vector<unsigned char> a1 = {0,1};
 	vector<unsigned char> a2 = {};
-	u.insert_kmer (20, a1);
-	u.insert_kmer (10, a2);
+	u->insert_kmer (20, a1);
+	u->insert_kmer (10, a2);
 
 	ProbabilityTable probs(0, 1, 21, 0.0L);
 	probs.modify_probability(0, 20, CopyNumber(0.1,0.2,0.9));
 	probs.modify_probability(0, 10, CopyNumber(0.3,0.4,0.1));
 
-	vector<UniqueKmers*> unique_kmers = {&u};
+	vector<shared_ptr<UniqueKmers>> unique_kmers = {u};
 //	vector<Variant> variants;
 //	variants.push_back(Variant("ATGC", "TGGG", "chr1", 2000, 2003, {"AAT", "ATT"}, {1,1,1}));
 	HMM hmm (&unique_kmers, &probs, true, true, 1.26, false, 0.25);
@@ -326,15 +327,12 @@ TEST_CASE("HMM no_ref_allele", "[HMM no_ref_allele]") {
 
 TEST_CASE("HMM no_unique_kmers", "[HMM no_unique_kmers]") {
 	vector<unsigned char> path_to_allele = {0, 1};
-	UniqueKmers u1(2000, path_to_allele);
-	UniqueKmers u2(3000, path_to_allele);
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
 
 	ProbabilityTable probs;
 
-	vector<UniqueKmers*> unique_kmers = {&u1, &u2};
-//	vector<Variant> variants;
-//	variants.push_back(Variant("AAA", "TTT", "chr1", 2000, 2003, {"ATA", "AAA"}, {0,1}));
-//	variants.push_back(Variant("CCC", "GGG", "chr1", 3000, 3003, {"CTC", "CGC"}, {0,1}));
+	vector<shared_ptr<UniqueKmers>> unique_kmers = {u1, u2};
 
 	// recombination rate leads to recombination probability of 0.1
 	HMM hmm (&unique_kmers, &probs, true, true, 446.287102628, false, 0.25);
@@ -356,16 +354,13 @@ TEST_CASE("HMM no_unique_kmers", "[HMM no_unique_kmers]") {
 
 TEST_CASE("HMM no_unique_kmers2", "[HMM no_unique_kmers2]") {
 	vector<unsigned char> path_to_allele = {0, 0, 1};
-	UniqueKmers u1(2000, path_to_allele);
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
 	path_to_allele = {0, 1, 1};
-	UniqueKmers u2(3000, path_to_allele);
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
 
 	ProbabilityTable probs;
 
-	vector<UniqueKmers*> unique_kmers = {&u1, &u2};
-//	vector<Variant> variants;
-//	variants.push_back(Variant("AAA", "TTT", "chr1", 2000, 2003, {"ATA", "AAA"}, {0,0,1}));
-//	variants.push_back(Variant("CCC", "GGG", "chr1", 3000, 3003, {"CTC", "CGC"}, {0,1,1}));
+	vector<shared_ptr<UniqueKmers>> unique_kmers = {u1, u2};
 
 	// recombination rate leads to recombination probability of 0.1
 	HMM hmm (&unique_kmers, &probs, true, true, 1070.02483182, false, 0.25);
@@ -387,29 +382,23 @@ TEST_CASE("HMM no_unique_kmers2", "[HMM no_unique_kmers2]") {
 
 TEST_CASE("HMM no_unique_kmers3", "[HMM no_unique_kmers3]") {
 	vector<unsigned char> path_to_allele = {0, 1};
-	UniqueKmers u1(2000, path_to_allele);
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
 	vector<unsigned char> a1 = {0};
 	vector<unsigned char> a2 = {1};
-//	u1.insert_kmer(CopyNumber(0.1,0.9,0.1), a1);
-//	u1.insert_kmer(CopyNumber(0.1,0.9,0.1), a2);
-	u1.insert_kmer(10, a1);
-	u1.insert_kmer(10, a2);
+	u1->insert_kmer(10, a1);
+	u1->insert_kmer(10, a2);
 
 	// no unique kmers for second variant
-	UniqueKmers u2(3000, path_to_allele);
-	UniqueKmers u3(4000, path_to_allele);
-	u3.insert_kmer(10, a1);
-	u3.insert_kmer(9, a2);
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
+	shared_ptr<UniqueKmers> u3 = shared_ptr<UniqueKmers>(new UniqueKmers (4000, path_to_allele));
+	u3->insert_kmer(10, a1);
+	u3->insert_kmer(9, a2);
 
 	ProbabilityTable probs (0,1,21,0.0L);
 	probs.modify_probability(0, 10, CopyNumber(0.1,0.9,0.1));
 	probs.modify_probability(0, 9, CopyNumber(0.1,0.8,0.1));
 
-	vector<UniqueKmers*> unique_kmers = {&u1,&u2,&u3};
-//	vector<Variant> variants;
-//	variants.push_back(Variant("AAA", "CCC", "chr1", 2000, 2003, {"AGG", "ATG"}, {0,1}));
-//	variants.push_back(Variant("GGG", "TCT", "chr1", 3000, 3003, {"TTT", "TGT"}, {0,1}));
-//	variants.push_back(Variant("ATT", "TTC", "chr1", 4000, 4003, {"CAT", "CGT"}, {0,1}));
+	vector<shared_ptr<UniqueKmers>> unique_kmers = {u1,u2,u3};
 
 	// recombination rate leads to recombination probability of 0.1
 	HMM hmm (&unique_kmers, &probs, true, true, 446.287102628, false, 0.25);
@@ -442,13 +431,13 @@ TEST_CASE("HMM no_unique_kmers3", "[HMM no_unique_kmers3]") {
 
 TEST_CASE("HMM no_unique_kmers_uniform", "[HMM no_unique_kmers_uniorm]") {
 	vector<unsigned char> path_to_allele = {0, 1, 1};
-	UniqueKmers u1 (2000, path_to_allele);
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
 	path_to_allele = {0, 0, 1};
-	UniqueKmers u2 (3000, path_to_allele);
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
 
 	ProbabilityTable probs;
 
-	vector<UniqueKmers*> unique_kmers = {&u1, &u2};
+	vector<shared_ptr<UniqueKmers>> unique_kmers = {u1, u2};
 	// switch on uniform transition probabilities
 	HMM hmm (&unique_kmers, &probs, true, true, 1.26, true, 0.25);
 
@@ -469,19 +458,19 @@ TEST_CASE("HMM no_unique_kmers_uniform", "[HMM no_unique_kmers_uniorm]") {
 TEST_CASE("HMM only_kmers", "[HMM only_kmers]") {
 	// PGGTyper-kmers: insert one ref and one alt path and allow uniform transitions between paths
 	vector<unsigned char> path_to_allele = {0, 1};
-	UniqueKmers u1 (2000, path_to_allele);
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>( new UniqueKmers (2000, path_to_allele));
 	vector<unsigned char> a1 = {0};
 	vector<unsigned char> a2 = {1};
-	u1.insert_kmer(10, a1);
-	u1.insert_kmer(12, a2);
+	u1->insert_kmer(10, a1);
+	u1->insert_kmer(12, a2);
 
-	UniqueKmers u2 (3000, path_to_allele);
-	u2.insert_kmer(1, a1);
-	u2.insert_kmer(20, a2);
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
+	u2->insert_kmer(1, a1);
+	u2->insert_kmer(20, a2);
 
-	UniqueKmers u3 (4000, path_to_allele);
-	u3.insert_kmer(5, a1);
-	u3.insert_kmer(7, a2);
+	shared_ptr<UniqueKmers> u3 = shared_ptr<UniqueKmers>(new UniqueKmers (4000, path_to_allele));
+	u3->insert_kmer(5, a1);
+	u3->insert_kmer(7, a2);
 
 	ProbabilityTable probs (0,1,21,0.0L);
 	probs.modify_probability(0,10,CopyNumber(0.05,0.9,0.05));
@@ -491,7 +480,7 @@ TEST_CASE("HMM only_kmers", "[HMM only_kmers]") {
 	probs.modify_probability(0,5,CopyNumber(0.6,0.3,0.1));
 	probs.modify_probability(0,7,CopyNumber(0.3,0.4,0.3));
 
-	vector<UniqueKmers*> unique_kmers = {&u1, &u2, &u3};
+	vector<shared_ptr<UniqueKmers>> unique_kmers = {u1, u2, u3};
 	// switch on uniform transition probabilities
 	HMM hmm (&unique_kmers, &probs, true, true, 1.26, true, 0.25);
 
@@ -511,27 +500,27 @@ TEST_CASE("HMM only_kmers", "[HMM only_kmers]") {
 
 TEST_CASE("HMM emissions_zero", "[HMM emissions_zero]") {
 	vector<unsigned char> path_to_allele = {0, 1};
-	UniqueKmers u1 (1000, path_to_allele);
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (1000, path_to_allele));
 	vector<unsigned char> a1 = {0};
 	vector<unsigned char> a2 = {1};
-	u1.insert_kmer(10, a1);
-	u1.insert_kmer(10, a2);
+	u1->insert_kmer(10, a1);
+	u1->insert_kmer(10, a2);
 
 	path_to_allele = {1, 1};
-	UniqueKmers u2(2000, path_to_allele);
-	u2.insert_kmer(0, a2);
-	u2.insert_kmer(0, a2);
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
+	u2->insert_kmer(0, a2);
+	u2->insert_kmer(0, a2);
 
 	path_to_allele = {0, 1};
-	UniqueKmers u3(3000, path_to_allele);
-	u3.insert_kmer(10, a1);
-	u3.insert_kmer(10, a2);
+	shared_ptr<UniqueKmers> u3 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
+	u3->insert_kmer(10, a1);
+	u3->insert_kmer(10, a2);
 
 	ProbabilityTable probs (0,1,11,0.0L);
 	probs.modify_probability(0, 10, CopyNumber(0.0,1.0,0.0));
 	probs.modify_probability(0, 0, CopyNumber(1.0,0.0,0.0));
 
-	vector<UniqueKmers*> unique_kmers = {&u1, &u2, &u3};
+	vector<shared_ptr<UniqueKmers>> unique_kmers = {u1, u2, u3};
 	HMM hmm (&unique_kmers, &probs, true, true, 446.287102628, false, 0.25);
 	// all emission probabilities are zero, but in this case, will be set uniformly to 1.0 by EmissionProbabilityComputer.
 	vector<double> expected_likelihoods = {0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0};
@@ -554,26 +543,26 @@ TEST_CASE("HMM emissions_zero", "[HMM emissions_zero]") {
 
 TEST_CASE("HMM underflow", "[HMM underflow]") {
 	vector<unsigned char> path_to_allele = {0, 1};
-	UniqueKmers u1 (1000, path_to_allele);
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (1000, path_to_allele));
 	vector<unsigned char> a1 = {0};
 	vector<unsigned char> a2 = {1};
-	u1.insert_kmer(10, a1);
-	u1.insert_kmer(10, a2);
+	u1->insert_kmer(10, a1);
+	u1->insert_kmer(10, a2);
 
-	UniqueKmers u2 (2000, path_to_allele);
-	u2.insert_kmer(20, a1);
-	u2.insert_kmer(0, a2);
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
+	u2->insert_kmer(20, a1);
+	u2->insert_kmer(0, a2);
 
-	UniqueKmers u3 (3000, path_to_allele);
-	u3.insert_kmer(10, a1);
-	u3.insert_kmer(10, a2);
+	shared_ptr<UniqueKmers> u3 =  shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
+	u3->insert_kmer(10, a1);
+	u3->insert_kmer(10, a2);
 
 	ProbabilityTable probs (0,1,21,0.0L);
 	probs.modify_probability(0,10,CopyNumber(0.0,1.0,0.0));
 	probs.modify_probability(0,20,CopyNumber(0.0,0.0,1.0));
 	probs.modify_probability(0,0,CopyNumber(1.0,0.0,0.0));
 
-	vector<UniqueKmers*> unique_kmers = {&u1, &u2, &u3};
+	vector<shared_ptr<UniqueKmers>> unique_kmers = {u1, u2, u3};
 	HMM hmm (&unique_kmers, &probs, true, true, 0.0, false, 0.25);
 	// currently, backward probabilities that all become zero, are not corrected in current column (but stored as uniform for further computations)
 	vector<double> expected_likelihoods = {0.0,0.0,0.0,0.0,1.0,0.0,0.0,1.0,0.0};
@@ -591,20 +580,20 @@ TEST_CASE("HMM underflow", "[HMM underflow]") {
 
 TEST_CASE("HMM get_genotyping_result_neutral_kmers", "[HMM get_genotyping_result_with_kmer]") {
 	vector<unsigned char> path_to_allele = {0, 1};
-	UniqueKmers u1(2000, path_to_allele);
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
 	vector<unsigned char> a1 = {0};
 	vector<unsigned char> a2 = {1};
 	vector<unsigned char> a3 = {0,1};
-	u1.insert_kmer(10, a1);
-	u1.insert_kmer(10, a2);
-	u1.insert_kmer(12, a3);
-	u1.insert_kmer(5, a3);
+	u1->insert_kmer(10, a1);
+	u1->insert_kmer(10, a2);
+	u1->insert_kmer(12, a3);
+	u1->insert_kmer(5, a3);
 
-	UniqueKmers u2(3000, path_to_allele);
-	u2.insert_kmer(20, a1);
-	u2.insert_kmer(1, a2);
-	u2.insert_kmer(15, a3);
-	u2.insert_kmer(9, a3);
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
+	u2->insert_kmer(20, a1);
+	u2->insert_kmer(1, a2);
+	u2->insert_kmer(15, a3);
+	u2->insert_kmer(9, a3);
 
 	ProbabilityTable probs (0,1,21,0.0L);
 	probs.modify_probability(0,10,CopyNumber(0.1,0.9,0.1));
@@ -615,10 +604,7 @@ TEST_CASE("HMM get_genotyping_result_neutral_kmers", "[HMM get_genotyping_result
 	probs.modify_probability(0,15,CopyNumber(0.01, 0.49, 0.5));
 	probs.modify_probability(0,9,CopyNumber(0.3, 0.4, 0.3));
 
-	vector<UniqueKmers*> unique_kmers = {&u1,&u2};
-//	vector<Variant> variants;
-//	variants.push_back(Variant("NNN", "NNN", "chr1", 2000, 2003, {"AAT", "ATT"}, {0,1}));
-//	variants.push_back(Variant("NNN", "NNN", "chr1", 3000, 3003, {"CCC", "CGC"}, {0,1}));
+	vector<shared_ptr<UniqueKmers>> unique_kmers = {u1,u2};
 
 	// recombination rate leads to recombination probability of 0.1
 	HMM hmm (&unique_kmers, &probs, true, true, 446.287102628, false, 0.25);
@@ -641,27 +627,24 @@ TEST_CASE("HMM only_paths", "[HMM only_paths]") {
 	// want to only consider the following paths. All others should be ignored.
 	vector<unsigned char> path_to_allele = {0, 2, 1, 1};
 	vector<unsigned short> only_paths = {0,3};
-	UniqueKmers u1(2000, path_to_allele);
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
 	vector<unsigned char> a1 = {0};
 	vector<unsigned char> a2 = {1};
 	vector<unsigned char> a3 = {2};
-	u1.insert_kmer(10, a1);
-	u1.insert_kmer(10, a2);
+	u1->insert_kmer(10, a1);
+	u1->insert_kmer(10, a2);
 
 	path_to_allele = {0, 0, 2, 1};
-	UniqueKmers u2(3000, path_to_allele);
-	u2.insert_kmer(20, a1);
-	u2.insert_kmer(1, a2);
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
+	u2->insert_kmer(20, a1);
+	u2->insert_kmer(1, a2);
 
 	ProbabilityTable probs (0,1,21,0.0L);
 	probs.modify_probability(0,10,CopyNumber(0.1,0.9,0.1));
 	probs.modify_probability(0,20,CopyNumber(0.01,0.01,0.9));
 	probs.modify_probability(0,1,CopyNumber(0.9,0.3,0.1));
 
-	vector<UniqueKmers*> unique_kmers = {&u1,&u2};
-//	vector<Variant> variants;
-//	variants.push_back(Variant("NNN", "NNN", "chr1", 2000, 2003, {"AAT", "ATT"}, {0,1}));
-//	variants.push_back(Variant("NNN", "NNN", "chr1", 3000, 3003, {"CCC", "CGC"}, {0,1}));
+	vector<shared_ptr<UniqueKmers>> unique_kmers = {u1,u2};
 
 	// recombination rate leads to recombination probability of 0.1
 	HMM hmm (&unique_kmers, &probs, true, true, 446.287102628, false, 0.25, &only_paths);
@@ -681,19 +664,16 @@ TEST_CASE("HMM only_paths", "[HMM only_paths]") {
 TEST_CASE("HMM no_only_paths2", "[HMM only_paths2]") {
 	vector<unsigned char> path_to_allele = {0, 1, 2};
 	vector<unsigned char> a2 = {2};
-	UniqueKmers u1(2000, path_to_allele);
-	u1.insert_kmer(12, a2);
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
+	u1->insert_kmer(12, a2);
 
-	UniqueKmers u2(3000, path_to_allele);
-	u2.insert_kmer(12,a2);
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
+	u2->insert_kmer(12,a2);
 
 	ProbabilityTable probs (0,1,13,0.0L);
 	probs.modify_probability(0,12,CopyNumber(0.05, 0.8, 0.15));
 
-	vector<UniqueKmers*> unique_kmers = {&u1, &u2};
-//	vector<Variant> variants;
-//	variants.push_back(Variant("AAA", "TTT", "chr1", 2000, 2003, {"ATA", "AAA"}, {0,1}));
-//	variants.push_back(Variant("CCC", "GGG", "chr1", 3000, 3003, {"CTC", "CGC"}, {0,1}));
+	vector<shared_ptr<UniqueKmers>> unique_kmers = {u1, u2};
 
 	// recombination rate leads to recombination probability of 0.1
 	vector<unsigned short> only_paths = {0,1};

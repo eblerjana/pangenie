@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <zlib.h>
 #include "kmercounter.hpp"
 #include "variantreader.hpp"
 #include "uniquekmers.hpp"

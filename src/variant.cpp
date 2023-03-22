@@ -387,7 +387,7 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 }
 
 
-void Variant::variant_statistics (UniqueKmers* unique_kmers, vector<VariantStats>& result) const {
+void Variant::variant_statistics (shared_ptr<UniqueKmers> unique_kmers, vector<VariantStats>& result) const {
 	size_t nr_variants = this->allele_sequences.size();
 	assert (this->uncovered_alleles.size() == nr_variants);
 

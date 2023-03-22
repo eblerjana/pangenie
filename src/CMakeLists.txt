@@ -26,5 +26,5 @@ add_library(PanGenieLib SHARED
 
 add_executable(PanGenie pangenie.cpp)
 
-target_link_libraries(PanGenie PanGenieLib ${JELLYFISH_LDFLAGS_OTHER})
-target_link_libraries(PanGenie PanGenieLib ${JELLYFISH_LIBRARIES})
+target_link_libraries(PanGenie PanGenieLib ${JELLYFISH_LDFLAGS_OTHER} ${ZLIB_LDFLAGS_OTHER})
+target_link_libraries(PanGenie PanGenieLib ${JELLYFISH_LIBRARIES} ${ZLIB_LIBRARIES})
