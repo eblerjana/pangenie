@@ -21,8 +21,8 @@ void parse_kmer_line(string line, vector<string>& kmers, vector<string>& flankin
 		is_header = true;
 		return;
 	}
-	parse(kmers, tokens[3], ',');
-	parse(flanking_kmers, tokens[4], ',');
+	if (tokens[3] != "nan") parse(kmers, tokens[3], ',');
+	if (tokens[4] != "nan") parse(flanking_kmers, tokens[4], ',');
 }
 
 unsigned short compute_local_coverage(vector<string>& kmers, shared_ptr<KmerCounter> read_counts, size_t kmer_coverage) {
