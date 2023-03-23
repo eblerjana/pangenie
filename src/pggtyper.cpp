@@ -321,8 +321,8 @@ int main (int argc, char* argv[])
 	if (nr_paths > 200) cerr << "Warning: panel is large and PanGenie might take a long time genotyping. Try reducing the panel size prior to genotyping." << endl;
 	// handle case when sampling_size is not set
 	if (sampling_size == 0) {
-		if (nr_paths > 25) {
-			sampling_size = 14;
+		if (nr_paths > 90) {
+			sampling_size = 45;
 		} else {
 			sampling_size = nr_paths;		
 		}
