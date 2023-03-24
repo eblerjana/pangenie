@@ -13,7 +13,7 @@ void parse(vector<string>& result, string line, char sep) {
 	}
 }
 
-void parse_kmer_line(string line, vector<string>& kmers, vector<string>& flanking_kmers, bool& is_header) {
+void parse_kmer_line(string line, string& chrom, size_t& start, vector<string>& kmers, vector<string>& flanking_kmers, bool& is_header) {
 	vector<string> tokens;
 	parse(tokens, line, '\t');
 	assert (tokens.size() == 5);
@@ -21,6 +21,8 @@ void parse_kmer_line(string line, vector<string>& kmers, vector<string>& flankin
 		is_header = true;
 		return;
 	}
+	chrom = tokens[0];
+	start = atoi(tokens[1].c_str());
 	if (tokens[3] != "nan") parse(kmers, tokens[3], ',');
 	if (tokens[4] != "nan") parse(flanking_kmers, tokens[4], ',');
 }

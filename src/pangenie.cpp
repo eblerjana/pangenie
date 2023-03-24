@@ -104,12 +104,16 @@ void fill_read_kmercounts(string chromosome, UniqueKmersMap* unique_kmers_map, s
 			vector<string> kmers;
 			vector<string> flanking_kmers;
 			bool is_header = false;
-			parse_kmer_line(line, kmers, flanking_kmers, is_header);
+			string chrom;
+			size_t start;
+			parse_kmer_line(line, chrom, start, kmers, flanking_kmers, is_header);
 
 			// clear string for next line
             line.clear();
 
 			if (is_header) continue; // header line
+			assert(chrom == chromosome);
+			assert(start == unique_kmers_map->unique_kmers[chromosome][var_index]->get_variant_position());
 
 			{
 				lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
@@ -226,6 +230,7 @@ int main (int argc, char* argv[])
 	} catch (const exception& e) {
 		return 0;
 	}
+
 	readfile = argument_parser.get_argument('i');
 	reffile = argument_parser.get_argument('r');
 	vcffile = argument_parser.get_argument('v');
@@ -446,8 +451,8 @@ int main (int argc, char* argv[])
 		if (nr_paths > 500) cerr << "Warning: panel is large and PanGenie might take a long time genotyping. Try reducing the panel size prior to genotyping." << endl;
 		// handle case when sampling_size is not set
 		if (sampling_size == 0) {
-			if (nr_paths > 25) {
-				sampling_size = 14;
+			if (nr_paths > 90) {
+				sampling_size = 45;
 			} else {
 				sampling_size = nr_paths;		
 			}
