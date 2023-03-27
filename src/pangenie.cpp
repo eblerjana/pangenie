@@ -117,10 +117,27 @@ void fill_read_kmercounts(string chromosome, UniqueKmersMap* unique_kmers_map, s
 
 			{
 				lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
+				size_t kmers_used = 0;
 				// add counts to UniqueKmers object
 				for (size_t i = 0; i < kmers.size(); ++i) {
+					if (kmers_used > 300) break;
+
 					size_t count = read_kmer_counts->getKmerAbundance(kmers[i]);
-					unique_kmers_map->unique_kmers[chromosome][var_index]->update_readcount(i, count);
+
+					// skip kmers with too extreme counts
+					if (count > 2*kmer_coverage) continue;
+
+					// determine probabilities
+					CopyNumber cn = probabilities->get_probability(kmer_coverage, count);
+					long double p_cn0 = cn.get_probability_of(0);
+					long double p_cn1 = cn.get_probability_of(1);
+					long double p_cn2 = cn.get_probability_of(2);
+
+					// skip kmers with only 0 probabilities
+					if ( (p_cn0 > 0) || (p_cn1 > 0) || (p_cn2 > 0) ) {
+						kmers_used += 1;
+						unique_kmers_map->unique_kmers[chromosome][var_index]->update_readcount(i, count);
+					}
 				}
 			}
 
@@ -133,6 +150,9 @@ void fill_read_kmercounts(string chromosome, UniqueKmersMap* unique_kmers_map, s
         }
     }
 	gzclose(file);
+	// store runtime
+	lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
+	unique_kmers_map->runtimes.insert(pair<string, double>(chromosome, timer.get_total_time()));
 }
 
 
@@ -288,7 +308,6 @@ int main (int argc, char* argv[])
 		cerr << "Determine allele sequences ..." << endl;
 		VariantReader variant_reader (vcffile, reffile, kmersize, add_reference, sample_name);
 
-
 		cerr << "Write path segments to file: " << segment_file << " ..." << endl;
 		variant_reader.write_path_segments(segment_file);
 
@@ -303,7 +322,6 @@ int main (int argc, char* argv[])
 
 		time_preprocessing = timer.get_interval_time();
 		nr_paths = variant_reader.nr_of_paths();
-
 
 	
 		/**
@@ -414,6 +432,8 @@ int main (int argc, char* argv[])
 		* Also, estimate the local kmer coverage from nearby kmers.
 		*/
 
+		cerr << "Determine read k-mer counts for unique kmers ..." << endl; 
+		
 		{
 			ThreadPool threadPool (nr_cores_uk);
 			for (auto chromosome : chromosomes) {
@@ -563,24 +583,25 @@ int main (int argc, char* argv[])
 		cerr << endl << "###### Summary ######" << endl;
 		// output times
 		cerr << "time spent reading input files:\t" << time_preprocessing << " sec" << endl;
-		cerr << "time spent counting kmers: \t" << time_kmer_counting << " sec" << endl;
-		cerr << "time spent selecting paths: \t" << time_path_sampling << " sec" << endl;
-		cerr << "time spent determining unique kmers: \t" << time_unique_kmers << " sec" << endl; 
+		cerr << "time spent counting graph kmers (wallclock):\t" << time_graph_counting << " sec" << endl;
+		cerr << "time spent determining unique kmers:\t" << time_unique_kmers << " sec" << endl;
+		cerr << "time spent counting read kmers (wallclock):\t" << time_kmer_counting << " sec" << endl;
+		cerr << "time spent determining counts of unique kmers:\t" << time_unique_kmers_updating << " sec" << endl;
+		cerr << "time spent selecting paths:\t" << time_path_sampling << " sec" << endl;
+		double time_hmm = 0.0;
 		// output per chromosome time
-		double time_hmm = time_writing;
 		for (auto chromosome : chromosomes) {
-			double time_chrom = results.runtimes[chromosome] + unique_kmers_list.runtimes[chromosome];
-			cerr << "time spent genotyping chromosome " << chromosome << ":\t" << time_chrom << endl;
-			time_hmm += time_chrom;
+			cerr << "time spent genotyping chromosome " << chromosome << ":\t" << results.runtimes[chromosome] << endl;
+			time_hmm += results.runtimes[chromosome];
 		}
-		cerr << "total running time:\t" << time_preprocessing + time_kmer_counting + time_path_sampling + time_unique_kmers +  time_hmm + time_writing << " sec"<< endl;
+		cerr << "time spent genotyping (total):\t" << time_hmm << " sec" << endl;
+		cerr << "time spent writing output file:\t" << time_writing << " sec" << endl;
 		cerr << "total wallclock time: " << time_total  << " sec" << endl;
 
 		// memory usage
 		struct rusage r_usage;
 		getrusage(RUSAGE_SELF, &r_usage);
 		cerr << "Total maximum memory usage: " << (r_usage.ru_maxrss / 1E6) << " GB" << endl;
-
 
 	}
 
