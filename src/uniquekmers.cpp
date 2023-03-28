@@ -30,7 +30,7 @@ void UniqueKmers::insert_kmer(unsigned short readcount,  vector<unsigned char>& 
 	current_index += 1;
 }
 
-bool UniqueKmers::kmer_on_path(unsigned short kmer_index, size_t path_index) const {
+bool UniqueKmers::kmer_on_path(size_t kmer_index, size_t path_index) const {
 	// check if path_id exists
 	if (path_index >= this->path_to_allele.size()) {
 		throw runtime_error("UniqueKmers::kmer_on_path: path_index " + to_string(path_index) + " does not exist.");
@@ -45,7 +45,7 @@ bool UniqueKmers::kmer_on_path(unsigned short kmer_index, size_t path_index) con
 	}
 }
 
-unsigned short UniqueKmers::get_readcount_of(unsigned short kmer_index) {
+unsigned short UniqueKmers::get_readcount_of(size_t kmer_index) {
 	if (kmer_index < this->current_index) {
 		return this->kmer_to_count[kmer_index];
 	} else {
