@@ -152,7 +152,7 @@ void fill_read_kmercounts(string chromosome, UniqueKmersMap* unique_kmers_map, s
 	gzclose(file);
 	// store runtime
 	lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
-	unique_kmers_map->runtimes.insert(pair<string, double>(chromosome, timer.get_total_time()));
+	unique_kmers_map->runtimes[chromosome] += timer.get_total_time();
 }
 
 
@@ -291,6 +291,7 @@ int main (int argc, char* argv[])
 	UniqueKmersMap unique_kmers_list;
 	ProbabilityTable probabilities;
 	vector<string> chromosomes;
+	Results results;
 	string segment_file = outname + "_path_segments.fasta";
 	size_t available_threads_uk;
 	size_t nr_cores_uk;
@@ -515,7 +516,6 @@ int main (int argc, char* argv[])
 
 
 		// run genotyping
-		Results results;
 		{
 			// create thread pool
 			ThreadPool threadPool (nr_core_threads);
