@@ -58,7 +58,7 @@ struct UniqueKmersMap {
 
 struct Results {
 	mutex result_mutex;
-	map<string, vector<GenotypingResult>> result;
+	map<string, shared_ptr<HMM>> result;
 	map<string, double> runtimes;
 };
 
@@ -161,21 +161,16 @@ void run_genotyping(string chromosome, vector<shared_ptr<UniqueKmers>>* unique_k
 	/* construct HMM and run genotyping/phasing. Genotyping is run without normalizing the final alpha*beta values.
 	These values are first added up across different subsets of paths, and the resulting probabilities are normalized
 	at the end. This is done so that genotyping runs on disjoint sets of paths are better comparable. */
-	HMM hmm(unique_kmers, probs, !only_phasing, !only_genotyping, 1.26, false, effective_N, only_paths, false);
+	shared_ptr<HMM> hmm = shared_ptr<HMM>(new HMM(unique_kmers, probs, !only_phasing, !only_genotyping, 1.26, false, effective_N, only_paths, false));
 	// store the results
 	{
 		lock_guard<mutex> lock_result (results->result_mutex);
 		// combine the new results to the already existing ones (if present)
 		if (results->result.find(chromosome) == results->result.end()) {
-			results->result.insert(pair<string, vector<GenotypingResult>> (chromosome, hmm.move_genotyping_result()));
+			results->result.insert(pair<string, shared_ptr<HMM> > (chromosome, hmm) );
 		} else {
 			// combine newly computed likelihoods with already exisiting ones
-			size_t index = 0;
-			vector<GenotypingResult> genotypes = hmm.move_genotyping_result();
-			for (auto likelihoods : genotypes) {
-				results->result.at(chromosome).at(index).combine(likelihoods);
-				index += 1;
-			}
+			results->result.at(chromosome)->combine_likelihoods(*hmm);
 		}
 	}
 	// store runtime
@@ -339,13 +334,10 @@ int main (int argc, char* argv[])
 		time_graph_counting = timer.get_interval_time();
 
 
-
 		/**
 		* Step 3: determine unique k-mers for each variant bubble and prepare datastructure storing
 		* that information. It will later be used for the genotyping step. 
 		* This step will delete information from the VariantReader that will no longer be used.
-		* TODO: in old version, kmers were selected taking kmer_coverage into account. This is no longer possible, because the step
-		*       counting kmers in the reads happens later.
 		**/
 
 		cerr << "Determine unique kmers ..." << endl;
@@ -498,7 +490,6 @@ int main (int argc, char* argv[])
 		unsigned short nr_phasing_paths = min((unsigned short) nr_paths, (unsigned short) 30);
 		path_sampler.select_single_subset(phasing_paths, nr_phasing_paths);
 		if (!only_genotyping) cerr << "Sampled " << phasing_paths.size() << " paths to be used for phasing." << endl;
-		time_path_sampling = timer.get_interval_time();
 		
 		// TODO: only for analysis
 		struct rusage r_usage30;
@@ -514,6 +505,7 @@ int main (int argc, char* argv[])
 			nr_core_threads = available_threads;
 		}
 
+		time_path_sampling = timer.get_interval_time();
 
 		// run genotyping
 		{
@@ -544,9 +536,7 @@ int main (int argc, char* argv[])
 		// in case genotyping was run, normalize the combined likelihoods
 		if (!only_phasing){
 			for (auto chromosome : chromosomes) {
-				for (size_t i = 0; i < results.result.at(chromosome).size(); ++i) {
-					results.result.at(chromosome).at(i).normalize();
-				}
+				results.result.at(chromosome)->normalize();
 			}
 		}
 
@@ -565,12 +555,11 @@ int main (int argc, char* argv[])
 		for (auto it = results.result.begin(); it != results.result.end(); ++it) {
 			if (!only_phasing) {
 				// output genotyping results
-				
-				variant_reader.write_genotypes_of(it->first, it->second, &unique_kmers_list.unique_kmers[it->first], ignore_imputed);
+				variant_reader.write_genotypes_of(it->first, it->second->get_ref_genotyping_result(), &unique_kmers_list.unique_kmers[it->first], ignore_imputed);
 			}
 			if (!only_genotyping) {
 				// output phasing results
-				variant_reader.write_phasing_of(it->first, it->second, &unique_kmers_list.unique_kmers[it->first], ignore_imputed);
+				variant_reader.write_phasing_of(it->first, it->second->get_ref_genotyping_result(), &unique_kmers_list.unique_kmers[it->first], ignore_imputed);
 			}
 		}
 

@@ -691,3 +691,116 @@ TEST_CASE("HMM no_only_paths2", "[HMM only_paths2]") {
 
 	REQUIRE( compare_vectors(computed_likelihoods, expected_likelihoods) );
 }
+
+TEST_CASE("HMM combine_results", "[HMM combine_results]") {
+
+	// construct first HMM
+	vector<unsigned char> path_to_allele = {0, 1};
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers(2000, path_to_allele));
+	vector<unsigned char> a1 = {0};
+	vector<unsigned char> a2 = {1};
+	u1->insert_kmer(10, a1);
+	u1->insert_kmer(10, a2);
+	u1->set_coverage(5);
+
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers(3000, path_to_allele));
+	u2->insert_kmer(20, a1);
+	u2->insert_kmer(5, a2);
+	u2->set_coverage(5);
+
+	ProbabilityTable probs(5, 10, 30, 0.0L);
+	probs.modify_probability(5, 10, CopyNumber(0.1,0.9,0.1));
+	probs.modify_probability(5, 20, CopyNumber(0.01,0.01,0.9));
+	probs.modify_probability(5, 5, CopyNumber(0.9,0.3,0.1));
+	vector<shared_ptr<UniqueKmers>> unique_kmers = {u1,u2};
+
+	// recombination rate leads to recombination probability of 0.1
+	HMM hmm1 (&unique_kmers, &probs, true, true, 446.287102628, false, 0.25);
+
+	vector<double> computed_likelihoods1;
+	for (auto result : hmm1.get_genotyping_result()) {
+		computed_likelihoods1.push_back(result.get_genotype_likelihood(0,0));
+		computed_likelihoods1.push_back(result.get_genotype_likelihood(0,1));
+		computed_likelihoods1.push_back(result.get_genotype_likelihood(1,1));
+	}
+
+
+	// construct second HMM
+	path_to_allele = {0, 1, 2};
+	a2 = {2};
+	u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
+	u1->insert_kmer(12, a2);
+
+	u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
+	u2->insert_kmer(12,a2);
+
+	probs = ProbabilityTable(0,1,13,0.0L);
+	probs.modify_probability(0,12,CopyNumber(0.05, 0.8, 0.15));
+
+	unique_kmers = {u1, u2};
+
+	// recombination rate leads to recombination probability of 0.1
+	vector<unsigned short> only_paths = {0,1};
+	HMM hmm2 (&unique_kmers, &probs, true, true, 446.287102628, false, 0.25, &only_paths);
+
+	vector<double> computed_likelihoods2;
+	for (auto result : hmm2.get_genotyping_result()) {
+		computed_likelihoods2.push_back(result.get_genotype_likelihood(0,0));
+		computed_likelihoods2.push_back(result.get_genotype_likelihood(0,1));
+		computed_likelihoods2.push_back(result.get_genotype_likelihood(1,1));
+	}
+
+	vector<double> expected_likelihoods = {};
+	for (size_t i = 0; i < 6; ++i) {
+		expected_likelihoods.push_back(computed_likelihoods1[i] + computed_likelihoods2[i]);
+	}
+
+	hmm1.combine_likelihoods(hmm2);
+	vector<double> computed_likelihoods;
+	for (auto result : hmm1.get_genotyping_result()) {
+		computed_likelihoods.push_back(result.get_genotype_likelihood(0,0));
+		computed_likelihoods.push_back(result.get_genotype_likelihood(0,1));
+		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
+	}
+	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
+}
+
+
+TEST_CASE("HMM normalize", "[HMM normalize]") {
+	vector<unsigned char> path_to_allele = {0, 1, 2};
+	vector<unsigned char> a2 = {2};
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
+	u1->insert_kmer(12, a2);
+
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
+	u2->insert_kmer(12,a2);
+
+	ProbabilityTable probs (0,1,13,0.0L);
+	probs.modify_probability(0,12,CopyNumber(0.05, 0.8, 0.15));
+
+	vector<shared_ptr<UniqueKmers>> unique_kmers = {u1, u2};
+
+	// recombination rate leads to recombination probability of 0.1
+	vector<unsigned short> only_paths = {0,1};
+	HMM hmm (&unique_kmers, &probs, true, true, 446.287102628, false, 0.25, &only_paths, false);
+
+	// each path combination should be equally likely here
+	vector<double> expected_likelihoods = {0.000625, 0.00125, 0.000625, 0.0125, 0.025, 0.0125};
+	vector<double> computed_likelihoods;
+	for (auto result : hmm.get_genotyping_result()) {
+		computed_likelihoods.push_back(result.get_genotype_likelihood(0,0));
+		computed_likelihoods.push_back(result.get_genotype_likelihood(0,1));
+		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
+	}
+	REQUIRE( compare_vectors(computed_likelihoods, expected_likelihoods) );
+
+	hmm.normalize();
+	vector<double> expected_likelihoods_normalized = {0.25, 0.5, 0.25, 0.25, 0.5, 0.25};
+	vector<double> computed_likelihoods_normalized;
+	for (auto result : hmm.get_genotyping_result()) {
+		computed_likelihoods_normalized.push_back(result.get_genotype_likelihood(0,0));
+		computed_likelihoods_normalized.push_back(result.get_genotype_likelihood(0,1));
+		computed_likelihoods_normalized.push_back(result.get_genotype_likelihood(1,1));
+	}
+	REQUIRE( compare_vectors(computed_likelihoods_normalized, expected_likelihoods_normalized) );
+}

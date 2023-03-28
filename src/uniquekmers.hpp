@@ -28,8 +28,8 @@ public:
 	**/
 	void insert_kmer(unsigned short readcount, std::vector<unsigned char>& allele_ids);
 	/** checks if kmer at index kmer_index is on path path_id **/
-	bool kmer_on_path(size_t kmer_index, size_t path_id) const;
-	unsigned short get_readcount_of(size_t kmer_index);
+	bool kmer_on_path(unsigned short kmer_index, size_t path_id) const;
+	unsigned short get_readcount_of(unsigned short kmer_index);
 	/** modify kmer count of an already inserted kmer **/
 	void update_readcount(size_t kmer_index, unsigned short new_count);
 	/** number of unique kmers **/
@@ -56,7 +56,7 @@ public:
 
 private:
 	size_t variant_pos;
-	size_t current_index;
+	unsigned short current_index;
 	std::vector<unsigned short> kmer_to_count;
 	// stores kmers of each allele and whether the allele is undefined
 	std::map<unsigned char, std::pair<KmerPath, bool>> alleles;

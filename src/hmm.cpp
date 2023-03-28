@@ -52,6 +52,17 @@ HMM::HMM(vector<shared_ptr<UniqueKmers>>* unique_kmers, ProbabilityTable* probab
 	if (run_phasing) {
 		compute_viterbi_path();
 	}
+
+	// delete objects no longer needed to save space
+	init(this->forward_columns,0);
+	if (this->previous_backward_column != nullptr){
+		delete this->previous_backward_column;
+		this->previous_backward_column = nullptr;
+	}
+	init(this->viterbi_columns,0);
+	init(this->viterbi_backtrace_columns,0);
+	init(this->column_indexers, 0);
+	vector<long double>().swap(this->forward_normalization_sums);
 }
 
 HMM::~HMM(){
@@ -562,6 +573,24 @@ vector<GenotypingResult> HMM::get_genotyping_result() const {
 	return this->genotyping_result;
 }
 
-vector<GenotypingResult> HMM::move_genotyping_result() {
-	return move(this->genotyping_result);
+const vector<GenotypingResult>& HMM::get_ref_genotyping_result() const {
+	return this->genotyping_result;
+}
+
+void HMM::combine_likelihoods(HMM& other) {
+	// TODO: implement this.
+	if (this->genotyping_result.size() != other.genotyping_result.size()) {
+		throw runtime_error("HMM::combine_likelihoods: HMMs to be combined must be of the same size.");
+	}
+	size_t index = 0;
+	for (auto likelihoods : other.genotyping_result) {
+		this->genotyping_result.at(index).combine(likelihoods);
+		index += 1;
+	}
+}
+
+void HMM::normalize() {
+	for (size_t i = 0; i < this->genotyping_result.size(); ++i) {
+		this->genotyping_result[i].normalize();
+	}
 }

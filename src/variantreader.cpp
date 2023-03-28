@@ -219,7 +219,6 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 					paths.push_back(undefined_index);
 					assert(undefined_index < 255);
 					undefined_index += 1;
-					undefined_allele += "N";
 				} else {
 					unsigned int p_index = atoi(s.c_str());
 					if (p_index >= alleles.size()) {

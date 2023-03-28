@@ -752,3 +752,44 @@ TEST_CASE("Variant combine_variants_undefined_alleles", "[Variant combine_varian
 	REQUIRE(single_variants[1].is_undefined_allele(0));
 	REQUIRE(!single_variants[1].is_undefined_allele(1));
 }
+
+TEST_CASE("Variant separate_variants_identical", "[Variant separate_variants_identical]") {
+
+	Variant v1("AAA", "TAC", "chr1", 10, 14, {"ATGC", "ATGC"}, {0,0,1});
+	Variant v2("GCT", "CCN", "chr1", 15, 16, {"A", "A"}, {0,1,0});
+	Variant v3("ACC", "GGC", "chr1", 18, 19, {"N", "N"}, {0,1,1});
+	Variant v4("AAA", "TAC", "chr1", 10, 14, {"ATGC", "ATGC"}, {0,0,1});
+
+
+	// combine and sepatate 2 variants
+	v1.combine_variants(v2);
+	vector<Variant> single_variants;
+	v1.separate_variants(&single_variants);
+	REQUIRE(single_variants.size() == 2);
+	REQUIRE(single_variants[0] == v4);
+	REQUIRE(single_variants[1] == v2);
+
+	// combine and separate 3 variants
+	v1.combine_variants(v3);
+	single_variants.clear();
+	v1.separate_variants(&single_variants);
+	REQUIRE(single_variants.size() == 3);
+	REQUIRE(single_variants[0] == v4);
+	REQUIRE(single_variants[1] == v2);
+	REQUIRE(single_variants[2] == v3);
+
+	// add flanking sequences and then separate
+	v1.add_flanking_sequence();
+	single_variants.clear();
+	v1.separate_variants(&single_variants);
+	REQUIRE(single_variants.size() == 3);
+	REQUIRE(single_variants[0] == v4);
+	REQUIRE(single_variants[1] == v2);
+	REQUIRE(single_variants[2] == v3);
+
+	// separate single variant
+	single_variants.clear();
+	v4.separate_variants(&single_variants);
+	REQUIRE(single_variants.size() == 1);
+	REQUIRE(single_variants[0] == v4);
+}
