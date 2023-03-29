@@ -157,3 +157,10 @@ void UniqueKmers::set_undefined_allele (unsigned char allele_id) {
 	}
 	this->alleles[allele_id].second = true;
 }
+
+unsigned char UniqueKmers::get_allele(unsigned short path_id) const {
+	if (path_id >= this->path_to_allele.size()) {
+		throw runtime_error("UniqueKmers:get_allele: index out of bounds.");
+	}
+	return this->path_to_allele[path_id];
+}

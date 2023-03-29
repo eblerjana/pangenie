@@ -41,7 +41,7 @@ public:
 	~HMM();
 
 private:
-	std::vector<ColumnIndexer*> column_indexers;
+	ColumnIndexer* column_indexer;
 	std::vector<HMMColumn*> forward_columns;
 	HMMColumn* previous_backward_column;
 	std::vector< HMMColumn* > viterbi_columns;
@@ -55,7 +55,6 @@ private:
 	void compute_forward_prob();
 	void compute_backward_prob();
 	void compute_viterbi_path();
-	void index_columns(std::vector<unsigned short>* only_paths = nullptr);
 	void compute_forward_column(size_t column_index);
 	void compute_backward_column(size_t column_index);
 	void compute_viterbi_column(size_t column_index);

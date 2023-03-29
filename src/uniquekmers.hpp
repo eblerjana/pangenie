@@ -53,6 +53,8 @@ public:
 	bool is_undefined_allele (unsigned char allele_id) const;
 	/** set allele to undefined **/
 	void set_undefined_allele (unsigned char allele_id);
+	/** look up allele covered by a path **/
+	unsigned char get_allele(unsigned short path_id) const;
 
 private:
 	size_t variant_pos;
