@@ -12,6 +12,12 @@
 
 /** Respresents the genotyping HMM. **/
 
+struct HMMColumn {
+	std::vector<long double> column;
+	long double forward_normalization_sum;
+};
+
+
 class HMM {
 public:
 	/** 
@@ -36,10 +42,9 @@ public:
 
 private:
 	std::vector<ColumnIndexer*> column_indexers;
-	std::vector< std::vector<long double>* > forward_columns;
-	std::vector< long double > forward_normalization_sums;
-	std::vector<long double>* previous_backward_column;
-	std::vector< std::vector<long double>* > viterbi_columns;
+	std::vector<HMMColumn*> forward_columns;
+	HMMColumn* previous_backward_column;
+	std::vector< HMMColumn* > viterbi_columns;
 	std::vector<std::shared_ptr<UniqueKmers>>* unique_kmers;
 	ProbabilityTable* probabilities;
 	std::vector< std::vector<size_t>* > viterbi_backtrace_columns;

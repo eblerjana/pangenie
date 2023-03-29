@@ -34,8 +34,6 @@ HMM::HMM(vector<shared_ptr<UniqueKmers>>* unique_kmers, ProbabilityTable* probab
 	index_columns(only_paths);
 
 	size_t size = this->column_indexers.size();
-	// initialize forward normalization sums
-	this->forward_normalization_sums = vector<long double>(size, 0.0L);
 	this->previous_backward_column = nullptr;
 
 	if (run_genotyping) {
@@ -62,7 +60,6 @@ HMM::HMM(vector<shared_ptr<UniqueKmers>>* unique_kmers, ProbabilityTable* probab
 	init(this->viterbi_columns,0);
 	init(this->viterbi_backtrace_columns,0);
 	init(this->column_indexers, 0);
-	vector<long double>().swap(this->forward_normalization_sums);
 }
 
 HMM::~HMM(){
@@ -158,10 +155,10 @@ void HMM::compute_viterbi_path() {
 	// find best value (+ index) in last column
 	size_t best_index = 0;
 	long double best_value = 0.0L;
-	vector<long double>* last_column = this->viterbi_columns.at(column_count-1);
+	HMMColumn* last_column = this->viterbi_columns.at(column_count-1);
 	assert (last_column != nullptr);
-	for (size_t i = 0; i < last_column->size(); ++i) {
-		long double entry = last_column->at(i);
+	for (size_t i = 0; i < last_column->column.size(); ++i) {
+		long double entry = last_column->column.at(i);
 		if (entry >= best_value) {
 			best_value = entry;
 			best_index = i;
@@ -207,7 +204,7 @@ void HMM::compute_forward_column(size_t column_index) {
 	if (this->forward_columns[column_index] != nullptr) return;
 
 	// get previous column and previous path ids (if existent)
-	vector<long double>* previous_column = nullptr;
+	HMMColumn* previous_column = nullptr;
 	ColumnIndexer* previous_indexer = nullptr;
 	TransitionProbabilityComputer* transition_probability_computer = nullptr;
 	
@@ -228,7 +225,7 @@ void HMM::compute_forward_column(size_t column_index) {
 	}
 
 	// construct new column
-	vector<long double>* current_column = new vector<long double>();
+	HMMColumn* current_column = new HMMColumn();
 
 	// emission probability computer
 	EmissionProbabilityComputer emission_probability_computer(this->unique_kmers->at(variant_id), this->probabilities);
@@ -249,7 +246,7 @@ void HMM::compute_forward_column(size_t column_index) {
 		size_t i = 0;
 		for (unsigned short path_id1 = 0; path_id1 < nr_prev_paths; ++path_id1) {
 			for (unsigned short path_id2 = 0; path_id2 < nr_prev_paths; ++path_id2) {
-				long double prev_forward = previous_column->at(i);
+				long double prev_forward = previous_column->column.at(i);
 				helper_i[path_id1] += prev_forward;
 				helper_j[path_id2] += prev_forward;
 				helper_ij += prev_forward;
@@ -268,9 +265,9 @@ void HMM::compute_forward_column(size_t column_index) {
 		for (unsigned short path_id2 = 0; path_id2 < nr_paths; ++path_id2) {
 			long double previous_cell = 0.0L;
 			if (column_index > 0) {
-				previous_cell = transition_probability_computer->compute_transition_prob(0) * previous_column->at(i) +
-								transition_probability_computer->compute_transition_prob(1) * (helper_i[path_id1] + helper_j[path_id2] - 2*previous_column->at(i)) + 
-								transition_probability_computer->compute_transition_prob(2) * (helper_ij - helper_i[path_id1] - helper_j[path_id2] + previous_column->at(i));
+				previous_cell = transition_probability_computer->compute_transition_prob(0) * previous_column->column.at(i) +
+								transition_probability_computer->compute_transition_prob(1) * (helper_i[path_id1] + helper_j[path_id2] - 2*previous_column->column.at(i)) + 
+								transition_probability_computer->compute_transition_prob(2) * (helper_ij - helper_i[path_id1] - helper_j[path_id2] + previous_column->column.at(i));
 			} else {
 				previous_cell = 1.0L;
 			}
@@ -283,7 +280,7 @@ void HMM::compute_forward_column(size_t column_index) {
 
 			// set entry of current column
 			long double current_cell = previous_cell * emission_prob;
-			current_column->push_back(current_cell);
+			current_column->column.push_back(current_cell);
 			normalization_sum += current_cell;
 			i += 1;
 		}
@@ -291,20 +288,20 @@ void HMM::compute_forward_column(size_t column_index) {
 
 	if (normalization_sum > 0.0L) {
 		// normalize the entries in current column to sum up to 1
-		transform(current_column->begin(), current_column->end(), current_column->begin(), bind(divides<long double>(), placeholders::_1, normalization_sum));
+		transform(current_column->column.begin(), current_column->column.end(), current_column->column.begin(), bind(divides<long double>(), placeholders::_1, normalization_sum));
 	} else {
-		long double uniform = 1.0L / (long double) current_column->size();
-		transform(current_column->begin(), current_column->end(), current_column->begin(),  [uniform](long double c) -> long double {return uniform;});
+		long double uniform = 1.0L / (long double) current_column->column.size();
+		transform(current_column->column.begin(), current_column->column.end(), current_column->column.begin(),  [uniform](long double c) -> long double {return uniform;});
 //		cerr << "Underflow in Forward pass at position: " << this->unique_kmers->at(column_index)->get_variant_position() << ". Column set to uniform." << endl;
 	}
 
 	// store the column
-	this->forward_columns.at(column_index) = current_column;
 	if (normalization_sum > 0.0L) {
-		this->forward_normalization_sums.at(column_index) = normalization_sum;
+		current_column->forward_normalization_sum = normalization_sum;
 	} else {
-		this->forward_normalization_sums.at(column_index) = 1.0L;
+		current_column->forward_normalization_sum = 1.0L;
 	}
+	this->forward_columns.at(column_index) = current_column;
 
 	if (transition_probability_computer != nullptr) {
 		delete transition_probability_computer;
@@ -320,7 +317,7 @@ void HMM::compute_backward_column(size_t column_index) {
 	ColumnIndexer* previous_indexer = nullptr;
 	TransitionProbabilityComputer* transition_probability_computer = nullptr;
 	EmissionProbabilityComputer* emission_probability_computer = nullptr;
-	vector<long double>* forward_column = this->forward_columns.at(column_index);
+	HMMColumn* forward_column = this->forward_columns.at(column_index);
 	
 	// get ColumnIndexer
 	ColumnIndexer* column_indexer = column_indexers.at(column_index);
@@ -370,16 +367,16 @@ void HMM::compute_backward_column(size_t column_index) {
 			unsigned char prev_allele1 = previous_indexer->get_allele(path_id1);
 			for (unsigned short path_id2 = 0; path_id2 < nr_prev_paths; ++path_id2) {
 				unsigned char prev_allele2 = previous_indexer->get_allele(path_id2);
-				helper_i[path_id1] += this->previous_backward_column->at(i) * emission_probability_computer->get_emission_probability(prev_allele1, prev_allele2);
-				helper_j[path_id2] += this->previous_backward_column->at(i) * emission_probability_computer->get_emission_probability(prev_allele1, prev_allele2);
-				helper_ij += this->previous_backward_column->at(i) * emission_probability_computer->get_emission_probability(prev_allele1, prev_allele2);
+				helper_i[path_id1] += this->previous_backward_column->column.at(i) * emission_probability_computer->get_emission_probability(prev_allele1, prev_allele2);
+				helper_j[path_id2] += this->previous_backward_column->column.at(i) * emission_probability_computer->get_emission_probability(prev_allele1, prev_allele2);
+				helper_ij += this->previous_backward_column->column.at(i) * emission_probability_computer->get_emission_probability(prev_allele1, prev_allele2);
 				i += 1;
 			}
 		}
 	}
 
 	// construct new column
-	vector<long double>* current_column = new vector<long double>();
+	HMMColumn* current_column = new HMMColumn;
 
 	// normalization
 	long double normalization_sum = 0.0L;
@@ -400,7 +397,7 @@ void HMM::compute_backward_column(size_t column_index) {
 				// get alleles on previous paths, assuming indexes are same as current column
 				unsigned char prev_allele1 = previous_indexer->get_allele(path_id1);
 				unsigned char prev_allele2 = previous_indexer->get_allele(path_id2);
-				long double helper_cell = this->previous_backward_column->at(i) * emission_probability_computer->get_emission_probability(prev_allele1, prev_allele2);
+				long double helper_cell = this->previous_backward_column->column.at(i) * emission_probability_computer->get_emission_probability(prev_allele1, prev_allele2);
 				// iterate over previous column (ahead of this)
 				current_cell =	transition_probability_computer->compute_transition_prob(0) * helper_cell +
 								transition_probability_computer->compute_transition_prob(1) * (helper_i[path_id1] + helper_j[path_id2] - 2*helper_cell) +
@@ -409,25 +406,25 @@ void HMM::compute_backward_column(size_t column_index) {
 				current_cell = 1.0L;
 			}
 			// store computed backward prob in column
-			current_column->push_back(current_cell);
+			current_column->column.push_back(current_cell);
 			normalization_sum += current_cell;
 
 			// compute forward_prob * backward_prob
-			long double forward_backward_prob = forward_column->at(i) * current_cell;
+			long double forward_backward_prob = forward_column->column.at(i) * current_cell;
 			normalization_f_b += forward_backward_prob;
 
 			// update genotype likelihood
-			this->genotyping_result.at(variant_id).add_to_likelihood(allele1, allele2, forward_backward_prob * this->forward_normalization_sums.at(column_index));
+			this->genotyping_result.at(variant_id).add_to_likelihood(allele1, allele2, forward_backward_prob * forward_column->forward_normalization_sum);
 			i += 1;
 		}
 	}
 
 
 	if (normalization_sum > 0.0L) {
-		transform(current_column->begin(), current_column->end(), current_column->begin(), bind(divides<long double>(), placeholders::_1, normalization_sum));
+		transform(current_column->column.begin(), current_column->column.end(), current_column->column.begin(), bind(divides<long double>(), placeholders::_1, normalization_sum));
 	} else {
-		long double uniform = 1.0L / (long double) current_column->size();
-		transform(current_column->begin(), current_column->end(), current_column->begin(), [uniform](long double c) -> long double {return uniform;});
+		long double uniform = 1.0L / (long double) current_column->column.size();
+		transform(current_column->column.begin(), current_column->column.end(), current_column->column.begin(), [uniform](long double c) -> long double {return uniform;});
 //		cerr << "Underflow in Backward pass at position: " << this->unique_kmers->at(column_index)->get_variant_position() << ". Column set to uniform." << endl;
 	}
 
@@ -465,7 +462,7 @@ void HMM::compute_viterbi_column(size_t column_index) {
 	if (this->viterbi_columns[column_index] != nullptr) return;
 
 	// get previous column and previous path ids (if existent)
-	vector<long double>* previous_column = nullptr;
+	HMMColumn* previous_column = nullptr;
 	ColumnIndexer* previous_indexer = nullptr;
 	
 	// get ColumnIndexer
@@ -486,7 +483,7 @@ void HMM::compute_viterbi_column(size_t column_index) {
 	}
 
 	// construct new column
-	vector<long double>* current_column = new vector<long double>();
+	HMMColumn* current_column = new HMMColumn();
 
 	// emission probability computer
 	EmissionProbabilityComputer emission_probability_computer(this->unique_kmers->at(variant_id), this->probabilities);
@@ -520,7 +517,7 @@ void HMM::compute_viterbi_column(size_t column_index) {
 						unsigned short prev_path1 = previous_indexer->get_path(prev_path_id1);
 						unsigned short prev_path2 = previous_indexer->get_path(prev_path_id2);
 						// probability of previous cell
-						long double prev_prob = previous_column->at(j);
+						long double prev_prob = previous_column->column.at(j);
 						// determine transition probability
 						long double transition_prob = transition_probability_computer->compute_transition_prob(prev_path1, prev_path2, path1, path2);
 						prev_prob *= transition_prob;
@@ -544,7 +541,7 @@ void HMM::compute_viterbi_column(size_t column_index) {
 			long double emission_prob = emission_probability_computer.get_emission_probability(allele1,allele2);
 			// set entry of current column
 			long double current_cell = previous_cell * emission_prob;
-			current_column->push_back(current_cell);
+			current_column->column.push_back(current_cell);
 			normalization_sum += current_cell;
 			i += 1;
 		}
@@ -552,10 +549,10 @@ void HMM::compute_viterbi_column(size_t column_index) {
 
 	if (normalization_sum > 0.0L) {
 		// normalize the entries in current column to sum up to 1 
-		transform(current_column->begin(), current_column->end(), current_column->begin(), bind(divides<long double>(), placeholders::_1, normalization_sum));
+		transform(current_column->column.begin(), current_column->column.end(), current_column->column.begin(), bind(divides<long double>(), placeholders::_1, normalization_sum));
 	} else {
-		long double uniform = 1.0L / (long double) current_column->size();
-		transform(current_column->begin(), current_column->end(), current_column->begin(),  [uniform](long double c) -> long double {return uniform;});
+		long double uniform = 1.0L / (long double) current_column->column.size();
+		transform(current_column->column.begin(), current_column->column.end(), current_column->column.begin(),  [uniform](long double c) -> long double {return uniform;});
 //		cerr << "Underflow in Viterbi pass at position: " << this->unique_kmers->at(column_index)->get_variant_position() << ". Column set to uniform." << endl;
 	}
 
