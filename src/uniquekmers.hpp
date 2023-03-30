@@ -7,6 +7,11 @@
 #include <utility>
 #include "copynumber.hpp"
 #include "kmerpath.hpp"
+#include <cereal/access.hpp>
+#include <cereal/types/map.hpp>
+#include <cereal/types/memory.hpp>
+#include <cereal/types/vector.hpp>
+
 
 /*
 * Represents the set of unique kmers for a variant position.
@@ -56,6 +61,11 @@ public:
 	/** look up allele covered by a path **/
 	unsigned char get_allele(unsigned short path_id) const;
 
+	template<class Archive>
+	void serialize(Archive& archive) {
+		archive(variant_pos, current_index, kmer_to_count, alleles, path_to_allele, local_coverage);
+	}
+
 private:
 	size_t variant_pos;
 	size_t current_index;
@@ -66,5 +76,6 @@ private:
 	std::vector<unsigned char> path_to_allele;
 	unsigned short local_coverage;
 	friend class EmissionProbabilityComputer;
+	friend cereal::access;
 };
 # endif // UNIQUEKMERS_HPP

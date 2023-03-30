@@ -63,23 +63,6 @@ struct Results {
 };
 
 
-void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, VariantReader* variant_reader, UniqueKmersMap* unique_kmers_map, string outname) {
-	Timer timer;
-	UniqueKmerComputer kmer_computer(genomic_kmer_counts, variant_reader, chromosome);
-	std::vector<shared_ptr<UniqueKmers>> unique_kmers;
-	string filename = outname + "_" + chromosome + "_kmers.tsv.gz";
-	kmer_computer.compute_unique_kmers(&unique_kmers, filename, true);
-	// store the results
-	{
-		lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
-		unique_kmers_map->unique_kmers.insert(pair<string, vector<shared_ptr<UniqueKmers>>> (chromosome, move(unique_kmers)));
-	}
-	// store runtime
-	lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
-	unique_kmers_map->runtimes.insert(pair<string, double>(chromosome, timer.get_total_time()));
-}
-
-
 void fill_read_kmercounts(string chromosome, UniqueKmersMap* unique_kmers_map, shared_ptr<KmerCounter> read_kmer_counts, ProbabilityTable* probabilities, string outname, size_t kmer_coverage) {
 	Timer timer;
 
@@ -152,7 +135,7 @@ void fill_read_kmercounts(string chromosome, UniqueKmersMap* unique_kmers_map, s
 	gzclose(file);
 	// store runtime
 	lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
-	unique_kmers_map->runtimes[chromosome] += timer.get_total_time();
+	unique_kmers_map->runtimes[chromosome] = timer.get_total_time();
 }
 
 
@@ -186,9 +169,7 @@ void run_genotyping(string chromosome, vector<shared_ptr<UniqueKmers>>* unique_k
 int main (int argc, char* argv[])
 {
 	Timer timer;
-	double time_preprocessing;
-	double time_graph_counting;
-	double time_unique_kmers;
+	double time_reading;
 	double time_unique_kmers_updating;
 	double time_kmer_counting;
 	double time_path_sampling;
@@ -197,6 +178,7 @@ int main (int argc, char* argv[])
 
 	cerr << endl;
 	cerr << "program: PanGenie - genotyping based on kmer-counting and known haplotype sequences." << endl;
+	cerr << "command: PanGenie-genotype - run genotyping based on unique kmers computed by PanGenie-index." << endl;
 	cerr << "author: Jana Ebler" << endl << endl;
 	cerr << "version: v3.0.0" << endl;
 	string readfile = "";
@@ -219,8 +201,9 @@ int main (int argc, char* argv[])
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
-	argument_parser.add_command("PanGenie [options] -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf>");
+	argument_parser.add_command("PanGenie-genotype [options] -f <unique-kmers> -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf>");
 	argument_parser.add_mandatory_argument('i', "sequencing reads in FASTA/FASTQ format or Jellyfish database in jf format. NOTE: INPUT FASTA/Q FILE MUST NOT BE COMPRESSED.");
+	argument_parser.add_mandatory_argument('f', "unique kmers object computed by PanGenie-index.");
 	argument_parser.add_mandatory_argument('r', "reference genome in FASTA format. NOTE: INPUT FASTA FILE MUST NOT BE COMPRESSED.");
 	argument_parser.add_mandatory_argument('v', "variants in VCF format. NOTE: INPUT VCF FILE MUST NOT BE COMPRESSED.");
 	argument_parser.add_optional_argument('o', "result", "prefix of the output files. NOTE: the given path must not include non-existent folders.");
@@ -292,93 +275,10 @@ int main (int argc, char* argv[])
 	size_t nr_cores_uk;
 	unsigned short nr_paths;
 
-	/**
-	*  1) Indexing step. Read variant information and determine unique kmers.
-	*/
 
-	{
-		/** 
-		*   Step 1: read variants, merge variants that are closer than kmersize apart,
-		*   and write allele sequences and unitigs inbetween to a file.
-		**/ 
-		cerr << "Determine allele sequences ..." << endl;
-		VariantReader variant_reader (vcffile, reffile, kmersize, add_reference, sample_name);
+	// TODO: re-construct UniqueKmersMap + chromosomes from input file (-f)
 
-		cerr << "Write path segments to file: " << segment_file << " ..." << endl;
-		variant_reader.write_path_segments(segment_file);
-
-		// determine chromosomes present in VCF
-		variant_reader.get_chromosomes(&chromosomes);
-		cerr << "Found " << chromosomes.size() << " chromosome(s) in the VCF." << endl;
-
-		// print RSS up to now
-		struct rusage r_usage00;
-		getrusage(RUSAGE_SELF, &r_usage00);
-		cerr << "#### Max RSS after determing allele sequences: " << (r_usage00.ru_maxrss / 1E6) << " GB ####" << endl;
-
-		time_preprocessing = timer.get_interval_time();
-		nr_paths = variant_reader.nr_of_paths();
-
-	
-		/**
-		*  Step 2: count graph k-mers. Needed to determine unique k-mers in subsequent steps.
-		**/ 
-		cerr << "Count kmers in graph ..." << endl;
-		JellyfishCounter genomic_kmer_counts (segment_file, kmersize, nr_jellyfish_threads, hash_size);
-
-		// print RSS up to now
-		struct rusage r_usage1;
-		getrusage(RUSAGE_SELF, &r_usage1);
-		cerr << "#### Max RSS after counting graph kmers: " << (r_usage1.ru_maxrss / 1E6) << " GB ####" << endl;
-
-		time_graph_counting = timer.get_interval_time();
-
-
-		/**
-		* Step 3: determine unique k-mers for each variant bubble and prepare datastructure storing
-		* that information. It will later be used for the genotyping step. 
-		* This step will delete information from the VariantReader that will no longer be used.
-		**/
-
-		cerr << "Determine unique kmers ..." << endl;
-		available_threads_uk = min(thread::hardware_concurrency(), (unsigned int) chromosomes.size());
-		nr_cores_uk = min(nr_core_threads, available_threads_uk);
-		if (nr_cores_uk < nr_core_threads) {
-			cerr << "Warning: using " << nr_cores_uk << " for determining unique kmers." << endl;
-		}
-
-
-		{
-			// create thread pool with at most nr_chromosome threads
-			ThreadPool threadPool (nr_cores_uk);
-			for (auto chromosome : chromosomes) {
-				VariantReader* variants = &variant_reader;
-				UniqueKmersMap* result = &unique_kmers_list;
-				KmerCounter* genomic_counts = &genomic_kmer_counts;
-				function<void()> f_unique_kmers = bind(prepare_unique_kmers, chromosome, genomic_counts, variants, result, outname);
-				threadPool.submit(f_unique_kmers);
-			}
-		}
-
-		// print RSS up to now
-		struct rusage r_usage2;
-		getrusage(RUSAGE_SELF, &r_usage2);
-		cerr << "#### Max RSS after determing unique kmers: " << (r_usage2.ru_maxrss / 1E6) << " GB ####" << endl;
-
-		// determine the total runtime needed to compute unique kmers
-		time_unique_kmers = 0.0;
-		for (auto it = unique_kmers_list.runtimes.begin(); it != unique_kmers_list.runtimes.end(); ++it) {
-			time_unique_kmers += it->second;
-		}
-		timer.get_interval_time();
-	}
-
-	// print RSS up to now
-	struct rusage r_usage3;
-	getrusage(RUSAGE_SELF, &r_usage3);
-	cerr << "#### Max RSS after Indexing is done and objects are deleted: " << (r_usage3.ru_maxrss / 1E6) << " GB ####" << endl;
-
-
+	time_reading = timer.get_interval_time();
 
 	/**
 	*  2) K-mer counting in sequencing reads
@@ -443,7 +343,6 @@ int main (int argc, char* argv[])
 			time_unique_kmers_updating += it->second;
 		}
 		// subract time spend determining unique kmers (since runtimes were added up)
-		time_unique_kmers_updating -= time_unique_kmers;
 		timer.get_interval_time();
 
 	}
@@ -571,9 +470,7 @@ int main (int argc, char* argv[])
 
 		cerr << endl << "###### Summary ######" << endl;
 		// output times
-		cerr << "time spent reading input files:\t" << time_preprocessing << " sec" << endl;
-		cerr << "time spent counting graph kmers (wallclock):\t" << time_graph_counting << " sec" << endl;
-		cerr << "time spent determining unique kmers:\t" << time_unique_kmers << " sec" << endl;
+		cerr << "time spent reading input files:\t" << time_reading << " sec" << endl;
 		cerr << "time spent counting read kmers (wallclock):\t" << time_kmer_counting << " sec" << endl;
 		cerr << "time spent determining counts of unique kmers:\t" << time_unique_kmers_updating << " sec" << endl;
 		cerr << "time spent selecting paths:\t" << time_path_sampling << " sec" << endl;
