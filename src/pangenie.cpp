@@ -269,7 +269,7 @@ int main (int argc, char* argv[])
 
 	count_only_graph = !argument_parser.get_flag('c');
 	ignore_imputed = argument_parser.get_flag('u');
-	add_reference = !argument_parser.get_flag('d');
+//	add_reference = !argument_parser.get_flag('d');
 	sampling_size = stoi(argument_parser.get_argument('a'));
 	istringstream iss(argument_parser.get_argument('e'));
 	iss >> hash_size;

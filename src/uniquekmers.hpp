@@ -17,6 +17,25 @@
 * Represents the set of unique kmers for a variant position.
 */
 
+// serialization of std::pair, code taken from: https://github.com/USCiLab/cereal/issues/547
+namespace cereal
+{
+    template<class Archive, class F, class S>
+    void save(Archive& ar, const std::pair<F, S>& pair)
+    {
+        ar(pair.first, pair.second);
+    }
+
+    template<class Archive, class F, class S>
+    void load(Archive& ar, std::pair<F, S>& pair)
+    {
+        ar(pair.first, pair.second);
+    }
+
+    template <class Archive, class F, class S> 
+    struct specialize<Archive, std::pair<F, S>, cereal::specialization::non_member_load_save> {};
+}
+
 
 class UniqueKmers {
 public:
@@ -24,6 +43,7 @@ public:
 	* @param variant_position genomic variant position
 	* @param alleles defines which path (= index) covers each allele (= alleles[index])
 	**/
+	UniqueKmers() = default;
 	UniqueKmers(size_t variant_position, std::vector<unsigned char>& alleles);
 	/** returns the variant position **/
 	size_t get_variant_position();

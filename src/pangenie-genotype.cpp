@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include <memory>
 #include <zlib.h>
+#include <cereal/archives/binary.hpp>
 #include "kmercounter.hpp"
 #include "jellyfishreader.hpp"
 #include "jellyfishcounter.hpp"
@@ -53,6 +54,16 @@ struct UniqueKmersMap {
 	mutex kmers_mutex;
 	map<string, vector<shared_ptr<UniqueKmers>>> unique_kmers;
 	map<string, double> runtimes;
+
+	template <class Archive>
+	void save(Archive& ar) const {
+		ar(unique_kmers, runtimes);
+	}
+
+	template <class Archive>
+	void load(Archive& ar) {
+		ar(unique_kmers, runtimes);
+	}
 };
 
 
@@ -65,7 +76,6 @@ struct Results {
 
 void fill_read_kmercounts(string chromosome, UniqueKmersMap* unique_kmers_map, shared_ptr<KmerCounter> read_kmer_counts, ProbabilityTable* probabilities, string outname, size_t kmer_coverage) {
 	Timer timer;
-
 	string filename = outname + "_" + chromosome + "_kmers.tsv.gz";
 	gzFile file = gzopen(filename.c_str(), "rb");
 	if (!file) {
@@ -181,6 +191,7 @@ int main (int argc, char* argv[])
 	cerr << "command: PanGenie-genotype - run genotyping based on unique kmers computed by PanGenie-index." << endl;
 	cerr << "author: Jana Ebler" << endl << endl;
 	cerr << "version: v3.0.0" << endl;
+	string precomputed_prefix = "";
 	string readfile = "";
 	string reffile = "";
 	string vcffile = "";
@@ -203,7 +214,7 @@ int main (int argc, char* argv[])
 	CommandLineParser argument_parser;
 	argument_parser.add_command("PanGenie-genotype [options] -f <unique-kmers> -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf>");
 	argument_parser.add_mandatory_argument('i', "sequencing reads in FASTA/FASTQ format or Jellyfish database in jf format. NOTE: INPUT FASTA/Q FILE MUST NOT BE COMPRESSED.");
-	argument_parser.add_mandatory_argument('f', "unique kmers object computed by PanGenie-index.");
+	argument_parser.add_mandatory_argument('f', "Filename prefix of unique kmers object computed by PanGenie-index as well as the kmer files.");
 	argument_parser.add_mandatory_argument('r', "reference genome in FASTA format. NOTE: INPUT FASTA FILE MUST NOT BE COMPRESSED.");
 	argument_parser.add_mandatory_argument('v', "variants in VCF format. NOTE: INPUT VCF FILE MUST NOT BE COMPRESSED.");
 	argument_parser.add_optional_argument('o', "result", "prefix of the output files. NOTE: the given path must not include non-existent folders.");
@@ -229,6 +240,7 @@ int main (int argc, char* argv[])
 		return 0;
 	}
 
+	precomputed_prefix = argument_parser.get_argument('f');
 	readfile = argument_parser.get_argument('i');
 	reffile = argument_parser.get_argument('r');
 	vcffile = argument_parser.get_argument('v');
@@ -252,7 +264,7 @@ int main (int argc, char* argv[])
 
 	count_only_graph = !argument_parser.get_flag('c');
 	ignore_imputed = argument_parser.get_flag('u');
-	add_reference = !argument_parser.get_flag('d');
+//	add_reference = !argument_parser.get_flag('d');
 	sampling_size = stoi(argument_parser.get_argument('a'));
 	istringstream iss(argument_parser.get_argument('e'));
 	iss >> hash_size;
@@ -270,13 +282,38 @@ int main (int argc, char* argv[])
 	ProbabilityTable probabilities;
 	vector<string> chromosomes;
 	Results results;
-	string segment_file = outname + "_path_segments.fasta";
+	string segment_file = precomputed_prefix + "_path_segments.fasta";
 	size_t available_threads_uk;
 	size_t nr_cores_uk;
-	unsigned short nr_paths;
+	unsigned short nr_paths = 0;
 
 
-	// TODO: re-construct UniqueKmersMap + chromosomes from input file (-f)
+	// re-construct UniqueKmersMap + chromosomes from input file (-f)
+	string unique_kmers_archive = precomputed_prefix + "_UniqueKmersMap.cereal";
+	cerr << "Reading precomputed UniqueKmersMap from " << unique_kmers_archive << " ..." << endl; 
+  	ifstream os(unique_kmers_archive, std::ios::binary);
+  	cereal::BinaryInputArchive archive( os );
+	archive(unique_kmers_list);
+
+	// check if there are any variants
+	size_t variants_read = 0;
+	for (auto it = unique_kmers_list.unique_kmers.begin(); it != unique_kmers_list.unique_kmers.end(); ++it) {
+		chromosomes.push_back(it->first);
+		if (it->second.size() > 0) {
+			nr_paths = it->second.at(0)->get_nr_paths();
+			variants_read += it->second.size();
+		}
+	}
+
+	cerr << "Read " << variants_read << " variants from provided UniqueKmersMap archive." << endl;
+
+	// if no variants present, nothing to be done. Exit program.
+	if (variants_read == 0) return 0;
+
+	// there must be paths given.
+	if (nr_paths == 0) {
+		throw runtime_error("PanGenie-index: no haplotype paths given.");
+	}
 
 	time_reading = timer.get_interval_time();
 
@@ -325,14 +362,19 @@ int main (int argc, char* argv[])
 		* Also, estimate the local kmer coverage from nearby kmers.
 		*/
 
-		cerr << "Determine read k-mer counts for unique kmers ..." << endl; 
+		cerr << "Determine read k-mer counts for unique kmers ..." << endl;
+		available_threads_uk = min(thread::hardware_concurrency(), (unsigned int) chromosomes.size());
+		nr_cores_uk = min(nr_core_threads, available_threads_uk);
+		if (nr_cores_uk < nr_core_threads) {
+			cerr << "Warning: using " << nr_cores_uk << " for determining unique kmers." << endl;
+		}
 		
 		{
 			ThreadPool threadPool (nr_cores_uk);
 			for (auto chromosome : chromosomes) {
 				UniqueKmersMap* unique_kmers = &unique_kmers_list;
 				ProbabilityTable* probs = &probabilities;
-				function<void()> f_fill_readkmers = bind(fill_read_kmercounts, chromosome, unique_kmers, read_kmer_counts, probs, outname, kmer_abundance_peak);
+				function<void()> f_fill_readkmers = bind(fill_read_kmercounts, chromosome, unique_kmers, read_kmer_counts, probs, precomputed_prefix, kmer_abundance_peak);
 				threadPool.submit(f_fill_readkmers);
 			}
 		}
@@ -346,7 +388,6 @@ int main (int argc, char* argv[])
 		timer.get_interval_time();
 
 	}
-
 
 	// print RSS up to now
 	struct rusage r_usage4;

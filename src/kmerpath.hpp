@@ -30,6 +30,7 @@ public:
 private:
 	/** use one unsigned int to store the assignments of 32 kmers **/
 	std::vector<uint32_t> kmers;
+	friend cereal::access;
 };
 
 #endif // KMERPATH_HPP

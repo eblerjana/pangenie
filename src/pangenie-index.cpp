@@ -24,6 +24,7 @@
 
 using namespace std;
 
+
 bool ends_with (string const &filename, string const &ending) {
     if (filename.length() >= ending.length()) {
         return (0 == filename.compare (filename.length() - ending.length(), ending.length(), ending));
@@ -133,7 +134,7 @@ int main (int argc, char* argv[])
 	nr_jellyfish_threads = stoi(argument_parser.get_argument('t'));
 	istringstream iss(argument_parser.get_argument('e'));
 	iss >> hash_size;
-	add_reference = !argument_parser.get_flag('d');
+//	add_reference = !argument_parser.get_flag('d');
 
 	// print info
 	cerr << "Files and parameters used:" << endl;
@@ -148,7 +149,6 @@ int main (int argc, char* argv[])
 	string segment_file = outname + "_path_segments.fasta";
 	size_t available_threads_uk;
 	size_t nr_cores_uk;
-	unsigned short nr_paths;
 
 	/**
 	*  1) Indexing step. Read variant information and determine unique kmers.
@@ -175,9 +175,7 @@ int main (int argc, char* argv[])
 		cerr << "#### Max RSS after determing allele sequences: " << (r_usage00.ru_maxrss / 1E6) << " GB ####" << endl;
 
 		time_preprocessing = timer.get_interval_time();
-		nr_paths = variant_reader.nr_of_paths();
 
-	
 		/**
 		*  Step 2: count graph k-mers. Needed to determine unique k-mers in subsequent steps.
 		**/ 
@@ -233,9 +231,12 @@ int main (int argc, char* argv[])
 
 	// serialization of UniqueKmersMap object
 	cerr << "Storing unique kmer information ..." << endl;
-  	ofstream os(outname + "_UniqueKmersMap.cereal", std::ios::binary);
-  	cereal::BinaryOutputArchive archive( os );
-	archive(unique_kmers_list);
+	{
+  		ofstream os(outname + "_UniqueKmersMap.cereal", std::ios::binary);
+  		cereal::BinaryOutputArchive archive( os );
+		archive(unique_kmers_list);
+	}
+
 	time_writing = timer.get_interval_time();
 
 	// print RSS up to now
@@ -257,7 +258,6 @@ int main (int argc, char* argv[])
 	struct rusage r_usage;
 	getrusage(RUSAGE_SELF, &r_usage);
 	cerr << "Total maximum memory usage: " << (r_usage.ru_maxrss / 1E6) << " GB" << endl;
-
 
 	return 0;
 }
