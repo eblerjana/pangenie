@@ -7,7 +7,7 @@ enable_testing()
 
 find_package(PkgConfig REQUIRED)
 find_package(ZLIB REQUIRED)
-find_package(cereal REQUIRED)
+#find_package(cereal REQUIRED)
 pkg_check_modules(JELLYFISH REQUIRED jellyfish-2.0)
 
 link_directories(${JELLYFISH_LIBRARY_DIRS} ${ZLIB_LIBRARY_DIRS} ${cereal_LIBRARY_DIRS})
