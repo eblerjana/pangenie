@@ -42,7 +42,7 @@ UniqueKmerComputer::UniqueKmerComputer (KmerCounter* genomic_kmers, KmerCounter*
 }
 
 
-void UniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKmers>>* result, ProbabilityTable* probabilities) {
+void UniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKmers>>* result, ProbabilityTable* probabilities, bool delete_processed_variants) {
 	size_t nr_variants = this->variants->size_of(this->chromosome);
 	for (size_t v = 0; v < nr_variants; ++v) {
 
@@ -124,6 +124,18 @@ void UniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKmers>>* r
 			}
 		}
 		result->push_back(u);
+
+		if (delete_processed_variants) {
+			if (v > 0) {
+				// previous variant object no longer needed
+				this->variants->delete_variant(chromosome, v - 1);
+			}
+			if (v == (nr_variants - 1)) {
+				// last variant object, can be deleted
+				this->variants->delete_variant(chromosome, v);
+			}
+		}
+
 	}
 }
 

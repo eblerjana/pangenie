@@ -17,7 +17,7 @@ void FastaReader::parse_file(string filename) {
 		throw runtime_error("FastaReader::parse_file: reference file cannot be opened.");
 	}
 	string line;
-	DnaSequence* dna_seq = nullptr;
+	shared_ptr<DnaSequence> dna_seq = nullptr;
 	while (getline(file, line)) {
 		if (line.size() == 0) continue;
 		size_t start = line.find_first_not_of(" \t\r\n");
@@ -33,9 +33,9 @@ void FastaReader::parse_file(string filename) {
 
 			if (this->name_to_sequence.find(name) != this->name_to_sequence.end()) {
 				// sequence with same name already seen, replace it
-				delete this->name_to_sequence.at(name);
+				this->name_to_sequence.at(name).reset();
 			}
-			dna_seq = new DnaSequence;
+			dna_seq = shared_ptr<DnaSequence>(new DnaSequence);
 			this->name_to_sequence[name] = dna_seq;
 		} else {
 			if (dna_seq == nullptr) {
@@ -47,12 +47,6 @@ void FastaReader::parse_file(string filename) {
 	}
 }
 
-FastaReader::~FastaReader() {
-	for (auto it = this->name_to_sequence.begin(); it != this->name_to_sequence.end(); ++it) {
-		delete it->second;
-	}
-	this->name_to_sequence.clear();
-}
 
 bool FastaReader::contains_name(string name) const {
 	auto it = this->name_to_sequence.find(name);

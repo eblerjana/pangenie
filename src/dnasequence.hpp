@@ -3,6 +3,9 @@
 
 #include <string>
 #include <vector>
+#include <memory>
+#include <cereal/access.hpp>
+#include <cereal/types/vector.hpp>
 
 /** 
 * Represents a DNA sequence.
@@ -42,6 +45,11 @@ public:
 	/** returns true if the sequence contains at least one undefined base (different from A,T,C,G,a,t,c,g) **/
 	bool contains_undefined() const;
 
+	template<class Archive>
+	void serialize(Archive& archive) {
+		archive(sequence, even_length, is_undefined);
+	}
+
 private:
 	/** store 2 bases per char (using 4 bits for each) **/
 	std::vector<unsigned char> sequence;
@@ -49,6 +57,7 @@ private:
 	bool even_length;
 	/** is true if sequence contains any undefined bases (N,n) **/
 	bool is_undefined;
+	friend cereal::access;
 };
 
 #endif // DNASEQUENCE_HPP

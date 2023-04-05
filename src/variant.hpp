@@ -5,6 +5,9 @@
 #include <string>
 #include <iostream>
 #include <memory>
+#include <cereal/access.hpp>
+#include <cereal/types/memory.hpp>
+#include <cereal/types/vector.hpp>
 #include "genotypingresult.hpp"
 #include "dnasequence.hpp"
 #include "uniquekmers.hpp"
@@ -32,8 +35,9 @@ public:
 	* Currently, the largest number of alleles and paths supported is 256. This is because unsigned chars are used to store allele ids. For merged variants, the number of alleles can get as
 	* high as the number of paths (if every path carries a different allele), therefore the limit on the number of paths is also 256 to avoid overflows.
 	**/
-	Variant(std::string left_flank, std::string right_flank, std::string chromosome, size_t start_position, size_t end_position, std::vector<std::string> alleles, std::vector<unsigned char> paths, std::string variant_id = ".");
-	Variant(DnaSequence& left_flank, DnaSequence& right_flank, std::string chromosome, size_t start_position, size_t end_position, std::vector<DnaSequence>& alleles, std::vector<unsigned char>& paths, std::string variant_id = ".");
+	Variant() = default;
+	Variant(std::string left_flank, std::string right_flank, std::string chromosome, size_t start_position, size_t end_position, std::vector<std::string> alleles, std::vector<unsigned char> paths); //, std::string variant_id = ".");
+	Variant(DnaSequence& left_flank, DnaSequence& right_flank, std::string chromosome, size_t start_position, size_t end_position, std::vector<DnaSequence>& alleles, std::vector<unsigned char>& paths); //, std::string variant_id = ".");
 	/** add flanking sequences left and right of variant **/
 	void add_flanking_sequence();
 	/** remove flanking sequences left and right of variant **/
@@ -78,6 +82,11 @@ public:
 	/** determine statistics for each individual variant **/
 	void variant_statistics (std::shared_ptr<UniqueKmers> unique_kmers, std::vector<VariantStats>& result) const;
 
+	template<class Archive>
+	void serialize(Archive& archive) {
+		archive(left_flank, right_flank, inner_flanks, chromosome, start_position, allele_sequences, allele_combinations, uncovered_alleles, paths, flanks_added);
+	}
+
 private:
 	// flanking sequence at left end
 	DnaSequence left_flank;
@@ -90,7 +99,7 @@ private:
 	// starting position of variant
 	size_t start_position;
 	// IDs of individual variants
-	std::vector<std::string> variant_ids;
+//	std::vector<std::string> variant_ids;
 	// allele sequences of individual variants
 	std::vector<std::vector<DnaSequence>> allele_sequences;
 	// combined alleles
@@ -100,6 +109,7 @@ private:
 	std::vector<unsigned char> paths;
 	bool flanks_added;
 	void set_values(size_t end_position);
+	friend cereal::access;
 };
 
 #endif //VARIANT_HPP

@@ -9,6 +9,10 @@
 #include <algorithm>
 #include <cassert>
 #include <memory>
+#include <cereal/access.hpp>
+#include <cereal/types/map.hpp>
+#include <cereal/types/memory.hpp>
+#include <cereal/types/vector.hpp>
 #include "fastareader.hpp"
 #include "variant.hpp"
 #include "genotypingresult.hpp"
@@ -32,6 +36,7 @@ std::vector<unsigned char> construct_index(std::vector<T>& alleles, bool referen
 
 class VariantReader {
 public:
+	VariantReader() = default;
 	VariantReader (std::string filename, std::string reference_filename, size_t kmer_size, bool add_reference, std::string sample = "sample");
 	~VariantReader();
 	/**  writes all path segments (allele sequences + reference sequences in between)
@@ -57,6 +62,16 @@ public:
 	*/
 	void delete_variant(std::string chromosome, size_t index);
 
+	template<class Archive>
+	void save(Archive& archive) const {
+		archive(fasta_reader, kmer_size, nr_paths, nr_variants, add_reference, sample, genotyping_outfile_open, phasing_outfile_open, variants_deleted, variants_per_chromosome, variant_ids);
+	}
+
+	template<class Archive>
+	void load(Archive& archive) {
+		archive(fasta_reader, kmer_size, nr_paths, nr_variants, add_reference, sample, genotyping_outfile_open, phasing_outfile_open, variants_deleted, variants_per_chromosome, variant_ids);
+	}
+
 private:
 	FastaReader fasta_reader;
 	size_t kmer_size;
@@ -75,6 +90,7 @@ private:
 	void add_variant_cluster(std::string& chromosome, std::vector< std::shared_ptr<Variant> >* cluster);
 	void insert_ids(std::string& chromosome, std::vector<DnaSequence>& alleles, std::vector<std::string>& variant_ids, bool reference_added);
 	std::string get_ids(std::string chromosome, std::vector<std::string>& alleles, size_t variant_index, bool reference_added);
+	friend cereal::access;
 };
 
 #endif // VARIANT_READER_HPP

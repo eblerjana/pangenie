@@ -531,9 +531,9 @@ TEST_CASE("Variant allele_frequency", "Variant allele_frequency") {
 }
 
 TEST_CASE("Variant separate_variants_likelihoods_uncovered", "Variant separate_variants_likelihoods_uncovered") {
-	Variant v1 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,1}, "VAR1");
+	Variant v1 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,1}); //, "VAR1");
 	// second allele is not covered by any path
-	Variant v2 ("AACT", "ACTG", "chr2", 7, 8, {"G", "C", "T"}, {0,2}, "VAR2");
+	Variant v2 ("AACT", "ACTG", "chr2", 7, 8, {"G", "C", "T"}, {0,2}); //, "VAR2");
 
 	GenotypingResult g;
 	g.add_to_likelihood(0,0,0.05);
@@ -557,7 +557,7 @@ TEST_CASE("Variant separate_variants_likelihoods_uncovered", "Variant separate_v
 	vector<Variant> single_variants;
 	vector<GenotypingResult> single_genotypes;
 	vector<VariantStats> variant_stats;
-	REQUIRE(v1.get_id() == "VAR1;VAR2");
+	REQUIRE(v1.get_id() == ".");
 	v1.separate_variants(&single_variants, &g, &single_genotypes);
 	v1.variant_statistics(u, variant_stats);
 	REQUIRE(single_variants.size() == 2);
@@ -636,39 +636,39 @@ TEST_CASE("Variant separate_variants_likelihoods_single_uncovered", "[Variant se
 }
 
 TEST_CASE("Variant get_id", "[Variant get_id]") {
-	Variant v1 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,1}, "VAR1");
-	Variant v2 ("AACT", "ACTG", "chr2", 7, 8, {"G", "C", "T"}, {0,2}, "VAR2");
+	Variant v1 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,1}); //, "VAR1");
+	Variant v2 ("AACT", "ACTG", "chr2", 7, 8, {"G", "C", "T"}, {0,2}); //, "VAR2");
 
-	REQUIRE(v1.get_id() == "VAR1");
-	REQUIRE(v2.get_id() == "VAR2");
+	REQUIRE(v1.get_id() == ".");
+	REQUIRE(v2.get_id() == ".");
 	v1.combine_variants(v2);
 
-	REQUIRE(v1.get_id() == "VAR1;VAR2");
+	REQUIRE(v1.get_id() == ".");
 	vector<Variant> single_variants;
 	v1.separate_variants(&single_variants);
 	REQUIRE(single_variants.size() == 2);
-	REQUIRE(single_variants[0].get_id() == "VAR1");
-	REQUIRE(single_variants[1].get_id() == "VAR2");
+	REQUIRE(single_variants[0].get_id() == ".");
+	REQUIRE(single_variants[1].get_id() == ".");
 }
 
 TEST_CASE("Variant get_id2", "[Variant get_id2]") {
-	Variant v1 ("AAA", "TGC", "chr1", 4, 5, {"A", "G"}, {0,0,0,0,0,0,1,0,0,0}, "VAR1");
-	Variant v2 ("AAT", "CCG", "chr1", 6, 7, {"G", "C"},  {0,0,0,0,0,0,1,0,0,0}, ".");
-	Variant v3 ("GCC", "GGG", "chr1", 9, 10, {"G", "C"}, {0,0,0,0,0,0,0,1,0,0}, "VAR2;VAR3");
+	Variant v1 ("AAA", "TGC", "chr1", 4, 5, {"A", "G"}, {0,0,0,0,0,0,1,0,0,0}); //, "VAR1");
+	Variant v2 ("AAT", "CCG", "chr1", 6, 7, {"G", "C"},  {0,0,0,0,0,0,1,0,0,0}); //, ".");
+	Variant v3 ("GCC", "GGG", "chr1", 9, 10, {"G", "C"}, {0,0,0,0,0,0,0,1,0,0}); //, "VAR2;VAR3");
 
-	REQUIRE(v1.get_id() == "VAR1");
+	REQUIRE(v1.get_id() == ".");
 	REQUIRE(v2.get_id() == ".");
-	REQUIRE(v3.get_id() == "VAR2;VAR3");
+	REQUIRE(v3.get_id() == ".");
 	v1.combine_variants(v2);
 	v1.combine_variants(v3);
 
-	REQUIRE(v1.get_id() == "VAR1;.;VAR2;VAR3");
+	REQUIRE(v1.get_id() == ".");
 	vector<Variant> single_variants;
 	v1.separate_variants(&single_variants);
 	REQUIRE(single_variants.size() == 3);
-	REQUIRE(single_variants[0].get_id() == "VAR1");
+	REQUIRE(single_variants[0].get_id() == ".");
 	REQUIRE(single_variants[1].get_id() == ".");
-	REQUIRE(single_variants[2].get_id() == "VAR2;VAR3");
+	REQUIRE(single_variants[2].get_id() == ".");
 }
 
 TEST_CASE("Variant is_undefined_allele", "[Variant is_undefined_allele]"){

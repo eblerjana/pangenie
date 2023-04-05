@@ -8,6 +8,7 @@
 #include <fstream>
 #include <stdexcept>
 #include <memory>
+#include <cereal/archives/binary.hpp>
 #include "kmercounter.hpp"
 #include "jellyfishreader.hpp"
 #include "jellyfishcounter.hpp"
@@ -66,7 +67,7 @@ void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, K
 	Timer timer;
 	UniqueKmerComputer kmer_computer(genomic_kmer_counts, read_kmer_counts, variant_reader, chromosome, kmer_coverage);
 	std::vector<shared_ptr<UniqueKmers>> unique_kmers;
-	kmer_computer.compute_unique_kmers(&unique_kmers, probs);
+	kmer_computer.compute_unique_kmers(&unique_kmers, probs, true);
 	// store the results
 	{
 		lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
@@ -118,7 +119,9 @@ int main (int argc, char* argv[])
 	double time_kmer_counting = 0.0;
 	double time_probabilities = 0.0;
 	double time_unique_kmers = 0.0;
+	double time_serialize = 0.0;
 	double time_path_sampling = 0.0;
+	double time_read_serialized = 0.0;
 	double time_hmm = 0.0;
 	double time_writing = 0.0;
 	double time_total = 0.0;
@@ -127,9 +130,12 @@ int main (int argc, char* argv[])
 	struct rusage rss_kmer_counting;
 	struct rusage rss_probabilities;
 	struct rusage rss_unique_kmers;
+	struct rusage rss_serialize;
 	struct rusage rss_path_sampling;
+	struct rusage rss_read_serialized;
 	struct rusage rss_hmm;
 	struct rusage rss_total;
+
 
 	cerr << endl;
 	cerr << "program: PanGenie - genotyping and phasing based on kmer-counting and known haplotype sequences." << endl;
@@ -221,27 +227,32 @@ int main (int argc, char* argv[])
 	check_input_file(vcffile);
 	check_input_file(readfile);
 
-	// read allele sequences and unitigs inbetween, write them into file
-	cerr << "Determine allele sequences ..." << endl;
-	VariantReader variant_reader (vcffile, reffile, kmersize, add_reference, sample_name);
-	
-	string segment_file = outname + "_path_segments.fasta";
-	cerr << "Write path segments to file: " << segment_file << " ..." << endl;
-	variant_reader.write_path_segments(segment_file);
-
-	// determine chromosomes present in VCF
-	vector<string> chromosomes;
-	variant_reader.get_chromosomes(&chromosomes);
-	cerr << "Found " << chromosomes.size() << " chromosome(s) in the VCF." << endl;
-
-	getrusage(RUSAGE_SELF, &rss_preprocessing);
-	time_preprocessing = timer.get_interval_time();
 
 	// UniqueKmers for each chromosome
 	UniqueKmersMap unique_kmers_list;
 	ProbabilityTable probabilities;
+	vector<string> chromosomes;
+	unsigned short nr_paths = 0;
 
 	{
+	
+		// read allele sequences and unitigs inbetween, write them into file
+		cerr << "Determine allele sequences ..." << endl;
+		VariantReader variant_reader (vcffile, reffile, kmersize, add_reference, sample_name);
+				
+		string segment_file = outname + "_path_segments.fasta";
+		cerr << "Write path segments to file: " << segment_file << " ..." << endl;
+		variant_reader.write_path_segments(segment_file);
+		nr_paths = variant_reader.nr_of_paths();
+
+		// determine chromosomes present in VCF
+		variant_reader.get_chromosomes(&chromosomes);
+		cerr << "Found " << chromosomes.size() << " chromosome(s) in the VCF." << endl;
+
+		getrusage(RUSAGE_SELF, &rss_preprocessing);
+		time_preprocessing = timer.get_interval_time();
+
+
 		KmerCounter* read_kmer_counts = nullptr;
 		// determine kmer copynumbers in reads
 		if (readfile.substr(std::max(3, (int) readfile.size())-3) == std::string(".jf")) {
@@ -264,13 +275,18 @@ int main (int argc, char* argv[])
 		cerr << "Count kmers in genome ..." << endl;
 		JellyfishCounter genomic_kmer_counts (segment_file, kmersize, nr_jellyfish_threads, hash_size);
 
-
-		// prepare output files
-		if (! only_phasing) variant_reader.open_genotyping_outfile(outname + "_genotyping.vcf");
-		if (! only_genotyping) variant_reader.open_phasing_outfile(outname + "_phasing.vcf");
-
-		getrusage(RUSAGE_SELF, &rss_kmer_counting);		
+		getrusage(RUSAGE_SELF, &rss_kmer_counting);
 		time_kmer_counting = timer.get_interval_time();
+
+		cerr << "Serialize VariantReader object ..." << endl;
+		{
+  			ofstream os(outname + "_VariantReader.cereal", std::ios::binary);
+  			cereal::BinaryOutputArchive archive( os );
+			archive(variant_reader);
+		}
+
+		getrusage(RUSAGE_SELF, &rss_serialize);
+		time_serialize = timer.get_interval_time();
 
 		cerr << "Determine unique kmers ..." << endl;
 		// determine number of cores to use
@@ -301,7 +317,7 @@ int main (int argc, char* argv[])
 
 		delete read_kmer_counts;
 		read_kmer_counts = nullptr;
-
+	
 		// compute total time spent determining unique kmers
 		time_unique_kmers = 0.0;
 		for (auto it = unique_kmers_list.runtimes.begin(); it != unique_kmers_list.runtimes.end(); ++it) {
@@ -313,7 +329,6 @@ int main (int argc, char* argv[])
 	}
 
 	// prepare subsets of paths to run on
-	unsigned short nr_paths = variant_reader.nr_of_paths();
 	// TODO: for too large panels, print waring
 	if (nr_paths > 200) cerr << "Warning: panel is large and PanGenie might take a long time genotyping. Try reducing the panel size prior to genotyping." << endl;
 	// handle case when sampling_size is not set
@@ -347,7 +362,7 @@ int main (int argc, char* argv[])
 
 	getrusage(RUSAGE_SELF, &rss_path_sampling);
 	time_path_sampling = timer.get_interval_time();
-	
+
 	cerr << "Construct HMM and run core algorithm ..." << endl;
 
 	// determine max number of available threads for genotyping (at most one thread per chromosome and subsample possible)
@@ -399,8 +414,24 @@ int main (int argc, char* argv[])
 	getrusage(RUSAGE_SELF, &rss_hmm);
 	timer.get_interval_time();
 
+	// read serialized VariantReader object
+	VariantReader variant_reader;
+	cerr << "Reading precomputed VariantReader ..." << endl; 
+  	ifstream os(outname + "_VariantReader.cereal", std::ios::binary);
+  	cereal::BinaryInputArchive archive( os );
+	archive(variant_reader);
+
+	getrusage(RUSAGE_SELF, &rss_read_serialized);
+	time_read_serialized = timer.get_interval_time();
+
+
 	// output VCF
 	cerr << "Write results to VCF ..." << endl;
+
+	// prepare output files
+	if (! only_phasing) variant_reader.open_genotyping_outfile(outname + "_genotyping.vcf");
+	if (! only_genotyping) variant_reader.open_phasing_outfile(outname + "_phasing.vcf");
+
 	if (!(only_genotyping && only_phasing)) assert (results.result.size() == chromosomes.size());
 	// write VCF
 	for (auto it = results.result.begin(); it != results.result.end(); ++it) {
@@ -426,6 +457,7 @@ int main (int argc, char* argv[])
 	// output times
 	cerr << "time spent reading input files:\t" << time_preprocessing << " sec" << endl;
 	cerr << "time spent counting kmers (wallclock): \t" << time_kmer_counting << " sec" << endl;
+	cerr << "time spent writing VariantReader to disk: \t" << time_serialize << " sec" << endl;
 	cerr << "time spent pre-computing probabilities: \t" << time_probabilities << " sec" << endl;
 	cerr << "time spent determining unique kmers: \t" << time_unique_kmers << " sec" << endl;
 	cerr << "time spent selecting paths: \t" << time_path_sampling << " sec" << endl;
@@ -434,16 +466,19 @@ int main (int argc, char* argv[])
 		cerr << "time spent genotyping chromosome " << chromosome << ":\t" << results.runtimes[chromosome] << endl;
 	}
 	cerr << "time spent genotyping (total): \t" << time_hmm << endl;
+	cerr << "time spent reading VariantReader from disk: \t" << time_read_serialized << " sec" << endl;
 	cerr << "time spent writing output VCF: \t" << time_writing << " sec" << endl;
 	cerr << "total wallclock time: " << time_total  << " sec" << endl;
 
 	cerr << endl;
 	cerr << "Max RSS after reading input files: \t" << (rss_preprocessing.ru_maxrss / 1E6) << " GB" << endl;
 	cerr << "Max RSS after counting kmers: \t" << (rss_kmer_counting.ru_maxrss / 1E6) << " GB" << endl;
+	cerr << "Max RSS after writing VariantReader to disk: \t" << (rss_serialize.ru_maxrss / 1E6) << " GB" << endl;
 	cerr << "Max RSS after pre-computing probabilities: \t" << (rss_probabilities.ru_maxrss / 1E6) << " GB" << endl;
 	cerr << "Max RSS after determining unique kmers: \t" << (rss_unique_kmers.ru_maxrss / 1E6) << " GB" << endl;
 	cerr << "Max RSS after selecting paths: \t" << (rss_path_sampling.ru_maxrss / 1E6) << " GB" << endl;
 	cerr << "Max RSS after genotyping: \t" << (rss_hmm.ru_maxrss / 1E6) << " GB" << endl;
+	cerr << "Max RSS after reading VariantReader from disk: \t" << (rss_read_serialized.ru_maxrss / 1E6) << " GB" << endl;
 	cerr << "Max RSS: \t" << (rss_total.ru_maxrss / 1E6) << " GB" << endl;
 
 	return 0;
