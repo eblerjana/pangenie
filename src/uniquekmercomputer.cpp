@@ -91,7 +91,7 @@ void UniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKmers>>* r
 		size_t nr_kmers_used = 0;
 		bool not_first = false;
 		for (auto& kmer : occurences) {
-//			if (nr_kmers_used > 300) break;
+			if (nr_kmers_used > 300) break;
 
 			size_t genomic_count = this->genomic_kmers->getKmerAbundance(kmer.first);
 			size_t local_count = kmer.second.size();

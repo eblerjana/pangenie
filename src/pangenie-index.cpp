@@ -86,11 +86,17 @@ void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, V
 int main (int argc, char* argv[])
 {
 	Timer timer;
-	double time_preprocessing;
-	double time_graph_counting;
-	double time_unique_kmers;
-	double time_writing;
-	double time_total;
+	double time_preprocessing = 0.0;
+	double time_kmer_counting = 0.0;
+	double time_unique_kmers = 0.0;
+	double time_serialize = 0.0;
+	double time_total = 0.0;
+
+	struct rusage rss_preprocessing;
+	struct rusage rss_kmer_counting;
+	struct rusage rss_unique_kmers;
+	struct rusage rss_serialize;
+	struct rusage rss_total;
 
 	cerr << endl;
 	cerr << "program: PanGenie - genotyping based on kmer-counting and known haplotype sequences." << endl;
@@ -169,11 +175,7 @@ int main (int argc, char* argv[])
 		variant_reader.get_chromosomes(&chromosomes);
 		cerr << "Found " << chromosomes.size() << " chromosome(s) in the VCF." << endl;
 
-		// print RSS up to now
-		struct rusage r_usage00;
-		getrusage(RUSAGE_SELF, &r_usage00);
-		cerr << "#### Max RSS after determing allele sequences: " << (r_usage00.ru_maxrss / 1E6) << " GB ####" << endl;
-
+		getrusage(RUSAGE_SELF, &rss_preprocessing);
 		time_preprocessing = timer.get_interval_time();
 
 		/**
@@ -182,12 +184,9 @@ int main (int argc, char* argv[])
 		cerr << "Count kmers in graph ..." << endl;
 		JellyfishCounter genomic_kmer_counts (segment_file, kmersize, nr_jellyfish_threads, hash_size);
 
-		// print RSS up to now
-		struct rusage r_usage1;
-		getrusage(RUSAGE_SELF, &r_usage1);
-		cerr << "#### Max RSS after counting graph kmers: " << (r_usage1.ru_maxrss / 1E6) << " GB ####" << endl;
 
-		time_graph_counting = timer.get_interval_time();
+		getrusage(RUSAGE_SELF, &rss_kmer_counting);
+		time_kmer_counting = timer.get_interval_time();
 
 
 		/**
@@ -216,16 +215,13 @@ int main (int argc, char* argv[])
 			}
 		}
 
-		// print RSS up to now
-		struct rusage r_usage2;
-		getrusage(RUSAGE_SELF, &r_usage2);
-		cerr << "#### Max RSS after determing unique kmers: " << (r_usage2.ru_maxrss / 1E6) << " GB ####" << endl;
-
 		// determine the total runtime needed to compute unique kmers
 		time_unique_kmers = 0.0;
 		for (auto it = unique_kmers_list.runtimes.begin(); it != unique_kmers_list.runtimes.end(); ++it) {
 			time_unique_kmers += it->second;
 		}
+
+		getrusage(RUSAGE_SELF, &rss_unique_kmers);
 		timer.get_interval_time();	
 	}
 
@@ -237,27 +233,23 @@ int main (int argc, char* argv[])
 		archive(unique_kmers_list);
 	}
 
-	time_writing = timer.get_interval_time();
-
-	// print RSS up to now
-	struct rusage r_usage3;
-	getrusage(RUSAGE_SELF, &r_usage3);
-	cerr << "#### Max RSS after Indexing is done and objects are deleted: " << (r_usage3.ru_maxrss / 1E6) << " GB ####" << endl;
-
+	getrusage(RUSAGE_SELF, &rss_serialize);
+	time_serialize = timer.get_interval_time();
 	time_total = timer.get_total_time();
 
 	cerr << endl << "###### Summary ######" << endl;
 	// output times
 	cerr << "time spent reading input files:\t" << time_preprocessing << " sec" << endl;
-	cerr << "time spent counting graph kmers (wallclock):\t" << time_graph_counting << " sec" << endl;
-	cerr << "time spent determining unique kmers:\t" << time_unique_kmers << " sec" << endl;
-	cerr << "time spent writing output file:\t" << time_writing << " sec" << endl;
+	cerr << "time spent counting kmers (wallclock): \t" << time_kmer_counting << " sec" << endl;
+	cerr << "time spent determining unique kmers: \t" << time_unique_kmers << " sec" << endl;
+	cerr << "time spent writing UniqueKmersMap to disk: \t" << time_serialize << " sec" << endl;
 	cerr << "total wallclock time: " << time_total  << " sec" << endl;
 
-	// memory usage
-	struct rusage r_usage;
-	getrusage(RUSAGE_SELF, &r_usage);
-	cerr << "Total maximum memory usage: " << (r_usage.ru_maxrss / 1E6) << " GB" << endl;
-
+	cerr << endl;
+	cerr << "Max RSS after reading input files: \t" << (rss_preprocessing.ru_maxrss / 1E6) << " GB" << endl;
+	cerr << "Max RSS after counting kmers: \t" << (rss_kmer_counting.ru_maxrss / 1E6) << " GB" << endl;
+	cerr << "Max RSS after determining unique kmers: \t" << (rss_unique_kmers.ru_maxrss / 1E6) << " GB" << endl;
+	cerr << "Max RSS after writing VariantReader to disk: \t" << (rss_serialize.ru_maxrss / 1E6) << " GB" << endl;
+	cerr << "Max RSS: \t" << (rss_total.ru_maxrss / 1E6) << " GB" << endl;
 	return 0;
 }
