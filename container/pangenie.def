@@ -6,7 +6,7 @@ From: ubuntu:20.04
     apt-get install --assume-yes software-properties-common
     add-apt-repository universe
     apt-get update
-    apt-get install --assume-yes git build-essential zlib1g-dev libcereal-dev libjellyfish-2.0-dev pkg-config cmake
+    apt-get install --assume-yes git build-essential zlib1g-dev libjellyfish-2.0-dev pkg-config cmake
     mkdir /metadata
     echo `dpkg -l | grep jellyfish | tr -s " " | cut -d " " -f 2,3` > /metadata/jellyfish.lib.version
     mkdir /repos
