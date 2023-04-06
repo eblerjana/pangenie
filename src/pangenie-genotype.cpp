@@ -197,7 +197,6 @@ int main (int argc, char* argv[])
 	struct rusage rss_total;
 
 
-
 	cerr << endl;
 	cerr << "program: PanGenie - genotyping based on kmer-counting and known haplotype sequences." << endl;
 	cerr << "command: PanGenie-genotype - run genotyping based on unique kmers computed by PanGenie-index." << endl;
@@ -367,8 +366,8 @@ int main (int argc, char* argv[])
 
 		probabilities = ProbabilityTable(kmer_abundance_peak / 4, kmer_abundance_peak*4, 2*kmer_abundance_peak, regularization);
 	
-		getrusage(RUSAGE_SELF, &rss_path_sampling);
-		time_path_sampling = timer.get_interval_time();
+		getrusage(RUSAGE_SELF, &rss_probabilities);
+		time_probabilities = timer.get_interval_time();
 
 
 		/**
@@ -524,24 +523,24 @@ int main (int argc, char* argv[])
 		cerr << endl << "###### Summary ######" << endl;
 		// output times
 		cerr << "time spent reading UniqueKmersMap from disk: \t" << time_read_serialized << " sec" << endl;
-		cerr << "time spent counting kmers (wallclock): \t" << time_kmer_counting << " sec" << endl;
+		cerr << "time spent counting kmers in reads (wallclock): \t" << time_kmer_counting << " sec" << endl;
 		cerr << "time spent pre-computing probabilities: \t" << time_probabilities << " sec" << endl;
-		cerr << "time spent determining unique kmers: \t" << time_unique_kmers << " sec" << endl;
+		cerr << "time spent updating unique kmers: \t" << time_unique_kmers << " sec" << endl;
 		cerr << "time spent selecting paths: \t" << time_path_sampling << " sec" << endl;
 		// output per chromosome time
 		for (auto chromosome : chromosomes) {
 			cerr << "time spent genotyping chromosome " << chromosome << ":\t" << results.runtimes[chromosome] << endl;
 		}
-		cerr << "time spent genotyping (total): \t" << time_hmm << endl;
+		cerr << "time spent genotyping (total): \t" << time_hmm << " sec" << endl;
 
 		cerr << "time spent writing output VCF: \t" << time_writing << " sec" << endl;
 		cerr << "total wallclock time: " << time_total  << " sec" << endl;
 
 		cerr << endl;
 		cerr << "Max RSS after reading UniqueKmersMap from disk: \t" << (rss_read_serialized.ru_maxrss / 1E6) << " GB" << endl;
-		cerr << "Max RSS after counting kmers: \t" << (rss_kmer_counting.ru_maxrss / 1E6) << " GB" << endl;
+		cerr << "Max RSS after counting kmers in reads: \t" << (rss_kmer_counting.ru_maxrss / 1E6) << " GB" << endl;
 		cerr << "Max RSS after pre-computing probabilities: \t" << (rss_probabilities.ru_maxrss / 1E6) << " GB" << endl;
-		cerr << "Max RSS after determining unique kmers: \t" << (rss_unique_kmers.ru_maxrss / 1E6) << " GB" << endl;
+		cerr << "Max RSS after updating unique kmers: \t" << (rss_unique_kmers.ru_maxrss / 1E6) << " GB" << endl;
 		cerr << "Max RSS after selecting paths: \t" << (rss_path_sampling.ru_maxrss / 1E6) << " GB" << endl;
 		cerr << "Max RSS after genotyping: \t" << (rss_hmm.ru_maxrss / 1E6) << " GB" << endl;
 		cerr << "Max RSS: \t" << (rss_total.ru_maxrss / 1E6) << " GB" << endl;

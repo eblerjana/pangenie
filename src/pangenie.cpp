@@ -186,14 +186,26 @@ void run_genotyping(string chromosome, vector<shared_ptr<UniqueKmers>>* unique_k
 int main (int argc, char* argv[])
 {
 	Timer timer;
-	double time_preprocessing;
-	double time_graph_counting;
-	double time_unique_kmers;
-	double time_unique_kmers_updating;
-	double time_kmer_counting;
-	double time_path_sampling;
-	double time_writing;
-	double time_total;
+	double time_preprocessing = 0.0;
+	double time_kmer_counting_genome = 0.0;
+	double time_kmer_counting = 0.0;
+	double time_unique_kmers = 0.0;
+	double time_unique_kmers_updating = 0.0;
+	double time_path_sampling = 0.0;
+	double time_probabilities = 0.0;
+	double time_hmm = 0.0;
+	double time_writing = 0.0;
+	double time_total = 0.0;
+
+	struct rusage rss_preprocessing;
+	struct rusage rss_kmer_counting_genome;
+	struct rusage rss_kmer_counting;
+	struct rusage rss_unique_kmers;
+	struct rusage rss_unique_kmers_updating;
+	struct rusage rss_probabilities;
+	struct rusage rss_path_sampling;
+	struct rusage rss_hmm;
+	struct rusage rss_total;
 
 	cerr << endl;
 	cerr << "program: PanGenie - genotyping based on kmer-counting and known haplotype sequences." << endl;
@@ -311,11 +323,7 @@ int main (int argc, char* argv[])
 		variant_reader.get_chromosomes(&chromosomes);
 		cerr << "Found " << chromosomes.size() << " chromosome(s) in the VCF." << endl;
 
-		// print RSS up to now
-		struct rusage r_usage00;
-		getrusage(RUSAGE_SELF, &r_usage00);
-		cerr << "#### Max RSS after determing allele sequences: " << (r_usage00.ru_maxrss / 1E6) << " GB ####" << endl;
-
+		getrusage(RUSAGE_SELF, &rss_preprocessing);
 		time_preprocessing = timer.get_interval_time();
 		nr_paths = variant_reader.nr_of_paths();
 
@@ -326,12 +334,8 @@ int main (int argc, char* argv[])
 		cerr << "Count kmers in graph ..." << endl;
 		JellyfishCounter genomic_kmer_counts (segment_file, kmersize, nr_jellyfish_threads, hash_size);
 
-		// print RSS up to now
-		struct rusage r_usage1;
-		getrusage(RUSAGE_SELF, &r_usage1);
-		cerr << "#### Max RSS after counting graph kmers: " << (r_usage1.ru_maxrss / 1E6) << " GB ####" << endl;
-
-		time_graph_counting = timer.get_interval_time();
+		getrusage(RUSAGE_SELF, &rss_kmer_counting_genome);
+		time_kmer_counting_genome = timer.get_interval_time();
 
 
 		/**
@@ -360,24 +364,13 @@ int main (int argc, char* argv[])
 			}
 		}
 
-		// print RSS up to now
-		struct rusage r_usage2;
-		getrusage(RUSAGE_SELF, &r_usage2);
-		cerr << "#### Max RSS after determing unique kmers: " << (r_usage2.ru_maxrss / 1E6) << " GB ####" << endl;
-
 		// determine the total runtime needed to compute unique kmers
-		time_unique_kmers = 0.0;
 		for (auto it = unique_kmers_list.runtimes.begin(); it != unique_kmers_list.runtimes.end(); ++it) {
 			time_unique_kmers += it->second;
 		}
-		timer.get_interval_time();
+		getrusage(RUSAGE_SELF, &rss_unique_kmers);
+		timer.get_interval_time();	
 	}
-
-	// print RSS up to now
-	struct rusage r_usage3;
-	getrusage(RUSAGE_SELF, &r_usage3);
-	cerr << "#### Max RSS after Indexing is done and objects are deleted: " << (r_usage3.ru_maxrss / 1E6) << " GB ####" << endl;
-
 
 
 	/**
@@ -410,14 +403,13 @@ int main (int argc, char* argv[])
 		*/
 		size_t kmer_abundance_peak = read_kmer_counts->computeHistogram(10000, count_only_graph, outname + "_histogram.histo");
 		cerr << "Computed kmer abundance peak: " << kmer_abundance_peak << endl;
-		probabilities = ProbabilityTable(kmer_abundance_peak / 4, kmer_abundance_peak*4, 2*kmer_abundance_peak, regularization);
-	
+		getrusage(RUSAGE_SELF, &rss_kmer_counting);
 		time_kmer_counting = timer.get_interval_time();
 
-		// print RSS up to now
-		struct rusage r_usage3;
-		getrusage(RUSAGE_SELF, &r_usage3);
-		cerr << "#### Max RSS after counting read kmers: " << (r_usage3.ru_maxrss / 1E6) << " GB ####" << endl;
+		probabilities = ProbabilityTable(kmer_abundance_peak / 4, kmer_abundance_peak*4, 2*kmer_abundance_peak, regularization);
+
+		getrusage(RUSAGE_SELF, &rss_probabilities);
+		time_probabilities = timer.get_interval_time();
 
 
 		/**
@@ -443,16 +435,11 @@ int main (int argc, char* argv[])
 			time_unique_kmers_updating += it->second;
 		}
 		// subract time spend determining unique kmers (since runtimes were added up)
+		getrusage(RUSAGE_SELF, &rss_unique_kmers_updating);
 		time_unique_kmers_updating -= time_unique_kmers;
 		timer.get_interval_time();
 
 	}
-
-
-	// print RSS up to now
-	struct rusage r_usage4;
-	getrusage(RUSAGE_SELF, &r_usage4);
-	cerr << "#### Max RSS after second step is complete: " << (r_usage4.ru_maxrss / 1E6) << " GB ####" << endl;
 
 
 	/**
@@ -491,10 +478,8 @@ int main (int argc, char* argv[])
 		path_sampler.select_single_subset(phasing_paths, nr_phasing_paths);
 		if (!only_genotyping) cerr << "Sampled " << phasing_paths.size() << " paths to be used for phasing." << endl;
 		
-		// TODO: only for analysis
-		struct rusage r_usage30;
-		getrusage(RUSAGE_SELF, &r_usage30);
-		cerr << "#### Memory usage until now: " << (r_usage30.ru_maxrss / 1E6) << " GB ####" << endl;
+		getrusage(RUSAGE_SELF, &rss_path_sampling);
+		time_path_sampling = timer.get_interval_time();
 
 		cerr << "Construct HMM and run core algorithm ..." << endl;
 
@@ -504,8 +489,6 @@ int main (int argc, char* argv[])
 			cerr << "Warning: using " << available_threads << " for genotyping." << endl;
 			nr_core_threads = available_threads;
 		}
-
-		time_path_sampling = timer.get_interval_time();
 
 		// run genotyping
 		{
@@ -540,7 +523,14 @@ int main (int argc, char* argv[])
 			}
 		}
 
+		// compute total time spent genotyping
+		for (auto it = results.runtimes.begin(); it != results.runtimes.end(); ++it) {
+			time_hmm += it->second;
+		}
+
+		getrusage(RUSAGE_SELF, &rss_hmm);
 		timer.get_interval_time();
+
 
 		// read VCF again, it is needed to output results
 		VariantReader variant_reader (vcffile, reffile, kmersize, add_reference, sample_name);
@@ -566,32 +556,36 @@ int main (int argc, char* argv[])
 		if (! only_phasing) variant_reader.close_genotyping_outfile();
 		if (! only_genotyping) variant_reader.close_phasing_outfile();
 
+		getrusage(RUSAGE_SELF, &rss_total);
 		time_writing = timer.get_interval_time();
 		time_total = timer.get_total_time();
 
 		cerr << endl << "###### Summary ######" << endl;
-		// output times
 		cerr << "time spent reading input files:\t" << time_preprocessing << " sec" << endl;
-		cerr << "time spent counting graph kmers (wallclock):\t" << time_graph_counting << " sec" << endl;
-		cerr << "time spent determining unique kmers:\t" << time_unique_kmers << " sec" << endl;
-		cerr << "time spent counting read kmers (wallclock):\t" << time_kmer_counting << " sec" << endl;
-		cerr << "time spent determining counts of unique kmers:\t" << time_unique_kmers_updating << " sec" << endl;
-		cerr << "time spent selecting paths:\t" << time_path_sampling << " sec" << endl;
-		double time_hmm = 0.0;
+		cerr << "time spent counting kmers in genome (wallclock): \t" << time_kmer_counting_genome << " sec" << endl;
+		cerr << "time spent determining unique kmers: \t" << time_unique_kmers << " sec" << endl;
+		cerr << "time spent counting kmers in reads (wallclock): \t" << time_kmer_counting << " sec" << endl;
+		cerr << "time spent pre-computing probabilities: \t" << time_probabilities << " sec" << endl;
+		cerr << "time spent updating unique kmers: \t" << time_unique_kmers_updating << " sec" << endl;
+		cerr << "time spent selecting paths: \t" << time_path_sampling << " sec" << endl;
 		// output per chromosome time
 		for (auto chromosome : chromosomes) {
 			cerr << "time spent genotyping chromosome " << chromosome << ":\t" << results.runtimes[chromosome] << endl;
-			time_hmm += results.runtimes[chromosome];
 		}
-		cerr << "time spent genotyping (total):\t" << time_hmm << " sec" << endl;
-		cerr << "time spent writing output file:\t" << time_writing << " sec" << endl;
+		cerr << "time spent genotyping (total): \t" << time_hmm << " sec" << endl;
+		cerr << "time spent writing output VCF: \t" << time_writing << " sec" << endl;
 		cerr << "total wallclock time: " << time_total  << " sec" << endl;
 
-		// memory usage
-		struct rusage r_usage;
-		getrusage(RUSAGE_SELF, &r_usage);
-		cerr << "Total maximum memory usage: " << (r_usage.ru_maxrss / 1E6) << " GB" << endl;
-
+		cerr << endl;
+		cerr << "Max RSS after reading input files:\t" << (rss_preprocessing.ru_maxrss / 1E6) << " GB" << endl;
+		cerr << "Max RSS after counting kmers in genome (wallclock): \t" << (rss_kmer_counting_genome.ru_maxrss / 1E6) << " GB" << endl;
+		cerr << "Max RSS after determining unique kmers: \t" << (rss_unique_kmers.ru_maxrss / 1E6) << " GB" << endl;
+		cerr << "Max RSS after counting kmers in reads (wallclock): \t" << (rss_kmer_counting.ru_maxrss / 1E6) << " GB" << endl;
+		cerr << "Max RSS after pre-computing probabilities: \t" << (rss_probabilities.ru_maxrss / 1E6) << " GB" << endl;
+		cerr << "Max RSS after updating unique kmers: \t" << (rss_unique_kmers_updating.ru_maxrss / 1E6) << " GB" << endl;
+		cerr << "Max RSS after selecting paths: \t" << (rss_path_sampling.ru_maxrss / 1E6) << " GB" << endl;
+		cerr << "Max RSS after genotyping (total): \t" << (rss_hmm.ru_maxrss / 1E6) <<  endl;
+		cerr << "Max RSS: " << (rss_total.ru_maxrss / 1E6)  << " GB" << endl;
 	}
 
 	return 0;
