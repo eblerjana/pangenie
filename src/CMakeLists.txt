@@ -11,10 +11,12 @@ add_library(PanGenieLib SHARED
 	jellyfishcounter.cpp
 	jellyfishreader.cpp
 	kmerpath.cpp
+	kmerparser.cpp
 	pathsampler.cpp
 	probabilitycomputer.cpp
 	probabilitytable.cpp
 	sequenceutils.cpp
+	stepwiseuniquekmercomputer.cpp
 	timer.cpp
 	transitionprobabilitycomputer.cpp
 	threadpool.cpp
@@ -30,3 +32,11 @@ target_link_libraries(PanGenie PanGenieLib ${JELLYFISH_LIBRARIES} ${ZLIB_LIBRARI
 add_executable(PanGenie-serialize pangenie-serialize.cpp)
 target_link_libraries(PanGenie-serialize PanGenieLib ${JELLYFISH_LDFLAGS_OTHER} ${ZLIB_LDFLAGS_OTHER} ${CEREAL_LDFLAGS_OTHER})
 target_link_libraries(PanGenie-serialize PanGenieLib ${JELLYFISH_LIBRARIES} ${ZLIB_LIBRARIES} ${CEREAL_LIBRARIES})
+
+add_executable(PanGenie-index pangenie-index.cpp)
+target_link_libraries(PanGenie-index PanGenieLib ${JELLYFISH_LDFLAGS_OTHER} ${ZLIB_LDFLAGS_OTHER} ${CEREAL_LDFLAGS_OTHER})
+target_link_libraries(PanGenie-index PanGenieLib ${JELLYFISH_LIBRARIES} ${ZLIB_LIBRARIES} ${CEREAL_LIBRARIES})
+
+add_executable(PanGenie-genotype pangenie-genotype.cpp)
+target_link_libraries(PanGenie-genotype PanGenieLib ${JELLYFISH_LDFLAGS_OTHER} ${ZLIB_LDFLAGS_OTHER} ${CEREAL_LDFLAGS_OTHER})
+target_link_libraries(PanGenie-genotype PanGenieLib ${JELLYFISH_LIBRARIES} ${ZLIB_LIBRARIES} ${CEREAL_LIBRARIES})
