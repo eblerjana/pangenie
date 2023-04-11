@@ -3,12 +3,17 @@
 
 #include <vector>
 #include <memory>
+#include <cereal/access.hpp>
+#include <cereal/types/map.hpp>
+#include <cereal/types/memory.hpp>
+#include <cereal/types/vector.hpp>
 #include "uniquekmers.hpp"
 #include "columnindexer.hpp"
 #include "transitionprobabilitycomputer.hpp"
 #include "variant.hpp"
 #include "genotypingresult.hpp"
 #include "probabilitytable.hpp"
+
 
 /** Respresents the genotyping HMM. **/
 
@@ -29,6 +34,7 @@ public:
 	* @param effective_N effective population size
 	* @param only_paths only use these paths and ignore others that might be in unique_kmers.
 	**/
+	HMM() = default;
 	HMM(std::vector<std::shared_ptr<UniqueKmers>>* unique_kmers, ProbabilityTable* probabilities, bool run_genotyping, bool run_phasing, double recombrate = 1.26, bool uniform = false, long double effective_N = 25000.0L, std::vector<unsigned short>* only_paths = nullptr, bool normalize = true);
 	/** combines likelihoods with likelihoods of given HMM. **/
 	void combine_likelihoods(HMM& other);
@@ -39,6 +45,12 @@ public:
 	/** return copy of genotyping result */
 	std::vector<GenotypingResult> get_genotyping_result() const;
 	~HMM();
+
+	template<class Archive>
+	void serialize(Archive& archive) {
+		archive(genotyping_result);
+	}
+
 
 private:
 	ColumnIndexer* column_indexer;
@@ -58,6 +70,7 @@ private:
 	void compute_forward_column(size_t column_index);
 	void compute_backward_column(size_t column_index);
 	void compute_viterbi_column(size_t column_index);
+	friend cereal::access;
 
 	template<class T>
 	void init(std::vector< T* >& c, size_t size) {

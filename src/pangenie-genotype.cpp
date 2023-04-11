@@ -70,6 +70,16 @@ struct Results {
 	mutex result_mutex;
 	map<string, shared_ptr<HMM>> result;
 	map<string, double> runtimes;
+
+	template <class Archive>
+	void save(Archive& ar) const {
+		ar(result, runtimes);
+	}
+
+	template <class Archive>
+	void load(Archive& ar) {
+		ar(result, runtimes);
+	}
 };
 
 
@@ -510,6 +520,15 @@ int main (int argc, char* argv[])
 				// output phasing results
 				variant_reader.write_phasing_of(it->first, it->second->get_ref_genotyping_result(), &unique_kmers_list.unique_kmers[it->first], ignore_imputed);
 			}
+		}
+
+		// just for analysis, serialize Results object
+		// serialization of UniqueKmersMap object
+		cerr << "Storing Results information ..." << endl;
+		{
+			ofstream os(outname + "_Results.cereal", std::ios::binary);
+			cereal::BinaryOutputArchive archive( os );
+			archive(results);
 		}
 
 		if (! only_phasing) variant_reader.close_genotyping_outfile();

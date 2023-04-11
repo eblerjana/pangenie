@@ -1,10 +1,14 @@
 #ifndef GENOTYPINGRESULT_HPP
 #define GENOTYPINGRESULT_HPP
 
+#include "uniquekmers.hpp"
 #include <map>
 #include <utility>
 #include <iostream>
 #include <vector>
+#include <cereal/access.hpp>
+#include <cereal/types/vector.hpp>
+#include <cereal/types/map.hpp>
 
 /** Represents the genotyping/phasing result of a position. **/
 
@@ -43,10 +47,16 @@ public:
 	void combine(GenotypingResult& likelihoods);
 	void normalize();
 
+	template<class Archive>
+	void serialize(Archive& archive) {
+		archive(genotype_to_likelihood, haplotype_1, haplotype_2);
+	}
+
 private:
 	/** map genotype -> likelihood. genotype alleles are ordered in ascending order **/
 	std::map < std::pair<unsigned char,unsigned char>, long double > genotype_to_likelihood;
 	unsigned char haplotype_1;
 	unsigned char haplotype_2;
+	friend cereal::access;
 };
 #endif // GENOTYPINGRESULT_HPP
