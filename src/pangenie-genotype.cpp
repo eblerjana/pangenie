@@ -501,8 +501,13 @@ int main (int argc, char* argv[])
 		getrusage(RUSAGE_SELF, &rss_hmm);
 		timer.get_interval_time();
 
-		// read VCF again, it is needed to output results
-		VariantReader variant_reader (vcffile, reffile, kmersize, add_reference, sample_name);
+		// read serialized VariantReader object
+		VariantReader variant_reader;
+		cerr << "Reading precomputed VariantReader ..." << endl; 
+		ifstream os(precomputed_prefix + "_VariantReader.cereal", std::ios::binary);
+		cereal::BinaryInputArchive archive( os );
+		archive(variant_reader);
+
 		// prepare output files
 		if (! only_phasing) variant_reader.open_genotyping_outfile(outname + "_genotyping.vcf");
 		if (! only_genotyping) variant_reader.open_phasing_outfile(outname + "_phasing.vcf");

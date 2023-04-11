@@ -88,12 +88,14 @@ int main (int argc, char* argv[])
 	Timer timer;
 	double time_preprocessing = 0.0;
 	double time_kmer_counting = 0.0;
+	double time_serialize_graph = 0.0;
 	double time_unique_kmers = 0.0;
 	double time_serialize = 0.0;
 	double time_total = 0.0;
 
 	struct rusage rss_preprocessing;
 	struct rusage rss_kmer_counting;
+	struct rusage rss_serialize_graph;
 	struct rusage rss_unique_kmers;
 	struct rusage rss_total;
 
@@ -187,6 +189,16 @@ int main (int argc, char* argv[])
 		getrusage(RUSAGE_SELF, &rss_kmer_counting);
 		time_kmer_counting = timer.get_interval_time();
 
+		cerr << "Serialize VariantReader object ..." << endl;
+		{
+  			ofstream os(outname + "_VariantReader.cereal", std::ios::binary);
+  			cereal::BinaryOutputArchive archive( os );
+			archive(variant_reader);
+		}
+
+		getrusage(RUSAGE_SELF, &rss_serialize_graph);
+		time_serialize_graph = timer.get_interval_time();
+
 
 		/**
 		* Step 3: determine unique k-mers for each variant bubble and prepare datastructure storing
@@ -240,6 +252,7 @@ int main (int argc, char* argv[])
 	// output times
 	cerr << "time spent reading input files:\t" << time_preprocessing << " sec" << endl;
 	cerr << "time spent counting kmers in genome (wallclock): \t" << time_kmer_counting << " sec" << endl;
+	cerr << "time spent writing VariantReader to disk: \t" << time_serialize_graph << " sec" << endl;
 	cerr << "time spent determining unique kmers: \t" << time_unique_kmers << " sec" << endl;
 	cerr << "time spent writing UniqueKmersMap to disk: \t" << time_serialize << " sec" << endl;
 	cerr << "total wallclock time: " << time_total  << " sec" << endl;
