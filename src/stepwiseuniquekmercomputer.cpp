@@ -158,6 +158,113 @@ void StepwiseUniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKm
 	gzclose(outfile);
 }
 
+
+void StepwiseUniqueKmerComputer::compute_unique_kmers_fasta(vector<shared_ptr<UniqueKmers>>* result, string filename , bool delete_processed_variants) {
+	gzFile outfile = gzopen(filename.c_str(), "wb");
+	if (!outfile) {
+		stringstream ss;
+		ss << "UniqueKmerComputer::compute_unique_kmers: File " << filename << " cannot be created. Note that the filename must not contain non-existing directories." << endl;
+		throw runtime_error(ss.str());
+	}
+
+	size_t kmer_size = this->variants->get_kmer_size();
+	size_t overhang_size = 2*kmer_size;
+
+	size_t nr_variants = this->variants->size_of(this->chromosome);
+	for (size_t v = 0; v < nr_variants; ++v) {
+		// set parameters of distributions
+		size_t kmer_size = this->variants->get_kmer_size();
+		
+		map <jellyfish::mer_dna, vector<unsigned char>> occurences;
+		const Variant& variant = this->variants->get_variant(this->chromosome, v);
+		stringstream outline;
+	
+		vector<unsigned char> path_to_alleles;
+		assert(variant.nr_of_paths() < 65535);
+		for (unsigned short p = 0; p < variant.nr_of_paths(); ++p) {
+			unsigned char a = variant.get_allele_on_path(p);
+			path_to_alleles.push_back(a);
+		}
+
+		shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers>(new UniqueKmers(variant.get_start_position(), path_to_alleles));
+		// set for 0 for now, since we do not know the kmer coverage yet
+		u->set_coverage(0);
+		size_t nr_alleles = variant.nr_of_alleles();
+
+		for (unsigned char a = 0; a < nr_alleles; ++a) {
+			// consider all alleles not undefined
+			if (variant.is_undefined_allele(a)) {
+				// skip kmers of alleles that are undefined
+				u->set_undefined_allele(a);
+				continue;
+			}
+			DnaSequence allele = variant.get_allele_sequence(a);
+			stepwise_unique_kmers(allele, a, kmer_size, occurences);
+		}
+
+		// check if kmers occur elsewhere in the genome
+		size_t nr_kmers_used = 0;
+		for (auto& kmer : occurences) {
+			if (nr_kmers_used > 300) break;
+
+			size_t genomic_count = this->genomic_kmers->getKmerAbundance(kmer.first);
+			size_t local_count = kmer.second.size();
+			if ( (genomic_count - local_count) == 0 ) {
+				// kmer unique to this region
+				// determine on which paths kmer occurs
+				vector<size_t> paths;
+				for (auto& allele : kmer.second) {
+					variant.get_paths_of_allele(allele, paths);
+				}
+
+				// skip kmer that does not occur on any path (uncovered allele)
+				if (paths.size() == 0) {
+					continue;
+				}
+
+				// skip kmer that occurs on all paths (they do not give any information about a genotype)
+				if (paths.size() == variant.nr_of_paths()) {
+					continue;
+				}
+
+				// set read kmer count to 0 for now, since we don't know it yet
+				u->insert_kmer(0, kmer.second); // ><u/f>_<kmer-index>_<variant-index>_<variant-position>
+				outline << ">u_" << nr_kmers_used << "_" << v << "_" << variant.get_start_position() << endl;
+				outline << kmer.first << "\n";
+				nr_kmers_used += 1;
+			}
+		}
+
+		// write unique kmers of left and right overhang to file
+		vector<string> flanking_kmers;
+		determine_unique_flanking_kmers(variant.get_chromosome(), v, overhang_size, flanking_kmers);
+		size_t f_index = 0;
+		for (auto& kmer : flanking_kmers) {
+			outline << ">f_" << f_index << "_" << v << "_" << variant.get_start_position() << "\n";
+			outline << kmer << "\n";
+			f_index +=1;
+		}
+	
+		gzwrite(outfile, outline.str().c_str(), outline.str().size());
+
+		result->push_back(u);
+
+		// if requested, delete variant objects once they are no longer needed
+		if (delete_processed_variants) {
+			if (v > 0) {
+				// previous variant object no longer needed
+				this->variants->delete_variant(chromosome, v - 1);
+			}
+			if (v == (nr_variants - 1)) {
+				// last variant object, can be deleted
+				this->variants->delete_variant(chromosome, v);
+			}
+		}
+	}
+	gzclose(outfile);
+}
+
+
 void StepwiseUniqueKmerComputer::compute_empty(vector<shared_ptr<UniqueKmers>>* result) const {
 	size_t nr_variants = this->variants->size_of(this->chromosome);
 	for (size_t v = 0; v < nr_variants; ++v) {

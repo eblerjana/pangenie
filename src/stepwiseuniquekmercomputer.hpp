@@ -23,6 +23,12 @@ public:
 	* @param delete_processed_variants if set to true, the VariantReader will be motified. Processed Variant objects will be deleted. Use with care!
 	 **/
 	void compute_unique_kmers(std::vector<std::shared_ptr<UniqueKmers>>* result, std::string filename,  bool delete_processed_variants = false);
+	/** generates UniqueKmers object for each position, ownership of vector is transferred to the caller. Writes output data in FASTA format.
+	* @param result	UniqueKmer objects will be stored here
+	* @param filename name of file to write kmer information to
+	* @param delete_processed_variants if set to true, the VariantReader will be motified. Processed Variant objects will be deleted. Use with care!
+	 **/
+	void compute_unique_kmers_fasta(std::vector<std::shared_ptr<UniqueKmers>>* result, std::string filename,  bool delete_processed_variants = false);
 	/** generates empty UniwueKmers objects for each position (no kmers, only paths). Ownership of vector is transferred to caller. **/
 	void compute_empty(std::vector<std::shared_ptr<UniqueKmers>>* result) const;
 

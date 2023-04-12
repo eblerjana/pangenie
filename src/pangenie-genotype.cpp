@@ -83,6 +83,101 @@ struct Results {
 };
 
 
+void fill_read_kmercounts_fasta(string chromosome, UniqueKmersMap* unique_kmers_map, shared_ptr<KmerCounter> read_kmer_counts, ProbabilityTable* probabilities, string outname, size_t kmer_coverage) {
+	Timer timer;
+	string filename = outname + "_" + chromosome + "_kmers.fa.gz";
+	gzFile file = gzopen(filename.c_str(), "rb");
+	if (!file) {
+		throw runtime_error("fill_read_kmercounts: kmer file cannot be opened.");
+	}
+
+	const int buffer_size = 1024;
+	char buffer[buffer_size];
+	string line;
+	size_t var_index = 0;
+	size_t kmer_index = 0;
+	bool is_flank = false;
+	vector<string> kmers = {};
+	vector<string> flanking_kmers = {};
+
+    while (gzgets(file, buffer, buffer_size) != nullptr) {
+        line += buffer;
+        if (line.back() == '\n') {
+			// remove newline character
+			line.pop_back();
+
+			if (line[0] == '>') {
+				// FASTA header line. Assumes this format: ><u/f>_<kmer-index>_<variant-index>_<variant-position>
+				vector<string> fields;
+				parse(fields, line, '_');
+				cout << line << endl;
+				assert(fields.size() == 4);
+				size_t read_var = atoi( fields[2].c_str() );
+				kmer_index = atoi( fields[1].c_str() );
+				if (read_var != var_index) {
+					// new variant, store previously read kmer information
+					size_t start = atoi(fields[3].c_str());
+					assert(start == unique_kmers_map->unique_kmers[chromosome][read_var]->get_variant_position());
+
+					{
+						size_t kmers_used = 0;
+						// add counts to UniqueKmers object
+						for (size_t i = 0; i < kmers.size(); ++i) {
+							assert (kmers_used <= 300);
+
+							size_t count = read_kmer_counts->getKmerAbundance(kmers[i]);
+
+							// skip kmers with too extreme counts
+							if (count > 2*kmer_coverage) continue;
+
+							// determine probabilities
+							CopyNumber cn = probabilities->get_probability(kmer_coverage, count);
+							long double p_cn0 = cn.get_probability_of(0);
+							long double p_cn1 = cn.get_probability_of(1);
+							long double p_cn2 = cn.get_probability_of(2);
+
+							// skip kmers with only 0 probabilities
+							if ( (p_cn0 > 0) || (p_cn1 > 0) || (p_cn2 > 0) ) {
+								kmers_used += 1;
+								lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
+								unique_kmers_map->unique_kmers[chromosome][var_index]->update_readcount(i, count);
+							}
+						}
+					}
+
+					// determine local kmer coverage
+					unsigned short local_coverage = compute_local_coverage(flanking_kmers, read_kmer_counts, kmer_coverage);
+
+					lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
+					unique_kmers_map->unique_kmers[chromosome][var_index]->set_coverage(local_coverage);
+
+					// clear for next variant
+					kmers = {};
+					flanking_kmers = {};
+					var_index = read_var;
+					is_flank = false;
+				} else {
+					is_flank = (fields[0] == ">f");
+				}
+			} else {
+				if (is_flank) {
+					assert (kmer_index == flanking_kmers.size());
+					flanking_kmers.push_back(line);
+				} else {
+					assert (kmer_index == kmers.size());
+					kmers.push_back(line);
+				}
+			}
+			line.clear();
+        }
+    }
+	gzclose(file);
+	// store runtime
+	lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
+	unique_kmers_map->runtimes[chromosome] = timer.get_total_time();
+}
+
+
 void fill_read_kmercounts(string chromosome, UniqueKmersMap* unique_kmers_map, shared_ptr<KmerCounter> read_kmer_counts, ProbabilityTable* probabilities, string outname, size_t kmer_coverage) {
 	Timer timer;
 	string filename = outname + "_" + chromosome + "_kmers.tsv.gz";
@@ -398,7 +493,7 @@ int main (int argc, char* argv[])
 				for (auto chromosome : chromosomes) {
 					UniqueKmersMap* unique_kmers = &unique_kmers_list;
 					ProbabilityTable* probs = &probabilities;
-					function<void()> f_fill_readkmers = bind(fill_read_kmercounts, chromosome, unique_kmers, read_kmer_counts, probs, precomputed_prefix, kmer_abundance_peak);
+					function<void()> f_fill_readkmers = bind(fill_read_kmercounts_fasta, chromosome, unique_kmers, read_kmer_counts, probs, precomputed_prefix, kmer_abundance_peak);
 					threadPool.submit(f_fill_readkmers);
 				}
 			}
