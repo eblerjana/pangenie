@@ -7,7 +7,9 @@ using namespace std;
 
 GenotypingResult::GenotypingResult()
 	:haplotype_1(0),
-	 haplotype_2(0)
+	 haplotype_2(0),
+	 local_coverage(0),
+	 unique_kmers(0)
 {}
 
 pair<unsigned char, unsigned char> genotype_from_alleles (unsigned char allele1, unsigned char allele2) {
@@ -150,6 +152,8 @@ pair<int, int> GenotypingResult::get_likeliest_genotype() const {
 ostream& operator<<(ostream& os, const GenotypingResult& res) {
 	os << "haplotype allele 1: " << res.haplotype_1 << endl;
 	os << "haplotype allele 2: " << res.haplotype_2 << endl;
+	os << "local coverage: " << res.local_coverage << endl;
+	os << "nr of unique kmers: " << res.unique_kmers << endl;
 	for (auto it = res.genotype_to_likelihood.begin(); it != res.genotype_to_likelihood.end(); ++it) {
 		os << (unsigned int) it->first.first << "/" << (unsigned int) it->first.second << ": " << it->second << endl;
 	}
@@ -173,4 +177,22 @@ void GenotypingResult::normalize () {
 	if (normalization_sum > 0) {
 		this->divide_likelihoods_by(normalization_sum);
 	}
+}
+
+void GenotypingResult::set_unique_kmers(unsigned short nr_unique_kmers) {
+	assert (nr_unique_kmers < 65536);
+	this->unique_kmers = nr_unique_kmers;
+}
+
+void GenotypingResult::set_coverage(unsigned short coverage) {
+	assert (coverage < 65536);
+	this->local_coverage = coverage;
+}
+
+unsigned short GenotypingResult::nr_unique_kmers() const {
+	return this->unique_kmers;
+}
+
+unsigned short GenotypingResult::coverage() const {
+	return this->local_coverage;
 }

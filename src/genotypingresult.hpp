@@ -46,6 +46,10 @@ public:
 	 **/
 	void combine(GenotypingResult& likelihoods);
 	void normalize();
+	void set_unique_kmers(unsigned short nr_unique_kmers);
+	void set_coverage(unsigned short coverage);
+	unsigned short nr_unique_kmers() const;
+	unsigned short coverage() const;
 
 	template<class Archive>
 	void serialize(Archive& archive) {
@@ -57,6 +61,8 @@ private:
 	std::map < std::pair<unsigned char,unsigned char>, long double > genotype_to_likelihood;
 	unsigned char haplotype_1;
 	unsigned char haplotype_2;
+	unsigned short local_coverage;
+	unsigned short unique_kmers;
 	friend cereal::access;
 };
 #endif // GENOTYPINGRESULT_HPP

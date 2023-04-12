@@ -410,7 +410,7 @@ void VariantReader::open_phasing_outfile(string filename) {
 	this->phasing_outfile << "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t" << this->sample << endl;
 }
 
-void VariantReader::write_genotypes_of(string chromosome, const vector<GenotypingResult>& genotyping_result, vector<shared_ptr<UniqueKmers>>* unique_kmers, bool ignore_imputed) {
+void VariantReader::write_genotypes_of(string chromosome, const vector<GenotypingResult>& genotyping_result, bool ignore_imputed) {
 	if (this->variants_deleted) {
 		throw runtime_error("VariantReader::write_genotypes_of: variants have been deleted by delete_variant funtion. Re-build object.");
 	}
@@ -431,13 +431,13 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 	size_t counter = 0;
 	for (size_t i = 0; i < size_of(chromosome); ++i) {
 		shared_ptr<Variant> variant = this->variants_per_chromosome.at(chromosome)[i];
+		unsigned short coverage = genotyping_result.at(i).coverage();
+		unsigned short nr_unique_kmers = genotyping_result.at(i).nr_unique_kmers();
 
 		// separate (possibly combined) variant into single variants and print a line for each
 		vector<Variant> singleton_variants;
 		vector<GenotypingResult> singleton_likelihoods;
-		vector<VariantStats> singleton_stats;
 		variant->separate_variants(&singleton_variants, &genotyping_result.at(i), &singleton_likelihoods);
-		variant->variant_statistics(unique_kmers->at(i), singleton_stats);
 
 		for (size_t j = 0; j < singleton_variants.size(); ++j) {
 			Variant v = singleton_variants[j];
@@ -489,12 +489,7 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 			if (nr_missing > 0) genotype_likelihoods = singleton_likelihoods.at(j).get_specific_likelihoods(defined_alleles);
 			nr_alleles = defined_alleles.size();
 
-			info << ";UK=" << singleton_stats.at(j).nr_unique_kmers; // UK
-			info << ";AK="; // AK
-			for (unsigned int a = 0; a < nr_alleles; ++a) {
-				if (a > 0) info << ",";
-				info << singleton_stats.at(j).kmer_counts[a];
-			}
+			info << ";UK=" << nr_unique_kmers; // UK
 			info << ";MA=" << nr_missing;
 	
 			// if IDs were given in input, write them to output as well
@@ -504,7 +499,7 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 
 			// determine computed genotype
 			pair<int,int> genotype = genotype_likelihoods.get_likeliest_genotype();
-			if (ignore_imputed && (singleton_stats.at(j).nr_unique_kmers == 0)) genotype = {-1,-1};
+			if (ignore_imputed && (nr_unique_kmers == 0)) genotype = {-1,-1};
 			if ( (genotype.first != -1) && (genotype.second != -1)) {
 
 				// unique maximum and therefore a likeliest genotype exists
@@ -531,13 +526,13 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 				oss << "," << setprecision(4) << log10(likelihoods[j]);
 			}
 			this->genotyping_outfile << oss.str(); // GL
-			this->genotyping_outfile << ":" << singleton_stats[j].coverage << endl; // KC
+			this->genotyping_outfile << ":" << coverage << endl; // KC
 			counter += 1;
 		}
 	}
 }
 
-void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingResult>& genotyping_result, vector<shared_ptr<UniqueKmers>>* unique_kmers, bool ignore_imputed) {
+void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingResult>& genotyping_result, bool ignore_imputed) {
 	if (this->variants_deleted) {
 		throw runtime_error("VariantReader::write_phasing_of: variants have been deleted by delete_variant funtion. Re-build object.");
 	}
@@ -552,13 +547,13 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 	size_t counter = 0;
 	for (size_t i = 0; i < size_of(chromosome); ++i) {
 		shared_ptr<Variant> variant = this->variants_per_chromosome.at(chromosome)[i];
+		unsigned short coverage = genotyping_result.at(i).coverage();
+		unsigned short nr_unique_kmers = genotyping_result.at(i).nr_unique_kmers();
 
 		// separate (possibly combined) variant into single variants and print a line for each
 		vector<Variant> singleton_variants;
 		vector<GenotypingResult> singleton_likelihoods;
 		variant->separate_variants(&singleton_variants, &genotyping_result.at(i), &singleton_likelihoods);
-		vector<VariantStats> singleton_stats;
-		variant->variant_statistics(unique_kmers->at(i), singleton_stats);
 
 		for (size_t j = 0; j < singleton_variants.size(); ++j) {
 			Variant v = singleton_variants[j];
@@ -607,13 +602,7 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 				if (a > 1) info << ",";
 				info << setprecision(6) << v.allele_frequency(defined_alleles[a], this->add_reference);				
 			}
-			info << ";UK=" << singleton_stats.at(j).nr_unique_kmers; // UK
-			info << ";AK="; // AK
-			for (unsigned int a = 0; a < nr_alleles; ++a) {
-				if (a > 0) info << ",";
-				info << singleton_stats.at(j).kmer_counts[a];
-			}
-
+			info << ";UK=" << nr_unique_kmers; // UK
 			info << ";MA=" << nr_missing;
 
 			// if IDs were given in input, write them to output as well
@@ -623,7 +612,7 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 			this->phasing_outfile << "GT:KC" << "\t"; // FORMAT
 
 			// determine phasing
-			if (ignore_imputed && (singleton_stats.at(j).nr_unique_kmers == 0)){
+			if (ignore_imputed && (nr_unique_kmers == 0)){
 				this->phasing_outfile << "./."; // GT (phased)
 			} else {
 				pair<unsigned char,unsigned char> haplotype = singleton_likelihoods.at(j).get_haplotype();
@@ -636,7 +625,7 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 				if (hap2_undefined) hap2 = ".";
 				this->phasing_outfile << (unsigned int) haplotype.first << "|" << (unsigned int) haplotype.second; // GT (phased)
 			}
-			this->phasing_outfile << ":" << singleton_stats[j].coverage << endl; // KC
+			this->phasing_outfile << ":" << coverage << endl; // KC
 			counter += 1;
 		}
 	}

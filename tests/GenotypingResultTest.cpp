@@ -253,3 +253,11 @@ TEST_CASE("GenotypingResult normalize", "[GenotypingResult normalize]") {
 	REQUIRE(doubles_equal(g.get_genotype_likelihood(0,1), 0.2));
 	REQUIRE(doubles_equal(g.get_genotype_likelihood(0,0), 0.4));
 }
+
+TEST_CASE("GenotypingResult coverage_kmers", "[GenotypingResult coverage_kmers]") {
+	GenotypingResult g;
+	g.set_coverage(30);
+	REQUIRE(g.coverage() == 30);
+	g.set_unique_kmers(300);
+	REQUIRE(g.nr_unique_kmers() == 300);
+}

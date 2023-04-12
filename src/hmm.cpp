@@ -100,6 +100,9 @@ void HMM::compute_backward_prob() {
 	// backward pass
 	for (int column_index = column_count-1; column_index >= 0; --column_index) {
 		compute_backward_column(column_index);
+		// store number of unique kmers and coverage
+		this->genotyping_result.at(column_index).set_unique_kmers(this->unique_kmers->at(column_index)->size());
+		this->genotyping_result.at(column_index).set_coverage(this->unique_kmers->at(column_index)->get_coverage());
 	}
 }
 
@@ -155,6 +158,8 @@ void HMM::compute_viterbi_path() {
 		size_t variant_id = this->column_indexer->get_variant_id(column_index);
 		this->genotyping_result.at(variant_id).add_first_haplotype_allele(allele1);
 		this->genotyping_result.at(variant_id).add_second_haplotype_allele(allele2);
+		this->genotyping_result.at(column_index).set_unique_kmers(this->unique_kmers->at(column_index)->size());
+		this->genotyping_result.at(column_index).set_coverage(this->unique_kmers->at(column_index)->get_coverage());
 
 		if (column_index == 0) break;
 
