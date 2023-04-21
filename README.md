@@ -162,6 +162,8 @@ Per default, PanGenie uses a single thread. The number of threads used for k-mer
 
 We have already produced input reference panels for several datasets from high-quality, haplotype-resolved assemblies that can be used as input to PanGenie. These files were used to produce genotyping results for the HGSVC and HPRC projects. Genotypes for 3,202 samples from the 1000 Genomes Project produced based on these VCFs are also linked below.
 
+**Note**: results produced by different versions of PanGenie are not directly comparable, since newer versions of PanGenie produce more accurate genotyping results.
+
 ### PanGenie v1.0.0
 
 | Dataset | PanGenie input VCF        |  Callset VCF         | 1000G Genotypes (n=3,202)  |
@@ -174,10 +176,8 @@ We have already produced input reference panels for several datasets from high-q
 
 | Dataset | PanGenie input VCF        |  Callset VCF         | 1000G Genotypes (n=3,202)  |
 |-------------| :-------------: |:-------------:| -----:|
-| HPRC-CHM13 (88 haplotypes) | [graph-VCF](https://zenodo.org/record/7660118/files/cactus_filtered_ids_chm13.vcf.gz?download=1) |      |   |
+| HPRC-CHM13 (88 haplotypes) | [graph-VCF](https://zenodo.org/record/7839719/files/chm13_cactus_filtered_ids.vcf.gz?download=1) | [callset-VCF](https://zenodo.org/record/7839719/files/chm13_cactus_filtered_ids_biallelic.vcf.gz?download=1)   |  [1000G-VCF](https://zenodo.org/record/7839719/files/chm13_all-samples_bi_all.vcf.gz?download=1) (PanGenie v2.1.1) |
 
-
-**Note**: Results produced by different versions of PanGenie are not directly comparable, since newer versions of PanGenie produce more accurate genotyping results.
 
 In all cases, the graph-VCFs provided in the second column were given as input to PanGenie. The callset-VCFs (third column) were used to convert the genotyped VCFs into a biallelic, callset representation using the following command:
 
