@@ -511,8 +511,8 @@ vector<GenotypingResult> HMM::get_genotyping_result() const {
 	return this->genotyping_result;
 }
 
-const vector<GenotypingResult>& HMM::get_ref_genotyping_result() const {
-	return this->genotyping_result;
+vector<GenotypingResult> HMM::move_genotyping_result() {
+	return move(this->genotyping_result);
 }
 
 void HMM::combine_likelihoods(HMM& other) {

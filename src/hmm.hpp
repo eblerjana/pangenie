@@ -40,10 +40,10 @@ public:
 	void combine_likelihoods(HMM& other);
 	/** normalize computed genotype likelihoods **/
 	void normalize();
-	/** return const reference to genotyping result **/
-	const std::vector<GenotypingResult>& get_ref_genotyping_result() const;
 	/** return copy of genotyping result */
 	std::vector<GenotypingResult> get_genotyping_result() const;
+	/** moves the GenotypingResults to the caller such that they will no longer be stored in the class. Use with care! **/
+	std::vector<GenotypingResult> move_genotyping_result();
 	~HMM();
 
 	template<class Archive>

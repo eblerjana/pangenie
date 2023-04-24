@@ -79,11 +79,11 @@ public:
 
 	/** 
 	* @param readfile name of the FASTQ-files containing reads
-	* @param kmerfile only count kmers contained in sequences given in this FASTQ-file
+	* @param kmerfile only count kmers contained in sequences given in these FASTQ-files
 	* @param *params parameters for GATB-Kmercounter
 	* @param name of the output file
 	**/
-	JellyfishCounter (std::string readfile, std::string kmerfile, size_t kmer_size, size_t nr_threads = 1, uint64_t hash = 3000000000);
+	JellyfishCounter (std::string readfile, std::vector<std::string> kmerfiles, size_t kmer_size, size_t nr_threads = 1, uint64_t hash = 3000000000);
 
 	~JellyfishCounter();
 	
