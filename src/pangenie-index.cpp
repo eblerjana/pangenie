@@ -70,8 +70,8 @@ void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, V
 	Timer timer;
 	StepwiseUniqueKmerComputer kmer_computer(genomic_kmer_counts, variant_reader, chromosome);
 	std::vector<shared_ptr<UniqueKmers>> unique_kmers;
-	string filename = outname + "_" + chromosome + "_kmers.fa.gz";
-	kmer_computer.compute_unique_kmers_fasta(&unique_kmers, filename, true);
+	string filename = outname + "_" + chromosome + "_kmers.tsv.gz";
+	kmer_computer.compute_unique_kmers(&unique_kmers, filename, true);
 	// store the results
 	{
 		lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
