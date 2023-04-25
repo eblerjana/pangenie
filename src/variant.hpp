@@ -110,6 +110,7 @@ private:
 	bool flanks_added;
 	void set_values(size_t end_position);
 	friend cereal::access;
+	friend Graph;
 };
 
 #endif //VARIANT_HPP

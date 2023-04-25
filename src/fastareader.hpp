@@ -31,6 +31,11 @@ public:
 	/** get a subsequence **/
 	void get_subsequence(std::string name, size_t start, size_t end, std::string& result) const;
 	void get_subsequence(std::string name, size_t start, size_t end, DnaSequence& result) const;
+	/** creates a new FastaReader object containing the sequence of the given sequence name. 
+	* This sequence will no longer be stored in the current object (i.e. it will be moved to the
+	* resulting FastaReader)
+	**/
+	FastaReader extract_name(std::string chromosome);
 
 	template<class Archive>
 	void serialize(Archive& archive) {
