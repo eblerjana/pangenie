@@ -97,7 +97,8 @@ FastaReader FastaReader::extract_name(std::string name) {
 		// sequence name exists. Extract it
 		FastaReader extracted;
 		extracted.name_to_sequence[name] = move(it->second);
-		this->map_to_sequence.erase(it);
+		this->name_to_sequence.erase(it);
+		return extracted;
 	} else {
 		throw runtime_error("FastaReader::extract_name: chromosome " + name + " is not present in FASTA-file.");		
 	}

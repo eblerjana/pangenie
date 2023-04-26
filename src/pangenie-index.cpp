@@ -14,11 +14,12 @@
 #include "jellyfishreader.hpp"
 #include "jellyfishcounter.hpp"
 #include "copynumber.hpp"
-#include "variantreader.hpp"
+#include "graphbuilder.hpp"
 #include "stepwiseuniquekmercomputer.hpp"
 #include "commandlineparser.hpp"
 #include "timer.hpp"
 #include "threadpool.hpp"
+#include "graph.hpp"
 
 
 
@@ -66,9 +67,9 @@ struct UniqueKmersMap {
 };
 
 
-void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, VariantReader* variant_reader, UniqueKmersMap* unique_kmers_map, string outname) {
+void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, shared_ptr<Graph> graph, UniqueKmersMap* unique_kmers_map, string outname) {
 	Timer timer;
-	StepwiseUniqueKmerComputer kmer_computer(genomic_kmer_counts, variant_reader, chromosome);
+	StepwiseUniqueKmerComputer kmer_computer(genomic_kmer_counts, graph);
 	std::vector<shared_ptr<UniqueKmers>> unique_kmers;
 	string filename = outname + "_" + chromosome + "_kmers.tsv.gz";
 	kmer_computer.compute_unique_kmers(&unique_kmers, filename, true);
@@ -167,13 +168,11 @@ int main (int argc, char* argv[])
 		*   and write allele sequences and unitigs inbetween to a file.
 		**/ 
 		cerr << "Determine allele sequences ..." << endl;
-		VariantReader variant_reader (vcffile, reffile, kmersize, add_reference);
-
-		cerr << "Write path segments to file: " << segment_file << " ..." << endl;
-		variant_reader.write_path_segments(segment_file);
+		map<string, shared_ptr<Graph>> graph;
+		GraphBuilder graph_builder (vcffile, reffile, graph, segment_file, kmersize, add_reference);
 
 		// determine chromosomes present in VCF
-		variant_reader.get_chromosomes(&chromosomes);
+		graph_builder.get_chromosomes(&chromosomes);
 		cerr << "Found " << chromosomes.size() << " chromosome(s) in the VCF." << endl;
 
 		getrusage(RUSAGE_SELF, &rss_preprocessing);
@@ -189,11 +188,11 @@ int main (int argc, char* argv[])
 		getrusage(RUSAGE_SELF, &rss_kmer_counting);
 		time_kmer_counting = timer.get_interval_time();
 
-		cerr << "Serialize VariantReader object ..." << endl;
-		{
-  			ofstream os(outname + "_VariantReader.cereal", std::ios::binary);
+		cerr << "Serialize Graph objects ..." << endl;
+		for (auto chromosome : chromosomes) {
+  			ofstream os(outname + "_" + chromosome + "_Graph.cereal", std::ios::binary);
   			cereal::BinaryOutputArchive archive( os );
-			archive(variant_reader);
+			archive(graph.at(chromosome));;
 		}
 
 		getrusage(RUSAGE_SELF, &rss_serialize_graph);
@@ -203,7 +202,7 @@ int main (int argc, char* argv[])
 		/**
 		* Step 3: determine unique k-mers for each variant bubble and prepare datastructure storing
 		* that information. It will later be used for the genotyping step. 
-		* This step will delete information from the VariantReader that will no longer be used.
+		* This step will delete information from the GraphBuilder that will no longer be used.
 		**/
 
 		cerr << "Determine unique kmers ..." << endl;
@@ -218,10 +217,10 @@ int main (int argc, char* argv[])
 			// create thread pool with at most nr_chromosome threads
 			ThreadPool threadPool (nr_cores_uk);
 			for (auto chromosome : chromosomes) {
-				VariantReader* variants = &variant_reader;
+				shared_ptr<Graph> graph_segment = graph.at(chromosome);
 				UniqueKmersMap* result = &unique_kmers_list;
 				KmerCounter* genomic_counts = &genomic_kmer_counts;
-				function<void()> f_unique_kmers = bind(prepare_unique_kmers, chromosome, genomic_counts, variants, result, outname);
+				function<void()> f_unique_kmers = bind(prepare_unique_kmers, chromosome, genomic_counts, graph_segment, result, outname);
 				threadPool.submit(f_unique_kmers);
 			}
 		}

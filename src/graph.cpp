@@ -3,13 +3,13 @@
 #include <iomanip>
 #include <math.h>
 #include <regex>
-#include "variantreader.hpp"
+#include "graphbuilder.hpp"
 #include "graph.hpp"
 
 using namespace std;
 
 
-string get_date() {
+string graph_get_date() {
 	time_t t = time(0);
 	tm* now = localtime(&t);
 	ostringstream oss;
@@ -29,13 +29,15 @@ void Graph::insert_ids(vector<DnaSequence>& alleles, vector<string>& variant_ids
 }
 
 string Graph::get_ids(vector<string>& alleles, size_t variant_index, bool reference_added) {
+	cout << "INSIDE1" << endl;
 	vector<unsigned char> index = construct_index(alleles, reference_added);
+	cout << "INSIDE2" << endl;
 	assert(index.size() < 256);
 	vector<string> sorted_ids(index.size());
 	for (unsigned char i = 0; i < index.size(); ++i) {
 		sorted_ids[index[i]] = this->variant_ids.at(variant_index)[i];
 	}
-
+	cout << "INSIDE3" << endl;
 	string result = "";
 	for (unsigned char i = 0; i < sorted_ids.size(); ++i) {
 		if (i > 0) result += ',';
@@ -75,13 +77,13 @@ void Graph::add_variant_cluster(vector<shared_ptr<Variant>>* cluster, vector<vec
 		combined->add_flanking_sequence();
 		this->variants.push_back(combined);
 
-		assert(cluster.size() == variant_ids.size());
+		assert(cluster->size() == variant_ids.size());
 
 		// store variant ids
 		for (size_t i = 0; i < variant_ids.size(); ++i) {
 			if (!variant_ids[i].empty()) {
 				assert (cluster->at(i)->allele_sequences.size() == 1);
-				insert_ids(cluster->at(i)->allele_sequences.at(0), variant_ids[i], this->reference_added);
+				insert_ids(cluster->at(i)->allele_sequences.at(0), variant_ids[i], this->add_reference);
 			} else {
 				this->variant_ids.push_back(vector<string>());
 			}
@@ -101,6 +103,10 @@ const Variant& Graph::get_variant(size_t index) const {
 	}
 }
 
+const FastaReader& Graph::get_fasta_reader() const {
+	return this->fasta_reader;
+}
+
 void Graph::write_genotypes(string filename, const vector<GenotypingResult>& genotyping_result, bool write_header, string sample, bool ignore_imputed) {
 	if (this->variants_deleted) {
 		throw runtime_error("Graph::write_genotypes_of: variants have been deleted by delete_variant funtion. Re-build object.");
@@ -112,14 +118,14 @@ void Graph::write_genotypes(string filename, const vector<GenotypingResult>& gen
 
 	ofstream genotyping_outfile;
 	if (write_header) {
-		genotyping_outfile.open(filename, std::ios_base::app);
+		genotyping_outfile.open(filename);
 		if (! genotyping_outfile.is_open()) {
 			throw runtime_error("Graph::write_genotypes_of: genotyping output file cannot be opened. Note that the filename must not contain non-existing directories.");
 		}
 		
 		// write VCF header lines
 		genotyping_outfile << "##fileformat=VCFv4.2" << endl;
-		genotyping_outfile << "##fileDate=" << get_date() << endl;
+		genotyping_outfile << "##fileDate=" << graph_get_date() << endl;
 		// TODO output command line
 		genotyping_outfile << "##INFO=<ID=AF,Number=A,Type=Float,Description=\"Allele Frequency\">" << endl;
 		genotyping_outfile << "##INFO=<ID=UK,Number=1,Type=Integer,Description=\"Total number of unique kmers.\">" << endl;
@@ -132,7 +138,7 @@ void Graph::write_genotypes(string filename, const vector<GenotypingResult>& gen
 		genotyping_outfile << "##FORMAT=<ID=KC,Number=1,Type=Float,Description=\"Local kmer coverage.\">" << endl;
 		genotyping_outfile << "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t" << sample << endl; 
 	} else {
-		genotyping_outfile.open(filename);
+		genotyping_outfile.open(filename, std::ios_base::app);
 		if (! genotyping_outfile.is_open()) {
 			throw runtime_error("Graph::write_genotypes_of: genotyping output file cannot be opened. Note that the filename must not contain non-existing directories.");
 		}
@@ -152,10 +158,10 @@ void Graph::write_genotypes(string filename, const vector<GenotypingResult>& gen
 		for (size_t j = 0; j < singleton_variants.size(); ++j) {
 			Variant v = singleton_variants[j];
 			v.remove_flanking_sequence();
-			this->genotyping_outfile << v.get_chromosome() << "\t"; // CHROM
-			this->genotyping_outfile << (v.get_start_position() + 1) << "\t"; // POS
-			this->genotyping_outfile << v.get_id() << "\t"; // ID
-			this->genotyping_outfile << v.get_allele_string(0) << "\t"; // REF
+			genotyping_outfile << v.get_chromosome() << "\t"; // CHROM
+			genotyping_outfile << (v.get_start_position() + 1) << "\t"; // POS
+			genotyping_outfile << v.get_id() << "\t"; // ID
+			genotyping_outfile << v.get_allele_string(0) << "\t"; // REF
 
 			// get alternative allele
 			size_t nr_alleles = v.nr_of_alleles();
@@ -182,9 +188,9 @@ void Graph::write_genotypes(string filename, const vector<GenotypingResult>& gen
 				alt_string += alt_alleles[a];
 			}
 
-			this->genotyping_outfile << alt_string << "\t"; // ALT
-			this->genotyping_outfile << ".\t"; // QUAL
-			this->genotyping_outfile << "PASS" << "\t"; // FILTER
+			genotyping_outfile << alt_string << "\t"; // ALT
+			genotyping_outfile << ".\t"; // QUAL
+			genotyping_outfile << "PASS" << "\t"; // FILTER
 			// output allele frequencies of all alleles
 			ostringstream info;
 			info << "AF="; // AF
@@ -204,8 +210,8 @@ void Graph::write_genotypes(string filename, const vector<GenotypingResult>& gen
 	
 			// if IDs were given in input, write them to output as well
 			if (!this->variant_ids[counter].empty()) info << ";ID=" << get_ids(alt_alleles, counter, false);
-			this->genotyping_outfile << info.str() << "\t"; // INFO
-			this->genotyping_outfile << "GT:GQ:GL:KC" << "\t"; // FORMAT
+			genotyping_outfile << info.str() << "\t"; // INFO
+			genotyping_outfile << "GT:GQ:GL:KC" << "\t"; // FORMAT
 
 			// determine computed genotype
 			pair<int,int> genotype = genotype_likelihoods.get_likeliest_genotype();
@@ -213,13 +219,13 @@ void Graph::write_genotypes(string filename, const vector<GenotypingResult>& gen
 			if ( (genotype.first != -1) && (genotype.second != -1)) {
 
 				// unique maximum and therefore a likeliest genotype exists
-				this->genotyping_outfile << genotype.first << "/" << genotype.second << ":"; // GT
+				genotyping_outfile << genotype.first << "/" << genotype.second << ":"; // GT
 
 				// output genotype quality
-				this->genotyping_outfile << genotype_likelihoods.get_genotype_quality(genotype.first, genotype.second) << ":"; // GQ
+				genotyping_outfile << genotype_likelihoods.get_genotype_quality(genotype.first, genotype.second) << ":"; // GQ
 			} else {
 				// genotype could not be determined 
-				this->genotyping_outfile << ".:.:"; // GT:GQ
+				genotyping_outfile << ".:.:"; // GT:GQ
 			}
 
 			// output genotype likelihoods
@@ -235,14 +241,14 @@ void Graph::write_genotypes(string filename, const vector<GenotypingResult>& gen
 			for (size_t j = 1; j < likelihoods.size(); ++j) {
 				oss << "," << setprecision(4) << log10(likelihoods[j]);
 			}
-			this->genotyping_outfile << oss.str(); // GL
-			this->genotyping_outfile << ":" << coverage << endl; // KC
+			genotyping_outfile << oss.str(); // GL
+			genotyping_outfile << ":" << coverage << endl; // KC
 			counter += 1;
 		}
 	}
 }
 
-void Graph::write_phasing(string filename, const vector<GenotypingResult>& genotyping_result, bools write_header, string sample, bool ignore_imputed) {
+void Graph::write_phasing(string filename, const vector<GenotypingResult>& genotyping_result, bool write_header, string sample, bool ignore_imputed) {
 	if (this->variants_deleted) {
 		throw runtime_error("Graph::write_phasing_of: variants have been deleted by delete_variant funtion. Re-build object.");
 	}
@@ -253,14 +259,14 @@ void Graph::write_phasing(string filename, const vector<GenotypingResult>& genot
 
 	ofstream phasing_outfile;
 	if (write_header) {
-		phasing_outfile.open(filename, std::ios_base::app);
+		phasing_outfile.open(filename);
 		if (! phasing_outfile.is_open()) {
 			throw runtime_error("Graph::write_phasing_of: phasing output file cannot be opened. Note that the filename must not contain non-existing directories.");
 		}
 
 		// write VCF header lines
 		phasing_outfile << "##fileformat=VCFv4.2" << endl;
-		phasing_outfile << "##fileDate=" << get_date() << endl;
+		phasing_outfile << "##fileDate=" << graph_get_date() << endl;
 		// TODO output command line
 		phasing_outfile << "##INFO=<ID=AF,Number=A,Type=Float,Description=\"Allele Frequency\">" << endl;
 		phasing_outfile << "##INFO=<ID=UK,Number=1,Type=Integer,Description=\"Total number of unique kmers.\">" << endl;
@@ -271,14 +277,14 @@ void Graph::write_phasing(string filename, const vector<GenotypingResult>& genot
 		phasing_outfile << "##FORMAT=<ID=KC,Number=1,Type=Float,Description=\"Local kmer coverage.\">" << endl;
 		phasing_outfile << "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t" << sample << endl;
 	} else {
-		phasing_outfile.open(filename);
+		phasing_outfile.open(filename, std::ios_base::app);
 		if (! phasing_outfile.is_open()) {
 			throw runtime_error("Graph::write_phasing_of: phasing output file cannot be opened. Note that the filename must not contain non-existing directories.");
 		}
 	}
 
 	size_t counter = 0;
-	for (size_t i = 0; i < this->size()); ++i) {
+	for (size_t i = 0; i < this->size(); ++i) {
 		shared_ptr<Variant> variant = this->variants.at(i);
 		unsigned short coverage = genotyping_result.at(i).coverage();
 		unsigned short nr_unique_kmers = genotyping_result.at(i).nr_unique_kmers();
@@ -291,10 +297,10 @@ void Graph::write_phasing(string filename, const vector<GenotypingResult>& genot
 		for (size_t j = 0; j < singleton_variants.size(); ++j) {
 			Variant v = singleton_variants[j];
 			v.remove_flanking_sequence();
-			this->phasing_outfile << v.get_chromosome() << "\t"; // CHROM
-			this->phasing_outfile << (v.get_start_position() + 1) << "\t"; // POS
-			this->phasing_outfile << v.get_id() << "\t"; // ID
-			this->phasing_outfile << v.get_allele_string(0) << "\t"; // REF
+			phasing_outfile << v.get_chromosome() << "\t"; // CHROM
+			phasing_outfile << (v.get_start_position() + 1) << "\t"; // POS
+			phasing_outfile << v.get_id() << "\t"; // ID
+			phasing_outfile << v.get_allele_string(0) << "\t"; // REF
 
 			// get alternative alleles
 			size_t nr_alleles = v.nr_of_alleles();
@@ -325,9 +331,9 @@ void Graph::write_phasing(string filename, const vector<GenotypingResult>& genot
 			GenotypingResult genotype_likelihoods = singleton_likelihoods.at(j);
 			if (nr_missing > 0) genotype_likelihoods = singleton_likelihoods.at(j).get_specific_likelihoods(defined_alleles);
 
-			this->phasing_outfile << alt_string << "\t"; // ALT
-			this->phasing_outfile << ".\t"; // QUAL
-			this->phasing_outfile << "PASS" << "\t"; // FILTER
+			phasing_outfile << alt_string << "\t"; // ALT
+			phasing_outfile << ".\t"; // QUAL
+			phasing_outfile << "PASS" << "\t"; // FILTER
 			// output allele frequencies of all alleles
 			ostringstream info;
 			info << "AF=";
@@ -341,12 +347,12 @@ void Graph::write_phasing(string filename, const vector<GenotypingResult>& genot
 			// if IDs were given in input, write them to output as well
 			if (!this->variant_ids[counter].empty()) info << ";ID=" << get_ids(alt_alleles, counter, false);
 
-			this->phasing_outfile << info.str() << "\t"; // INFO
-			this->phasing_outfile << "GT:KC" << "\t"; // FORMAT
+			phasing_outfile << info.str() << "\t"; // INFO
+			phasing_outfile << "GT:KC" << "\t"; // FORMAT
 
 			// determine phasing
 			if (ignore_imputed && (nr_unique_kmers == 0)){
-				this->phasing_outfile << "./."; // GT (phased)
+				phasing_outfile << "./."; // GT (phased)
 			} else {
 				pair<unsigned char,unsigned char> haplotype = singleton_likelihoods.at(j).get_haplotype();
 				// check if the haplotype allele is undefined
@@ -356,9 +362,9 @@ void Graph::write_phasing(string filename, const vector<GenotypingResult>& genot
 				string hap2 (1, haplotype.second);
 				if (hap1_undefined) hap1 = ".";
 				if (hap2_undefined) hap2 = ".";
-				this->phasing_outfile << (unsigned int) haplotype.first << "|" << (unsigned int) haplotype.second; // GT (phased)
+				phasing_outfile << (unsigned int) haplotype.first << "|" << (unsigned int) haplotype.second; // GT (phased)
 			}
-			this->phasing_outfile << ":" << coverage << endl; // KC
+			phasing_outfile << ":" << coverage << endl; // KC
 			counter += 1;
 		}
 	}
@@ -415,4 +421,8 @@ void Graph::delete_variant(size_t index) {
 	} else {
 		throw runtime_error("Graph::get_variant: index out of bounds.");
 	}
+}
+
+bool Graph::variants_were_deleted() const {
+	return this->variants_deleted;
 }

@@ -6,6 +6,8 @@ add_library(PanGenieLib SHARED
 	dnasequence.cpp
 	fastareader.cpp
 	genotypingresult.cpp
+	graphbuilder.cpp
+	graph.cpp
 	histogram.cpp
 	hmm.cpp
 	jellyfishcounter.cpp
@@ -25,22 +27,22 @@ add_library(PanGenieLib SHARED
 	variant.cpp
 	variantreader.cpp)
 
-add_executable(PanGenie pangenie.cpp)
-target_link_libraries(PanGenie PanGenieLib ${JELLYFISH_LDFLAGS_OTHER} ${ZLIB_LDFLAGS_OTHER} ${CEREAL_LDFLAGS_OTHER})
-target_link_libraries(PanGenie PanGenieLib ${JELLYFISH_LIBRARIES} ${ZLIB_LIBRARIES} ${CEREAL_LIBRARIES})
+# add_executable(PanGenie pangenie.cpp)
+#target_link_libraries(PanGenie PanGenieLib ${JELLYFISH_LDFLAGS_OTHER} ${ZLIB_LDFLAGS_OTHER} ${CEREAL_LDFLAGS_OTHER})
+#target_link_libraries(PanGenie PanGenieLib ${JELLYFISH_LIBRARIES} ${ZLIB_LIBRARIES} ${CEREAL_LIBRARIES})
 
-add_executable(PanGenie-serialize pangenie-serialize.cpp)
-target_link_libraries(PanGenie-serialize PanGenieLib ${JELLYFISH_LDFLAGS_OTHER} ${ZLIB_LDFLAGS_OTHER} ${CEREAL_LDFLAGS_OTHER})
-target_link_libraries(PanGenie-serialize PanGenieLib ${JELLYFISH_LIBRARIES} ${ZLIB_LIBRARIES} ${CEREAL_LIBRARIES})
+#add_executable(PanGenie-serialize pangenie-serialize.cpp)
+#target_link_libraries(PanGenie-serialize PanGenieLib ${JELLYFISH_LDFLAGS_OTHER} ${ZLIB_LDFLAGS_OTHER} ${CEREAL_LDFLAGS_OTHER})
+#target_link_libraries(PanGenie-serialize PanGenieLib ${JELLYFISH_LIBRARIES} ${ZLIB_LIBRARIES} ${CEREAL_LIBRARIES})
 
 add_executable(PanGenie-index pangenie-index.cpp)
 target_link_libraries(PanGenie-index PanGenieLib ${JELLYFISH_LDFLAGS_OTHER} ${ZLIB_LDFLAGS_OTHER} ${CEREAL_LDFLAGS_OTHER})
 target_link_libraries(PanGenie-index PanGenieLib ${JELLYFISH_LIBRARIES} ${ZLIB_LIBRARIES} ${CEREAL_LIBRARIES})
 
-add_executable(PanGenie-genotype pangenie-genotype.cpp)
-target_link_libraries(PanGenie-genotype PanGenieLib ${JELLYFISH_LDFLAGS_OTHER} ${ZLIB_LDFLAGS_OTHER} ${CEREAL_LDFLAGS_OTHER})
-target_link_libraries(PanGenie-genotype PanGenieLib ${JELLYFISH_LIBRARIES} ${ZLIB_LIBRARIES} ${CEREAL_LIBRARIES})
+#add_executable(PanGenie-genotype pangenie-genotype.cpp)
+#target_link_libraries(PanGenie-genotype PanGenieLib ${JELLYFISH_LDFLAGS_OTHER} ${ZLIB_LDFLAGS_OTHER} ${CEREAL_LDFLAGS_OTHER})
+#target_link_libraries(PanGenie-genotype PanGenieLib ${JELLYFISH_LIBRARIES} ${ZLIB_LIBRARIES} ${CEREAL_LIBRARIES})
 
-add_executable(Analyze analyze.cpp)
-target_link_libraries(Analyze PanGenieLib ${JELLYFISH_LDFLAGS_OTHER} ${ZLIB_LDFLAGS_OTHER} ${CEREAL_LDFLAGS_OTHER})
-target_link_libraries(Analyze PanGenieLib ${JELLYFISH_LIBRARIES} ${ZLIB_LIBRARIES} ${CEREAL_LIBRARIES})
+#add_executable(Analyze analyze.cpp)
+#target_link_libraries(Analyze PanGenieLib ${JELLYFISH_LDFLAGS_OTHER} ${ZLIB_LDFLAGS_OTHER} ${CEREAL_LDFLAGS_OTHER})
+#target_link_libraries(Analyze PanGenieLib ${JELLYFISH_LIBRARIES} ${ZLIB_LIBRARIES} ${CEREAL_LIBRARIES})

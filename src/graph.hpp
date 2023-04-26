@@ -13,6 +13,8 @@
 #include <cereal/types/map.hpp>
 #include <cereal/types/memory.hpp>
 #include <cereal/types/vector.hpp>
+#include "variant.hpp"
+#include "graphbuilder.hpp"
 #include "fastareader.hpp"
 #include "variant.hpp"
 #include "genotypingresult.hpp"
@@ -55,6 +57,8 @@ public:
 	void add_variant_cluster(std::vector< std::shared_ptr<Variant> >* cluster, std::vector<std::vector<std::string>>& variant_ids);
 	/** return variant bubble at provided index **/
 	const Variant& get_variant(size_t index) const;
+	/** return FastaReader underlying this object **/
+	const FastaReader& get_fasta_reader() const;
 	/** write genotyping results into a VCF file **/
 	void write_genotypes(std::string filename, const std::vector<GenotypingResult>& genotyping_result, bool write_header, std::string sample, bool ignore_imputed = false);
 	/** write phasing results into a VCF file **/
@@ -68,15 +72,17 @@ public:
 	* resulting in an error message.
 	*/
 	void delete_variant(size_t index);
+	/** returns true if at least one variant was deleted by delete_variant function **/
+	bool variants_were_deleted() const;
 
 	template<class Archive>
 	void save(Archive& archive) const {
-		archive(fasta_reader, chromosome, kmer_size, reference_added, variants_deleted, variants, variant_ids);
+		archive(fasta_reader, chromosome, kmer_size, add_reference, variants_deleted, variants, variant_ids);
 	}
 
 	template<class Archive>
 	void load(Archive& archive) {
-		archive(fasta_reader, chromosome, kmer_size, reference_added, variants_deleted, variants, variant_ids);
+		archive(fasta_reader, chromosome, kmer_size, add_reference, variants_deleted, variants, variant_ids);
 	}
 
 private:
@@ -87,7 +93,7 @@ private:
 	/** kmer size **/
 	size_t kmer_size;
 	/** whether or not reference was added as an additional path **/
-	bool reference_added;
+	bool add_reference;
 	/** indicates whether variants were deleted by delete_variant function **/
 	bool variants_deleted;
 	/** list of variant bubbles. Individual variants were merged into bubbles. **/
@@ -98,7 +104,6 @@ private:
 	void insert_ids(std::vector<DnaSequence>& alleles, std::vector<std::string>& variant_ids, bool reference_added);
 	std::string get_ids(std::vector<std::string>& alleles, size_t variant_index, bool reference_added);
 	friend cereal::access;
-	friend VariantReader;
 };
 
 #endif // GRAPH_HPP

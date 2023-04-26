@@ -58,12 +58,14 @@ TEST_CASE("FastaReader extract_name", "[FastaReader extract_name]") {
 	// extract existing chromosome
 	vector<string> sequence_names_before;
 	f.get_sequence_names(sequence_names_before);
-	REQUIRE(sequence_names_before == {"chr01", "chr02"});
+
+	vector<string> expected = {"chr01", "chr02"};
+	REQUIRE(sequence_names_before == expected);
 	FastaReader extracted = f.extract_name("chr01");
 
 	// chr02 should still be there, but not chr01
-	REQUIRE(extracted.get_size_of("chr02") == 2135);
-	REQUIRE_THROWS(extracted.get_size_of("chr01"));
+	REQUIRE(f.get_size_of("chr02") == 2135);
+	REQUIRE_THROWS(f.get_size_of("chr01"));
 
 	// chr01 should now only be present in new FastaReader
 	REQUIRE(extracted.contains_name("chr01"));
@@ -71,10 +73,12 @@ TEST_CASE("FastaReader extract_name", "[FastaReader extract_name]") {
 
 	vector<string> sequence_names_after;
 	f.get_sequence_names(sequence_names_after);
-	REQUIRE(sequence_names_after == {"chr02"});
+	expected = {"chr02"};
+	REQUIRE(sequence_names_after == expected);
 	sequence_names_after.clear();
 	extracted.get_sequence_names(sequence_names_after);
-	REQUIRE(sequence_names_after == {"chr01"});
+	expected = {"chr01"};
+	REQUIRE(sequence_names_after == expected);
 
 	REQUIRE(extracted.get_size_of("chr01") == 1688);
 

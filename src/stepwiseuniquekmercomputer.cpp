@@ -32,10 +32,10 @@ void stepwise_unique_kmers(DnaSequence& allele, unsigned char index, size_t kmer
 	}
 }
 
-StepwiseUniqueKmerComputer::StepwiseUniqueKmerComputer (KmerCounter* genomic_kmers, VariantReader* variants, string chromosome)
+StepwiseUniqueKmerComputer::StepwiseUniqueKmerComputer (KmerCounter* genomic_kmers, shared_ptr<Graph> variants)
 	:genomic_kmers(genomic_kmers),
 	 variants(variants),
-	 chromosome(chromosome)
+	 chromosome(variants->get_chromosome())
 {
 	jellyfish::mer_dna::k(this->variants->get_kmer_size());
 }
@@ -54,13 +54,13 @@ void StepwiseUniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKm
 	size_t kmer_size = this->variants->get_kmer_size();
 	size_t overhang_size = 2*kmer_size;
 
-	size_t nr_variants = this->variants->size_of(this->chromosome);
+	size_t nr_variants = this->variants->size();
 	for (size_t v = 0; v < nr_variants; ++v) {
 		// set parameters of distributions
 		size_t kmer_size = this->variants->get_kmer_size();
 		
 		map <jellyfish::mer_dna, vector<unsigned char>> occurences;
-		const Variant& variant = this->variants->get_variant(this->chromosome, v);
+		const Variant& variant = this->variants->get_variant(v);
 		stringstream outline;
 		outline << variant.get_chromosome() << "\t" << variant.get_start_position() << "\t" << variant.get_end_position() << "\t";
 	
@@ -146,11 +146,11 @@ void StepwiseUniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKm
 		if (delete_processed_variants) {
 			if (v > 0) {
 				// previous variant object no longer needed
-				this->variants->delete_variant(chromosome, v - 1);
+				this->variants->delete_variant(v - 1);
 			}
 			if (v == (nr_variants - 1)) {
 				// last variant object, can be deleted
-				this->variants->delete_variant(chromosome, v);
+				this->variants->delete_variant(v);
 			}
 		}
 
@@ -170,13 +170,13 @@ void StepwiseUniqueKmerComputer::compute_unique_kmers_fasta(vector<shared_ptr<Un
 	size_t kmer_size = this->variants->get_kmer_size();
 	size_t overhang_size = 2*kmer_size;
 
-	size_t nr_variants = this->variants->size_of(this->chromosome);
+	size_t nr_variants = this->variants->size();
 	for (size_t v = 0; v < nr_variants; ++v) {
 		// set parameters of distributions
 		size_t kmer_size = this->variants->get_kmer_size();
 		
 		map <jellyfish::mer_dna, vector<unsigned char>> occurences;
-		const Variant& variant = this->variants->get_variant(this->chromosome, v);
+		const Variant& variant = this->variants->get_variant(v);
 		stringstream outline;
 	
 		vector<unsigned char> path_to_alleles;
@@ -253,11 +253,11 @@ void StepwiseUniqueKmerComputer::compute_unique_kmers_fasta(vector<shared_ptr<Un
 		if (delete_processed_variants) {
 			if (v > 0) {
 				// previous variant object no longer needed
-				this->variants->delete_variant(chromosome, v - 1);
+				this->variants->delete_variant(v - 1);
 			}
 			if (v == (nr_variants - 1)) {
 				// last variant object, can be deleted
-				this->variants->delete_variant(chromosome, v);
+				this->variants->delete_variant(v);
 			}
 		}
 	}
@@ -266,9 +266,9 @@ void StepwiseUniqueKmerComputer::compute_unique_kmers_fasta(vector<shared_ptr<Un
 
 
 void StepwiseUniqueKmerComputer::compute_empty(vector<shared_ptr<UniqueKmers>>* result) const {
-	size_t nr_variants = this->variants->size_of(this->chromosome);
+	size_t nr_variants = this->variants->size();
 	for (size_t v = 0; v < nr_variants; ++v) {
-		const Variant& variant = this->variants->get_variant(this->chromosome, v);
+		const Variant& variant = this->variants->get_variant(v);
 		vector<unsigned char> path_to_alleles;
 		assert(variant.nr_of_paths() < 65535);
 		for (unsigned short p = 0; p < variant.nr_of_paths(); ++p) {
@@ -285,8 +285,8 @@ void StepwiseUniqueKmerComputer::determine_unique_flanking_kmers(string chromoso
 	DnaSequence left_overhang;
 	DnaSequence right_overhang;
 
-	this->variants->get_left_overhang(chromosome, var_index, length, left_overhang);
-	this->variants->get_right_overhang(chromosome, var_index, length, right_overhang);
+	this->variants->get_left_overhang(var_index, length, left_overhang);
+	this->variants->get_right_overhang(var_index, length, right_overhang);
 
 	size_t kmer_size = this->variants->get_kmer_size();
 	map <jellyfish::mer_dna, vector<unsigned char>> occurences;

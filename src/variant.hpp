@@ -22,6 +22,8 @@ struct VariantStats {
 	unsigned short coverage;
 };
 
+class Graph;
+
 class Variant {
 public:
 	/** 
