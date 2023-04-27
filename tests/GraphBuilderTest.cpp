@@ -62,7 +62,6 @@ TEST_CASE("GraphBuilder get_allele_string", "[GraphBuilder get_allele_string]") 
 	REQUIRE(graph.at("chrB")->get_variant(1).get_allele_string(0) == "GAGTATTTTGATCATAAAT");
 }
 
-
 TEST_CASE("GraphBuilder get_overhang", "[GraphBuilder get_overhang]") {
 	string vcf = "../tests/data/small1.vcf";
 	string fasta = "../tests/data/small1.fa";
@@ -89,7 +88,6 @@ TEST_CASE("GraphBuilder get_overhang", "[GraphBuilder get_overhang]") {
 	REQUIRE(right_overhang.to_string() == "ACGGCCAAAACATACCATTT");
 	REQUIRE(v.nr_of_paths() == 4);
 }
-
 
 TEST_CASE("GraphBuilder write_path_segments", "[GrpahBuilder write_path_segments]") {
 	string vcf = "../tests/data/small1.vcf";
@@ -137,7 +135,6 @@ TEST_CASE("GraphBuilder write_path_segments", "[GrpahBuilder write_path_segments
 		REQUIRE(expected[i] == computed[i]);
 	}
 }
-
 
 TEST_CASE("GraphBuilder write_path_segments_no_variants", "[GraphBuilder write_path_segments]") {
 	string vcf = "../tests/data/empty.vcf";
@@ -249,7 +246,6 @@ TEST_CASE("GraphBuilder write_genotypes_of", "[GraphBuilder write_genotypes_of]"
 	graph.at("chrB")->write_phasing("../tests/data/small1-phasing-graph.vcf", genotypes_chrB, false, "HG0");
 }
 
-
 TEST_CASE("GraphBuilder broken_vcfs", "[GraphBuilder broken_vcfs]") {
 	string no_paths = "../tests/data/no-paths.vcf";
 	string malformatted = "../tests/data/malformatted-vcf1.vcf";
@@ -260,7 +256,6 @@ TEST_CASE("GraphBuilder broken_vcfs", "[GraphBuilder broken_vcfs]") {
 	CHECK_THROWS(GraphBuilder(no_paths, fasta, graph, "../tests/data/empty-segments.fa", 10, false));
 	CHECK_THROWS(GraphBuilder(malformatted, fasta, graph, "../tests/data/empty-segments.fa", 10, false));
 }
-
 
 TEST_CASE("GraphBuilder no-alt-alleles", "[GraphBuilder no-alt-alleles]") {
 	string vcf = "../tests/data/no-alt-alleles.vcf";
@@ -273,7 +268,6 @@ TEST_CASE("GraphBuilder no-alt-alleles", "[GraphBuilder no-alt-alleles]") {
 	REQUIRE(graph.at("chrA")->size() == 1);
 }
 
-
 TEST_CASE("GraphBuilder overlapping variants", "[GraphBuilder overlapping variants]") {
 	string vcf = "../tests/data/overlapping-variants.vcf";
 	string fasta = "../tests/data/small1.fa";
@@ -283,7 +277,6 @@ TEST_CASE("GraphBuilder overlapping variants", "[GraphBuilder overlapping varian
 	// should have skipped variant that is contained in another
 	REQUIRE(graph.at("chrA")->size() == 1);
 }
-
 
 TEST_CASE("GraphBuilder get_chromosomes", "[GraphBuilder get_chromosomes]") {
 	string vcf1 = "../tests/data/small1.vcf";
@@ -313,17 +306,14 @@ TEST_CASE("GraphBuilder construct_index", "[GraphBuilder construct_index]") {
 		alleles.push_back(DnaSequence(s));
 	}
 	vector<unsigned char> expected = {1,0,2,3};
-	REQUIRE(construct_index(alleles, true) == expected);
+	REQUIRE(graph_construct_index(alleles, true) == expected);
 }
 
-// TODO!! Figure out what is going on here
-/**
 TEST_CASE("GraphBuilder variant_ids1", "[GraphBuilder variant_ids1]") {
 	string vcf = "../tests/data/small1-ids.vcf";
 	string fasta = "../tests/data/small1.fa";
 
-	map<string, shared_ptr<Graph>> graph;
-	GraphBuilder v(vcf, fasta, graph, "../tests/data/empty-segments.fa", 10, true);
+	Graph graph;
 
 	vector<string> sequences_ref = {"TGGG", "AATAGTAAAGTTATA", "GTAGATAGATA", "AATAGTAAAGTGATA", "GGGTG", "TTG"};
 	vector<string> sequences = {"AATAGTAAAGTTATA", "GTAGATAGATA", "AATAGTAAAGTGATA", "GGGTG", "TTG"};
@@ -336,11 +326,7 @@ TEST_CASE("GraphBuilder variant_ids1", "[GraphBuilder variant_ids1]") {
 	string chromosome = "chrA";
 	vector<string> variant_ids = {"var1", "var2", "var3", "var4", "var5:var6"};
 
-	cout << "HERE1" << endl;
-
-	graph.at("chrA")->insert_ids(alleles, variant_ids, true);
-
-	cout << "HERE2" << endl;
+	graph.insert_ids(alleles, variant_ids, true);
 
 	for (size_t i = 0; i < 10; ++i) {
 		// shuffle alleles
@@ -353,61 +339,21 @@ TEST_CASE("GraphBuilder variant_ids1", "[GraphBuilder variant_ids1]") {
 			expected += sequence_to_id[s];
 			index += 1;
 		}
-		cout << "HERE3" << endl;
-		string result = graph.at("chrA")->get_ids(sequences, 0 , false);
-		REQUIRE(result == expected);
-		cout << "HERE4" << endl;
-	}
-}
-
-
-
-
-TEST_CASE("VariantReader variant_ids1", "[VariantReader variant_ids1]") {
-	string vcf = "../tests/data/small1-ids.vcf";
-	string fasta = "../tests/data/small1.fa";
-	VariantReader v(vcf, fasta, 10, true);
-
-	vector<string> sequences_ref = {"TGGG", "AATAGTAAAGTTATA", "GTAGATAGATA", "AATAGTAAAGTGATA", "GGGTG", "TTG"};
-	vector<string> sequences = {"AATAGTAAAGTTATA", "GTAGATAGATA", "AATAGTAAAGTGATA", "GGGTG", "TTG"};
-	map<string,string> sequence_to_id = {{"AATAGTAAAGTTATA", "var1"}, {"GTAGATAGATA", "var2"}, {"AATAGTAAAGTGATA", "var3"}, {"GGGTG", "var4"}, {"TTG", "var5:var6"}};
-
-	vector<DnaSequence> alleles;
-	for (auto s : sequences_ref) {
-		alleles.push_back(DnaSequence(s));
-	}
-	string chromosome = "chr1";
-	vector<string> variant_ids = {"var1", "var2", "var3", "var4", "var5:var6"};
-	v.insert_ids(chromosome, alleles, variant_ids, true);
-
-	for (size_t i = 0; i < 10; ++i) {
-		// shuffle alleles
-		auto rng = std::default_random_engine {};
-		std::shuffle(std::begin(sequences), std::end(sequences), rng);
-		string expected = "";
-		size_t index = 0;
-		for (auto s : sequences) {
-			if (index > 0) expected += ',';
-			expected += sequence_to_id[s];
-			index += 1;
-		}
-		string result = v.get_ids(chromosome, sequences, 0 , false);
+		string result = graph.get_ids(sequences, 0 , false);
 		REQUIRE(result == expected);
 	}
 }
 
-TEST_CASE("VariantReader variant_ids2", "[VariantReader variant_ids2]") {
+TEST_CASE("GraphBuilder variant_ids2", "[GraphBuilder variant_ids2]") {
 	string vcf = "../tests/data/small1-ids.vcf";
 	string fasta = "../tests/data/small1.fa";
-	VariantReader v(vcf, fasta, 10, true);
+
+	map<string, shared_ptr<Graph>> graph;
+	GraphBuilder v(vcf, fasta, graph, "../tests/data/empty-segments.fa", 10, true);
 	vector<GenotypingResult> genotypes(2);
-	v.open_genotyping_outfile("../tests/data/small1-ids-genotypes.vcf");
-	
-	v.write_genotypes_of("chrA", genotypes);
+	REQUIRE(graph.size() == 1);
+	graph.at("chrA")->write_genotypes("../tests/data/small1-ids-genotypes.vcf", genotypes, true, "sample");
 }
-**/
-
-
 
 TEST_CASE("GraphBuilder close_to_start", "[GraphBuilder close_to_start]") {
 	string vcf = "../tests/data/close.vcf";
@@ -419,7 +365,6 @@ TEST_CASE("GraphBuilder close_to_start", "[GraphBuilder close_to_start]") {
 	graph.at("chr10")->write_genotypes("../tests/data/small1-ids-close-graph.vcf", genotypes, true, "sample");
 }
 
-
 TEST_CASE("GraphBuilder non_existing_path", "[GraphBuilder non_existing_path]") {
 	string vcf = "../tests/data/small1.vcf";
 	string fasta = "../tests/data/small1.fa";
@@ -428,22 +373,19 @@ TEST_CASE("GraphBuilder non_existing_path", "[GraphBuilder non_existing_path]") 
 	CHECK_THROWS(GraphBuilder (vcf, fasta, graph, "nonexistent/paths_segments.fasta", 10, false));
 }
 
-/**
-TEST_CASE("VariantReader too_large_panel", "[VariantReader too_large_panel]") {
+TEST_CASE("GraphBuilder too_large_panel", "[GraphBuilder too_large_panel]") {
 	string vcf = "../tests/data/large-panel.vcf";
 	string fasta = "../tests/data/small1.fa";
 	// there are more than 256 paths in the VCF, the implementation cannot handle this and should throw an error
-	CHECK_THROWS(VariantReader (vcf, fasta, 10, false));
-	CHECK_THROWS(VariantReader (vcf, fasta, 10, true));
+	map<string, shared_ptr<Graph>> graph;
+	CHECK_THROWS(GraphBuilder (vcf, fasta, graph, "nonexistent/paths_segments.fasta", 10, false));
+	CHECK_THROWS(GraphBuilder (vcf, fasta, graph, "nonexistent/paths_segments.fasta", 10, true));
 }
 
-
-TEST_CASE("VariantReader too_many_alleles", "[VariantReader too_many_alleles]") {
+TEST_CASE("GraphBuilder too_many_alleles", "[GraphBuilder too_many_alleles]") {
 	string vcf = "../tests/data/many-alleles.vcf";
 	string fasta = "../tests/data/small1.fa";
 	// there are more than 256 alleles in the VCF, the implementation cannot handle this and should throw an error
-	CHECK_THROWS(VariantReader (vcf, fasta, 10, false));
+	map<string, shared_ptr<Graph>> graph;
+	CHECK_THROWS(GraphBuilder (vcf, fasta, graph, "nonexistent/paths_segments.fasta", 10, false));
 }
-
-
-**/

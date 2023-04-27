@@ -15,7 +15,7 @@
 #include "jellyfishcounter.hpp"
 #include "emissionprobabilitycomputer.hpp"
 #include "copynumber.hpp"
-#include "variantreader.hpp"
+#include "graph.hpp"
 #include "hmm.hpp"
 #include "commandlineparser.hpp"
 #include "timer.hpp"
@@ -88,7 +88,7 @@ void fill_read_kmercounts_fasta(string chromosome, UniqueKmersMap* unique_kmers_
 	string filename = outname + "_" + chromosome + "_kmers.fa.gz";
 	gzFile file = gzopen(filename.c_str(), "rb");
 	if (!file) {
-		throw runtime_error("fill_read_kmercounts: kmer file cannot be opened.");
+		throw runtime_error("fill_read_kmercounts_fasta: kmer file cannot be opened.");
 	}
 
 	const int buffer_size = 1024;
@@ -500,7 +500,7 @@ int main (int argc, char* argv[])
 				for (auto chromosome : chromosomes) {
 					UniqueKmersMap* unique_kmers = &unique_kmers_list;
 					ProbabilityTable* probs = &probabilities;
-					function<void()> f_fill_readkmers = bind(fill_read_kmercounts_fasta, chromosome, unique_kmers, read_kmer_counts, probs, precomputed_prefix, kmer_abundance_peak);
+					function<void()> f_fill_readkmers = bind(fill_read_kmercounts, chromosome, unique_kmers, read_kmer_counts, probs, precomputed_prefix, kmer_abundance_peak);
 					threadPool.submit(f_fill_readkmers);
 				}
 			}
@@ -607,45 +607,40 @@ int main (int argc, char* argv[])
 			getrusage(RUSAGE_SELF, &rss_hmm);
 			timer.get_interval_time();
 		}
-	}	
+	}
 
-	// read serialized VariantReader object
-	VariantReader variant_reader;
-	cerr << "Reading precomputed VariantReader ..." << endl; 
-	ifstream os(precomputed_prefix + "_VariantReader.cereal", std::ios::binary);
-	cereal::BinaryInputArchive archive( os );
-	archive(variant_reader);
-
-	// prepare output files
-	if (! only_phasing) variant_reader.open_genotyping_outfile(outname + "_genotyping.vcf");
-	if (! only_genotyping) variant_reader.open_phasing_outfile(outname + "_phasing.vcf");
-
-	// output VCF
+	// write the output VCF
 	cerr << "Write results to VCF ..." << endl;
 	if (!(only_genotyping && only_phasing)) assert (results.result.size() == chromosomes.size());
-	// write VCF
+	bool write_header = true;
 	for (auto it = results.result.begin(); it != results.result.end(); ++it) {
+		// read serialized Graph object corresponding to current chromosome
+		Graph graph;
+		cerr << "Reading precomputed Graph for chromosome " << it->first << " ..." <<  " from " << precomputed_prefix + "_" + it->first + "_Graph.cereal" << endl;
+		ifstream os(precomputed_prefix + "_" + it->first + "_Graph.cereal", std::ios::binary);
+		cereal::BinaryInputArchive archive( os );
+		archive(graph);
+
+		cerr << "Writing results for chromosome " << it->first << " ..." << endl;
 		if (!only_phasing) {
 			// output genotyping results
-			variant_reader.write_genotypes_of(it->first, it->second, ignore_imputed);
+			graph.write_genotypes(outname + "_genotyping.vcf", it->second, write_header, sample_name, ignore_imputed);
 		}
 		if (!only_genotyping) {
 			// output phasing results
-			variant_reader.write_phasing_of(it->first, it->second, ignore_imputed);
+			graph.write_phasing(outname + "_phasing.vcf", it->second, write_header, sample_name, ignore_imputed);
 		}
+		// write header only for first chromosome
+		write_header = false;
 	}
 
 	// just for analysis, serialize Results object
-	// serialization of UniqueKmersMap object
 	cerr << "Storing Results information ..." << endl;
 	{
 		ofstream os(outname + "_Results.cereal", std::ios::binary);
 		cereal::BinaryOutputArchive archive( os );
 		archive(results);
 	}
-
-	if (! only_phasing) variant_reader.close_genotyping_outfile();
-	if (! only_genotyping) variant_reader.close_phasing_outfile();
 
 	getrusage(RUSAGE_SELF, &rss_total);
 	time_writing = timer.get_interval_time();

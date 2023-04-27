@@ -22,7 +22,7 @@
 
 
 template<class T>
-std::vector<unsigned char> construct_index(std::vector<T>& alleles, bool reference_added) {
+std::vector<unsigned char> graph_construct_index(std::vector<T>& alleles, bool reference_added) {
 	size_t length = alleles.size();
 	unsigned char offset = 0;
 	if (reference_added) {

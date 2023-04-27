@@ -192,7 +192,7 @@ int main (int argc, char* argv[])
 		for (auto chromosome : chromosomes) {
   			ofstream os(outname + "_" + chromosome + "_Graph.cereal", std::ios::binary);
   			cereal::BinaryOutputArchive archive( os );
-			archive(graph.at(chromosome));;
+			archive(*graph.at(chromosome));;
 		}
 
 		getrusage(RUSAGE_SELF, &rss_serialize_graph);
