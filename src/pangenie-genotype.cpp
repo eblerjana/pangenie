@@ -671,6 +671,5 @@ int main (int argc, char* argv[])
 	cerr << "Max RSS after genotyping: \t" << (rss_hmm.ru_maxrss / 1E6) << " GB" << endl;
 	cerr << "Max RSS: \t" << (rss_total.ru_maxrss / 1E6) << " GB" << endl;
 
-
 	return 0;
 }

@@ -36,7 +36,7 @@ private:
 	KmerCounter* genomic_kmers;
 	std::shared_ptr<Graph> variants;
 	std::string chromosome;
-	void determine_unique_flanking_kmers(std::string chromosome, size_t var_index, size_t length, std::vector<std::string>& result); 
+	void determine_unique_flanking_kmers(size_t var_index, size_t length, std::vector<std::string>& result); 
 };
 
 #endif // STEPWISEUNIQUEKMERCOMPUTER_HPP

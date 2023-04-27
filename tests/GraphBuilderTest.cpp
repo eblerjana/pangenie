@@ -29,8 +29,15 @@ TEST_CASE("GraphBuilder get_allele_string", "[GraphBuilder get_allele_string]") 
 	// there should be 4+1 paths (since the reference path is added)
 	REQUIRE(v.nr_of_paths() == 5);
 
-	// check if graph segments have been properly constructed
 	REQUIRE(graph.size() == 2);
+
+	// double check if kmer sizes and chromosomes have been set correctly
+	REQUIRE(graph.at("chrA")->get_kmer_size() == 10);
+	REQUIRE(graph.at("chrB")->get_kmer_size() == 10);
+	REQUIRE(graph.at("chrA")->get_chromosome() == "chrA");
+	REQUIRE(graph.at("chrB")->get_chromosome() == "chrB");
+
+	// check if graph segments have been properly constructed
 	REQUIRE(graph.at("chrA")->size() == 7);
 	REQUIRE(graph.at("chrB")->size() == 2);
 	REQUIRE(graph.at("chrA")->get_variant(2).nr_of_alleles() == 3);

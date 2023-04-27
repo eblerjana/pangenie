@@ -128,7 +128,7 @@ void StepwiseUniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKm
 
 		// write unique kmers of left and right overhang to file
 		vector<string> flanking_kmers;
-		determine_unique_flanking_kmers(variant.get_chromosome(), v, overhang_size, flanking_kmers);
+		determine_unique_flanking_kmers(v, overhang_size, flanking_kmers);
 		not_first = false;
 		outline << "\t";
 		for (auto& kmer : flanking_kmers) {
@@ -237,7 +237,7 @@ void StepwiseUniqueKmerComputer::compute_unique_kmers_fasta(vector<shared_ptr<Un
 
 		// write unique kmers of left and right overhang to file
 		vector<string> flanking_kmers;
-		determine_unique_flanking_kmers(variant.get_chromosome(), v, overhang_size, flanking_kmers);
+		determine_unique_flanking_kmers(v, overhang_size, flanking_kmers);
 		size_t f_index = 0;
 		for (auto& kmer : flanking_kmers) {
 			outline << ">f_" << f_index << "_" << v << "_" << variant.get_start_position() << "\n";
@@ -281,7 +281,7 @@ void StepwiseUniqueKmerComputer::compute_empty(vector<shared_ptr<UniqueKmers>>* 
 }
 
 
-void StepwiseUniqueKmerComputer::determine_unique_flanking_kmers(string chromosome, size_t var_index, size_t length, vector<string>& result) {
+void StepwiseUniqueKmerComputer::determine_unique_flanking_kmers(size_t var_index, size_t length, vector<string>& result) {
 	DnaSequence left_overhang;
 	DnaSequence right_overhang;
 
