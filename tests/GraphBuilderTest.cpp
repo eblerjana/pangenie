@@ -3,6 +3,7 @@
 #include "../src/graphbuilder.hpp"
 #include "../src/graph.hpp"
 #include "../src/uniquekmers.hpp"
+#include "../src/variant.hpp"
 #include <vector>
 #include <memory>
 #include <map>
@@ -68,6 +69,8 @@ TEST_CASE("GraphBuilder get_allele_string", "[GraphBuilder get_allele_string]") 
 	REQUIRE(graph.at("chrB")->get_variant(0).get_allele_string(0) == "CCACTTCATCAAGACACAA");
 	REQUIRE(graph.at("chrB")->get_variant(1).get_allele_string(0) == "GAGTATTTTGATCATAAAT");
 }
+
+
 
 TEST_CASE("GraphBuilder get_overhang", "[GraphBuilder get_overhang]") {
 	string vcf = "../tests/data/small1.vcf";
@@ -395,4 +398,25 @@ TEST_CASE("GraphBuilder too_many_alleles", "[GraphBuilder too_many_alleles]") {
 	// there are more than 256 alleles in the VCF, the implementation cannot handle this and should throw an error
 	map<string, shared_ptr<Graph>> graph;
 	CHECK_THROWS(GraphBuilder (vcf, fasta, graph, "nonexistent/paths_segments.fasta", 10, false));
+}
+
+TEST_CASE("GraphBuilder unknown_alleles", "[GraphBuilder unknown_alleles]") {
+	string vcf = "../tests/data/small3.vcf";
+	string fasta = "../tests/data/small1.fa";
+	// vcf contains unknown alleles in panel (".")
+	map<string, shared_ptr<Graph>> graph;
+	GraphBuilder (vcf, fasta, graph, "../tests/data/empty-segments.fa", 10, false);	
+}
+
+TEST_CASE("GraphBuilder unknown_alleles2", "[GraphBuilder unknown_alleles2]") {
+	vector<string> alleles = {"G", "A", "C", "AAA"};
+	shared_ptr<Variant> v1 (new Variant ("AAAA", "TTTT", "chr1", 10, 11, {"G", "AAA", "CN", "C", "N", "A"}, {0,1,2}));
+	Graph g;
+	vector<shared_ptr<Variant>> cluster = {v1};
+	vector<vector<string>> variant_ids = { {"var1", "var2", "var3"} };
+	g.add_variant_cluster(&cluster, variant_ids, true);
+
+	string computed_ids = g.get_ids(alleles, 0, true);
+	string expected_ids = "var3,var2,var1";
+	REQUIRE(expected_ids == computed_ids);
 }

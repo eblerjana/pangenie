@@ -54,7 +54,7 @@ public:
 	/** returns the number of variant bubbles in the graph (i.e. after merging clusters) **/
 	size_t size() const;
 	/** add variant cluster to the graph. Variants are assumed to belong to the same bubble and will thus be merged into one. **/
-	void add_variant_cluster(std::vector< std::shared_ptr<Variant> >* cluster, std::vector<std::vector<std::string>>& variant_ids);
+	void add_variant_cluster(std::vector< std::shared_ptr<Variant> >* cluster, std::vector<std::vector<std::string>>& variant_ids, bool only_defined_ids=false);
 	/** return variant bubble at provided index **/
 	const Variant& get_variant(size_t index) const;
 	/** return FastaReader underlying this object **/

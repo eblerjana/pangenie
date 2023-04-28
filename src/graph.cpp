@@ -63,8 +63,30 @@ size_t Graph::size() const {
 	return this->variants.size();
 }
 
-void Graph::add_variant_cluster(vector<shared_ptr<Variant>>* cluster, vector<vector<string>>& variant_ids) {
+void Graph::add_variant_cluster(vector<shared_ptr<Variant>>* cluster, vector<vector<string>>& variant_ids, bool only_defined_ids) {
 	if (!cluster->empty()) {
+		assert(cluster->size() == variant_ids.size());
+
+		// store variant ids
+		for (size_t i = 0; i < variant_ids.size(); ++i) {
+			if (!variant_ids[i].empty()) {
+				assert (cluster->at(i)->allele_sequences.size() == 1);
+				if (only_defined_ids) {
+					vector<DnaSequence> defined_alleles;
+					for (auto a : cluster->at(i)->allele_sequences.at(0)) {
+						if (a.contains_undefined()) continue;
+						defined_alleles.push_back(a);
+					}
+					assert (defined_alleles.size() == (variant_ids[i].size()+1));
+					insert_ids(defined_alleles, variant_ids[i], true);
+				} else {
+					insert_ids(cluster->at(i)->allele_sequences.at(0), variant_ids[i], true);
+				}
+			} else {
+				this->variant_ids.push_back(vector<string>());
+			}
+		}
+
 		// merge all variants in cluster
 		shared_ptr<Variant> combined = cluster->at(0);
 		for (size_t v = 1; v < cluster->size(); ++v) {
@@ -74,17 +96,6 @@ void Graph::add_variant_cluster(vector<shared_ptr<Variant>>* cluster, vector<vec
 		combined->add_flanking_sequence();
 		this->variants.push_back(combined);
 
-		assert(cluster->size() == variant_ids.size());
-
-		// store variant ids
-		for (size_t i = 0; i < variant_ids.size(); ++i) {
-			if (!variant_ids[i].empty()) {
-				assert (cluster->at(i)->allele_sequences.size() == 1);
-				insert_ids(cluster->at(i)->allele_sequences.at(0), variant_ids[i], this->add_reference);
-			} else {
-				this->variant_ids.push_back(vector<string>());
-			}
-		}
 	}
 }
 

@@ -53,7 +53,7 @@ public:
 
 	template<class Archive>
 	void serialize(Archive& archive) {
-		archive(genotype_to_likelihood, haplotype_1, haplotype_2);
+		archive(genotype_to_likelihood, haplotype_1, haplotype_2, local_coverage, unique_kmers);
 	}
 
 private:

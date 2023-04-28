@@ -181,12 +181,11 @@ void GraphBuilder::construct_graph(std::string filename, FastaReader* fasta_read
 		// if distance to next variant is larger than kmer_size or the chromosome changed, start a new cluster
 		if ( (previous_chrom != current_chrom) || (current_start_pos - previous_end_pos) >= (this->kmer_size-1) ) {
 			// merge all variants currently in cluster and store them
-			if (current_graph != nullptr) current_graph->add_variant_cluster(&variant_cluster, variant_cluster_ids);
+			if (current_graph != nullptr) current_graph->add_variant_cluster(&variant_cluster, variant_cluster_ids, true);
 			variant_cluster.clear();
 			variant_cluster_ids.clear();
 
 			if (previous_chrom != current_chrom) {
-
 				// chromosome changed, construct a Graph object for new chromosome
 				if (current_graph != nullptr) {
 					result[previous_chrom] = current_graph;
