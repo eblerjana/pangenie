@@ -56,10 +56,13 @@ GraphBuilder::GraphBuilder(string filename, string reference_filename, map<strin
 	: kmer_size(kmer_size),
 	  nr_variants(0)
 {
+	cerr << "Read reference genome ..." << endl;
 	// read the reference sequence
 	FastaReader fasta_reader(reference_filename);
 	// read variants from input VCF and merge such closer than kmer size into bubbles
+	cerr << "Read input VCF ..." << endl;
 	construct_graph(filename, &fasta_reader, result, add_reference);
+	cerr << "Write path segments to file ..." << endl;
 	// write a FASTA containing all graph sequences (needed for kmer counting)
 	write_path_segments(segments_file, &fasta_reader, result);
 }
@@ -190,7 +193,9 @@ void GraphBuilder::construct_graph(std::string filename, FastaReader* fasta_read
 				if (current_graph != nullptr) {
 					result[previous_chrom] = current_graph;
 				}
+				cerr << "CHECKPOINT1" << endl;
 				current_graph = shared_ptr<Graph>(new Graph(fasta_reader->extract_name(current_chrom), current_chrom, this->kmer_size, add_reference));
+				cerr << "CHECKPOINT2" << endl;
 			}
 		}
 
@@ -246,24 +251,33 @@ void GraphBuilder::construct_graph(std::string filename, FastaReader* fasta_read
 		DnaSequence right_flank;
 		current_graph->get_fasta_reader().get_subsequence(current_chrom, current_end_pos, current_end_pos + kmer_size - 1, right_flank);
 		// add Variant to variant_cluster
+		cerr << "CHECKPOINT3" << endl;
 		shared_ptr<Variant> variant = shared_ptr<Variant>(new Variant(left_flank, right_flank, current_chrom, current_start_pos, current_end_pos, alleles, paths));
+		cerr << "CHECKPOINT4" << endl;
 		variant_cluster.push_back(variant);
 		variant_cluster_ids.push_back(var_ids);
 		previous_chrom = current_chrom;
 		previous_end_pos = current_end_pos;
 
 	}
+
+	cerr << "CHECKPOINTX" << endl;
+
 	// add last cluster to list and store the Graph object
 	if (current_graph != nullptr) {
-		current_graph->add_variant_cluster(&variant_cluster, variant_cluster_ids);
+		current_graph->add_variant_cluster(&variant_cluster, variant_cluster_ids, true);
 		result[previous_chrom] = current_graph;
 	}
+
+	cerr << "CHECKPOINTY" << endl;
 
 	// determine total number of variant clusters read and store chromosomes in order of their size
 	for (auto it = result.begin(); it != result.end(); ++it) {
 		chromosome_sizes.push_back(make_pair(it->second->size(), it->first));
 		this->nr_variants += it->second->size();
 	}
+
+	cerr << "CHECKPOINTZ" << endl;
 
 	sort(chromosome_sizes.rbegin(), chromosome_sizes.rend());
 	for (auto const& element : chromosome_sizes) {
