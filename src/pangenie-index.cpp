@@ -251,7 +251,7 @@ int main (int argc, char* argv[])
 	// output times
 	cerr << "time spent reading input files:\t" << time_preprocessing << " sec" << endl;
 	cerr << "time spent counting kmers in genome (wallclock): \t" << time_kmer_counting << " sec" << endl;
-	cerr << "time spent writing VariantReader to disk: \t" << time_serialize_graph << " sec" << endl;
+	cerr << "time spent writing Graph objects to disk: \t" << time_serialize_graph << " sec" << endl;
 	cerr << "time spent determining unique kmers: \t" << time_unique_kmers << " sec" << endl;
 	cerr << "time spent writing UniqueKmersMap to disk: \t" << time_serialize << " sec" << endl;
 	cerr << "total wallclock time: " << time_total  << " sec" << endl;

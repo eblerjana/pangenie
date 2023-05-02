@@ -43,7 +43,7 @@ struct UniqueKmersMap {
 
 struct Results {
 	mutex result_mutex;
-	map<string, shared_ptr<HMM>> result;
+	map<string, vector<GenotypingResult>> result;
 	map<string, double> runtimes;
 
 	template <class Archive>
@@ -62,7 +62,7 @@ int main (int argc, char* argv[])
 {
 	Timer timer;
 
-	struct rusage rss_variant_reader;
+
 	struct rusage rss_unique_kmers_map;
 	struct rusage rss_results;
 
@@ -95,38 +95,41 @@ int main (int argc, char* argv[])
 	cerr << "Files and parameters used:" << endl;
 	argument_parser.info();
 
-	// re-construct VariantReader from input archive
-	VariantReader variant_reader;
-	string variant_reader_archive = precomputed_prefix + "_VariantReader.cereal";
-	cerr << "Reading precomputed VariantReader from " << variant_reader_archive << " ..." << endl; 
-  	ifstream os1(variant_reader_archive, std::ios::binary);
-  	cereal::BinaryInputArchive archive1( os1 );
-	archive1(variant_reader);
-	getrusage(RUSAGE_SELF, &rss_variant_reader);
+	// re-construct Graph objects from input archives
+	vector<string> chromosomes = {};
+	for (size_t i = 1; i < 23; ++i) {
+		chromosomes.push_back("chr" + to_string(i));
+	}
+	chromosomes.push_back("chrX");
 
+	for (auto chrom : chromosomes) {
+		// re-construct graph object
+		Graph graph;
+		string graph_archive = precomputed_prefix + "_" + chrom + "_Graph.cereal";
+		ifstream os1(graph_archive, std::ios::binary);
+		cereal::BinaryInputArchive archive1( os1 );
+		archive1(graph);
+		struct rusage rss_graph;
+		getrusage(RUSAGE_SELF, &rss_graph);
+		cerr << "Max RSS after reading Graph for " << chrom << " from disk: \t" << (rss_graph.ru_maxrss / 1E6) << " GB" << endl;
+	}
 
 	// re-construct UniqueKmersMap from input archive
 	UniqueKmersMap unique_kmers_list;
 	string unique_kmers_archive = precomputed_prefix + "_UniqueKmersMap.cereal";
-	cerr << "Reading precomputed UniqueKmersMap from " << unique_kmers_archive << " ..." << endl; 
   	ifstream os2(unique_kmers_archive, std::ios::binary);
   	cereal::BinaryInputArchive archive2( os2 );
 	archive2(unique_kmers_list);
 	getrusage(RUSAGE_SELF, &rss_unique_kmers_map);
+	cerr << "Max RSS after reading UniqueKmersMap from disk: \t" << (rss_unique_kmers_map.ru_maxrss / 1E6) << " GB" << endl;
 
 	// re-construct Results from input archive
 	Results results;
 	string results_archive = precomputed_prefix + "_Results.cereal";
-	cerr << "Reading precomputed Results from " << results_archive << " ..." << endl; 
   	ifstream os3(results_archive, std::ios::binary);
   	cereal::BinaryInputArchive archive3( os3 );
 	archive3(results);
 	getrusage(RUSAGE_SELF, &rss_results);
-
-
-	// print max RSS after each step
-	cerr << "Max RSS after reading VariantReader from disk: \t" << (rss_variant_reader.ru_maxrss / 1E6) << " GB" << endl;
-	cerr << "Max RSS after reading UniqueKmersMap from disk: \t" << (rss_unique_kmers_map.ru_maxrss / 1E6) << " GB" << endl;
 	cerr << "Max RSS after reading Results from disk: \t" << (rss_results.ru_maxrss / 1E6) << " GB" << endl;
 
 	return 0;
