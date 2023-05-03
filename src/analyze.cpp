@@ -102,6 +102,8 @@ int main (int argc, char* argv[])
 	}
 	chromosomes.push_back("chrX");
 
+	vector<Graph> graphs;
+
 	for (auto chrom : chromosomes) {
 		// re-construct graph object
 		Graph graph;
@@ -109,6 +111,7 @@ int main (int argc, char* argv[])
 		ifstream os1(graph_archive, std::ios::binary);
 		cereal::BinaryInputArchive archive1( os1 );
 		archive1(graph);
+		graphs.push_back(graph);
 		struct rusage rss_graph;
 		getrusage(RUSAGE_SELF, &rss_graph);
 		cerr << "Max RSS after reading Graph for " << chrom << " from disk: \t" << (rss_graph.ru_maxrss / 1E6) << " GB" << endl;
