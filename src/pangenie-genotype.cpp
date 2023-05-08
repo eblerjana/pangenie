@@ -127,21 +127,19 @@ void fill_read_kmercounts_fasta(string chromosome, UniqueKmersMap* unique_kmers_
 
 							size_t count = read_kmer_counts->getKmerAbundance(kmers[i]);
 
-							// skip kmers with too extreme counts
-							if (count > 2*kmer_coverage) continue;
-
 							// determine probabilities
 							CopyNumber cn = probabilities->get_probability(kmer_coverage, count);
 							long double p_cn0 = cn.get_probability_of(0);
 							long double p_cn1 = cn.get_probability_of(1);
 							long double p_cn2 = cn.get_probability_of(2);
 
-							// skip kmers with only 0 probabilities
-							if ( (p_cn0 > 0) || (p_cn1 > 0) || (p_cn2 > 0) ) {
-								kmers_used += 1;
-								lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
-								unique_kmers_map->unique_kmers[chromosome][var_index]->update_readcount(i, count);
-							}
+							// kmers with only 0 probabilities
+							if (! ((p_cn0 > 0) || (p_cn1 > 0) || (p_cn2 > 0) )) cerr << "Warining: only zero probabilities for " << kmers[i] << " at " << chromosome << " " << start << endl; 
+
+							kmers_used += 1;
+							lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
+							unique_kmers_map->unique_kmers[chromosome][var_index]->update_readcount(i, count);
+							
 						}
 					}
 
@@ -220,21 +218,17 @@ void fill_read_kmercounts(string chromosome, UniqueKmersMap* unique_kmers_map, s
 
 					size_t count = read_kmer_counts->getKmerAbundance(kmers[i]);
 
-					// skip kmers with too extreme counts
-					if (count > 2*kmer_coverage) continue;
-
 					// determine probabilities
 					CopyNumber cn = probabilities->get_probability(kmer_coverage, count);
 					long double p_cn0 = cn.get_probability_of(0);
 					long double p_cn1 = cn.get_probability_of(1);
 					long double p_cn2 = cn.get_probability_of(2);
 
-					// skip kmers with only 0 probabilities
-					if ( (p_cn0 > 0) || (p_cn1 > 0) || (p_cn2 > 0) ) {
-						kmers_used += 1;
-						lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
-						unique_kmers_map->unique_kmers[chromosome][var_index]->update_readcount(i, count);
-					}
+					if (!(p_cn0 > 0.0 || p_cn1 > 0.0 || p_cn2 > 0.0)) cerr << "Warining: only zero probabilities for " << kmers[i] << " at " << chrom << " " << start << endl; 
+
+					kmers_used += 1;
+					lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
+					unique_kmers_map->unique_kmers[chromosome][var_index]->update_readcount(i, count);
 				}
 			}
 
