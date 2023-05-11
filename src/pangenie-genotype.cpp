@@ -628,14 +628,6 @@ int main (int argc, char* argv[])
 		write_header = false;
 	}
 
-	// just for analysis, serialize Results object
-	cerr << "Storing Results information ..." << endl;
-	{
-		ofstream os(outname + "_Results.cereal", std::ios::binary);
-		cereal::BinaryOutputArchive archive( os );
-		archive(results);
-	}
-
 	getrusage(RUSAGE_SELF, &rss_total);
 	time_writing = timer.get_interval_time();
 	time_total = timer.get_total_time();
