@@ -23,6 +23,27 @@
 using namespace std;
 
 
+void parse_positions(string filename, map<string, bool>& result) {
+	ifstream file(filename);
+	if (!file.good()) {
+		throw runtime_error("pggtyper: positions file cannot be opened.");
+	}
+	string line;
+	while (getline(file, line)) {
+		if (line == "") continue;
+
+		vector<string> fields;
+		string token;
+		istringstream iss (line);
+		while (getline(iss, token, '\t')) {
+			fields.push_back(token);
+		}
+		assert(fields.size() == 2);
+		result[fields[1] + "_" + fields[2]] = true;
+	}
+}
+
+
 bool ends_with (string const &filename, string const &ending) {
     if (filename.length() >= ending.length()) {
         return (0 == filename.compare (filename.length() - ending.length(), ending.length(), ending));
@@ -74,12 +95,12 @@ void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, K
 	unique_kmers_map->runtimes.insert(pair<string, double>(chromosome, timer.get_total_time()));
 }
 
-void run_genotyping(string chromosome, vector<UniqueKmers*>* unique_kmers, ProbabilityTable* probs, bool only_genotyping, bool only_phasing, long double effective_N, vector<unsigned short>* only_paths, Results* results) {
+void run_genotyping(string chromosome, vector<UniqueKmers*>* unique_kmers, ProbabilityTable* probs, bool only_genotyping, bool only_phasing, long double effective_N, vector<unsigned short>* only_paths, Results* results, string posterior_file) {
 	Timer timer;
 	/* construct HMM and run genotyping/phasing. Genotyping is run without normalizing the final alpha*beta values.
 	These values are first added up across different subsets of paths, and the resulting probabilities are normalized
 	at the end. This is done so that genotyping runs on disjoint sets of paths are better comparable. */
-	HMM hmm(unique_kmers, probs, !only_phasing, !only_genotyping, 1.26, false, effective_N, only_paths, false);
+	HMM hmm(unique_kmers, probs, !only_phasing, !only_genotyping, 1.26, false, effective_N, only_paths, false, posterior_file, chromosome);
 	// store the results
 	{
 		lock_guard<mutex> lock_result (results->result_mutex);
@@ -143,6 +164,7 @@ int main (int argc, char* argv[])
 	bool add_reference = true;
 	size_t sampling_size = 0;
 	uint64_t hash_size = 3000000000;
+	string posterior_file = "";
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
@@ -164,6 +186,7 @@ int main (int argc, char* argv[])
 	argument_parser.add_flag_argument('d', "do not add reference as additional path.");
 	argument_parser.add_optional_argument('a', "0", "sample subsets of paths of this size.");
 	argument_parser.add_optional_argument('e', "3000000000", "size of hash used by jellyfish.");
+	argument_parser.add_optional_argument('f', "", "File containing positions for which posterior state probabilities should be output in format: <chrom> <start>. Positions must exist in input VCF.");
 
 	try {
 		argument_parser.parse(argc, argv);
@@ -203,6 +226,7 @@ int main (int argc, char* argv[])
 	sampling_size = stoi(argument_parser.get_argument('a'));
 	istringstream iss(argument_parser.get_argument('e'));
 	iss >> hash_size;
+	posterior_file = argument_parser.get_argument('f');
 
 	// print info
 	cerr << "Files and parameters used:" << endl;
@@ -212,6 +236,11 @@ int main (int argc, char* argv[])
 	check_input_file(reffile);
 	check_input_file(vcffile);
 	check_input_file(readfile);
+	
+	map<string, bool> posterior_pos;
+	if (posterior_file != "") {
+		parse_positions(posterior_file, posterior_pos);
+	}
 
 	// read allele sequences and unitigs inbetween, write them into file
 	cerr << "Determine allele sequences ..." << endl;
@@ -375,7 +404,7 @@ int main (int argc, char* argv[])
 			// if requested, run phasing first
 			if (!only_genotyping) {
 				vector<unsigned short>* only_paths = &phasing_paths;
-				function<void()> f_genotyping = bind(run_genotyping, chromosome, unique_kmers, probs, false, true, effective_N, only_paths, r);
+				function<void()> f_genotyping = bind(run_genotyping, chromosome, unique_kmers, probs, false, true, effective_N, only_paths, r, outname);
 				threadPool.submit(f_genotyping);
 			}
 
@@ -383,7 +412,7 @@ int main (int argc, char* argv[])
 				// if requested, run genotying
 				for (size_t s = 0; s < subsets.size(); ++s){
 					vector<unsigned short>* only_paths = &subsets[s];
-					function<void()> f_genotyping = bind(run_genotyping, chromosome, unique_kmers, probs, true, false, effective_N, only_paths, r);
+					function<void()> f_genotyping = bind(run_genotyping, chromosome, unique_kmers, probs, true, false, effective_N, only_paths, r, outname);
 					threadPool.submit(f_genotyping);
 				}
 			}

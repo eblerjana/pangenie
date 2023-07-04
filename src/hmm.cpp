@@ -5,10 +5,10 @@
 #include <algorithm>
 #include <iomanip>
 #include <sstream>
+#include <fstream>
 #include "hmm.hpp"
 #include "emissionprobabilitycomputer.hpp"
 
-#include <iostream>
 
 using namespace std;
 
@@ -22,14 +22,23 @@ void print_column(vector<long double>* column, ColumnIndexer* indexer) {
 }
 
 
-HMM::HMM(vector<UniqueKmers*>* unique_kmers, ProbabilityTable* probabilities, bool run_genotyping, bool run_phasing, double recombrate, bool uniform, long double effective_N, vector<unsigned short>* only_paths, bool normalize)
+HMM::HMM(vector<UniqueKmers*>* unique_kmers, ProbabilityTable* probabilities, bool run_genotyping, bool run_phasing, double recombrate, bool uniform, long double effective_N, vector<unsigned short>* only_paths, bool normalize, string posteriors, string name)
 	:unique_kmers(unique_kmers),
 	 probabilities(probabilities),
 	 genotyping_result(unique_kmers->size()),
 	 recombrate(recombrate),
 	 uniform(uniform),
-	 effective_N(effective_N)
+	 effective_N(effective_N),
+	 posteriors(posteriors),
+	 name(name)
 {
+
+	if (posteriors != "") {
+		ofstream f(posteriors + "_" + this->name + "_posteriors.tsv");
+		f << "variant\thaplotype1\thaplotype2\tposterior_prob" << endl;
+		f.close();
+	}
+
 	// index all columns with at least one alternative allele
 	index_columns(only_paths);
 
@@ -318,11 +327,12 @@ void HMM::compute_backward_column(size_t column_index) {
 	// nr of paths
 	unsigned short nr_paths = column_indexer->nr_paths();
 
+	size_t prev_index = this->column_indexers.at(column_index)->get_variant_id();
+	size_t prev_pos = this->unique_kmers->at(prev_index)->get_variant_position();
+
 	if (column_index < column_count-1) {
 		assert (this->previous_backward_column != nullptr);
-		size_t prev_index = this->column_indexers.at(column_index)->get_variant_id();
 		size_t cur_index = this->column_indexers.at(column_index+1)->get_variant_id();
-		size_t prev_pos = this->unique_kmers->at(prev_index)->get_variant_position();
 		size_t cur_pos = this->unique_kmers->at(cur_index)->get_variant_position();
 		transition_probability_computer = new TransitionProbabilityComputer(prev_pos, cur_pos, this->recombrate, nr_paths, this->uniform, this->effective_N);	
 		previous_indexer = this->column_indexers.at(column_index+1);
@@ -375,6 +385,19 @@ void HMM::compute_backward_column(size_t column_index) {
 
 	// normalization of forward-backward
 	long double normalization_f_b = 0.0L;
+	
+	// file to write posteriors to, if requested
+	ofstream outfile;
+	bool write_posteriors = false;
+	vector<long double> posterior_values;
+	if (this->posteriors != "") {
+		outfile.open(posteriors + "_" + this->name + "_posteriors.tsv", fstream::app);
+		write_posteriors = true;
+		if (! outfile.is_open()) {
+			throw runtime_error("HMM::compute_backward_column: posterior output file cannot be opened.");
+		}
+	}
+
 
 	// state index
 	size_t i = 0;
@@ -404,6 +427,10 @@ void HMM::compute_backward_column(size_t column_index) {
 			// compute forward_prob * backward_prob
 			long double forward_backward_prob = forward_column->at(i) * current_cell;
 			normalization_f_b += forward_backward_prob;
+			
+			if (write_posteriors) {
+				posterior_values.push_back(forward_backward_prob);
+			}
 
 			// update genotype likelihood
 			this->genotyping_result.at(variant_id).add_to_likelihood(allele1, allele2, forward_backward_prob * this->forward_normalization_sums.at(column_index));
@@ -411,6 +438,19 @@ void HMM::compute_backward_column(size_t column_index) {
 		}
 	}
 
+
+	// write normalized posteriors to output file if requested
+	if (write_posteriors) {
+		size_t index = 0;
+		for (unsigned short path_id1 = 0; path_id1 < nr_paths; ++path_id1) {
+			for (unsigned short path_id2 = 0; path_id2 < nr_paths; ++path_id2) {
+				outfile << this->name << "_" << prev_pos + 1 << "\t" << path_id1 << "\t" << path_id2 << "\t" << (size_t) column_indexer->get_allele(path_id1) << "\t" << (size_t) column_indexer->get_allele(path_id2) << "\t" <<  posterior_values[index] / normalization_f_b << endl;
+				index += 1;
+			}
+		}
+	}
+
+	outfile.close();
 
 	if (normalization_sum > 0.0L) {
 		transform(current_column->begin(), current_column->end(), current_column->begin(), bind(divides<long double>(), placeholders::_1, normalization_sum));
