@@ -14,6 +14,7 @@ add_library(PanGenieLib SHARED
 	pathsampler.cpp
 	probabilitycomputer.cpp
 	probabilitytable.cpp
+	recombinationmap.cpp
 	sequenceutils.cpp
 	timer.cpp
 	transitionprobabilitycomputer.cpp
