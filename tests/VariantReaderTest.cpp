@@ -370,6 +370,7 @@ TEST_CASE("VariantReader close_to_start", "[VariantReader close_to_start]") {
 	VariantReader v(vcf, fasta, 31, true);
 	v.open_genotyping_outfile("../tests/data/small1-ids-close.vcf");
 	v.write_genotypes_of("chr10", genotypes, &u);
+	delete u[0];
 }
 
 

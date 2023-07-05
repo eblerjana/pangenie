@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <fstream>
 #include <stdexcept>
+#include <cstdio>
 #include "kmercounter.hpp"
 #include "jellyfishreader.hpp"
 #include "jellyfishcounter.hpp"
@@ -39,7 +40,7 @@ void parse_positions(string filename, map<string, bool>& result) {
 			fields.push_back(token);
 		}
 		assert(fields.size() == 2);
-		result[fields[1] + "_" + fields[2]] = true;
+		result[fields[0] + "_" + fields[1]] = true;
 	}
 }
 
@@ -95,12 +96,12 @@ void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, K
 	unique_kmers_map->runtimes.insert(pair<string, double>(chromosome, timer.get_total_time()));
 }
 
-void run_genotyping(string chromosome, vector<UniqueKmers*>* unique_kmers, ProbabilityTable* probs, bool only_genotyping, bool only_phasing, long double effective_N, vector<unsigned short>* only_paths, Results* results, string posterior_file) {
+void run_genotyping(string chromosome, vector<UniqueKmers*>* unique_kmers, ProbabilityTable* probs, bool only_genotyping, bool only_phasing, long double effective_N, vector<unsigned short>* only_paths, Results* results, map<string,bool>* post_pos, string posterior_file) {
 	Timer timer;
 	/* construct HMM and run genotyping/phasing. Genotyping is run without normalizing the final alpha*beta values.
 	These values are first added up across different subsets of paths, and the resulting probabilities are normalized
 	at the end. This is done so that genotyping runs on disjoint sets of paths are better comparable. */
-	HMM hmm(unique_kmers, probs, !only_phasing, !only_genotyping, 1.26, false, effective_N, only_paths, false, posterior_file, chromosome);
+	HMM hmm(unique_kmers, probs, !only_phasing, !only_genotyping, 1.26, false, effective_N, only_paths, false, post_pos, posterior_file, chromosome);
 	// store the results
 	{
 		lock_guard<mutex> lock_result (results->result_mutex);
@@ -186,7 +187,7 @@ int main (int argc, char* argv[])
 	argument_parser.add_flag_argument('d', "do not add reference as additional path.");
 	argument_parser.add_optional_argument('a', "0", "sample subsets of paths of this size.");
 	argument_parser.add_optional_argument('e', "3000000000", "size of hash used by jellyfish.");
-	argument_parser.add_optional_argument('f', "", "File containing positions for which posterior state probabilities should be output in format: <chrom> <start>. Positions must exist in input VCF.");
+	argument_parser.add_optional_argument('f', "", "File containing positions for which posterior state probabilities should be output in format: <chrom> <start>. Positions must exist in input VCF. NOTE: can only be used when running genotyping on the full panel.");
 
 	try {
 		argument_parser.parse(argc, argv);
@@ -240,11 +241,31 @@ int main (int argc, char* argv[])
 	map<string, bool> posterior_pos;
 	if (posterior_file != "") {
 		parse_positions(posterior_file, posterior_pos);
+		for (auto u : posterior_pos) {
+			cout << u.first << " " << u.second << endl;
+		}
 	}
 
 	// read allele sequences and unitigs inbetween, write them into file
 	cerr << "Determine allele sequences ..." << endl;
 	VariantReader variant_reader (vcffile, reffile, kmersize, add_reference, sample_name);
+
+	unsigned short nr_paths = variant_reader.nr_of_paths();
+	// TODO: for too large panels, print waring
+	if (nr_paths > 200) cerr << "Warning: panel is large and PanGenie might take a long time genotyping. Try reducing the panel size prior to genotyping." << endl;
+	// handle case when sampling_size is not set
+	if (sampling_size == 0) {
+		if (nr_paths > 90) {
+			sampling_size = 45;
+		} else {
+			sampling_size = nr_paths;		
+		}
+	}
+
+	// if posteriors shall be written, make sure no subsampling is used.
+	if ( (posterior_file != "") && (nr_paths > sampling_size )) {
+		throw runtime_error("pggtyper: writing posteriors is currently only possible if full panel is used for genotyping.");
+	}
 	
 	// TODO: only for analysis
 	struct rusage r_usage00;
@@ -345,18 +366,6 @@ int main (int argc, char* argv[])
 	cerr << "#### Memory usage until now: " << (r_usage3.ru_maxrss / 1E6) << " GB ####" << endl;
 
 	// prepare subsets of paths to run on
-	unsigned short nr_paths = variant_reader.nr_of_paths();
-	// TODO: for too large panels, print waring
-	if (nr_paths > 200) cerr << "Warning: panel is large and PanGenie might take a long time genotyping. Try reducing the panel size prior to genotyping." << endl;
-	// handle case when sampling_size is not set
-	if (sampling_size == 0) {
-		if (nr_paths > 90) {
-			sampling_size = 45;
-		} else {
-			sampling_size = nr_paths;		
-		}
-	}
-
 	PathSampler path_sampler(nr_paths);
 	vector<vector<unsigned short>> subsets;
 	path_sampler.partition_samples(subsets, sampling_size);
@@ -401,10 +410,11 @@ int main (int argc, char* argv[])
 			vector<UniqueKmers*>* unique_kmers = &unique_kmers_list.unique_kmers[chromosome];
 			ProbabilityTable* probs = &probabilities;
 			Results* r = &results;
+			map<string,bool>* post_pos = &posterior_pos;
 			// if requested, run phasing first
 			if (!only_genotyping) {
 				vector<unsigned short>* only_paths = &phasing_paths;
-				function<void()> f_genotyping = bind(run_genotyping, chromosome, unique_kmers, probs, false, true, effective_N, only_paths, r, outname);
+				function<void()> f_genotyping = bind(run_genotyping, chromosome, unique_kmers, probs, false, true, effective_N, only_paths, r, post_pos, outname);
 				threadPool.submit(f_genotyping);
 			}
 
@@ -412,7 +422,7 @@ int main (int argc, char* argv[])
 				// if requested, run genotying
 				for (size_t s = 0; s < subsets.size(); ++s){
 					vector<unsigned short>* only_paths = &subsets[s];
-					function<void()> f_genotyping = bind(run_genotyping, chromosome, unique_kmers, probs, true, false, effective_N, only_paths, r, outname);
+					function<void()> f_genotyping = bind(run_genotyping, chromosome, unique_kmers, probs, true, false, effective_N, only_paths, r, post_pos, outname);
 					threadPool.submit(f_genotyping);
 				}
 			}
@@ -449,6 +459,42 @@ int main (int argc, char* argv[])
 	if (! only_phasing) variant_reader.close_genotyping_outfile();
 	if (! only_genotyping) variant_reader.close_phasing_outfile();
 
+	// destroy UniqueKmers
+	for (auto it = unique_kmers_list.unique_kmers.begin(); it != unique_kmers_list.unique_kmers.end(); ++it){
+		for (size_t i = 0; i < it->second.size(); ++i) {
+			delete it->second[i];
+			it->second[i] = nullptr;
+		}
+	}
+
+	// if posteriors were written to files, combine files into one
+	if (posterior_file != "") {
+		ofstream post_outfile(outname + "_posteriors.tsv");
+		post_outfile << "variant\thaplotype1\thaplotype2\tposterior_probability" << endl;
+		if (!post_outfile.good()) {
+			stringstream ss;
+			ss << "pggtyper: File " << outname + "_posteriors.tsv" << " cannot be created. Note that the filename must not contain non-existing directories." << endl;
+			throw runtime_error(ss.str());
+		}
+		for (auto chromosome : chromosomes) {
+			// check if output file exists for this chromosome
+			string chrom_file = outname + "_" + chromosome + "_posteriors.tsv";
+			ifstream chrom_values(chrom_file);
+			if (chrom_values.good()) {
+				// write content to output file
+				post_outfile << chrom_values.rdbuf();
+				chrom_values.close();
+				// delete the individual files
+				int rval = remove(chrom_file.c_str());
+				if (rval) {
+					post_outfile.close();
+					throw runtime_error("pggtyper: file " + chrom_file + " could not be deleted.");
+				}
+			}
+		}
+		post_outfile.close();
+	}
+
 	time_writing = timer.get_interval_time();
 	time_total = timer.get_total_time();
 
@@ -472,14 +518,6 @@ int main (int argc, char* argv[])
 	struct rusage r_usage;
 	getrusage(RUSAGE_SELF, &r_usage);
 	cerr << "Total maximum memory usage: " << (r_usage.ru_maxrss / 1E6) << " GB" << endl;
-
-	// destroy UniqueKmers
-	for (auto it = unique_kmers_list.unique_kmers.begin(); it != unique_kmers_list.unique_kmers.end(); ++it){
-		for (size_t i = 0; i < it->second.size(); ++i) {
-			delete it->second[i];
-			it->second[i] = nullptr;
-		}
-	}
 
 	return 0;
 }

@@ -22,7 +22,7 @@ void print_column(vector<long double>* column, ColumnIndexer* indexer) {
 }
 
 
-HMM::HMM(vector<UniqueKmers*>* unique_kmers, ProbabilityTable* probabilities, bool run_genotyping, bool run_phasing, double recombrate, bool uniform, long double effective_N, vector<unsigned short>* only_paths, bool normalize, string posteriors, string name)
+HMM::HMM(vector<UniqueKmers*>* unique_kmers, ProbabilityTable* probabilities, bool run_genotyping, bool run_phasing, double recombrate, bool uniform, long double effective_N, vector<unsigned short>* only_paths, bool normalize, map<string, bool>* posterior_positions, string posteriors, string name)
 	:unique_kmers(unique_kmers),
 	 probabilities(probabilities),
 	 genotyping_result(unique_kmers->size()),
@@ -30,14 +30,9 @@ HMM::HMM(vector<UniqueKmers*>* unique_kmers, ProbabilityTable* probabilities, bo
 	 uniform(uniform),
 	 effective_N(effective_N),
 	 posteriors(posteriors),
-	 name(name)
+	 name(name),
+	 posterior_pos(posterior_positions)
 {
-
-	if (posteriors != "") {
-		ofstream f(posteriors + "_" + this->name + "_posteriors.tsv");
-		f << "variant\thaplotype1\thaplotype2\tposterior_prob" << endl;
-		f.close();
-	}
 
 	// index all columns with at least one alternative allele
 	index_columns(only_paths);
@@ -390,11 +385,18 @@ void HMM::compute_backward_column(size_t column_index) {
 	ofstream outfile;
 	bool write_posteriors = false;
 	vector<long double> posterior_values;
-	if (this->posteriors != "") {
-		outfile.open(posteriors + "_" + this->name + "_posteriors.tsv", fstream::app);
-		write_posteriors = true;
-		if (! outfile.is_open()) {
-			throw runtime_error("HMM::compute_backward_column: posterior output file cannot be opened.");
+
+	stringstream ss;
+	ss << this->name << "_" << prev_pos + 1;
+	string key = ss.str();
+
+	if ( (this->posterior_pos != nullptr)) {
+		if (this->posterior_pos->count(key) > 0) {
+			outfile.open(posteriors + "_" + this->name + "_posteriors.tsv", fstream::app);
+			write_posteriors = true;
+			if (! outfile.is_open()) {
+				throw runtime_error("HMM::compute_backward_column: posterior output file cannot be opened.");
+			}
 		}
 	}
 
