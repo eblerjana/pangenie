@@ -34,6 +34,11 @@ HMM::HMM(vector<UniqueKmers*>* unique_kmers, ProbabilityTable* probabilities, bo
 	 posterior_pos(posterior_positions)
 {
 
+	if (posteriors != "") {
+		ofstream f(posteriors + "_" + this->name + "_posteriors.tsv");
+		f.close();
+	}
+
 	// index all columns with at least one alternative allele
 	index_columns(only_paths);
 
@@ -446,7 +451,7 @@ void HMM::compute_backward_column(size_t column_index) {
 		size_t index = 0;
 		for (unsigned short path_id1 = 0; path_id1 < nr_paths; ++path_id1) {
 			for (unsigned short path_id2 = 0; path_id2 < nr_paths; ++path_id2) {
-				outfile << this->name << "_" << prev_pos + 1 << "\t" << path_id1 << "\t" << path_id2 << "\t" << (size_t) column_indexer->get_allele(path_id1) << "\t" << (size_t) column_indexer->get_allele(path_id2) << "\t" <<  posterior_values[index] / normalization_f_b << endl;
+				outfile << this->name << "_" << prev_pos + 1 << "\t" << path_id1 << "\t" << path_id2 << "\t" << std::setprecision (15) << posterior_values[index] / normalization_f_b << "\t" << (size_t) column_indexer->get_allele(path_id1) << "\t" << (size_t) column_indexer->get_allele(path_id2) << endl;
 				index += 1;
 			}
 		}
