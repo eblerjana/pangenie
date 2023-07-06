@@ -15,4 +15,6 @@ TEST_CASE("RecombinationMap read_genetic_map", "[RecombinationMap read_genetic_m
 	for (auto s : g) {
 		cout << s.first << " " << s.second << endl;
 	}
+
+	REQUIRE(g.size() == 7);
 }

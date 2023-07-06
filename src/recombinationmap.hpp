@@ -5,6 +5,7 @@
 #include <vector>
 #include <iostream>
 #include <fstream> 
+#include "variantreader.hpp"
 
 void load_genetic_map(std::string filename, std::vector<std::pair<size_t,float>>* result);
 
@@ -12,8 +13,10 @@ class RecombinationMap {
 public:
 	/**
 	* @param filename name of the genetic map file
+	* @param variants VariantReader with information on variant positions
+	* @param chromosome which chromosome is to be considered
 	**/
-	RecombinationMap(std::string& filename);
+	RecombinationMap(std::string& filename, VariantReader* variants, std::string chromosome);
 	/**
 	* @param constant recombination rate (uniform recombination probabilities)
 	**/
@@ -24,5 +27,6 @@ private:
 	bool uniform;
 	long double recomb_rate;
 	std::vector<long double> cumulative_distances;
+	void compute_recombination_cost_map(std::vector<std::pair<size_t,float>>* genetic_map, VariantReader* variants, std::string chromosome);
 };
 #endif // RECOMBINATIONMAP_H 
