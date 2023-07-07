@@ -54,7 +54,6 @@ void load_genetic_map(string filename, vector<pair<size_t,float>>* result) {
 	}
 }
 
-// TODO: this needs access to the variant positions also!!
 RecombinationMap::RecombinationMap(std::string& filename, VariantReader* variants, string chromosome)
 	:uniform(false)
 {
@@ -130,19 +129,23 @@ void RecombinationMap::compute_recombination_cost_map(vector<pair<size_t,float>>
 // TODO: are IDs available?? --> Yes, should be.
 long double RecombinationMap::compute_recombination_probability(size_t left_variant, size_t left_variant_id, size_t right_variant, size_t right_variant_id) {
 
-	if (right_variant != (left_variant + 1)) {
+	if (right_variant_id != (left_variant_id + 1)) {
 		throw runtime_error("RecombinationMap::compute_recombination_probability: variant ids must be consecutive.");
 	}
 
-	if (right_variant >= this->cumulative_distances.size()) {
-		throw runtime_error("RecombinationMap::compute_recombination_probability: right variant id exeeds the number of variants stored.");
+	if (left_variant > right_variant) {
+		throw runtime_error("RecombinationMap::compute_recombination_probability: left variant position is larger than right variant position.");
 	}
 
 	if (this->uniform) {
 		return (right_variant - left_variant) * 0.000001 * (this->recomb_rate);
 	} else {
+		long double minimum_genetic_distance = 1e-10L;
+		if (right_variant_id >= this->cumulative_distances.size()) {
+			throw runtime_error("RecombinationMap::compute_recombination_probability: right variant id exeeds the number of variants stored.");
+		}
 		if (left_variant == 0) return 0.0L;
-		return this->cumulative_distances[right_variant_id] - cumulative_distances[left_variant_id];
+		return max(this->cumulative_distances[right_variant_id] - cumulative_distances[left_variant_id], minimum_genetic_distance);
 	}
 }
 

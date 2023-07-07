@@ -18,7 +18,7 @@ public:
 	**/
 	RecombinationMap(std::string& filename, VariantReader* variants, std::string chromosome);
 	/**
-	* @param constant recombination rate (uniform recombination probabilities)
+	* @param recomb_rate constant recombination rate (uniform recombination probabilities)
 	**/
 	RecombinationMap(float recomb_rate);
 	/** compute recombination probability between two variant positions **/
