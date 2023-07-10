@@ -241,9 +241,6 @@ int main (int argc, char* argv[])
 	map<string, bool> posterior_pos;
 	if (posterior_file != "") {
 		parse_positions(posterior_file, posterior_pos);
-		for (auto u : posterior_pos) {
-			cout << u.first << " " << u.second << endl;
-		}
 	}
 
 	// read allele sequences and unitigs inbetween, write them into file
