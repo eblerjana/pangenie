@@ -6,6 +6,56 @@
 
 using namespace std;
 
+TEST_CASE("Variant ref_uncovered", "[Variant ref_uncovered]"){
+	Variant v1("AAA", "TAC", "chr1", 10, 14, {"ATGC", "ATT"}, {1,1});
+	Variant v2("GCT", "CCC", "chr1", 15, 16, {"A", "G"}, {1,1});
+	Variant v3("AAA", "TAC", "chr1", 10, 14, {"ATGC", "ATT"}, {1,1});
+
+	REQUIRE(v1.nr_of_alleles() == 2);
+	REQUIRE(v2.nr_of_alleles() == 2);
+	REQUIRE(v1.nr_of_paths() == 2);
+	REQUIRE(v2.nr_of_paths() == 2);
+	REQUIRE(v1.get_allele_string(0) == "ATGC");
+	REQUIRE(v2.get_allele_string(1) == "G");
+
+	REQUIRE(!v1.allele_on_path(0,0));
+	REQUIRE(v1.allele_on_path(1,0));
+	REQUIRE(v2.allele_on_path(1,0));
+	REQUIRE(!v2.allele_on_path(0,1));
+
+	v1.combine_variants(v2);
+	REQUIRE(v1.get_allele_string(0) == "ATGCTA");
+	REQUIRE(v1.get_allele_string(1) == "ATTTG");
+	REQUIRE(v1.nr_of_alleles() == 2);
+	REQUIRE(v1.is_combined());
+	
+	v1.add_flanking_sequence();
+	REQUIRE(v1.get_allele_string(0) == "AAAATGCTACCC");
+	REQUIRE(v1.get_allele_string(1) == "AAAATTTGCCC");
+
+	v1.remove_flanking_sequence();
+	REQUIRE(v1.get_allele_string(0) == "ATGCTA");
+	REQUIRE(v1.get_allele_string(1) == "ATTTG");
+
+	GenotypingResult genotypes;
+	vector<GenotypingResult> result_genotypes;
+	genotypes.add_to_likelihood(1,1,1.0);
+
+	vector<Variant> single_variants;
+	v1.separate_variants(&single_variants, &genotypes, &result_genotypes);
+	REQUIRE(single_variants.size() == 2);
+	REQUIRE(single_variants[0] == v3);
+	REQUIRE(single_variants[1] == v2);
+
+	REQUIRE(doubles_equal(result_genotypes[0].get_genotype_likelihood(1,1), 1.0));
+	REQUIRE(doubles_equal(result_genotypes[0].get_genotype_likelihood(0,1), 0.0));
+	REQUIRE(doubles_equal(result_genotypes[0].get_genotype_likelihood(0,0), 0.0));
+
+	REQUIRE(doubles_equal(result_genotypes[1].get_genotype_likelihood(1,1), 1.0));
+	REQUIRE(doubles_equal(result_genotypes[1].get_genotype_likelihood(0,1), 0.0));
+	REQUIRE(doubles_equal(result_genotypes[1].get_genotype_likelihood(0,0), 0.0));
+}
+
 TEST_CASE("Variant testcase 1", "[Variant testcase 1]"){
 	Variant v1("AAA", "TAC", "chr1", 10, 14, {"ATGC", "ATT"}, {0,1});
 	Variant v2("GCT", "CCC", "chr1", 15, 16, {"A", "G"}, {1,0});
@@ -39,6 +89,7 @@ TEST_CASE("Variant testcase 1", "[Variant testcase 1]"){
 	REQUIRE(v1.get_allele_string(1) == "ATGCTG");
 	REQUIRE(v1.get_allele_string(2) == "ATTTA");
 }
+
 
 TEST_CASE("Variant operator==", "[Variant operator==]") {
 	Variant v1("AAA", "TAC", "chr1", 10, 13, {"ATG", "C"}, {0,1});

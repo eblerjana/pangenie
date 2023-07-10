@@ -470,7 +470,13 @@ int main (int argc, char* argv[])
 	// if posteriors were written to files, combine files into one
 	if (posterior_file != "") {
 		ofstream post_outfile(outname + "_posteriors.tsv");
-		post_outfile << "variant\thaplotype1\thaplotype2\tposterior_probability" << endl;
+		post_outfile << "variant";
+		for (size_t i = 0; i < nr_paths; ++i) {
+			for (size_t j = 0; j < nr_paths; ++j) {
+				post_outfile << "\t" << "posteriors_" << i << "|" << j;
+			}
+		}
+		post_outfile << endl;
 		if (!post_outfile.good()) {
 			stringstream ss;
 			ss << "pggtyper: File " << outname + "_posteriors.tsv" << " cannot be created. Note that the filename must not contain non-existing directories." << endl;

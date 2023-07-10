@@ -73,7 +73,10 @@ TEST_CASE("Posteriors compare_posteriors", "[Posteriors compare_posteriors]") {
 
 	string line;
 	size_t index = 0;
-	while(getline(post_file, line)){
+
+	vector<pair<unsigned char, unsigned char>> index_to_alleles = { {0,0}, {0,1}, {1,0}, {1,1}};
+
+	while(getline(post_file, line)) {
 		vector<string> fields;
 		string token;
 		istringstream iss (line);
@@ -81,46 +84,34 @@ TEST_CASE("Posteriors compare_posteriors", "[Posteriors compare_posteriors]") {
 			fields.push_back(token);
 		}
 
-		REQUIRE(fields.size() == 6);
+		REQUIRE(fields.size() == 5);
 
-		// if variant has changed, compare likelihoods
-		if ( (fields[0] != prev_var) && (index != 0)) {
-			// compare computed likelihoods to expected ones
-			computed_likelihoods.push_back(genotypes.get_genotype_likelihood((unsigned char) 0, (unsigned char) 0));
-			computed_likelihoods.push_back(genotypes.get_genotype_likelihood((unsigned char) 0, (unsigned char) 1));
-			computed_likelihoods.push_back(genotypes.get_genotype_likelihood((unsigned char) 1, (unsigned char) 1));
-			cleared = true;
-			genotypes = GenotypingResult();
+		for (size_t h = 1; h < fields.size(); ++h) {
+			unsigned char allele1 = index_to_alleles[h-1].first;
+			unsigned char allele2 = index_to_alleles[h-1].second;
+			genotypes.add_to_likelihood(allele1, allele2, string_to_l_double(fields[h]));
 		}
 
-		// determine which genotype the current state refers to
-		unsigned char allele1 = (unsigned char) atoi(fields[4].c_str());
-		unsigned char allele2 = (unsigned char) atoi(fields[5].c_str());
-		genotypes.add_to_likelihood(allele1, allele2, string_to_l_double(fields[3]));
-		cleared = false;
-		index += 1;
-		prev_var = fields[0];		
-	
-	}
-
-	if (!cleared) {
 		computed_likelihoods.push_back(genotypes.get_genotype_likelihood((unsigned char) 0, (unsigned char) 0));
 		computed_likelihoods.push_back(genotypes.get_genotype_likelihood((unsigned char) 0, (unsigned char) 1));
 		computed_likelihoods.push_back(genotypes.get_genotype_likelihood((unsigned char) 1, (unsigned char) 1));
+
+		genotypes = GenotypingResult();
 	}
 
-	// variants are enumerated in reverse order, that is why likelihoods also appear in reverse order (v2, v1)
 	vector<double> expected_likelihoods_rev = { 0.9678020017, 0.031003181, 0.0011948172, 0.0509465435, 0.9483202731, 0.0007331832};
 
 	REQUIRE(computed_likelihoods.size() == expected_likelihoods_rev.size());
 	REQUIRE(compare_vectors(expected_likelihoods_rev, computed_likelihoods));
+
 }
 
+
 TEST_CASE("Posteriors compare_posteriors_subset", "[Posteriors compare_posteriors_subset]") {
-	vector<unsigned char> path_to_allele = {0, 1};
+	vector<unsigned char> path_to_allele = {0, 2};
 	UniqueKmers u1(2000, path_to_allele);
 	vector<unsigned char> a1 = {0};
-	vector<unsigned char> a2 = {1};
+	vector<unsigned char> a2 = {2};
 	u1.insert_kmer(10, a1);
 	u1.insert_kmer(10, a2);
 	u1.set_coverage(5);
@@ -146,8 +137,8 @@ TEST_CASE("Posteriors compare_posteriors_subset", "[Posteriors compare_posterior
 	vector<double> computed_likelihoods;
 	for (auto result : hmm.get_genotyping_result()) {
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,0));
-		computed_likelihoods.push_back(result.get_genotype_likelihood(0,1));
-		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
+		computed_likelihoods.push_back(result.get_genotype_likelihood(0,2));
+		computed_likelihoods.push_back(result.get_genotype_likelihood(2,2));
 	}
 	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
 
@@ -162,7 +153,9 @@ TEST_CASE("Posteriors compare_posteriors_subset", "[Posteriors compare_posterior
 
 	string line;
 	size_t index = 0;
-	while(getline(post_file, line)){
+	vector<pair<unsigned char, unsigned char>> index_to_alleles = { {0,0}, {0,2}, {2,0}, {2,2}};
+
+	while(getline(post_file, line)) {
 		vector<string> fields;
 		string token;
 		istringstream iss (line);
@@ -170,35 +163,21 @@ TEST_CASE("Posteriors compare_posteriors_subset", "[Posteriors compare_posterior
 			fields.push_back(token);
 		}
 
-		REQUIRE(fields.size() == 6);
+		REQUIRE(fields.size() == 5);
 
-		// if variant has changed, compare likelihoods
-		if ( (fields[0] != prev_var) && (index != 0)) {
-			// compare computed likelihoods to expected ones
-			computed_likelihoods.push_back(genotypes.get_genotype_likelihood((unsigned char) 0, (unsigned char) 0));
-			computed_likelihoods.push_back(genotypes.get_genotype_likelihood((unsigned char) 0, (unsigned char) 1));
-			computed_likelihoods.push_back(genotypes.get_genotype_likelihood((unsigned char) 1, (unsigned char) 1));
-			cleared = true;
-			genotypes = GenotypingResult();
+		for (size_t h = 1; h < fields.size(); ++h) {
+			unsigned char allele1 = index_to_alleles[h-1].first;
+			unsigned char allele2 = index_to_alleles[h-1].second;
+			genotypes.add_to_likelihood(allele1, allele2, string_to_l_double(fields[h]));
 		}
 
-		// determine which genotype the current state refers to
-		unsigned char allele1 = (unsigned char) atoi(fields[4].c_str());
-		unsigned char allele2 = (unsigned char) atoi(fields[5].c_str());
-		genotypes.add_to_likelihood(allele1, allele2, string_to_l_double(fields[3]));
-		cleared = false;
-		index += 1;
-		prev_var = fields[0];		
-	
-	}
-
-	if (!cleared) {
 		computed_likelihoods.push_back(genotypes.get_genotype_likelihood((unsigned char) 0, (unsigned char) 0));
-		computed_likelihoods.push_back(genotypes.get_genotype_likelihood((unsigned char) 0, (unsigned char) 1));
-		computed_likelihoods.push_back(genotypes.get_genotype_likelihood((unsigned char) 1, (unsigned char) 1));
+		computed_likelihoods.push_back(genotypes.get_genotype_likelihood((unsigned char) 0, (unsigned char) 2));
+		computed_likelihoods.push_back(genotypes.get_genotype_likelihood((unsigned char) 2, (unsigned char) 2));
+
+		genotypes = GenotypingResult();
 	}
 
-	// variants are enumerated in reverse order, that is why likelihoods also appear in reverse order (v2, v1)
 	vector<double> expected_likelihoods_rev = { 0.9678020017, 0.031003181, 0.0011948172};
 
 	REQUIRE(computed_likelihoods.size() == expected_likelihoods_rev.size());
