@@ -458,12 +458,7 @@ void HMM::compute_backward_column(size_t column_index) {
 				index += 1;
 			}
 		}
-
-		for (unsigned short path_id1 = 0; path_id1 < nr_paths; ++path_id1) {
-			for (unsigned short path_id2 = 0; path_id2 < nr_paths; ++path_id2) {
-				outfile << "\t" << (unsigned int) column_indexer->get_allele(path_id1) << "|" << (unsigned int) column_indexer->get_allele(path_id2);
-			}
-		}
+		
 		outfile << endl;
 	}
 
