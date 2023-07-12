@@ -127,7 +127,7 @@ options:
 ```
 
 
-## Outputing posterior state probabilities
+## Outputting posterior state probabilities
 
 In order to output posterior state probabilities for given variant positions, use `` -f `` to provide a tab-separated input file of the following format:
 
@@ -137,7 +137,7 @@ In order to output posterior state probabilities for given variant positions, us
 
 ```
 
-Note that chromosome and start positions need to exist in the input VCF (provided by ``-v``). PanGenie will then output posterior state probabilities for all pairs of haplotype paths for the provided variant positions. Assuming the input VCF contains ``n`` haplotypes, PanGenie will output a TSV file of the following format, enumerating the haplotypes in the order they appear in the VCF:
+Note that chromosome and start positions need to exist in the input VCF (provided by ``-v``). PanGenie will then output posterior state probabilities for all pairs of haplotype paths for the provided variant positions. Assuming the input VCF contains ``n`` haplotypes, PanGenie will output a TSV file of the following format, enumerating the haplotypes in the order they appear in the VCF (see below). The file is called `` <outname>_posteriors.tsv ``.
 
 ```bat
 
