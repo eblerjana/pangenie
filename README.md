@@ -127,6 +127,28 @@ options:
 ```
 
 
+## Outputing posterior state probabilities
+
+In order to output posterior state probabilities for given variant positions, use `` -f `` to provide a tab-separated input file of the following format:
+
+```bat
+
+<chromosome>	<start>
+
+```
+
+Note that chromosome and start positions need to exist in the input VCF (provided by ``-v``). PanGenie will then output posterior state probabilities for all pairs of haplotype paths for the provided variant positions. Assuming the input VCF contains ``n`` haplotypes, PanGenie will output a TSV file of the following format, enumerating the haplotypes in the order they appear in the VCF:
+
+```bat
+
+<chromosome_start>	<posteriors_0|0>	<posteriors_0|1>	...	<posteriors_0|n>	<posteriors_1|0>	...	<posteriors_1|n>	...	<posteriors_n|n>
+
+```
+Per default, PanGenie adds the reference genome as one additional haplotype path (index 0). To avoid this, run PanGenie with option `` -d ``. In this case, it would only use the haplotype paths present in the VCF.
+
+**Note:**  During genotyping, PanGenie internally merges clusters of variants that are closer that the kmer size and treats them as a single locus when computing probabilities. As a result, in the ouput TSV, there will only be one entry for such a locus, labelled with the position of the first variant in such a cluster. In other words, say we have variants v1,v2,v3,v4 and v1,v2,v3 are treated as a single locus (since they are too close), then the output TSV would only have an entry for v1 and v4 (since for v2 and v3 the posteriors are the same as for v1).
+
+
 ## Runtime and memory usage
 
 Runtime and memory usage depend on the number of variants genotyped and the number of haplotypes present in the graph. PanGenie is fastest when it is installed using Singularity (see above).
