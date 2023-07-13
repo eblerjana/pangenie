@@ -77,14 +77,8 @@ We typically generate such VCFs from haplotype-resolved assemblies using this pi
 #### What should I do if my input VCF contains overlapping variants?
 
 In this case you can run PanGenie using the Snakemake pipeline provided in ``pipelines/run-from-callset/``. This automatically merges overlapping alleles into mult-allelic VCF, runs PanGenie and later converts the output VCF back to the original representation.
+Note that running this pipeline is not necessary if you are using the input VCFs provided below in Section "Data and genotypes". These VCFs can directly be given as input to PanGenie.
 
-#### Existing reference panels to use with PanGenie
-
-We have already produced input reference panels for several datasets from high-quality, haplotype-resolved assemblies that can be used as input to PanGenie:
-
-- HGSVC (GRCh38, 64 haplotypes): http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/HGSVC2/release/v2.0/PanGenie_PAV-panel/20210311_pav-panel-freeze4.vcf.gz
-- HPRC (GRCh38, 88 haplotypes): https://zenodo.org/record/6797328/files/cactus_filtered_ids.vcf.gz?download=1
-- HPRC (CHM13, 88 haplotypes): https://zenodo.org/record/7660118/files/cactus_filtered_ids_chm13.vcf.gz?download=1
 
 ### Input reads
 
@@ -161,6 +155,35 @@ The result will be a VCF file named `` test_genotyping.vcf `` containing the sam
 Parameter `` -e `` sets the hash size used by Jellyfish for k-mer counting. When running PanGenie on a whole genome dataset, this parameter can be omitted (so that PanGenie uses the default value).
 
 Per default, PanGenie uses a single thread. The number of threads used for k-mer counting and genotyping/phasing can be set via parameters ``-j`` and ``-t``, respectively. 
+
+
+## Data and genotypes
+
+
+We have already produced input reference panels for several datasets from high-quality, haplotype-resolved assemblies that can be used as input to PanGenie. These files were used to produce genotyping results for the HGSVC and HPRC projects. Genotypes for 3,202 samples from the 1000 Genomes Project produced based on these VCFs are also linked below.
+
+**Note**: results produced by different versions of PanGenie are not directly comparable, since newer versions of PanGenie produce more accurate genotyping results.
+
+### PanGenie v1.0.0
+
+| Dataset | PanGenie input VCF        |  Callset VCF         | 1000G Genotypes (n=3,202)  |
+|-------------| :-------------: |:-------------:| -----:|
+| HGSVC-GRCh38 (freeze3, 64 haplotypes) | [graph-VCF](https://zenodo.org/record/7763717/files/pav-panel-freeze3.vcf.gz?download=1) | [callset-VCF](https://zenodo.org/record/7763717/files/pav-calls-freeze3.vcf.gz?download=1) | [1000G-VCF](http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/HGSVC2/release/v1.0/PanGenie_results/pangenie_merged_bi_all.vcf.gz) (PanGenie v1.0.0)
+| HGSVC-GRCh38 (freeze4, 64 haplotypes) |  [graph-VCF](https://zenodo.org/record/7763717/files/pav-panel-freeze4.vcf.gz?download=1)     | [callset-VCF](https://zenodo.org/record/7763717/files/pav-calls-freeze4.vcf.gz?download=1) | [1000G-VCF](http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/HGSVC2/release/v2.0/PanGenie_results/20201217_pangenie_merged_bi_all.vcf.gz) (PanGenie v1.0.0) |
+| HPRC-GRCh38 (88 haplotypes) | [graph-VCF](https://zenodo.org/record/6797328/files/cactus_filtered_ids.vcf.gz?download=1)     |  [callset-VCF](https://zenodo.org/record/6797328/files/cactus_filtered_ids_biallelic.vcf.gz?download=1)    | [1000G-VCF](https://zenodo.org/record/6797328/files/all-samples_bi_all.vcf.gz?download=1)  (PanGenie v1.0.0)  |
+
+### PanGenie v2.1.1
+
+| Dataset | PanGenie input VCF        |  Callset VCF         | 1000G Genotypes (n=3,202)  |
+|-------------| :-------------: |:-------------:| -----:|
+| HPRC-CHM13 (88 haplotypes) | [graph-VCF](https://zenodo.org/record/7839719/files/chm13_cactus_filtered_ids.vcf.gz?download=1) | [callset-VCF](https://zenodo.org/record/7839719/files/chm13_cactus_filtered_ids_biallelic.vcf.gz?download=1)   |  [1000G-VCF](https://zenodo.org/record/7839719/files/chm13_all-samples_bi_all.vcf.gz?download=1) (PanGenie v2.1.1) |
+
+
+In all cases, the graph-VCFs provided in the second column were given as input to PanGenie. The callset-VCFs (third column) were used to convert the genotyped VCFs into a biallelic, callset representation using the following command:
+
+``  cat <pangenie-output> | python3 convert-to-biallelic.py <callset-VCF>  > callset-genotypes.vcf ``
+
+The script `` convert-to-biallelic.py `` can be found here: https://github.com/eblerjana/pangenie/blob/master/pipelines/run-from-callset/scripts/convert-to-biallelic.py.
 
 
 ## Citation
