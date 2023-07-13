@@ -5,7 +5,7 @@
 
 using namespace std;
 
-float interpolate (size_t point, size_t start_pos, size_t end_pos, float start_val, float end_val) {
+long double interpolate (size_t point, size_t start_pos, size_t end_pos, long double start_val, long double end_val) {
 	assert (start_pos <= point);
 	assert (point <= end_pos);
 
@@ -13,10 +13,34 @@ float interpolate (size_t point, size_t start_pos, size_t end_pos, float start_v
 	return start_val + ((point - start_pos) * (end_val - start_val) / (end_pos - start_pos));
 }
 
-void load_genetic_map(string filename, vector<pair<size_t,float>>* result) {
+void parse_map_inputs(string filename, map<string, string>& output_maps) {
 	ifstream file(filename);
 	if (!file.good()) {
-		throw runtime_error("RecombinationMap::load_genetic_map: file " + filename + " cannot be opened.");
+		throw runtime_error("parse_map_inputs: file " + filename + " cannot be opened.");
+	}
+
+	string line;
+	while(getline(file, line)){
+		vector<string> fields;
+		if (line == "") continue;
+		string token;
+		istringstream iss (line);
+		while (getline(iss, token, '\t')){
+			fields.push_back(token);
+		}
+
+		if (fields.size() != 2) {
+			throw runtime_error("parse_map_inputs: map config file is malformed.");
+		}
+
+		output_maps[fields[0]] = fields[1];
+	}
+}
+
+void load_genetic_map(string filename, vector<pair<size_t,long double>>* result) {
+	ifstream file(filename);
+	if (!file.good()) {
+		throw runtime_error("load_genetic_map: file " + filename + " cannot be opened.");
 	}
 
 	string line;
@@ -26,9 +50,7 @@ void load_genetic_map(string filename, vector<pair<size_t,float>>* result) {
 
 		// parse the fields
 		vector<string> fields;
-
 		if (line == "") continue;
-
 		string token;
 		istringstream iss (line);
 		while (getline(iss, token, ' ')) {
@@ -37,7 +59,7 @@ void load_genetic_map(string filename, vector<pair<size_t,float>>* result) {
 
 		// make sure the file is properly formatted
 		if (fields.size() != 3) {
-			throw runtime_error("RecombinationMap::load_genetic_map: genetic map file is malformed.");
+			throw runtime_error("load_genetic_map: genetic map file is malformed.");
 		}
 
 		// convert strings to numbers
@@ -46,7 +68,7 @@ void load_genetic_map(string filename, vector<pair<size_t,float>>* result) {
 		ss_pos >> position;
 
 		stringstream ss_dist(fields[2]);
-		float dist;
+		long double dist;
 		ss_dist >> dist;
 
 		// store position and cummulative distance
@@ -58,20 +80,20 @@ RecombinationMap::RecombinationMap(std::string& filename, VariantReader* variant
 	:uniform(false)
 {
 	// read the recombination map file
-	vector<pair<size_t, float>> recomb_map;
+	vector<pair<size_t, long double>> recomb_map;
 	load_genetic_map(filename, &recomb_map);
 	compute_recombination_cost_map(&recomb_map, variants, chromosome);
 
 }
 
-RecombinationMap::RecombinationMap(float recomb_rate)
+RecombinationMap::RecombinationMap(long double recomb_rate)
 	: uniform(true),
 	 recomb_rate((long double) recomb_rate)
 
 {}
 
 
-void RecombinationMap::compute_recombination_cost_map(vector<pair<size_t,float>>* genetic_map, VariantReader* variants, string chromosome) {
+void RecombinationMap::compute_recombination_cost_map(vector<pair<size_t,long double>>* genetic_map, VariantReader* variants, string chromosome) {
 	// NOTE: c++ implementation of the WhatsHap code: https://github.com/whatshap/whatshap/blob/main/whatshap/pedigree.py
 	assert (genetic_map->size() > 0);
 
@@ -84,6 +106,7 @@ void RecombinationMap::compute_recombination_cost_map(vector<pair<size_t,float>>
 
 	size_t nr_variants = variants->size_of(chromosome);
 	size_t map_size = genetic_map->size();
+
 	for (size_t v = 0; v < nr_variants; ++v) {
 		size_t position = variants->get_variant(chromosome, v).get_start_position();
 
@@ -106,13 +129,13 @@ void RecombinationMap::compute_recombination_cost_map(vector<pair<size_t,float>>
 		}
 
 		// interpolate
-		float d = 0.0;
+		long double d = 0.0;
 		if (i_none) {
 			assert (!j_none);
 			d = interpolate(position, 0, genetic_map->at(j).first, 0,  genetic_map->at(j).second);
 		} else if (j_none) {
 			// point is outside of the genetic map
-			float avg_rate = genetic_map->at(map_size-1).second / genetic_map->at(map_size -1).first;
+			long double avg_rate = genetic_map->at(map_size-1).second / genetic_map->at(map_size -1).first;
 			d = genetic_map->at(map_size-1).second + (position - genetic_map->at(map_size-1).first) * avg_rate;
 		} else {
 			assert (genetic_map->at(i).first <= position);
@@ -122,15 +145,14 @@ void RecombinationMap::compute_recombination_cost_map(vector<pair<size_t,float>>
 
 		this->cumulative_distances.push_back(d);
 	}
-
 }
 
 
 // TODO: are IDs available?? --> Yes, should be.
-long double RecombinationMap::compute_recombination_probability(size_t left_variant, size_t left_variant_id, size_t right_variant, size_t right_variant_id) {
+long double RecombinationMap::compute_recombination_probability(size_t left_variant, size_t left_variant_id, size_t right_variant, size_t right_variant_id) const {
 
-	if (right_variant_id != (left_variant_id + 1)) {
-		throw runtime_error("RecombinationMap::compute_recombination_probability: variant ids must be consecutive.");
+	if (left_variant_id >= right_variant_id) {
+		throw runtime_error("RecombinationMap::compute_recombination_probability: left_variant_id must be smaller than right_variant_id.");
 	}
 
 	if (left_variant > right_variant) {
@@ -144,7 +166,7 @@ long double RecombinationMap::compute_recombination_probability(size_t left_vari
 		if (right_variant_id >= this->cumulative_distances.size()) {
 			throw runtime_error("RecombinationMap::compute_recombination_probability: right variant id exeeds the number of variants stored.");
 		}
-		if (left_variant == 0) return 0.0L;
+	//	if (left_variant_id == 0) return 0.0L;
 		return max(this->cumulative_distances[right_variant_id] - cumulative_distances[left_variant_id], minimum_genetic_distance);
 	}
 }

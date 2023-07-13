@@ -22,11 +22,11 @@ void print_column(vector<long double>* column, ColumnIndexer* indexer) {
 }
 
 
-HMM::HMM(vector<UniqueKmers*>* unique_kmers, ProbabilityTable* probabilities, bool run_genotyping, bool run_phasing, double recombrate, bool uniform, long double effective_N, vector<unsigned short>* only_paths, bool normalize)
+HMM::HMM(vector<UniqueKmers*>* unique_kmers, ProbabilityTable* probabilities, bool run_genotyping, bool run_phasing, shared_ptr<RecombinationMap> recombination, bool uniform, long double effective_N, vector<unsigned short>* only_paths, bool normalize)
 	:unique_kmers(unique_kmers),
 	 probabilities(probabilities),
 	 genotyping_result(unique_kmers->size()),
-	 recombrate(recombrate),
+	 recombination(recombination),
 	 uniform(uniform),
 	 effective_N(effective_N)
 {
@@ -213,7 +213,7 @@ void HMM::compute_forward_column(size_t column_index) {
 		size_t cur_index = this->column_indexers.at(column_index)->get_variant_id();
 		size_t prev_pos = this->unique_kmers->at(prev_index)->get_variant_position();
 		size_t cur_pos = this->unique_kmers->at(cur_index)->get_variant_position();
-		transition_probability_computer = new TransitionProbabilityComputer(prev_pos, cur_pos, this->recombrate, nr_paths, this->uniform, this->effective_N);
+		transition_probability_computer = new TransitionProbabilityComputer(prev_pos, cur_pos, prev_index, cur_index, this->recombination, nr_paths, this->uniform, this->effective_N);
 	}
 
 	// construct new column
@@ -324,7 +324,7 @@ void HMM::compute_backward_column(size_t column_index) {
 		size_t cur_index = this->column_indexers.at(column_index+1)->get_variant_id();
 		size_t prev_pos = this->unique_kmers->at(prev_index)->get_variant_position();
 		size_t cur_pos = this->unique_kmers->at(cur_index)->get_variant_position();
-		transition_probability_computer = new TransitionProbabilityComputer(prev_pos, cur_pos, this->recombrate, nr_paths, this->uniform, this->effective_N);	
+		transition_probability_computer = new TransitionProbabilityComputer(prev_pos, cur_pos, prev_index, cur_index, this->recombination, nr_paths, this->uniform, this->effective_N);	
 		previous_indexer = this->column_indexers.at(column_index+1);
 		emission_probability_computer = new EmissionProbabilityComputer(this->unique_kmers->at(this->column_indexers.at(column_index+1)->get_variant_id()), this->probabilities);
 
@@ -471,7 +471,7 @@ void HMM::compute_viterbi_column(size_t column_index) {
 		size_t cur_index = this->column_indexers.at(column_index)->get_variant_id();
 		size_t prev_pos = this->unique_kmers->at(prev_index)->get_variant_position();
 		size_t cur_pos = this->unique_kmers->at(cur_index)->get_variant_position();
-		transition_probability_computer = new TransitionProbabilityComputer(prev_pos, cur_pos, this->recombrate, nr_paths, this->uniform, this->effective_N);
+		transition_probability_computer = new TransitionProbabilityComputer(prev_pos, cur_pos, prev_index, cur_index, this->recombination, nr_paths, this->uniform, this->effective_N);
 	}
 
 	// construct new column

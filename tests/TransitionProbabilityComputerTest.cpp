@@ -1,14 +1,17 @@
 #include <math.h>
+#include <memory>
 #include "catch.hpp"
 #include "utils.hpp"
 #include "../src/transitionprobabilitycomputer.hpp"
+#include "../src/recombinationmap.hpp"
 #include <vector>
 #include <string>
 
 using namespace std;
 
 TEST_CASE("TransitionProbabilityComputer compute_transition_prob1", "[TransitionProbabilityComputer compute_transition_probability]") {
-	TransitionProbabilityComputer t (1000000, 2000000, 1.26, 5, false, 0.25);
+	shared_ptr<RecombinationMap> recomb = shared_ptr<RecombinationMap>(new RecombinationMap(1.26));
+	TransitionProbabilityComputer t (1000000, 2000000, 0, 1, recomb, 5, false, 0.25);
 	double recomb_prob =  0.04455105238;
 	double no_recomb_prob = recomb_prob + 0.77724473806;
 
@@ -27,7 +30,8 @@ TEST_CASE("TransitionProbabilityComputer compute_transition_prob1", "[Transition
 }
 
 TEST_CASE("TransitionProbabilityComputer compute_transition_prob2", "[TransitionProbabilityComputer compute_transition_probability]") {
-	TransitionProbabilityComputer t (1000000, 2000000, 1.26, 10, false, 0.25);
+	shared_ptr<RecombinationMap> recomb = shared_ptr<RecombinationMap>(new RecombinationMap(1.26));
+	TransitionProbabilityComputer t (1000000, 2000000, 0, 1, recomb, 10, false, 0.25);
 	double recomb_prob = 0.01183851532;
 	double no_recomb_prob = recomb_prob + 0.88161484678;
 
@@ -46,7 +50,8 @@ TEST_CASE("TransitionProbabilityComputer compute_transition_prob2", "[Transition
 }
 
 TEST_CASE("TransitionProbabilityComputer compute_transition_prob1_switches", "[TransitionProbabilityComputer compute_transition_probability_switches]") {
-	TransitionProbabilityComputer t (1000000, 2000000, 1.26, 5, false, 0.25);
+	shared_ptr<RecombinationMap> recomb = shared_ptr<RecombinationMap>(new RecombinationMap(1.26));
+	TransitionProbabilityComputer t (1000000, 2000000, 0, 1, recomb, 5, false, 0.25);
 	double recomb_prob =  0.04455105238;
 	double no_recomb_prob = recomb_prob + 0.77724473806;
 
@@ -60,7 +65,8 @@ TEST_CASE("TransitionProbabilityComputer compute_transition_prob1_switches", "[T
 }
 
 TEST_CASE("TransitionProbabilityComputer compute_transition_prob2_switches", "[TransitionProbabilityComputer compute_transition_probability_switches]") {
-	TransitionProbabilityComputer t (1000000, 2000000, 1.26, 10, false, 0.25);
+	shared_ptr<RecombinationMap> recomb = shared_ptr<RecombinationMap>(new RecombinationMap(1.26));
+	TransitionProbabilityComputer t (1000000, 2000000, 0, 1, recomb, 10, false, 0.25);
 	double recomb_prob = 0.01183851532;
 	double no_recomb_prob = recomb_prob + 0.88161484678;
 

@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <fstream>
 #include <stdexcept>
+#include <memory>
 #include "kmercounter.hpp"
 #include "jellyfishreader.hpp"
 #include "jellyfishcounter.hpp"
@@ -47,6 +48,12 @@ void check_input_file(string &filename) {
 	}
 }
 
+struct GeneticMaps {
+	mutex genmap_mutex;
+	map<string, shared_ptr<RecombinationMap>> maps;
+	map<string, double> runtimes;
+};
+
 struct UniqueKmersMap {
 	mutex kmers_mutex;
 	map<string, vector<UniqueKmers*>> unique_kmers;
@@ -58,6 +65,19 @@ struct Results {
 	map<string, vector<GenotypingResult>> result;
 	map<string, double> runtimes;
 };
+
+void build_genetic_map(string chromosome, string filename, VariantReader* variants, GeneticMaps* result) {
+	Timer timer;
+	shared_ptr<RecombinationMap> recomb = shared_ptr<RecombinationMap> (new RecombinationMap(filename, variants, chromosome));
+	{
+		lock_guard<mutex> lock_rmap (result->genmap_mutex);
+		result->maps.insert(pair<string, shared_ptr<RecombinationMap>>(chromosome, recomb));
+	}
+	// store runtime
+	lock_guard<mutex> lock_rmap (result->genmap_mutex);
+	result->runtimes.insert(pair<string, double>(chromosome, timer.get_total_time()));
+
+}
 
 void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, KmerCounter* read_kmer_counts, VariantReader* variant_reader, ProbabilityTable* probs, UniqueKmersMap* unique_kmers_map, size_t kmer_coverage) {
 	Timer timer;
@@ -74,12 +94,12 @@ void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, K
 	unique_kmers_map->runtimes.insert(pair<string, double>(chromosome, timer.get_total_time()));
 }
 
-void run_genotyping(string chromosome, vector<UniqueKmers*>* unique_kmers, ProbabilityTable* probs, bool only_genotyping, bool only_phasing, long double effective_N, vector<unsigned short>* only_paths, Results* results) {
+void run_genotyping(string chromosome, vector<UniqueKmers*>* unique_kmers, ProbabilityTable* probs, bool only_genotyping, bool only_phasing, long double effective_N, vector<unsigned short>* only_paths, shared_ptr<RecombinationMap> genetic_map, Results* results) {
 	Timer timer;
 	/* construct HMM and run genotyping/phasing. Genotyping is run without normalizing the final alpha*beta values.
 	These values are first added up across different subsets of paths, and the resulting probabilities are normalized
 	at the end. This is done so that genotyping runs on disjoint sets of paths are better comparable. */
-	HMM hmm(unique_kmers, probs, !only_phasing, !only_genotyping, 1.26, false, effective_N, only_paths, false);
+	HMM hmm(unique_kmers, probs, !only_phasing, !only_genotyping, genetic_map, false, effective_N, only_paths, false);
 	// store the results
 	{
 		lock_guard<mutex> lock_result (results->result_mutex);
@@ -143,6 +163,7 @@ int main (int argc, char* argv[])
 	bool add_reference = true;
 	size_t sampling_size = 0;
 	uint64_t hash_size = 3000000000;
+	string genetic_maps = "";
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
@@ -164,6 +185,7 @@ int main (int argc, char* argv[])
 	argument_parser.add_flag_argument('d', "do not add reference as additional path.");
 	argument_parser.add_optional_argument('a', "0", "sample subsets of paths of this size.");
 	argument_parser.add_optional_argument('e', "3000000000", "size of hash used by jellyfish.");
+	argument_parser.add_optional_argument('m', "", "TSV file specifying paths to chromosome-specific genetic maps (in map format). File format: <chromosome> <path/to/genetic.map>");
 
 	try {
 		argument_parser.parse(argc, argv);
@@ -203,6 +225,7 @@ int main (int argc, char* argv[])
 	sampling_size = stoi(argument_parser.get_argument('a'));
 	istringstream iss(argument_parser.get_argument('e'));
 	iss >> hash_size;
+	genetic_maps = argument_parser.get_argument('m');
 
 	// print info
 	cerr << "Files and parameters used:" << endl;
@@ -212,6 +235,7 @@ int main (int argc, char* argv[])
 	check_input_file(reffile);
 	check_input_file(vcffile);
 	check_input_file(readfile);
+	if (genetic_maps != "") check_input_file(genetic_maps);
 
 	// read allele sequences and unitigs inbetween, write them into file
 	cerr << "Determine allele sequences ..." << endl;
@@ -315,6 +339,28 @@ int main (int argc, char* argv[])
 	getrusage(RUSAGE_SELF, &r_usage3);
 	cerr << "#### Memory usage until now: " << (r_usage3.ru_maxrss / 1E6) << " GB ####" << endl;
 
+
+	// prepare recombination maps
+	GeneticMaps recombination_maps;
+
+	if (genetic_maps != "") {
+		map<string, string> map_filenames;
+		parse_map_inputs(genetic_maps, map_filenames);
+
+		// TODO construct recombination maps
+		for (auto chromosome : chromosomes) {
+			VariantReader* variants = &variant_reader;
+			build_genetic_map(chromosome, map_filenames[chromosome], variants, &recombination_maps);
+		}
+
+	} else {
+		// generate uniform RecombinationMaps
+		for (auto chromosome : chromosomes) {
+			function<void()> f_unique_kmers = bind(recombination_maps[chromosome] = shared_ptr<RecombinationMap> (new RecombinationMap(1.26));
+		}
+	}
+
+
 	// prepare subsets of paths to run on
 	unsigned short nr_paths = variant_reader.nr_of_paths();
 	// TODO: for too large panels, print waring
@@ -375,7 +421,7 @@ int main (int argc, char* argv[])
 			// if requested, run phasing first
 			if (!only_genotyping) {
 				vector<unsigned short>* only_paths = &phasing_paths;
-				function<void()> f_genotyping = bind(run_genotyping, chromosome, unique_kmers, probs, false, true, effective_N, only_paths, r);
+				function<void()> f_genotyping = bind(run_genotyping, chromosome, unique_kmers, probs, false, true, effective_N, only_paths, recombination_maps[chromosome], r);
 				threadPool.submit(f_genotyping);
 			}
 
@@ -383,7 +429,7 @@ int main (int argc, char* argv[])
 				// if requested, run genotying
 				for (size_t s = 0; s < subsets.size(); ++s){
 					vector<unsigned short>* only_paths = &subsets[s];
-					function<void()> f_genotyping = bind(run_genotyping, chromosome, unique_kmers, probs, true, false, effective_N, only_paths, r);
+					function<void()> f_genotyping = bind(run_genotyping, chromosome, unique_kmers, probs, true, false, effective_N, only_paths, recombination_maps[chromosome], r);
 					threadPool.submit(f_genotyping);
 				}
 			}
