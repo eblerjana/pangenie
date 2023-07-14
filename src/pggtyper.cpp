@@ -76,7 +76,6 @@ void build_genetic_map(string chromosome, string filename, VariantReader* varian
 	// store runtime
 	lock_guard<mutex> lock_rmap (result->genmap_mutex);
 	result->runtimes.insert(pair<string, double>(chromosome, timer.get_total_time()));
-
 }
 
 void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, KmerCounter* read_kmer_counts, VariantReader* variant_reader, ProbabilityTable* probs, UniqueKmersMap* unique_kmers_map, size_t kmer_coverage) {
@@ -346,17 +345,30 @@ int main (int argc, char* argv[])
 	if (genetic_maps != "") {
 		map<string, string> map_filenames;
 		parse_map_inputs(genetic_maps, map_filenames);
+	
+		size_t available_threads_map = min(thread::hardware_concurrency(), (unsigned int) map_filenames.size());
+		size_t nr_cores_map = min(nr_core_threads, available_threads_map);
+		if (nr_cores_map < nr_core_threads) {
+			cerr << "Warning: using " << nr_cores_map << " for reading genetic maps." << endl;
+		}
 
 		// TODO construct recombination maps
+		ThreadPool threadPool (nr_cores_map);
 		for (auto chromosome : chromosomes) {
-			VariantReader* variants = &variant_reader;
-			build_genetic_map(chromosome, map_filenames[chromosome], variants, &recombination_maps);
+			if (map_filenames.find(chromosome) == map_filenames.end()) {
+				recombination_maps.maps[chromosome] = shared_ptr<RecombinationMap> (new RecombinationMap(1.26));
+			} else {
+				VariantReader* variants = &variant_reader;
+				GeneticMaps* g = &recombination_maps;
+				function<void()> f_recomb = bind(build_genetic_map, chromosome, map_filenames[chromosome], variants, g);
+				threadPool.submit(f_recomb);
+			}
 		}
 
 	} else {
 		// generate uniform RecombinationMaps
 		for (auto chromosome : chromosomes) {
-			function<void()> f_unique_kmers = bind(recombination_maps[chromosome] = shared_ptr<RecombinationMap> (new RecombinationMap(1.26));
+			recombination_maps.maps[chromosome] = shared_ptr<RecombinationMap> (new RecombinationMap(1.26));
 		}
 	}
 
@@ -421,7 +433,7 @@ int main (int argc, char* argv[])
 			// if requested, run phasing first
 			if (!only_genotyping) {
 				vector<unsigned short>* only_paths = &phasing_paths;
-				function<void()> f_genotyping = bind(run_genotyping, chromosome, unique_kmers, probs, false, true, effective_N, only_paths, recombination_maps[chromosome], r);
+				function<void()> f_genotyping = bind(run_genotyping, chromosome, unique_kmers, probs, false, true, effective_N, only_paths, recombination_maps.maps[chromosome], r);
 				threadPool.submit(f_genotyping);
 			}
 
@@ -429,7 +441,7 @@ int main (int argc, char* argv[])
 				// if requested, run genotying
 				for (size_t s = 0; s < subsets.size(); ++s){
 					vector<unsigned short>* only_paths = &subsets[s];
-					function<void()> f_genotyping = bind(run_genotyping, chromosome, unique_kmers, probs, true, false, effective_N, only_paths, recombination_maps[chromosome], r);
+					function<void()> f_genotyping = bind(run_genotyping, chromosome, unique_kmers, probs, true, false, effective_N, only_paths, recombination_maps.maps[chromosome], r);
 					threadPool.submit(f_genotyping);
 				}
 			}
