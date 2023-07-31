@@ -15,6 +15,7 @@
 #include "copynumber.hpp"
 #include "variantreader.hpp"
 #include "uniquekmercomputer.hpp"
+#include "recombinationmap.hpp"
 #include "hmm.hpp"
 #include "commandlineparser.hpp"
 #include "timer.hpp"

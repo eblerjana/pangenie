@@ -46,14 +46,14 @@ void load_genetic_map(string filename, vector<pair<size_t,long double>>* result)
 	string line;
 	while(getline(file, line)) {
 		// check if header line
-		if (line.substr(0,8) == "position") continue;
+		if (line.substr(0,3) == "pos") continue;
 
 		// parse the fields
 		vector<string> fields;
 		if (line == "") continue;
 		string token;
 		istringstream iss (line);
-		while (getline(iss, token, ' ')) {
+		while (getline(iss, token, '\t')) {
 			fields.push_back(token);
 		}
 

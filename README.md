@@ -115,6 +115,7 @@ options:
 		NOTE: INPUT FASTA/Q FILE MUST NOT BE COMPRESSED. (required).
 	-j VAL	number of threads to use for kmer-counting (default: 1).
 	-k VAL	kmer size (default: 31).
+	-m VAL	TSV file specifying paths to chromosome-specific genetic maps (in map format). File format: <chromosome> <path/to/genetic.map> (default: ).
 	-o VAL	prefix of the output files. NOTE: the given path must not include non-existent folders. (default: result).
 	-p	run phasing (Viterbi algorithm). Experimental feature.
 	-r VAL	reference genome in FASTA format.
@@ -125,6 +126,22 @@ options:
 	-v VAL	variants in VCF format. 
 		NOTE: INPUT VCF FILE MUST NOT BE COMPRESSED. (required).
 ```
+
+### Using genetic maps
+
+In order to use recombination probabilities computed from genetic map files, use option `` -m `` to provide PanGenie with a config file specifying the location of genetic maps for each chromosome as follows:
+
+```bat
+<chromosome>	<path/to/genetic.map>
+
+```
+
+Each genetic map file is expected to follow the format used by [shapeit5](https://github.com/odelaneau/shapeit5) (tab separated):
+
+```bat
+<position>	<chromosome>	<cM>
+```
+
 
 
 ## Runtime and memory usage
