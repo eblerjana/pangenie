@@ -77,7 +77,7 @@ We typically generate such VCFs from haplotype-resolved assemblies using this pi
 #### What should I do if my input VCF contains overlapping variants?
 
 In this case you can run PanGenie using the Snakemake pipeline provided in ``pipelines/run-from-callset/``. This automatically merges overlapping alleles into mult-allelic VCF, runs PanGenie and later converts the output VCF back to the original representation.
-
+Note that running this pipeline is not necessary if you are using the input VCFs provided below in Section "Data and genotypes". These VCFs can directly be given as input to PanGenie.
 
 
 ### Input reads
