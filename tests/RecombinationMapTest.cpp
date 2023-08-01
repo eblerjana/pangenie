@@ -56,3 +56,49 @@ TEST_CASE("RecombinationMap compute_recombination_probability_map", "Recombinati
 
 	REQUIRE(compare_vectors(computed, expected));
 }
+
+TEST_CASE("RecombinationMap compute_recombination_probability_map2", "RecombinationMap compute_recombination_probability_map2") {
+	string vcf = "../tests/data/small3.vcf";
+	string fasta = "../tests/data/small3.fa";
+	string filename = "../tests/data/recomb_map3.map";
+	VariantReader v(vcf, fasta, 10, true);
+	RecombinationMap r(filename, &v, "chr1");
+
+	vector<double> expected = {0.0001328663819544218, 7.247257197517953e-05, 0.00022043740642430087, 3.925597648635204e-05, 9.059071496908544e-05, 3.925597648635204e-05, 0.00031404781189237063, 0.00010568916746356294, 9.663009596683203e-05, 0.0005888396472979451, 8.757102447010112e-05, 0.00024459493041595337, 9.361040546784771e-05};
+	vector<double> computed = {};
+
+	vector<double> positions = {};
+
+	for (size_t i = 0; i < v.size_of("chr1"); i++) {
+		positions.push_back(v.get_variant("chr1", i).get_start_position());
+	}
+
+	for (size_t i = 0; i < positions.size()-1; ++i) {
+		computed.push_back(r.compute_recombination_probability(positions[i], i, positions[i+1], i+1));
+	}
+
+	REQUIRE(compare_vectors(computed, expected));
+}
+
+TEST_CASE("RecombinationMap compute_recombination_probability_map3", "RecombinationMap compute_recombination_probability_map3") {
+	string vcf = "../tests/data/small3.vcf";
+	string fasta = "../tests/data/small3.fa";
+	string filename = "../tests/data/recomb_map4.map";
+	VariantReader v(vcf, fasta, 10, true);
+	RecombinationMap r(filename, &v, "chr1");
+
+	vector<double> expected = {6.778756507563877e-05, 3.697503549571213e-05, 0.00011246573296641582, 2.0028144226857947e-05, 4.6218794369723426e-05, 2.002814422696897e-05, 0.00016022515381519664, 5.392192676456631e-05, 4.9300047327838215e-05, 0.0003004221634033133, 4.4678167890888076e-05, 0.00012479074479831986, 4.77594208486698e-05};
+	vector<double> computed = {};
+
+	vector<double> positions = {};
+
+	for (size_t i = 0; i < v.size_of("chr1"); i++) {
+		positions.push_back(v.get_variant("chr1", i).get_start_position());
+	}
+
+	for (size_t i = 0; i < positions.size()-1; ++i) {
+		computed.push_back(r.compute_recombination_probability(positions[i], i, positions[i+1], i+1));
+	}
+
+	REQUIRE(compare_vectors(computed, expected));
+}

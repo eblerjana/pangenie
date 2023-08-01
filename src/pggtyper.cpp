@@ -342,6 +342,7 @@ int main (int argc, char* argv[])
 
 	// prepare recombination maps
 	GeneticMaps recombination_maps;
+	cerr << "Preparing recombination probabilities ... " << endl;
 
 	if (genetic_maps != "") {
 		map<string, string> map_filenames;
@@ -357,8 +358,10 @@ int main (int argc, char* argv[])
 		ThreadPool threadPool (nr_cores_map);
 		for (auto chromosome : chromosomes) {
 			if (map_filenames.find(chromosome) == map_filenames.end()) {
+				cerr << "Using constant recombination rate for chromosome " << chromosome << endl;
 				recombination_maps.maps[chromosome] = shared_ptr<RecombinationMap> (new RecombinationMap(1.26));
 			} else {
+				cerr << "Using genetic map " << map_filenames[chromosome] << " for chromosome "  << chromosome << endl;
 				VariantReader* variants = &variant_reader;
 				GeneticMaps* g = &recombination_maps;
 				function<void()> f_recomb = bind(build_genetic_map, chromosome, map_filenames[chromosome], variants, g);
@@ -369,6 +372,7 @@ int main (int argc, char* argv[])
 	} else {
 		// generate uniform RecombinationMaps
 		for (auto chromosome : chromosomes) {
+			cerr << "Using constant recombination rate for chromosome " << chromosome << endl;
 			recombination_maps.maps[chromosome] = shared_ptr<RecombinationMap> (new RecombinationMap(1.26));
 		}
 	}
