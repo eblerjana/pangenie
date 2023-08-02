@@ -176,10 +176,10 @@ int main (int argc, char* argv[])
 	argument_parser.add_optional_argument('s', "sample", "name of the sample (will be used in the output VCFs)");
 	argument_parser.add_optional_argument('j', "1", "number of threads to use for kmer-counting");
 	argument_parser.add_optional_argument('t', "1", "number of threads to use for core algorithm. Largest number of threads possible is the number of chromosomes given in the VCF");
-//	argument_parser.add_optional_argument('n', "0.00001", "effective population size");
+	argument_parser.add_optional_argument('n', "0.00001", "effective population size");
 	argument_parser.add_flag_argument('g', "run genotyping (Forward backward algorithm, default behaviour).");
 	argument_parser.add_flag_argument('p', "run phasing (Viterbi algorithm). Experimental feature.");
-//	argument_parser.add_optional_argument('m', "0.001", "regularization constant for copynumber probabilities");
+	argument_parser.add_optional_argument('b', "0.001", "regularization constant for copynumber probabilities");
 	argument_parser.add_flag_argument('c', "count all read kmers instead of only those located in graph.");
 	argument_parser.add_flag_argument('u', "output genotype ./. for variants not covered by any unique kmers.");
 	argument_parser.add_flag_argument('d', "do not add reference as additional path.");
@@ -217,8 +217,8 @@ int main (int argc, char* argv[])
 		only_phasing = true;
 	}
 
-//	effective_N = stold(argument_parser.get_argument('n'));
-//	regularization = stold(argument_parser.get_argument('m'));
+	effective_N = stold(argument_parser.get_argument('n'));
+	regularization = stold(argument_parser.get_argument('b'));
 	count_only_graph = !argument_parser.get_flag('c');
 	ignore_imputed = argument_parser.get_flag('u');
 	add_reference = !argument_parser.get_flag('d');
