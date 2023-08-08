@@ -90,9 +90,11 @@ PanGenie also needs a reference genome in FASTA format which can be provided usi
 
 ## Usage
 
+PanGenie is run in two separate steps. A pre-processing step and a genotyping step. The pre-processing step has to be run only once per input VCF, meaning in cases where the same input variants are genotyped across multiple samples, the pre-processing needs to be run only a single time. The genotyping step needs to be run separately for each sample. Below, details on how to run PanGenie are provided.
+
 ### Preprocessing step
 
-PanGenie is run in two steps. The first one is a preprocessing step that will perform steps unrelated to the sample that is to be genotyped, like processing the input variants and determining unique k-mers in the graph. In a setting in which the same set of input variants are genotyped across multiple samples, the advantage is that this preprocessing step needs to be run only once. The preprocessing step can be run using the command `` PanGenie-index ``:
+During preprocessing, steps unrelated to the genotyped sample(s) are performed, like processing the input variants and determining unique k-mers in the graph. In a setting in which the same set of input variants are genotyped across multiple samples, the advantage is that this preprocessing step needs to be run only once. The preprocessing step can be run using the command `` PanGenie-index ``:
 
 `` PanGenie-index -v <variants.vcf> -r <reference.fa> -t <number of threads> ``
 
@@ -116,7 +118,7 @@ options:
 
 ```
 
-The result of running the pre-proccessing step will be a set of files to be used in the second step in order to genotype a specific sample.
+The result of running the pre-proccessing step will be a set of files to be used in the second step in order to genotype a specific sample: TODO
 
 
 ### Genotyping step
