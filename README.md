@@ -90,7 +90,22 @@ PanGenie also needs a reference genome in FASTA format which can be provided usi
 
 ## Usage
 
-PanGenie can be run in two separate steps. A preprocessing step (`` PanGenie-index ``) and a genotyping step (`` PanGenie-genotype ``). The preprocessing step has to be run only once per input VCF. This means that in cases where one wants to genotype the same input variants across multiple samples, preprocessing needs to be run only a single time. The genotyping step needs to be run separately for each sample. Below, details on how to run PanGenie are provided. In addition, we also provide a single command (`` PanGenie ``) to run both of these steps. The latter is useful for cases where one just wants to genotype a single sample and is equivalent to first running `` PanGenie-index `` and then `` PanGenie-genotype ``.
+There are two ways of running PanGenie. The first way is to run in two steps using commands `` PanGenie-index `` and `` PanGenie-genotype ``:
+
+``` bat
+PanGenie-index -v <variants.vcf> -r <reference.fa> -t <number of threads> -o <outfile-prefix>`
+PanGenie-genotype -f <outfile-prefix>` -i <reads.fa/fq> -v <variants.vcf> -r <reference.fa> -s <sample-name> -j <nr threads kmer-counting> -t <nr threads genotyping>
+```
+The second way is to use a single command, equivalent to first running `` PanGenie-index `` and then `` PanGenie-genotype ``:
+
+
+``` bat
+PanGenie -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf> -s <sample-name> -j <nr threads kmer-counting> -t <nr threads genotyping>
+```
+
+Both ways are equivalent, but running PanGenie in two separate steps is especially useful in cases where one wants to genotype the same set of variants across multiple samples. In such a case, `` PanGenie-index `` allows to do all preprocessing of the variant data only once instead of doing it over and over again for each sample. So when genotyping multiple samples, one needs to run `` PanGenie-index `` only a single time, and then runs `` PanGenie-genotype `` separately on each sample re-using the precomputed data. This helps reducing memory usage and runtime. In cases where one wants to genotype a single sample only, the single command can be used for convenience (which simply runs both steps consecutively).
+
+Below, details on these commands are provided.
 
 ### Preprocessing step
 
@@ -132,7 +147,7 @@ You don't need to understand what any of these files represent. They mainly cont
 
 After preprocessing is completed, the genotyping step can be run in order to genotype a specific sample. If multiple samples shall be genotyped, this step needs to be run on each os these samples separately. Based on the sequencing reads of a sample and the pre-computed files, genotyping is run using the command `` PanGenie-genotype ``:
 
-``PanGenie-genotype -f preprocessing -i <reads.fa/fq> -v <variants.vcf> -r <reference.fa> -s <sample-name> -j <nr threads kmer-counting> -t <nr threads genotyping>``
+``PanGenie-genotype -f <outfile-prefix> -i <reads.fa/fq> -v <variants.vcf> -r <reference.fa> -s <sample-name> -j <nr threads kmer-counting> -t <nr threads genotyping>``
 
 The full list of options is provided below:
 
