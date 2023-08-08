@@ -90,7 +90,7 @@ PanGenie also needs a reference genome in FASTA format which can be provided usi
 
 ## Usage
 
-PanGenie can be run in two separate steps. A preprocessing step (`` PanGenie-index ``) and a genotyping step (`` PanGenie-genotype ``). The preprocessing step has to be run only once per input VCF. This means that in cases where one wants to genotype the same input variants across multiple samples, pre-processing needs to be run only a single time. The genotyping step needs to be run separately for each sample. Below, details on how to run PanGenie are provided. In addition, we also provide a single command (`` PanGenie ``) to run both of these steps. The latter is useful for cases where one just wants to genotype a single sample and is equivalent to first running `` PanGenie-index `` and then `` PanGenie-genotype ``.
+PanGenie can be run in two separate steps. A preprocessing step (`` PanGenie-index ``) and a genotyping step (`` PanGenie-genotype ``). The preprocessing step has to be run only once per input VCF. This means that in cases where one wants to genotype the same input variants across multiple samples, preprocessing needs to be run only a single time. The genotyping step needs to be run separately for each sample. Below, details on how to run PanGenie are provided. In addition, we also provide a single command (`` PanGenie ``) to run both of these steps. The latter is useful for cases where one just wants to genotype a single sample and is equivalent to first running `` PanGenie-index `` and then `` PanGenie-genotype ``.
 
 ### Preprocessing step
 
@@ -130,7 +130,7 @@ You don't need to understand what any of these files represent. They mainly cont
 
 ### Genotyping step
 
-After pre-processing is completed, the genotyping step can be run in order to genotype a specific sample. If multiple samples shall be genotyped, this step needs to be run on each os these samples separately. Based on the sequencing reads of a sample and the pre-computed files, genotyping is run using the command `` PanGenie-genotype ``:
+After preprocessing is completed, the genotyping step can be run in order to genotype a specific sample. If multiple samples shall be genotyped, this step needs to be run on each os these samples separately. Based on the sequencing reads of a sample and the pre-computed files, genotyping is run using the command `` PanGenie-genotype ``:
 
 ``PanGenie-genotype -f preprocessing -i <reads.fa/fq> -v <variants.vcf> -r <reference.fa> -s <sample-name> -j <nr threads kmer-counting> -t <nr threads genotyping>``
 
@@ -167,7 +167,7 @@ options:
 The result will be a VCF file containing genotypes of the sample for the variants provided in the input VCF. Per default, the name of the output VCF is `` result_genotyping.vcf ``. You can specify the prefix of the output file using option ``-o <prefix>``, i.e. the output file will be named as ``<prefix>_genotyping.vcf ``.
 The full list of options is provided below.
 
-If you want to genotype the same set of variants across more than one sample, run the command above separately on each sample. The pre-processing step only needs to be run once (as long as the VCF does not change).
+If you want to genotype the same set of variants across more than one sample, run the command above separately on each sample. The preprocessing step only needs to be run once (as long as the VCF does not change).
 
 
 ### Running both steps with a single command
