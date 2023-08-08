@@ -303,7 +303,7 @@ int main (int argc, char* argv[])
 
 	cerr << endl;
 	cerr << "program: PanGenie - genotyping based on kmer-counting and known haplotype sequences." << endl;
-	cerr << "command: PanGenie-genotype - run genotyping based on unique kmers computed by PanGenie-index." << endl;
+	cerr << "command: PanGenie-genotype - run genotyping based on precomputed data produced by PanGenie-index." << endl;
 	cerr << "author: Jana Ebler" << endl << endl;
 	cerr << "version: v3.0.0" << endl;
 	string precomputed_prefix = "";
@@ -329,7 +329,7 @@ int main (int argc, char* argv[])
 	CommandLineParser argument_parser;
 	argument_parser.add_command("PanGenie-genotype [options] -f <unique-kmers> -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf>");
 	argument_parser.add_mandatory_argument('i', "sequencing reads in FASTA/FASTQ format or Jellyfish database in jf format. NOTE: INPUT FASTA/Q FILE MUST NOT BE COMPRESSED.");
-	argument_parser.add_mandatory_argument('f', "Filename prefix of unique kmers object computed by PanGenie-index as well as the kmer files.");
+	argument_parser.add_mandatory_argument('f', "Filename prefix of files computed by PanGenie-index (i.e. option -o used with PanGenie-index).");
 	argument_parser.add_mandatory_argument('r', "reference genome in FASTA format. NOTE: INPUT FASTA FILE MUST NOT BE COMPRESSED.");
 	argument_parser.add_mandatory_argument('v', "variants in VCF format. NOTE: INPUT VCF FILE MUST NOT BE COMPRESSED.");
 	argument_parser.add_optional_argument('o', "result", "prefix of the output files. NOTE: the given path must not include non-existent folders.");
