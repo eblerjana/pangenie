@@ -161,12 +161,12 @@ The full list of options is provided below.
 If you want to genotype the same set of variants across more than one sample, run the command above separately on each sample. The pre-processing step only needs to be run once (as long as the VCF does not change).
 
 
-## Runtime and memory usage (TODO)
+## Runtime and memory usage
 
 Runtime and memory usage depend on the number of variants genotyped and the number of haplotypes present in the graph. PanGenie is fastest when it is installed using Singularity (see above).
 
-With the data described here: https://doi.org/10.1038/s41588-022-01043-w, PanGenie ran in 1 hour and 5 minutes walltime using 24 cores (16 CPU hours) and used 68 GB RAM.
-The largest dataset that we have tested (HPRC: https://doi.org/10.1101/2022.07.09.499321) contained around 27 million variants, 88 haplotypes and around 30x read coverage. Using 24 cores, PanGenie run in 1 hour and 57 minutes (19 CPU hours) and used 86 GB of RAM.
+The largest dataset that we have tested (HPRC: https://doi.org/10.1101/2022.07.09.499321) contained around 27 million variants, 88 haplotypes and around 30x read coverage. With 24 cores, `` PanGenie-index `` run in 34 minutes using 24 cores (around 3 CPU hours) using 60 GB of RAM. `` PanGenie-genotype `` ran in 1 hour and 40 minutes using 24 cores (around 14 CPU hours) using 37 GB of RAM.
+
 
 
 ## Limitations
