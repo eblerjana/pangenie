@@ -105,9 +105,11 @@ int main(int argc, char* argv[]) {
 
 	getrusage(RUSAGE_SELF, &rss_total);
 
-	cerr << endl << "###### Summary ######" << endl;
+
+	cerr << endl << "############## Summary ##############" << endl;
 	cerr << "total wallclock time: \t" << timer.get_total_time() << " sec" << endl;
 	cerr << "Max RSS: \t" << (rss_total.ru_maxrss / 1E6) << " GB" << endl;
+	cerr << "#####################################" << endl;
 
 	return exit_code;
 }

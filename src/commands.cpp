@@ -25,6 +25,7 @@
 #include "kmerparser.hpp"
 #include "graphbuilder.hpp"
 #include "stepwiseuniquekmercomputer.hpp"
+#include "uniquekmercomputer.hpp"
 #include "threadpool.hpp"
 
 using namespace std;
@@ -284,7 +285,7 @@ void run_genotyping(string chromosome, vector<shared_ptr<UniqueKmers>>* unique_k
 }
 
 
-void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, shared_ptr<Graph> graph, UniqueKmersMap* unique_kmers_map, string outname) {
+void prepare_unique_kmers_stepwise(string chromosome, KmerCounter* genomic_kmer_counts, shared_ptr<Graph> graph, UniqueKmersMap* unique_kmers_map, string outname) {
 	Timer timer;
 	StepwiseUniqueKmerComputer kmer_computer(genomic_kmer_counts, graph);
 	std::vector<shared_ptr<UniqueKmers>> unique_kmers;
@@ -298,6 +299,338 @@ void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, s
 	// store runtime
 	lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
 	unique_kmers_map->runtimes.insert(pair<string, double>(chromosome, timer.get_total_time()));
+}
+
+
+// TODO: implement after adapting UniqueKmerComputer
+void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, shared_ptr<KmerCounter> read_kmer_counts, shared_ptr<Graph> graph, ProbabilityTable* probs, UniqueKmersMap* unique_kmers_map, size_t kmer_coverage) {
+	Timer timer;
+	UniqueKmerComputer kmer_computer(genomic_kmer_counts, read_kmer_counts, graph, kmer_coverage);
+	std::vector<shared_ptr<UniqueKmers>> unique_kmers;
+	kmer_computer.compute_unique_kmers(&unique_kmers, probs, true);
+	// store the results
+	{
+		lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
+		unique_kmers_map->unique_kmers.insert(pair<string, vector<shared_ptr<UniqueKmers>>> (chromosome, move(unique_kmers)));
+	}
+	// store runtime
+	lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
+	unique_kmers_map->runtimes.insert(pair<string, double>(chromosome, timer.get_total_time()));
+}
+
+
+
+int run_single_command(string precomputed_prefix, string readfile, string reffile, string vcffile, size_t kmersize, string outname, string sample_name, size_t nr_jellyfish_threads, size_t nr_core_threads, bool only_genotyping, bool only_phasing, long double effective_N, long double regularization, bool count_only_graph, bool ignore_imputed, bool add_reference, size_t sampling_size, uint64_t hash_size)
+{
+
+	Timer timer;
+	double time_preprocessing = 0.0;
+	double time_kmer_counting_graph = 0.0;
+	double time_serialize_graph = 0.0;
+	double time_unique_kmers = 0.0;
+	double time_kmer_counting_reads = 0.0;
+	double time_probabilities = 0.0;
+	double time_path_sampling = 0.0;
+	double time_hmm = 0.0;
+	double time_writing = 0.0;
+	double time_total = 0.0;
+
+	struct rusage rss_preprocessing;
+	struct rusage rss_kmer_counting_graph;
+	struct rusage rss_serialize_graph;
+	struct rusage rss_unique_kmers;
+	struct rusage rss_kmer_counting_reads;
+	struct rusage rss_probabilities;
+	struct rusage rss_path_sampling;
+	struct rusage rss_hmm;
+	struct rusage rss_total;
+
+	// check if input files exist and are uncompressed
+	check_input_file(reffile);
+	check_input_file(vcffile);
+	check_input_file(readfile);
+
+	UniqueKmersMap unique_kmers_list;
+	ProbabilityTable probabilities;
+	vector<string> chromosomes;
+	Results results;
+	string segment_file = outname + "_path_segments.fasta";
+	size_t available_threads_uk;
+	size_t nr_cores_uk;
+
+	/**
+	*  1) Indexing step. Read variant information and determine unique kmers.
+	*/
+
+	{
+		/** 
+		*   Step 1: read variants, merge variants that are closer than kmersize apart,
+		*   and write allele sequences and unitigs inbetween to a file.
+		**/ 
+		cerr << "Determine allele sequences ..." << endl;
+		map<string, shared_ptr<Graph>> graph;
+		GraphBuilder graph_builder (vcffile, reffile, graph, segment_file, kmersize, add_reference);
+
+		// determine chromosomes present in VCF
+		graph_builder.get_chromosomes(&chromosomes);
+		cerr << "Found " << chromosomes.size() << " chromosome(s) in the VCF." << endl;
+
+		getrusage(RUSAGE_SELF, &rss_preprocessing);
+		time_preprocessing = timer.get_interval_time();
+
+		/**
+		*  Step 2: count graph k-mers. Needed to determine unique k-mers in subsequent steps.
+		**/ 
+		cerr << "Count kmers in graph ..." << endl;
+		JellyfishCounter genomic_kmer_counts (segment_file, kmersize, nr_jellyfish_threads, hash_size);
+
+
+		getrusage(RUSAGE_SELF, &rss_kmer_counting_graph);
+		time_kmer_counting_graph = timer.get_interval_time();
+
+
+		/**
+		* Step 3: count k-mers in reads
+		**/
+
+		shared_ptr<KmerCounter> read_kmer_counts = nullptr;
+		// determine kmer copynumbers in reads
+		if (readfile.substr(std::max(3, (int) readfile.size())-3) == std::string(".jf")) {
+			cerr << "Read pre-computed read kmer counts ..." << endl;
+			jellyfish::mer_dna::k(kmersize);
+			read_kmer_counts = shared_ptr<JellyfishReader>(new JellyfishReader(readfile, kmersize));
+		} else {
+			cerr << "Count kmers in reads ..." << endl;
+
+			if (count_only_graph) {
+				read_kmer_counts = shared_ptr<JellyfishCounter>(new JellyfishCounter(readfile, {segment_file}, kmersize, nr_jellyfish_threads, hash_size));
+			} else {
+				read_kmer_counts = shared_ptr<JellyfishCounter>(new JellyfishCounter(readfile, kmersize, nr_jellyfish_threads, hash_size));
+			}
+		}
+
+
+		/**
+		* Step 4: Compute k-mer coverage and precompute probabilities.
+		*/
+		size_t kmer_abundance_peak = read_kmer_counts->computeHistogram(10000, count_only_graph, outname + "_histogram.histo");
+		cerr << "Computed kmer abundance peak: " << kmer_abundance_peak << endl;
+
+		getrusage(RUSAGE_SELF, &rss_kmer_counting_reads);
+		time_kmer_counting_reads = timer.get_interval_time();
+
+		probabilities = ProbabilityTable(kmer_abundance_peak / 4, kmer_abundance_peak*4, 2*kmer_abundance_peak, regularization);
+		
+		getrusage(RUSAGE_SELF, &rss_probabilities);
+		time_probabilities = timer.get_interval_time();
+
+		cerr << "Serialize Graph objects ..." << endl;
+		for (auto chromosome : chromosomes) {
+  			ofstream os(outname + "_" + chromosome + "_Graph.cereal", std::ios::binary);
+  			cereal::BinaryOutputArchive archive( os );
+			archive(*graph.at(chromosome));;
+		}
+
+		getrusage(RUSAGE_SELF, &rss_serialize_graph);
+		time_serialize_graph = timer.get_interval_time();
+
+
+		/**
+		* Step 4: determine unique k-mers for each variant bubble 
+		* This step will delete information from the GraphBuilder that will no longer be used.
+		**/
+
+		cerr << "Determine unique kmers ..." << endl;
+		available_threads_uk = min(thread::hardware_concurrency(), (unsigned int) chromosomes.size());
+		nr_cores_uk = min(nr_jellyfish_threads, available_threads_uk);
+		if (nr_cores_uk < nr_jellyfish_threads) {
+			cerr << "Warning: using " << nr_cores_uk << " for determining unique kmers." << endl;
+		}
+
+
+		{
+			// create thread pool with at most nr_chromosome threads
+			ThreadPool threadPool (nr_cores_uk);
+			for (auto chromosome : chromosomes) {
+				shared_ptr<Graph> graph_segment = graph.at(chromosome);
+				UniqueKmersMap* result = &unique_kmers_list;
+				KmerCounter* genomic_counts = &genomic_kmer_counts;
+				ProbabilityTable* probs = &probabilities;
+				function<void()> f_unique_kmers = bind(prepare_unique_kmers, chromosome, genomic_counts, read_kmer_counts, graph_segment, probs, result, kmer_abundance_peak);
+				threadPool.submit(f_unique_kmers);
+			}
+		}
+
+		// determine the total runtime needed to compute unique kmers
+		time_unique_kmers = 0.0;
+		for (auto it = unique_kmers_list.runtimes.begin(); it != unique_kmers_list.runtimes.end(); ++it) {
+			time_unique_kmers += it->second;
+		}
+
+		getrusage(RUSAGE_SELF, &rss_unique_kmers);
+		timer.get_interval_time();	
+	}
+
+
+	/**
+	*  2) Genotyping step. Construct a HMM and run the Forward-Backward algorithm to compute genotype likelihoods.
+	*/
+
+	{
+		unsigned short nr_paths = 0;
+		for (auto it = unique_kmers_list.unique_kmers.begin(); it != unique_kmers_list.unique_kmers.end(); ++it) {
+			if (it->second.size() > 0) {
+				nr_paths = it->second.at(0)->get_nr_paths();
+			}
+		}
+
+		// TODO: for too large panels, print warning
+		if (nr_paths > 500) cerr << "Warning: panel is large and PanGenie might take a long time genotyping. Try reducing the panel size prior to genotyping." << endl;
+		// handle case when sampling_size is not set
+		if (sampling_size == 0) {
+			if (nr_paths > 90) {
+				sampling_size = 45;
+			} else {
+				sampling_size = nr_paths;		
+			}
+		}
+
+		PathSampler path_sampler(nr_paths);
+		vector<vector<unsigned short>> subsets;
+		path_sampler.partition_samples(subsets, sampling_size);
+
+		for (auto s : subsets) {
+			for (auto b : s) {
+				cout << b << endl;
+			}
+			cout << "-----" << endl;
+		}
+
+		if (!only_phasing) cerr << "Sampled " << subsets.size() << " subset(s) of paths each of size " << sampling_size << " for genotyping." << endl;
+
+		// for now, run phasing only once on largest set of paths that can still be handled.
+		// in order to use all paths, an iterative stradegie should be considered
+		vector<unsigned short> phasing_paths;
+		unsigned short nr_phasing_paths = min((unsigned short) nr_paths, (unsigned short) 30);
+		path_sampler.select_single_subset(phasing_paths, nr_phasing_paths);
+		if (!only_genotyping) cerr << "Sampled " << phasing_paths.size() << " paths to be used for phasing." << endl;
+			
+		getrusage(RUSAGE_SELF, &rss_path_sampling);
+		time_path_sampling = timer.get_interval_time();
+
+		cerr << "Construct HMM and run core algorithm ..." << endl;
+
+		// determine max number of available threads for genotyping (at most one thread per chromosome and subsample possible)
+		size_t available_threads = min(thread::hardware_concurrency(), (unsigned int) chromosomes.size() * (unsigned int) subsets.size());
+		if (nr_core_threads > available_threads) {
+			cerr << "Warning: using " << available_threads << " for genotyping." << endl;
+			nr_core_threads = available_threads;
+		}
+
+		// run genotyping
+		{
+			// create thread pool
+			ThreadPool threadPool (nr_core_threads);
+			for (auto chromosome : chromosomes) {
+				vector<shared_ptr<UniqueKmers>>* unique_kmers = &unique_kmers_list.unique_kmers[chromosome];
+				ProbabilityTable* probs = &probabilities;
+				Results* r = &results;
+				// if requested, run phasing first
+				if (!only_genotyping) {
+					vector<unsigned short>* only_paths = &phasing_paths;
+					function<void()> f_genotyping = bind(run_genotyping, chromosome, unique_kmers, probs, false, true, effective_N, only_paths, r);
+					threadPool.submit(f_genotyping);
+				}
+
+				if (!only_phasing) {
+					// if requested, run genotying
+					for (size_t s = 0; s < subsets.size(); ++s){
+						vector<unsigned short>* only_paths = &subsets[s];
+						function<void()> f_genotyping = bind(run_genotyping, chromosome, unique_kmers, probs, true, false, effective_N, only_paths, r);
+						threadPool.submit(f_genotyping);
+					}
+				}
+			}
+		}
+
+		// in case genotyping was run, normalize the combined likelihoods
+		if (!only_phasing){
+			for (auto chromosome : chromosomes) {
+				for (size_t i = 0; i < results.result.at(chromosome).size(); ++i) {
+					results.result.at(chromosome).at(i).normalize();
+				}
+			}
+		}
+
+		// compute total time spent genotyping
+		for (auto it = results.runtimes.begin(); it != results.runtimes.end(); ++it) {
+			time_hmm += it->second;
+		}
+
+		getrusage(RUSAGE_SELF, &rss_hmm);
+		timer.get_interval_time();
+	}
+
+	// write the output VCF
+	cerr << "Write results to VCF ..." << endl;
+	if (!(only_genotyping && only_phasing)) assert (results.result.size() == chromosomes.size());
+	bool write_header = true;
+	for (auto it = results.result.begin(); it != results.result.end(); ++it) {
+		// read serialized Graph object corresponding to current chromosome
+		Graph graph;
+        string graph_filename = precomputed_prefix + "_" + it->first + "_Graph.cereal";
+		cerr << "Reading precomputed Graph for chromosome " << it->first << " ..." <<  " from " << graph_filename << endl;
+		ifstream os(graph_filename, std::ios::binary);
+		cereal::BinaryInputArchive archive( os );
+		archive(graph);
+
+		cerr << "Writing results for chromosome " << it->first << " ..." << endl;
+		if (!only_phasing) {
+			// output genotyping results
+			graph.write_genotypes(outname + "_genotyping.vcf", it->second, write_header, sample_name, ignore_imputed);
+		}
+		if (!only_genotyping) {
+			// output phasing results
+			graph.write_phasing(outname + "_phasing.vcf", it->second, write_header, sample_name, ignore_imputed);
+		}
+		// write header only for first chromosome
+		write_header = false;
+	}
+
+	getrusage(RUSAGE_SELF, &rss_total);
+	time_writing = timer.get_interval_time();
+	time_total = timer.get_total_time();
+
+
+	cerr << endl << "############### Summary ###############" << endl;
+	// output times
+	cerr << "time spent reading input files:\t" << time_preprocessing << " sec" << endl;
+	cerr << "time spent counting kmers in genome (wallclock): \t" << time_kmer_counting_graph << " sec" << endl;
+	cerr << "time spent counting kmers in reads (wallclock): \t" << time_kmer_counting_reads << " sec" << endl;
+	cerr << "time spent writing Graph objects to disk: \t" << time_serialize_graph << " sec" << endl;
+	cerr << "time spent determining unique kmers: \t" << time_unique_kmers << " sec" << endl;
+	cerr << "time spent pre-computing probabilities: \t" << time_probabilities << " sec" << endl;
+	cerr << "time spent selecting paths: \t" << time_path_sampling << " sec" << endl;
+	// output per chromosome time
+	for (auto chromosome : chromosomes) {
+		cerr << "time spent genotyping chromosome " << chromosome << ":\t" << results.runtimes[chromosome] << endl;
+	}
+	cerr << "time spent genotyping (total): \t" << time_hmm << " sec" << endl;
+	cerr << "time spent writing output VCF: \t" << time_writing << " sec" << endl;
+	cerr << "total wallclock time PanGenie: " << time_total  << " sec" << endl;
+
+	cerr << endl;
+	cerr << "Max RSS after reading input files: \t" << (rss_preprocessing.ru_maxrss / 1E6) << " GB" << endl;
+	cerr << "Max RSS after counting kmers in genome: \t" << (rss_kmer_counting_graph.ru_maxrss / 1E6) << " GB" << endl;
+	cerr << "Max RSS after counting kmers in reads: \t" << (rss_kmer_counting_reads.ru_maxrss / 1E6) << " GB" << endl;
+	cerr << "Max RSS after determining unique kmers: \t" << (rss_unique_kmers.ru_maxrss / 1E6) << " GB" << endl;
+	cerr << "Max RSS after pre-computing probabilities: \t" << (rss_probabilities.ru_maxrss / 1E6) << " GB" << endl;
+	cerr << "Max RSS after selecting paths: \t" << (rss_path_sampling.ru_maxrss / 1E6) << " GB" << endl;
+	cerr << "Max RSS after genotyping: \t" << (rss_hmm.ru_maxrss / 1E6) << " GB" << endl;
+	cerr << "Max RSS: \t" << (rss_total.ru_maxrss / 1E6) << " GB" << endl;
+    cerr << "#######################################" << endl << endl;
+
+	return 0;
 }
 
 
@@ -390,7 +723,7 @@ int run_index_command(string reffile, string vcffile, size_t kmersize, string ou
 				shared_ptr<Graph> graph_segment = graph.at(chromosome);
 				UniqueKmersMap* result = &unique_kmers_list;
 				KmerCounter* genomic_counts = &genomic_kmer_counts;
-				function<void()> f_unique_kmers = bind(prepare_unique_kmers, chromosome, genomic_counts, graph_segment, result, outname);
+				function<void()> f_unique_kmers = bind(prepare_unique_kmers_stepwise, chromosome, genomic_counts, graph_segment, result, outname);
 				threadPool.submit(f_unique_kmers);
 			}
 		}

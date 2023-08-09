@@ -96,9 +96,11 @@ int main(int argc, char* argv[]) {
 	argument_parser.info();
 
 	// run genotyping
-	int exit_code = run_index_command(reffile, vcffile, kmersize, outname, nr_jellyfish_threads, add_reference, hash_size);
-	if (exit_code != 0) return exit_code;
-	exit_code = run_genotype_command(outname, readfile, reffile, vcffile, kmersize, outname, sample_name, nr_jellyfish_threads, nr_core_threads, only_genotyping, only_phasing, effective_N, regularization, count_only_graph, ignore_imputed, add_reference, sampling_size, hash_size);
+//	int exit_code = run_index_command(reffile, vcffile, kmersize, outname, nr_jellyfish_threads, add_reference, hash_size);
+//	if (exit_code != 0) return exit_code;
+//	exit_code = run_genotype_command(outname, readfile, reffile, vcffile, kmersize, outname, sample_name, nr_jellyfish_threads, nr_core_threads, only_genotyping, only_phasing, effective_N, regularization, count_only_graph, ignore_imputed, add_reference, sampling_size, hash_size);
+
+	int exit_code = run_single_command(outname, readfile, reffile, vcffile, kmersize, outname, sample_name, nr_jellyfish_threads, nr_core_threads, only_genotyping, only_phasing, effective_N, regularization, count_only_graph, ignore_imputed, add_reference, sampling_size, hash_size);
 
 	getrusage(RUSAGE_SELF, &rss_total);
 
