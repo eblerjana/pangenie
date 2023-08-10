@@ -94,7 +94,7 @@ There are two ways of running PanGenie. The first way is to run it in two steps 
 
 ``` bat
 PanGenie-index -v <variants.vcf> -r <reference.fa> -t <number of threads> -o <outfile-prefix>`
-PanGenie-genotype -f <outfile-prefix>` -i <reads.fa/fq> -v <variants.vcf> -r <reference.fa> -s <sample-name> -j <nr threads kmer-counting> -t <nr threads genotyping>
+PanGenie-genotype -f <outfile-prefix>` -i <reads.fa/fq>  -s <sample-name> -j <nr threads kmer-counting> -t <nr threads genotyping>
 ```
 The second way is to use a single command, equivalent to first running `` PanGenie-index `` and then `` PanGenie-genotype ``:
 
@@ -150,7 +150,7 @@ You don't need to understand what any of these files represent. They mainly cont
 After preprocessing is completed, the genotyping step can be run in order to genotype a specific sample. If multiple samples shall be genotyped, this step needs to be run on each os these samples separately. Based on the sequencing reads of a sample and the pre-computed files, genotyping is run using the command `` PanGenie-genotype ``:
 
 ``` bat
-PanGenie-genotype -f <outfile-prefix> -i <reads.fa/fq> -v <variants.vcf> -r <reference.fa> -s <sample-name> -j <nr threads kmer-counting> -t <nr threads genotyping>``
+PanGenie-genotype -f <outfile-prefix> -i <reads.fa/fq> -s <sample-name> -j <nr threads kmer-counting> -t <nr threads genotyping>``
 ```
 
 The full list of options is provided below:
