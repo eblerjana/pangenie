@@ -56,18 +56,19 @@ void check_input_file(string &filename) {
 }
 
 struct UniqueKmersMap {
+	size_t kmersize;
 	mutex kmers_mutex;
 	map<string, vector<shared_ptr<UniqueKmers>>> unique_kmers;
 	map<string, double> runtimes;
 
 	template <class Archive>
 	void save(Archive& ar) const {
-		ar(unique_kmers, runtimes);
+		ar(kmersize, unique_kmers, runtimes);
 	}
 
 	template <class Archive>
 	void load(Archive& ar) {
-		ar(unique_kmers, runtimes);
+		ar(kmersize, unique_kmers, runtimes);
 	}
 };
 
@@ -357,6 +358,8 @@ int run_single_command(string precomputed_prefix, string readfile, string reffil
 	string segment_file = outname + "_path_segments.fasta";
 	size_t available_threads_uk;
 	size_t nr_cores_uk;
+
+	unique_kmers_list.kmersize = kmersize;
 
 	/**
 	*  1) Indexing step. Read variant information and determine unique kmers.
@@ -661,6 +664,8 @@ int run_index_command(string reffile, string vcffile, size_t kmersize, string ou
 	size_t available_threads_uk;
 	size_t nr_cores_uk;
 
+	unique_kmers_list.kmersize = kmersize;
+
 	/**
 	*  1) Indexing step. Read variant information and determine unique kmers.
 	*/
@@ -769,7 +774,7 @@ int run_index_command(string reffile, string vcffile, size_t kmersize, string ou
 
 }
 
-int run_genotype_command(string precomputed_prefix, string readfile, string reffile, string vcffile, size_t kmersize, string outname, string sample_name, size_t nr_jellyfish_threads, size_t nr_core_threads, bool only_genotyping, bool only_phasing, long double effective_N, long double regularization, bool count_only_graph, bool ignore_imputed, bool add_reference, size_t sampling_size, uint64_t hash_size)
+int run_genotype_command(string precomputed_prefix, string readfile, string outname, string sample_name, size_t nr_jellyfish_threads, size_t nr_core_threads, bool only_genotyping, bool only_phasing, long double effective_N, long double regularization, bool count_only_graph, bool ignore_imputed, size_t sampling_size, uint64_t hash_size)
 {
 
 	Timer timer;
@@ -791,8 +796,6 @@ int run_genotype_command(string precomputed_prefix, string readfile, string reff
 	struct rusage rss_total;
 
 	// check if input files exist and are uncompressed
-	check_input_file(reffile);
-	check_input_file(vcffile);
 	check_input_file(readfile);
 
 	vector<string> chromosomes;
@@ -848,6 +851,8 @@ int run_genotype_command(string precomputed_prefix, string readfile, string reff
 			* Step 1: Count kmers in the sequencing reads of the sample using Jellyfish
 			* or read already computed counts from .jf file.
 			*/
+
+			size_t kmersize = unique_kmers_list.kmersize;
 
 			shared_ptr<KmerCounter> read_kmer_counts = nullptr;
 			// determine kmer copynumbers in reads

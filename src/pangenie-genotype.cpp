@@ -20,9 +20,6 @@ int main(int argc, char* argv[]) {
 	cerr << "version: v3.0.0" << endl;
 	string precomputed_prefix = "";
 	string readfile = "";
-	string reffile = "";
-	string vcffile = "";
-	size_t kmersize = 31;
 	string outname = "result";
 	string sample_name = "sample";
 	size_t nr_jellyfish_threads = 1;
@@ -33,7 +30,6 @@ int main(int argc, char* argv[]) {
 	long double regularization = 0.001L;
 	bool count_only_graph = true;
 	bool ignore_imputed = false;
-	bool add_reference = true;
 	size_t sampling_size = 0;
 	uint64_t hash_size = 3000000000;
 
@@ -42,10 +38,7 @@ int main(int argc, char* argv[]) {
 	argument_parser.add_command("PanGenie-genotype [options] -f <unique-kmers> -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf>");
 	argument_parser.add_mandatory_argument('i', "sequencing reads in FASTA/FASTQ format or Jellyfish database in jf format. NOTE: INPUT FASTA/Q FILE MUST NOT BE COMPRESSED.");
 	argument_parser.add_mandatory_argument('f', "Filename prefix of files computed by PanGenie-index (i.e. option -o used with PanGenie-index).");
-	argument_parser.add_mandatory_argument('r', "reference genome in FASTA format. NOTE: INPUT FASTA FILE MUST NOT BE COMPRESSED.");
-	argument_parser.add_mandatory_argument('v', "variants in VCF format. NOTE: INPUT VCF FILE MUST NOT BE COMPRESSED.");
 	argument_parser.add_optional_argument('o', "result", "prefix of the output files. NOTE: the given path must not include non-existent folders.");
-	argument_parser.add_optional_argument('k', "31", "kmer size");
 	argument_parser.add_optional_argument('s', "sample", "name of the sample (will be used in the output VCFs)");
 	argument_parser.add_optional_argument('j', "1", "number of threads to use for kmer-counting");
 	argument_parser.add_optional_argument('t', "1", "number of threads to use for core algorithm. Largest number of threads possible is the number of chromosomes given in the VCF");
@@ -53,7 +46,6 @@ int main(int argc, char* argv[]) {
 	argument_parser.add_flag_argument('p', "run phasing (Viterbi algorithm). Experimental feature.");
 	argument_parser.add_flag_argument('c', "count all read kmers instead of only those located in graph.");
 	argument_parser.add_flag_argument('u', "output genotype ./. for variants not covered by any unique kmers.");
-//	argument_parser.add_flag_argument('d', "do not add reference as additional path.");
 	argument_parser.add_optional_argument('a', "0", "sample subsets of paths of this size.");
 	argument_parser.add_optional_argument('e', "3000000000", "size of hash used by jellyfish.");
 
@@ -69,9 +61,6 @@ int main(int argc, char* argv[]) {
 
 	precomputed_prefix = argument_parser.get_argument('f');
 	readfile = argument_parser.get_argument('i');
-	reffile = argument_parser.get_argument('r');
-	vcffile = argument_parser.get_argument('v');
-	kmersize = stoi(argument_parser.get_argument('k'));
 	outname = argument_parser.get_argument('o');
 	sample_name = argument_parser.get_argument('s');
 	nr_jellyfish_threads = stoi(argument_parser.get_argument('j'));
@@ -91,7 +80,6 @@ int main(int argc, char* argv[]) {
 
 	count_only_graph = !argument_parser.get_flag('c');
 	ignore_imputed = argument_parser.get_flag('u');
-//	add_reference = !argument_parser.get_flag('d');
 	sampling_size = stoi(argument_parser.get_argument('a'));
 	istringstream iss(argument_parser.get_argument('e'));
 	iss >> hash_size;
@@ -101,7 +89,7 @@ int main(int argc, char* argv[]) {
 	argument_parser.info();
 
 	// run genotyping
-	int exit_code = run_genotype_command(precomputed_prefix, readfile, reffile, vcffile, kmersize, outname, sample_name, nr_jellyfish_threads, nr_core_threads, only_genotyping, only_phasing, effective_N, regularization, count_only_graph, ignore_imputed, add_reference, sampling_size, hash_size);
+	int exit_code = run_genotype_command(precomputed_prefix, readfile, outname, sample_name, nr_jellyfish_threads, nr_core_threads, only_genotyping, only_phasing, effective_N, regularization, count_only_graph, ignore_imputed, sampling_size, hash_size);
 
 	getrusage(RUSAGE_SELF, &rss_total);
 

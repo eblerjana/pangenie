@@ -7,8 +7,8 @@ using namespace std;
 UniqueKmers::UniqueKmers(size_t variant_position, vector<unsigned char>& alleles)
 	:variant_pos(variant_position),
 	 current_index(0),
-	 local_coverage(0),
-	 path_to_allele(alleles.size())
+	 path_to_allele(alleles.size()),
+	 local_coverage(0)
 {
 	for (size_t i = 0; i < alleles.size(); ++i) {
 		unsigned char a = alleles[i];
