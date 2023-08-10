@@ -12,6 +12,7 @@
 #include <memory>
 #include <zlib.h>
 #include <cereal/archives/binary.hpp>
+#include <cstdio>
 #include "kmercounter.hpp"
 #include "jellyfishreader.hpp"
 #include "jellyfishcounter.hpp"
@@ -598,6 +599,9 @@ int run_single_command(string precomputed_prefix, string readfile, string reffil
 		}
 		// write header only for first chromosome
 		write_header = false;
+
+		// remove file
+		remove(graph_filename.c_str());
 	}
 
 	getrusage(RUSAGE_SELF, &rss_total);
@@ -610,9 +614,9 @@ int run_single_command(string precomputed_prefix, string readfile, string reffil
 	cerr << "time spent reading input files:\t" << time_preprocessing << " sec" << endl;
 	cerr << "time spent counting kmers in genome (wallclock): \t" << time_kmer_counting_graph << " sec" << endl;
 	cerr << "time spent counting kmers in reads (wallclock): \t" << time_kmer_counting_reads << " sec" << endl;
+	cerr << "time spent pre-computing probabilities: \t" << time_probabilities << " sec" << endl;
 	cerr << "time spent writing Graph objects to disk: \t" << time_serialize_graph << " sec" << endl;
 	cerr << "time spent determining unique kmers: \t" << time_unique_kmers << " sec" << endl;
-	cerr << "time spent pre-computing probabilities: \t" << time_probabilities << " sec" << endl;
 	cerr << "time spent selecting paths: \t" << time_path_sampling << " sec" << endl;
 	// output per chromosome time
 	for (auto chromosome : chromosomes) {
@@ -626,8 +630,8 @@ int run_single_command(string precomputed_prefix, string readfile, string reffil
 	cerr << "Max RSS after reading input files: \t" << (rss_preprocessing.ru_maxrss / 1E6) << " GB" << endl;
 	cerr << "Max RSS after counting kmers in genome: \t" << (rss_kmer_counting_graph.ru_maxrss / 1E6) << " GB" << endl;
 	cerr << "Max RSS after counting kmers in reads: \t" << (rss_kmer_counting_reads.ru_maxrss / 1E6) << " GB" << endl;
-	cerr << "Max RSS after determining unique kmers: \t" << (rss_unique_kmers.ru_maxrss / 1E6) << " GB" << endl;
 	cerr << "Max RSS after pre-computing probabilities: \t" << (rss_probabilities.ru_maxrss / 1E6) << " GB" << endl;
+	cerr << "Max RSS after determining unique kmers: \t" << (rss_unique_kmers.ru_maxrss / 1E6) << " GB" << endl;
 	cerr << "Max RSS after selecting paths: \t" << (rss_path_sampling.ru_maxrss / 1E6) << " GB" << endl;
 	cerr << "Max RSS after genotyping: \t" << (rss_hmm.ru_maxrss / 1E6) << " GB" << endl;
 	cerr << "Max RSS: \t" << (rss_total.ru_maxrss / 1E6) << " GB" << endl;
