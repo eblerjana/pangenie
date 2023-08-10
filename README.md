@@ -94,7 +94,7 @@ There are two ways of running PanGenie. The first way is to run it in two steps 
 
 ``` bat
 PanGenie-index -v <variants.vcf> -r <reference.fa> -t <number of threads> -o <outfile-prefix>`
-PanGenie-genotype -f <outfile-prefix>` -i <reads.fa/fq> -v <variants.vcf> -r <reference.fa> -s <sample-name> -j <nr threads kmer-counting> -t <nr threads genotyping>
+PanGenie-genotype -f <outfile-prefix>` -i <reads.fa/fq>  -s <sample-name> -j <nr threads kmer-counting> -t <nr threads genotyping>
 ```
 The second way is to use a single command, equivalent to first running `` PanGenie-index `` and then `` PanGenie-genotype ``:
 
@@ -150,7 +150,7 @@ You don't need to understand what any of these files represent. They mainly cont
 After preprocessing is completed, the genotyping step can be run in order to genotype a specific sample. If multiple samples shall be genotyped, this step needs to be run on each os these samples separately. Based on the sequencing reads of a sample and the pre-computed files, genotyping is run using the command `` PanGenie-genotype ``:
 
 ``` bat
-PanGenie-genotype -f <outfile-prefix> -i <reads.fa/fq> -v <variants.vcf> -r <reference.fa> -s <sample-name> -j <nr threads kmer-counting> -t <nr threads genotyping>``
+PanGenie-genotype -f <outfile-prefix> -i <reads.fa/fq> -s <sample-name> -j <nr threads kmer-counting> -t <nr threads genotyping>``
 ```
 
 The full list of options is provided below:
@@ -171,14 +171,11 @@ options:
 	-g	run genotyping (Forward backward algorithm, default behaviour).
 	-i VAL	sequencing reads in FASTA/FASTQ format or Jellyfish database in jf format. NOTE: INPUT FASTA/Q FILE MUST NOT BE COMPRESSED. (required).
 	-j VAL	number of threads to use for kmer-counting (default: 1).
-	-k VAL	kmer size (default: 31).
 	-o VAL	prefix of the output files. NOTE: the given path must not include non-existent folders. (default: result).
 	-p	run phasing (Viterbi algorithm). Experimental feature.
-	-r VAL	reference genome in FASTA format. NOTE: INPUT FASTA FILE MUST NOT BE COMPRESSED. (required).
 	-s VAL	name of the sample (will be used in the output VCFs) (default: sample).
 	-t VAL	number of threads to use for core algorithm. Largest number of threads possible is the number of chromosomes given in the VCF (default: 1).
 	-u	output genotype ./. for variants not covered by any unique kmers.
-	-v VAL	variants in VCF format. NOTE: INPUT VCF FILE MUST NOT BE COMPRESSED. (required).
 
 
 ```
