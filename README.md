@@ -126,9 +126,11 @@ options:
 		NOTE: INPUT VCF FILE MUST NOT BE COMPRESSED. (required).
 ```
 
-### Notes
+### Remarks
 
 * PanGenie is designed for whole genome genotyping, i.e. using the full set of variants as input rather than restricting to certain regions and/or variant types. In case you want to genotype a certain genomic region only (which is not the ideal use case for PanGenie), make sure the provided reference genome as well as the provided reads only contain data for these respective regions.
+
+* PanGenie is a re-genotyping tool, **not a variant caller**. It re-genotypes the variants provided in the input VCF, meaning the output VCF will contain the same variant records as the input, just with genotypes added for the sample PanGenie is run on. It cannot detect new variant alleles.
 
 
 ## Runtime and memory usage
