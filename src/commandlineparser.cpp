@@ -35,6 +35,15 @@ void CommandLineParser::add_flag_argument(char name, string description) {
 	this->flag_to_parameter[name] = false;
 }
 
+
+void CommandLineParser::exactly_one(char name1, char name2) {
+	this->exactly_one_arg.push_back(make_pair(name1, name2));
+}
+
+void CommandLineParser::not_both(char name1, char name2) {
+	this->not_both_arg.push_back(make_pair(name1, name2));
+}
+
 void CommandLineParser::parse(int argc, char* argv[]) {
 	int c;
 	while ((c = getopt(argc, argv, this->parser_string.c_str())) != -1) {
@@ -62,6 +71,32 @@ void CommandLineParser::parse(int argc, char* argv[]) {
 			}
 		}
 	}
+
+	// make sure argument combinations are valid
+	for (auto it = this->exactly_one_arg.begin(); it != this->exactly_one_arg.end(); ++it) {
+		if (this->arg_to_parameter.find(it->first) != this->arg_to_parameter.end()) {
+			if (this->arg_to_parameter.find(it->second) != this->arg_to_parameter.end()) {
+				ostringstream oss;
+				oss << "Error: options -" << it->first << " and -" << it->second << " cannot be used together." << endl;
+				throw runtime_error(oss.str());
+			}
+		} else {
+			if (this->arg_to_parameter.find(it->second) == this->arg_to_parameter.end()) {
+				ostringstream oss;
+				oss << "Error: one of the options -" << it->first << " and -" << it->second << " must be used." << endl;
+				throw runtime_error(oss.str());
+			}			
+		}
+	}
+
+	for (auto it = this->not_both_arg.begin(); it != this->not_both_arg.end(); ++it) {
+		if ( (this->arg_to_parameter.find(it->first) != this->arg_to_parameter.end()) && (this->arg_to_parameter.find(it->second) != this->arg_to_parameter.end()) ) {
+			ostringstream oss;
+			oss << "Error: options -" << it->first << " and -" << it->second << " cannot be used together." << endl;
+			throw runtime_error(oss.str());			
+		}
+	}
+
 	// check if mandatory options are all given
 	for (auto it = this->mandatory.begin(); it != this->mandatory.end(); ++it) {
 		// check if it was seen
@@ -71,6 +106,7 @@ void CommandLineParser::parse(int argc, char* argv[]) {
 			throw runtime_error(oss.str());
 		}
 	}
+
 }
 
 string CommandLineParser::get_argument(char name) {
@@ -86,6 +122,10 @@ bool CommandLineParser::get_flag(char name) {
 	return this->flag_to_parameter.at(name);
 }
 
+bool CommandLineParser::exists(char name) {
+	return this->arg_to_parameter.find(name) != this->arg_to_parameter.end();
+}
+
 void CommandLineParser::usage() {
 	cerr << "usage: " << this->command << endl;
 	cerr << endl;
@@ -99,7 +139,11 @@ void CommandLineParser::usage() {
 		// if there is a default value, get it
 		auto d = this->optional.find(it->first);
 		if (d != this->optional.end()) {
-			cerr << "\t-" << it->first << " VAL\t" << it->second << " (default: " << d->second << ")." << endl;
+			if (d->second != ""){
+				cerr << "\t-" << it->first << " VAL\t" << it->second << " (default: " << d->second << ")." << endl;
+			} else {
+				cerr << "\t-" << it->first << " VAL\t" << it->second << "." << endl;
+			}
 		} else {
 			cerr << "\t-" << it->first << " VAL\t" << it->second << " (required)." << endl;
 		}
