@@ -14,7 +14,6 @@ int main(int argc, char* argv[]) {
 
 	cerr << endl;
 	cerr << "program: PanGenie - genotyping based on kmer-counting and known haplotype sequences." << endl;
-	cerr << "command: PanGenie-index - construct graph and determine unique kmers." << endl;
 	cerr << "author: Jana Ebler" << endl << endl;
 	cerr << "version: v3.0.0" << endl;
 
@@ -28,13 +27,13 @@ int main(int argc, char* argv[]) {
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
-	argument_parser.add_command("PanGenie-index [options] -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf> -o <outfile-prefix>");
-	argument_parser.add_mandatory_argument('r', "reference genome in FASTA format. NOTE: INPUT FASTA FILE MUST NOT BE COMPRESSED.");
-	argument_parser.add_mandatory_argument('v', "variants in VCF format. NOTE: INPUT VCF FILE MUST NOT BE COMPRESSED.");
-	argument_parser.add_mandatory_argument('o', "prefix of the output files. NOTE: the given path must not include non-existent folders.");
+	argument_parser.add_command("PanGenie-index [options] -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf> -o <index-prefix>");
+	argument_parser.add_mandatory_argument('r', "reference genome in FASTA format. NOTE: INPUT FASTA FILE MUST NOT BE COMPRESSED");
+	argument_parser.add_mandatory_argument('v', "variants in VCF format. NOTE: INPUT VCF FILE MUST NOT BE COMPRESSED");
+	argument_parser.add_mandatory_argument('o', "prefix of the output files. NOTE: the given path must not include non-existent folders");
 	argument_parser.add_optional_argument('k', "31", "kmer size");
 	argument_parser.add_optional_argument('t', "1", "number of threads to use for kmer-counting");
-	argument_parser.add_optional_argument('e', "3000000000", "size of hash used by jellyfish.");
+	argument_parser.add_optional_argument('e', "3000000000", "size of hash used by jellyfish");
 //	argument_parser.add_flag_argument('d', "do not add reference as additional path.");
 
 	try {

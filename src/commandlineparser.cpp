@@ -127,7 +127,7 @@ bool CommandLineParser::exists(char name) {
 }
 
 void CommandLineParser::usage() {
-	cerr << "usage: " << this->command << endl;
+	cerr << "usage: " << endl << this->command << endl;
 	cerr << endl;
 	cerr << "options:" << endl;
 	for (auto it = this->arg_to_string.begin(); it != this->arg_to_string.end(); ++it) {
@@ -145,7 +145,7 @@ void CommandLineParser::usage() {
 				cerr << "\t-" << it->first << " VAL\t" << it->second << "." << endl;
 			}
 		} else {
-			cerr << "\t-" << it->first << " VAL\t" << it->second << " (required)." << endl;
+			cerr << "\t-" << it->first << " VAL\t" << it->second << "." << endl;
 		}
 	}
 	cerr << endl;
