@@ -7,7 +7,8 @@ scripts = 'scripts'
 # allow max 20 % missing alleles at a variant position
 frac_missing = 0.2
 outdir = config['outdir']
-pangenie = config['pangenie']
+pangenie_genotype = config['pangenie_genotype']
+pangenie_index = config['pangenie_index']
 samples = config['reads'].keys()
 
 rule all:
@@ -22,10 +23,26 @@ rule all:
 ##  that are overlapping into multi-allelic positions.   ##
 ###########################################################
 
+# check that VCF matches the reference genome
+rule validate_vcf:
+	input:
+		vcf = vcf,
+		fasta = reference
+	log:
+		'{outdir}/input-vcf/validate-vcf.log'
+	benchmark:
+		'{outdir}/benchmarks/validate-vcf.txt'
+	conda:
+		'env/merging.yml'
+	shell:
+		"bcftools norm --check-ref e --fasta-ref {input.fasta} {input.vcf} &> {log}"	
+
+
 # check that VCF is correct and remove positions with more than frac_missing missing alleles
 rule prepare_vcf:
 	input:
-		vcf
+		vcf = vcf,
+		validation = '{outdir}/input-vcf/validate-vcf.log'
 	output:
 		temp('{outdir}/input-vcf/input-missing-removed.vcf')
 	log:
@@ -35,7 +52,7 @@ rule prepare_vcf:
 	conda:
 		'env/merging.yml'
 	shell:
-		"cat {input} | python3 {scripts}/prepare-vcf.py --missing {frac_missing} 2> {log} 1> {output}"
+		"cat {input.vcf} | python3 {scripts}/prepare-vcf.py --missing {frac_missing} 2> {log} 1> {output}"
 
 
 # assign IDs to all alleles
@@ -93,14 +110,39 @@ rule merge_haplotypes:
 		"""
 
 
+
 ##########################################################
-##                  Run PanGenie                        ##
+##             Run PanGenie (two steps)                 ##
 ##########################################################
 
-rule pangenie:
+rule pangenie_preprocessing:
 	input:
 		vcf='{outdir}/pangenome/pangenome.vcf',
-		reference = reference,
+		reference = reference
+	output:
+		directory('{outdir}/pangenie/indexing/')
+	threads:
+		24
+	resources:
+		mem_total_mb=200000,
+		runtime_hrs=4,
+		runtime_min=59
+	log:
+		'{outdir}/pangenie/pangenie-indexing.log'
+	benchmark:
+		'{outdir}/benchmarks/pangenie-indexing.txt'
+	params:
+		prefix = "{outdir}/pangenie/indexing/index"
+	shell:
+		"""
+		mkdir -p {wildcards.outdir}/pangenie/indexing/
+		{pangenie_index} -v {input.vcf} -r {input.reference} -o {params.prefix} -j {threads} -t {threads} -e 100000 &> {log}
+		"""
+
+
+rule pangenie_genotyping:
+	input:
+		index='{outdir}/pangenie/indexing/',
 		reads = lambda wildcards: config['reads'][wildcards.sample]
 	output:
 		'{outdir}/pangenie/{sample}_graph_genotyping.vcf'
@@ -117,7 +159,8 @@ rule pangenie:
 	params:
 		prefix = "{outdir}/pangenie/{sample}_graph"
 	shell:
-		"{pangenie} -i {input.reads} -v {input.vcf} -r {input.reference} -o {params.prefix} -j {threads} -t {threads} -g &> {log}"
+		"{pangenie_genotype} -i {input.reads} -f {input.index}index -o {params.prefix} -j {threads} -t {threads} -e 100000 &> {log}"
+
 
 
 
