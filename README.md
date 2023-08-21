@@ -142,7 +142,6 @@ options:
 	-t VAL	number of threads to use for kmer-counting (default: 1).
 	-v VAL	variants in VCF format. NOTE: INPUT VCF FILE MUST NOT BE COMPRESSED.
 
-Error: option -r is mandatory.
 
 ```
 
@@ -159,7 +158,7 @@ You don't need to understand what any of these files represent. They mainly cont
 
 ### Genotyping step
 
-After preprocessing is completed, the genotyping step can be run in order to genotype a specific sample. If multiple samples shall be genotyped, this step needs to be run on each os these samples separately (while the pre-processing needs to be done only once). Based on the sequencing reads of a sample and the pre-computed files, genotyping is run using the command `` PanGenie-genotype ``:
+After preprocessing is completed, the genotyping step can be run in order to genotype a specific sample. If multiple samples shall be genotyped, this step needs to be run on each of these samples separately (while the preprocessing needs to be done only once). Based on the sequencing reads of a sample and the pre-computed files, genotyping is run using the command `` PanGenie-genotype ``:
 
 ``` bat
 PanGenie-genotype -f <outfile-prefix> -i <reads.fa/fq> -s <sample-name> -j <nr threads kmer-counting> -t <nr threads genotyping>``
@@ -204,9 +203,9 @@ If you want to genotype the same set of variants across more than one sample, ru
 
 ### Running PanGenie with a single command
 
-We also provide the option of running  `` PanGenie-genotype `` without running the pre-processing step first. This can be done by running it with parameters `` -v `` and `` -r `` instead of ``-f ``. This will automatically do the pre-processing steps, but in contrast to ``PanGenie-index``, it does not write any files to disk during pre-processing to save time. While this runs more efficiently when genotyping a single sample, it needs more RAM (similar to previous release v2.1.1). Running PanGenie like this might be useful in cases where one wants to genotype a single sample only, or to save some disk space.
+We also provide the option of running  `` PanGenie-genotype `` without running the preprocessing step first. This can be done by running it with parameters `` -v `` and `` -r `` instead of ``-f ``. This will automatically do the preprocessing steps, but in contrast to ``PanGenie-index``, it does not write any files to disk during preprocessing to save time. While this runs more efficiently when genotyping a single sample, it needs more RAM (similar to previous release v2.1.1). Running PanGenie like this might be useful in cases where one wants to genotype a single sample only, or to save some disk space.
 
-As mentioned before, when genotyping more than one sample, it is beneficial to run both steps separately, since the preprocessing needs to be run only once for all samples, while the genotyping step needs to be run separately on each sample. Running PanGenie with a single command works as follows:
+As mentioned before, especially when genotyping more than one sample, it is beneficial to run both steps separately, since the preprocessing needs to be run only once for all samples, while the genotyping step needs to be run separately on each sample. Running PanGenie with a single command works as follows:
 
 ``` bat
 PanGenie-genotype -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf> -s <sample-name> -j <nr threads kmer-counting> -t <nr threads genotyping> ``
@@ -216,6 +215,7 @@ PanGenie-genotype -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf> -s <sampl
 ## Remarks
 
 * PanGenie is designed for whole genome genotyping, i.e. using the full set of variants as input rather than restricting to certain regions and/or variant types. In case you want to genotype a certain genomic region only (which is not the ideal use case for PanGenie), make sure the provided reference genome as well as the provided reads only contain data for these respective regions.
+* PanGenie can only genotype diploid genomes. It cannot be used for polyploid samples.
 
 
 ## Runtime and memory usage
