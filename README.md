@@ -203,7 +203,7 @@ If you want to genotype the same set of variants across more than one sample, ru
 
 ### Running PanGenie with a single command
 
-We also provide the option of running  `` PanGenie-genotype `` without running the preprocessing step first. This can be done by running it with parameters `` -v `` and `` -r `` instead of ``-f ``. This will automatically do the preprocessing steps, but in contrast to ``PanGenie-index``, it does not write any files to disk during preprocessing to save time. While this runs more efficiently when genotyping a single sample, it needs more RAM (similar to previous release v2.1.1). Running PanGenie like this might be useful in cases where one wants to genotype a single sample only, or to save some disk space.
+We also provide the option of running  `` PanGenie-genotype `` without running the preprocessing step first. This can be done by running it with parameters `` -v `` and `` -r `` instead of ``-f ``. This will automatically do the preprocessing steps, but in contrast to ``PanGenie-index``, it does not write as any files to disk during preprocessing to save time, but needs more RAM (similar to previous release v2.1.1). Running PanGenie like this might be useful in cases where one wants to genotype a single sample only, or to save some disk space.
 
 As mentioned before, especially when genotyping more than one sample, it is beneficial to run both steps separately, since the preprocessing needs to be run only once for all samples, while the genotyping step needs to be run separately on each sample. Running PanGenie with a single command works as follows:
 
@@ -223,6 +223,7 @@ PanGenie-genotype -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf> -s <sampl
 Runtime and memory usage depend on the number of variants genotyped and the number of haplotypes present in the graph. PanGenie is fastest when it is installed using Singularity (see above).
 
 The largest dataset that we have tested (HPRC: https://doi.org/10.1101/2022.07.09.499321) contained around 27 million variants, 88 haplotypes and around 30x read coverage. With 24 cores, `` PanGenie-index `` run in 34 minutes using 24 cores (around 3 CPU hours) using 60 GB of RAM. `` PanGenie-genotype `` ran in 1 hour and 40 minutes using 24 cores (around 14 CPU hours) using 37 GB of RAM.
+Running PanGenie without preprocessing, ``PanGenie-genotype`` needs 2 hours and 35 minutes using 24 cores (around 18 CPU hours) using 84 GB of RAM.
 
 
 
