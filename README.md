@@ -14,13 +14,17 @@ Use the Singularity definition file located in ``container/`` to build an (Ubunt
 
 ``[sudo] singularity build pangenie.sif pangenie.def``
 
-In all usage examples below, call the ``PanGenie`` executable as follows:
+In all usage examples below, call the ``PanGenie`` executables as follows:
 
-``singularity exec pangenie.sif PanGenie <PARAMETERS>``
+
+``` bat
+singularity exec pangenie.sif PanGenie-index <PARAMETERS>  
+singularity exec pangenie.sif PanGenie-genotype <PARAMETERS>
+```
 
 For example, to show ``PanGenie``'s command line help, use the following command:
 
-``singularity exec pangenie.sif PanGenie --help``
+``singularity exec pangenie.sif PanGenie-genotype --help``
 
 You can check which versions of ``PanGenie`` (git hash) and of the ``jellyfish`` library have been installed in the container by running the following commands:
 
@@ -40,24 +44,29 @@ should produce a line like this:
 
 ### Building from source using Conda
 
-`` git clone https://github.com/eblerjana/pangenie.git``  
-`` cd pangenie``  
-`` conda env create -f environment.yml``  
-`` conda activate pangenie``   
-``mkdir build; cd build; cmake .. ; make``
+``` bat
+git clone https://github.com/eblerjana/pangenie.git  
+cd pangenie  
+conda env create -f environment.yml  
+conda activate pangenie   
+mkdir build; cd build; cmake .. ; make
+
+```
 
 
 
 ### Building from source (requires jellyfish to be installed)
 
-`` git clone https://github.com/eblerjana/pangenie.git``  
-`` cd pangenie``  
-``mkdir build; cd build; cmake .. ; make``
+``` bat
+git clone https://github.com/eblerjana/pangenie.git  
+cd pangenie  
+mkdir build; cd build; cmake .. ; make
+```
 
 
 ## Required Input files
 
-PanGenie is a pangenome-based genotyper using short-read data. It computes genotypes for variants represented as bubbles in a pangenome graph by taking information of already known haplotypes (represented as paths through the graph) into account. The required input files are described in detail below.
+PanGenie is a pangenome-based genotyper using short-read data. It computes genotypes for variants represented as bubbles in a pangenome graph by taking information of already known haplotypes (represented as paths through the graph) into account. It can only genotype diploid individuals. The required input files are described in detail below.
 
 ### Input variants
 
@@ -96,20 +105,20 @@ There are two ways of running PanGenie. The first way is to run it in two steps 
 PanGenie-index -v <variants.vcf> -r <reference.fa> -t <number of threads> -o <outfile-prefix>`
 PanGenie-genotype -f <outfile-prefix>` -i <reads.fa/fq>  -s <sample-name> -j <nr threads kmer-counting> -t <nr threads genotyping>
 ```
-The second way is to use a single command, equivalent to first running `` PanGenie-index `` and then `` PanGenie-genotype ``:
+The second way is to just use `` PanGenie-genotype ``, which will result in the same results, but use more memory: 
 
 
 ``` bat
 PanGenie -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf> -s <sample-name> -j <nr threads kmer-counting> -t <nr threads genotyping>
 ```
 
-Both ways are equivalent, but running PanGenie in two separate steps is especially useful in cases where one wants to genotype the same set of variants across multiple samples. In such a case, `` PanGenie-index `` allows to do all preprocessing of the variant data only once instead of doing it over and over again for each sample. So when genotyping multiple samples, one needs to run `` PanGenie-index `` only a single time, and then runs `` PanGenie-genotype `` separately on each sample re-using the precomputed data. This helps reducing memory usage and runtime. In cases where one wants to genotype a single sample only, the single command can be used for convenience (which simply runs both steps consecutively).
+Both ways will produce the same end results, but running PanGenie in two separate steps is especially useful in cases where one wants to genotype the same set of variants across multiple samples. In such a case, `` PanGenie-index `` allows to do all preprocessing of the variant data only once instead of doing it over and over again for each sample. So when genotyping multiple samples, one needs to run `` PanGenie-index `` only a single time, and then runs `` PanGenie-genotype `` separately on each sample re-using the precomputed data. This reduces memory usage and runtime. 
 
 Below, details on these commands are provided.
 
-### Preprocessing step
+### Preprocessing step (optional, but recommended)
 
-During preprocessing, steps unrelated to the genotyped sample(s) are performed, like processing the input variants and determining unique k-mers in the graph. In a setting in which the same set of input variants are genotyped across multiple samples, the advantage is that this preprocessing step needs to be run only once. The preprocessing step can be run using the command `` PanGenie-index ``:
+During preprocessing, steps **unrelated to the genotyped sample(s)** are performed, like processing the input variants and determining unique k-mers in the graph. In a setting in which the same set of input variants are genotyped across multiple samples, the advantage is that this preprocessing step **needs to be run only once**. The preprocessing step can be run using the command `` PanGenie-index ``:
 
 ``` bat
 PanGenie-index -v <variants.vcf> -r <reference.fa> -t <number of threads> -o <outfile-prefix>``
@@ -119,22 +128,25 @@ The full list of options is previded below:
 
 ``` bat
 program: PanGenie - genotyping based on kmer-counting and known haplotype sequences.
-command: PanGenie-index - construct graph and determine unique kmers.
 author: Jana Ebler
 
 version: v3.0.0
-usage: PanGenie-index [options] -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf> -o <outfile-prefix>
+usage: 
+PanGenie-index [options] -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf> -o <index-prefix>
 
 options:
-	-e VAL	size of hash used by jellyfish. (default: 3000000000).
+	-e VAL	size of hash used by jellyfish (default: 3000000000).
 	-k VAL	kmer size (default: 31).
-	-o VAL	prefix of the output files. NOTE: the given path must not include non-existent folders. (required).
-	-r VAL	reference genome in FASTA format. NOTE: INPUT FASTA FILE MUST NOT BE COMPRESSED. (required).
+	-o VAL	prefix of the output files. NOTE: the given path must not include non-existent folders.
+	-r VAL	reference genome in FASTA format. NOTE: INPUT FASTA FILE MUST NOT BE COMPRESSED.
 	-t VAL	number of threads to use for kmer-counting (default: 1).
-	-v VAL	variants in VCF format. NOTE: INPUT VCF FILE MUST NOT BE COMPRESSED. (required).
+	-v VAL	variants in VCF format. NOTE: INPUT VCF FILE MUST NOT BE COMPRESSED.
+
+Error: option -r is mandatory.
+
 ```
 
-The pre-proccessing step will result in a set of files (listed below) to be used by `` PanGenie-genotype `` in order to genotype a specific sample:
+The pre-proccessing step will result in a set of files (listed below) that can be used by `` PanGenie-genotype `` in order to genotype a specific sample:
 
 * `` <outfile-prefix>_<chromosome>_Graph.cereal `` (one for each chromosome) serialization of Graph object
 * `` <outfile-prefix>_<chromosome>_kmers.tsv.gz `` (one for each chromosome) containing unique k-mers
@@ -147,7 +159,7 @@ You don't need to understand what any of these files represent. They mainly cont
 
 ### Genotyping step
 
-After preprocessing is completed, the genotyping step can be run in order to genotype a specific sample. If multiple samples shall be genotyped, this step needs to be run on each os these samples separately. Based on the sequencing reads of a sample and the pre-computed files, genotyping is run using the command `` PanGenie-genotype ``:
+After preprocessing is completed, the genotyping step can be run in order to genotype a specific sample. If multiple samples shall be genotyped, this step needs to be run on each os these samples separately (while the pre-processing needs to be done only once). Based on the sequencing reads of a sample and the pre-computed files, genotyping is run using the command `` PanGenie-genotype ``:
 
 ``` bat
 PanGenie-genotype -f <outfile-prefix> -i <reads.fa/fq> -s <sample-name> -j <nr threads kmer-counting> -t <nr threads genotyping>``
@@ -157,25 +169,29 @@ The full list of options is provided below:
 
 ``` bat
 program: PanGenie - genotyping based on kmer-counting and known haplotype sequences.
-command: PanGenie-genotype - run genotyping based on precomputed data produced by PanGenie-index.
 author: Jana Ebler
 
 version: v3.0.0
-usage: PanGenie-genotype [options] -f <unique-kmers> -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf>
+usage: 
+PanGenie-genotype [options] -f <index-prefix> -i <reads.fa/fq> -o <outfile-prefix>
+PanGenie-genotype [options] -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf> -o <outfile-prefix>
 
 options:
-	-a VAL	sample subsets of paths of this size. (default: 0).
-	-c	count all read kmers instead of only those located in graph.
-	-e VAL	size of hash used by jellyfish. (default: 3000000000).
-	-f VAL	Filename prefix of files computed by PanGenie-index (i.e. option -o used with PanGenie-index). (required).
-	-g	run genotyping (Forward backward algorithm, default behaviour).
-	-i VAL	sequencing reads in FASTA/FASTQ format or Jellyfish database in jf format. NOTE: INPUT FASTA/Q FILE MUST NOT BE COMPRESSED. (required).
+	-a VAL	sample subsets of paths of this size (default: 0).
+	-c	count all read kmers instead of only those located in graph
+	-e VAL	size of hash used by jellyfish (default: 3000000000).
+	-f VAL	Filename prefix of files computed by PanGenie-index (i.e. option -o used with PanGenie-index).
+	-g	run genotyping (Forward backward algorithm, default behaviour)
+	-i VAL	sequencing reads in FASTA/FASTQ format or Jellyfish database in jf format. NOTE: INPUT FASTA/Q FILE MUST NOT BE COMPRESSED.
 	-j VAL	number of threads to use for kmer-counting (default: 1).
-	-o VAL	prefix of the output files. NOTE: the given path must not include non-existent folders. (default: result).
-	-p	run phasing (Viterbi algorithm). Experimental feature.
+	-k VAL	kmer size (default: 31).
+	-o VAL	prefix of the output files. NOTE: the given path must not include non-existent folders (default: result).
+	-p	run phasing (Viterbi algorithm). Experimental feature
+	-r VAL	reference genome in FASTA format. NOTE: INPUT FASTA FILE MUST NOT BE COMPRESSED.
 	-s VAL	name of the sample (will be used in the output VCFs) (default: sample).
 	-t VAL	number of threads to use for core algorithm. Largest number of threads possible is the number of chromosomes given in the VCF (default: 1).
-	-u	output genotype ./. for variants not covered by any unique kmers.
+	-u	output genotype ./. for variants not covered by any unique kmers
+	-v VAL	variants in VCF format. NOTE: INPUT VCF FILE MUST NOT BE COMPRESSED.
 
 
 ```
@@ -186,14 +202,15 @@ The full list of options is provided below.
 If you want to genotype the same set of variants across more than one sample, run the command above separately on each sample. The preprocessing step only needs to be run once (as long as the VCF does not change).
 
 
-### Running both steps with a single command
+### Running PanGenie with a single command
 
-We also provide the option of running `` PanGenie-index `` and `` PanGenie-genotype `` with a single command called `` PanGenie ``. This is useful in cases where one wants to genotype a single sample only. As mentioned before, it is equivalent to first running `` PanGenie-index`` and then `` PanGenie-genotype ``. When genotyping more than one sample, it is beneficial to run both steps separately, since the preprocessing needs to be run only once for all samples, while the genotyping step needs to be run separately on each sample. Running PanGenie with a single command works as follows:
+We also provide the option of running  `` PanGenie-genotype `` without running the pre-processing step first. This can be done by running it with parameters `` -v `` and `` -r `` instead of ``-f ``. This will automatically do the pre-processing steps, but in contrast to ``PanGenie-index``, it does not write any files to disk during pre-processing to save time. While this runs more efficiently when genotyping a single sample, it needs more RAM (similar to previous release v2.1.1). Running PanGenie like this might be useful in cases where one wants to genotype a single sample only, or to save some disk space.
+
+As mentioned before, when genotyping more than one sample, it is beneficial to run both steps separately, since the preprocessing needs to be run only once for all samples, while the genotyping step needs to be run separately on each sample. Running PanGenie with a single command works as follows:
 
 ``` bat
-PanGenie -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf> -s <sample-name> -j <nr threads kmer-counting> -t <nr threads genotyping> ``
+PanGenie-genotype -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf> -s <sample-name> -j <nr threads kmer-counting> -t <nr threads genotyping> ``
 ```
-
 
 
 ## Remarks
