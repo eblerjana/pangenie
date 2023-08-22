@@ -222,7 +222,7 @@ PanGenie is designed for whole genome genotyping, i.e. using the full set of var
 
 Runtime and memory usage depend on the number of variants genotyped and the number of haplotypes present in the graph. PanGenie is fastest when it is installed using Singularity (see above).
 
-The largest dataset that we have tested (HPRC: https://doi.org/10.1101/2022.07.09.499321) contained around 27 million variants, 88 haplotypes and around 30x read coverage. With 24 cores, `` PanGenie-index `` ran in 34 minutes (around 3 CPU hours) using 60 GB of RAM. `` PanGenie `` with option ``-f`` ran in 1 hour and 40 minutes using 24 cores (around 14 CPU hours) using 37 GB of RAM.
+The largest dataset that we have tested (HPRC: https://doi.org/10.1101/2022.07.09.499321) contained around 27 million variants, 88 haplotypes and around 30x read coverage. With 24 cores, `` PanGenie-index `` ran in 34 minutes (around 3 CPU hours) using 60 GB of RAM. `` PanGenie `` with option ``-f`` ran in 1 hour and 40 minutes using 24 cores (around 14 CPU hours) and used 37 GB of RAM.
 Running PanGenie without preprocessing, ``PanGenie`` needs 2 hours and 35 minutes using 24 cores (around 18 CPU hours) and 84 GB of RAM.
 
 
