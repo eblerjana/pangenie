@@ -31,27 +31,27 @@ void unique_kmers(DnaSequence& allele, unsigned char index, size_t kmer_size, ma
 	}
 }
 
-UniqueKmerComputer::UniqueKmerComputer (KmerCounter* genomic_kmers, KmerCounter* read_kmers, VariantReader* variants, string chromosome, size_t kmer_coverage)
+UniqueKmerComputer::UniqueKmerComputer (KmerCounter* genomic_kmers, shared_ptr<KmerCounter> read_kmers, shared_ptr<Graph> variants, size_t kmer_coverage)
 	:genomic_kmers(genomic_kmers),
 	 read_kmers(read_kmers),
 	 variants(variants),
-	 chromosome(chromosome),
+	 chromosome(variants->get_chromosome()),
 	 kmer_coverage(kmer_coverage)
 {
 	jellyfish::mer_dna::k(this->variants->get_kmer_size());
 }
 
 
-void UniqueKmerComputer::compute_unique_kmers(vector<UniqueKmers*>* result, ProbabilityTable* probabilities) {
-	size_t nr_variants = this->variants->size_of(this->chromosome);
+void UniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKmers>>* result, ProbabilityTable* probabilities, bool delete_processed_variants) {
+	size_t nr_variants = this->variants->size();
 	for (size_t v = 0; v < nr_variants; ++v) {
 
 		// set parameters of distributions
 		size_t kmer_size = this->variants->get_kmer_size();
-		double kmer_coverage = compute_local_coverage(this->chromosome, v, 2*kmer_size);
+		double kmer_coverage = compute_local_coverage(v, 2*kmer_size);
 		
 		map <jellyfish::mer_dna, vector<unsigned char>> occurences;
-		const Variant& variant = this->variants->get_variant(this->chromosome, v);
+		const Variant& variant = this->variants->get_variant(v);
 	
 		vector<unsigned char> path_to_alleles;
 		assert(variant.nr_of_paths() < 65535);
@@ -60,7 +60,7 @@ void UniqueKmerComputer::compute_unique_kmers(vector<UniqueKmers*>* result, Prob
 			path_to_alleles.push_back(a);
 		}
 
-		UniqueKmers* u = new UniqueKmers(variant.get_start_position(), path_to_alleles);
+		shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers>(new UniqueKmers(variant.get_start_position(), path_to_alleles));
 		u->set_coverage(kmer_coverage);
 		size_t nr_alleles = variant.nr_of_alleles();
 
@@ -106,9 +106,9 @@ void UniqueKmerComputer::compute_unique_kmers(vector<UniqueKmers*>* result, Prob
 
 				// skip kmers with "too extreme" counts
 				// TODO: value ok?
-				if (read_kmercount > (2*this->kmer_coverage)) {
-					continue;
-				}
+//				if (read_kmercount > (2*this->kmer_coverage)) {
+//					continue;
+//				}
 
 				// determine probabilities
 				CopyNumber cn = probabilities->get_probability(kmer_coverage, read_kmercount);
@@ -124,13 +124,25 @@ void UniqueKmerComputer::compute_unique_kmers(vector<UniqueKmers*>* result, Prob
 			}
 		}
 		result->push_back(u);
+
+		if (delete_processed_variants) {
+			if (v > 0) {
+				// previous variant object no longer needed
+				this->variants->delete_variant(v - 1);
+			}
+			if (v == (nr_variants - 1)) {
+				// last variant object, can be deleted
+				this->variants->delete_variant(v);
+			}
+		}
+
 	}
 }
 
 void UniqueKmerComputer::compute_empty(vector<UniqueKmers*>* result) const {
-	size_t nr_variants = this->variants->size_of(this->chromosome);
+	size_t nr_variants = this->variants->size();
 	for (size_t v = 0; v < nr_variants; ++v) {
-		const Variant& variant = this->variants->get_variant(this->chromosome, v);
+		const Variant& variant = this->variants->get_variant(v);
 		vector<unsigned char> path_to_alleles;
 		assert(variant.nr_of_paths() < 65535);
 		for (unsigned short p = 0; p < variant.nr_of_paths(); ++p) {
@@ -142,14 +154,14 @@ void UniqueKmerComputer::compute_empty(vector<UniqueKmers*>* result) const {
 	}
 }
 
-unsigned short UniqueKmerComputer::compute_local_coverage(string chromosome, size_t var_index, size_t length) {
+unsigned short UniqueKmerComputer::compute_local_coverage(size_t var_index, size_t length) {
 	DnaSequence left_overhang;
 	DnaSequence right_overhang;
 	size_t total_coverage = 0;
 	size_t total_kmers = 0;
 
-	this->variants->get_left_overhang(chromosome, var_index, length, left_overhang);
-	this->variants->get_right_overhang(chromosome, var_index, length, right_overhang);
+	this->variants->get_left_overhang(var_index, length, left_overhang);
+	this->variants->get_right_overhang(var_index, length, right_overhang);
 
 	size_t kmer_size = this->variants->get_kmer_size();
 	map <jellyfish::mer_dna, vector<unsigned char>> occurences;

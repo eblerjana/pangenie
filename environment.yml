@@ -1,8 +1,9 @@
 name: pangenie
 channels:
-  - conda-forge
   - bioconda
   - main
+  - conda-forge
+  - defaults
 dependencies:
   - _libgcc_mutex=0.1=conda_forge
   - _openmp_mutex=4.5=1_gnu
@@ -10,8 +11,9 @@ dependencies:
   - binutils_linux-64=2.36=hf3e587d_1
   - bzip2=1.0.8=h7b6447c_0
   - c-ares=1.17.1=h27cfd23_0
-  - ca-certificates=2021.10.8=ha878542_0
-  - certifi=2021.10.8=py39hf3d152e_1
+  - ca-certificates=2022.12.7=ha878542_0
+  - cereal=1.3.2=hd8ed1ab_0
+  - certifi=2022.12.7=pyhd8ed1ab_0
   - cmake=3.19.6=h973ab73_0
   - expat=2.4.1=h2531618_2
   - gcc=11.2.0=h702ea55_1

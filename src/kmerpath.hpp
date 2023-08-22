@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include  <string>
 #include <iostream>
+#include <cereal/access.hpp>
+#include <cereal/types/vector.hpp>
 
 /** Represents a sequence of kmers. **/
 
@@ -20,9 +22,15 @@ public:
 	friend std::ostream& operator<< (std::ostream& stream, const KmerPath& cna);
 	std::string convert_to_string() const;
 
+	template<class Archive>
+	void serialize(Archive& archive) {
+		archive(kmers);
+	}
+
 private:
 	/** use one unsigned int to store the assignments of 32 kmers **/
 	std::vector<uint32_t> kmers;
+	friend cereal::access;
 };
 
 #endif // KMERPATH_HPP

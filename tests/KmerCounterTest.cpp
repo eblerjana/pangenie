@@ -19,7 +19,7 @@ TEST_CASE("JellyfishCounter", "[JellyfishCounter]") {
 }
 
 TEST_CASE("JellyfishCounter_if", "[JellyfishCounter_if]") {
-	JellyfishCounter counter("../tests/data/reads.fa", "../tests/data/kmerfile.fa", 10);
+	JellyfishCounter counter("../tests/data/reads.fa", {"../tests/data/kmerfile.fa"}, 10);
 	// these two kmers are in kmerfile.fa and should have been counted
 	REQUIRE(counter.getKmerAbundance("ATGCTGTAAA") == 1);
 	REQUIRE(counter.getKmerAbundance("TGCTGTAAAA") == 1);

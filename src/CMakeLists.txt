@@ -2,19 +2,24 @@ add_library(PanGenieLib SHARED
 	emissionprobabilitycomputer.cpp
 	copynumber.cpp
 	commandlineparser.cpp
+	commands.cpp
 	columnindexer.cpp
 	dnasequence.cpp
 	fastareader.cpp
 	genotypingresult.cpp
+	graphbuilder.cpp
+	graph.cpp
 	histogram.cpp
 	hmm.cpp
 	jellyfishcounter.cpp
 	jellyfishreader.cpp
 	kmerpath.cpp
+	kmerparser.cpp
 	pathsampler.cpp
 	probabilitycomputer.cpp
 	probabilitytable.cpp
 	sequenceutils.cpp
+	stepwiseuniquekmercomputer.cpp
 	timer.cpp
 	transitionprobabilitycomputer.cpp
 	threadpool.cpp
@@ -23,20 +28,11 @@ add_library(PanGenieLib SHARED
 	variant.cpp
 	variantreader.cpp)
 
-add_executable(PanGenie pggtyper.cpp)
-#add_executable(PanGenie-kmers pggtyper-kmers.cpp)
-#add_executable(PanGenie-paths pggtyper-paths.cpp)
-add_executable(PanGenie-graph pggtyper-graph.cpp)
 
+add_executable(PanGenie-index pangenie-index.cpp)
+target_link_libraries(PanGenie-index PanGenieLib ${JELLYFISH_LDFLAGS_OTHER} ${ZLIB_LDFLAGS_OTHER} ${CEREAL_LDFLAGS_OTHER})
+target_link_libraries(PanGenie-index PanGenieLib ${JELLYFISH_LIBRARIES} ${ZLIB_LIBRARIES} ${CEREAL_LIBRARIES})
 
-target_link_libraries(PanGenie PanGenieLib ${JELLYFISH_LDFLAGS_OTHER})
-target_link_libraries(PanGenie PanGenieLib ${JELLYFISH_LIBRARIES})
-
-#target_link_libraries(PanGenie-kmers PanGenieLib ${JELLYFISH_LDFLAGS_OTHER})
-#target_link_libraries(PanGenie-kmers PanGenieLib ${JELLYFISH_LIBRARIES})
-
-#target_link_libraries(PanGenie-paths PanGenieLib ${JELLYFISH_LDFLAGS_OTHER})
-#target_link_libraries(PanGenie-paths PanGenieLib ${JELLYFISH_LIBRARIES})
-
-target_link_libraries(PanGenie-graph PanGenieLib ${JELLYFISH_LDFLAGS_OTHER})
-target_link_libraries(PanGenie-graph PanGenieLib ${JELLYFISH_LIBRARIES})
+add_executable(PanGenie pangenie-genotype.cpp)
+target_link_libraries(PanGenie PanGenieLib ${JELLYFISH_LDFLAGS_OTHER} ${ZLIB_LDFLAGS_OTHER} ${CEREAL_LDFLAGS_OTHER})
+target_link_libraries(PanGenie PanGenieLib ${JELLYFISH_LIBRARIES} ${ZLIB_LIBRARIES} ${CEREAL_LIBRARIES})

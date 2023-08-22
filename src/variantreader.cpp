@@ -5,7 +5,6 @@
 #include <regex>
 #include "variantreader.hpp"
 
-
 using namespace std;
 
 void parse_line(vector<DnaSequence>& result, string line, char sep) {
@@ -87,7 +86,8 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 	 add_reference(add_reference),
 	 sample(sample),
 	 genotyping_outfile_open(false),
-	 phasing_outfile_open(false)
+	 phasing_outfile_open(false),
+	 variants_deleted(false)
 {
 	if (filename.substr(filename.size()-3,3).compare(".gz") == 0) {
 		throw runtime_error("VariantReader::VariantReader: Uncompressed VCF-file is required.");
@@ -100,7 +100,7 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 	string previous_chrom("");
 	size_t previous_end_pos = 0;
 	map<unsigned int, string> fields = { {0, "#CHROM"}, {1, "POS"}, {2, "ID"}, {3, "REF"}, {4, "ALT"}, {5, "QUAL"}, {6, "FILTER"}, {7, "INFO"}, {8, "FORMAT"} };
-	vector<Variant> variant_cluster;
+	vector<shared_ptr<Variant>> variant_cluster;
 	// read VCF-file line by line
 	while (getline(file, line)) {
 		if (line.size() == 0) continue;
@@ -214,12 +214,11 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 			for (string& s : p){
 				// handle unknown genotypes '.'
 				if (s == ".") {
-					// add "NNN" allele to the list of alleles
+					// add "N" allele to the list of alleles
 					parse_line(alleles, undefined_allele, ',');
 					paths.push_back(undefined_index);
 					assert(undefined_index < 255);
 					undefined_index += 1;
-					undefined_allele += "N";
 				} else {
 					unsigned int p_index = atoi(s.c_str());
 					if (p_index >= alleles.size()) {
@@ -238,7 +237,7 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 		DnaSequence right_flank;
 		this->fasta_reader.get_subsequence(current_chrom, current_end_pos, current_end_pos + kmer_size - 1, right_flank);
 		// add Variant to variant_cluster
-		Variant variant (left_flank, right_flank, current_chrom, current_start_pos, current_end_pos, alleles, paths);
+		shared_ptr<Variant> variant = shared_ptr<Variant>(new Variant(left_flank, right_flank, current_chrom, current_start_pos, current_end_pos, alleles, paths));
 		variant_cluster.push_back(variant);
 		previous_chrom = current_chrom;
 		previous_end_pos = current_end_pos;
@@ -249,11 +248,24 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 	cerr << "Identified " << this->nr_variants << " variants in total from VCF-file." << endl;
 }
 
+VariantReader::~VariantReader() {
+	for (auto it = this->variants_per_chromosome.begin(); it != this->variants_per_chromosome.end(); ++it) {
+		for (size_t i = 0; i < it->second.size(); ++i) {
+			if (this->variants_per_chromosome[it->first][i] != nullptr){
+				this->variants_per_chromosome[it->first][i] = nullptr;
+			}
+		}
+	}
+}
+
 size_t VariantReader::get_kmer_size() const {
 	return this->kmer_size;
 }
 
 void VariantReader::write_path_segments(std::string filename) const {
+	if (this->variants_deleted) {
+		throw runtime_error("VariantReader::write_path_segments: variants have been deleted by delete_variant funtion. Re-build object.");
+	}
 	ofstream outfile;
 	outfile.open(filename);
 	if (!outfile.good()) {
@@ -270,18 +282,19 @@ void VariantReader::write_path_segments(std::string filename) const {
 		auto it = this->variants_per_chromosome.find(element);
 		if (it != this->variants_per_chromosome.end()) {
 			for (auto variant : this->variants_per_chromosome.at(element)) {
+				assert (variant != nullptr);
 				// generate reference unitig and write to file
-				size_t start_pos = variant.get_start_position();
+				size_t start_pos = variant->get_start_position();
 				outfile << ">" << element << "_reference_" << start_pos << endl;
 				string ref_segment;
 				this->fasta_reader.get_subsequence(element, prev_end, start_pos, ref_segment);
 				outfile << ref_segment << endl;
-				for (size_t allele = 0; allele < variant.nr_of_alleles(); ++allele) {
+				for (size_t allele = 0; allele < variant->nr_of_alleles(); ++allele) {
 					// sequence name
 					outfile << ">" << element << "_" << start_pos << "_" << allele << endl;
-					outfile << variant.get_allele_string(allele) << endl;
+					outfile << variant->get_allele_string(allele) << endl;
 				}
-				prev_end = variant.get_end_position();
+				prev_end = variant->get_end_position();
 			}
 		}
 		// output reference sequence after last position on chromosome
@@ -319,30 +332,27 @@ size_t VariantReader::size_of(string chromosome) const {
 
 const Variant& VariantReader::get_variant(string chromosome, size_t index) const {
 	if (index < size_of(chromosome)) {
-		return this->variants_per_chromosome.at(chromosome)[index];
+		if (this->variants_per_chromosome.at(chromosome)[index] != nullptr) {
+			return *this->variants_per_chromosome.at(chromosome)[index];
+		} else {
+			throw runtime_error("VariantReader::get_variant: variant was previously destroyed by delete_variant function.");
+		}
 	} else {
 		throw runtime_error("VariantReader::get_variant: index out of bounds.");
 	}
 }
 
-void VariantReader::add_variant_cluster(string& chromosome, vector<Variant>* cluster) {
+void VariantReader::add_variant_cluster(string& chromosome, vector<shared_ptr<Variant>>* cluster) {
 	if (!cluster->empty()) {
 		// merge all variants in cluster
-		Variant combined = cluster->at(0);
+		shared_ptr<Variant> combined = cluster->at(0);
 		for (size_t v = 1; v < cluster->size(); ++v) {
-			combined.combine_variants(cluster->at(v));
+			combined->combine_variants(*cluster->at(v));
+			cluster->operator[](v) = nullptr;
 		}
-		combined.add_flanking_sequence();
+		combined->add_flanking_sequence();
 		this->variants_per_chromosome[chromosome].push_back(combined);
 		this->nr_variants += 1;
-	}
-}
-
-const vector<Variant>& VariantReader::get_variants_on_chromosome(string chromosome) const {
-	if (this->variants_per_chromosome.find(chromosome) != this->variants_per_chromosome.end()) {
-		return this->variants_per_chromosome.at(chromosome);
-	} else {
-		throw runtime_error("VariantReader::get_variants_on_chromosome: chromosome " + chromosome + " not present in VCF.");
 	}
 }
 
@@ -400,7 +410,10 @@ void VariantReader::open_phasing_outfile(string filename) {
 	this->phasing_outfile << "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t" << this->sample << endl;
 }
 
-void VariantReader::write_genotypes_of(string chromosome, const vector<GenotypingResult>& genotyping_result, vector<UniqueKmers*>* unique_kmers, bool ignore_imputed) {
+void VariantReader::write_genotypes_of(string chromosome, const vector<GenotypingResult>& genotyping_result, bool ignore_imputed) {
+	if (this->variants_deleted) {
+		throw runtime_error("VariantReader::write_genotypes_of: variants have been deleted by delete_variant funtion. Re-build object.");
+	}
 	// outfile needs to be open
 	if (!this->genotyping_outfile_open) {
 		throw runtime_error("VariantReader::write_genotypes_of: output file needs to be opened before writing.");
@@ -417,14 +430,14 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 
 	size_t counter = 0;
 	for (size_t i = 0; i < size_of(chromosome); ++i) {
-		Variant variant = this->variants_per_chromosome.at(chromosome)[i];
+		shared_ptr<Variant> variant = this->variants_per_chromosome.at(chromosome)[i];
+		unsigned short coverage = genotyping_result.at(i).coverage();
+		unsigned short nr_unique_kmers = genotyping_result.at(i).nr_unique_kmers();
 
 		// separate (possibly combined) variant into single variants and print a line for each
 		vector<Variant> singleton_variants;
 		vector<GenotypingResult> singleton_likelihoods;
-		vector<VariantStats> singleton_stats;
-		variant.separate_variants(&singleton_variants, &genotyping_result.at(i), &singleton_likelihoods);
-		variant.variant_statistics(unique_kmers->at(i), singleton_stats);
+		variant->separate_variants(&singleton_variants, &genotyping_result.at(i), &singleton_likelihoods);
 
 		for (size_t j = 0; j < singleton_variants.size(); ++j) {
 			Variant v = singleton_variants[j];
@@ -476,12 +489,7 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 			if (nr_missing > 0) genotype_likelihoods = singleton_likelihoods.at(j).get_specific_likelihoods(defined_alleles);
 			nr_alleles = defined_alleles.size();
 
-			info << ";UK=" << singleton_stats.at(j).nr_unique_kmers; // UK
-			info << ";AK="; // AK
-			for (unsigned int a = 0; a < nr_alleles; ++a) {
-				if (a > 0) info << ",";
-				info << singleton_stats.at(j).kmer_counts[a];
-			}
+			info << ";UK=" << nr_unique_kmers; // UK
 			info << ";MA=" << nr_missing;
 	
 			// if IDs were given in input, write them to output as well
@@ -491,7 +499,7 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 
 			// determine computed genotype
 			pair<int,int> genotype = genotype_likelihoods.get_likeliest_genotype();
-			if (ignore_imputed && (singleton_stats.at(j).nr_unique_kmers == 0)) genotype = {-1,-1};
+			if (ignore_imputed && (nr_unique_kmers == 0)) genotype = {-1,-1};
 			if ( (genotype.first != -1) && (genotype.second != -1)) {
 
 				// unique maximum and therefore a likeliest genotype exists
@@ -518,13 +526,16 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 				oss << "," << setprecision(4) << log10(likelihoods[j]);
 			}
 			this->genotyping_outfile << oss.str(); // GL
-			this->genotyping_outfile << ":" << singleton_stats[j].coverage << endl; // KC
+			this->genotyping_outfile << ":" << coverage << endl; // KC
 			counter += 1;
 		}
 	}
 }
 
-void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingResult>& genotyping_result, vector<UniqueKmers*>* unique_kmers, bool ignore_imputed) {
+void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingResult>& genotyping_result, bool ignore_imputed) {
+	if (this->variants_deleted) {
+		throw runtime_error("VariantReader::write_phasing_of: variants have been deleted by delete_variant funtion. Re-build object.");
+	}
 	// outfile needs to be open
 	if (! this->phasing_outfile_open) {
 		throw runtime_error("VariantReader::write_phasing_of: output file needs to be opened before writing.");
@@ -535,14 +546,14 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 
 	size_t counter = 0;
 	for (size_t i = 0; i < size_of(chromosome); ++i) {
-		Variant variant = this->variants_per_chromosome.at(chromosome)[i];
+		shared_ptr<Variant> variant = this->variants_per_chromosome.at(chromosome)[i];
+		unsigned short coverage = genotyping_result.at(i).coverage();
+		unsigned short nr_unique_kmers = genotyping_result.at(i).nr_unique_kmers();
 
 		// separate (possibly combined) variant into single variants and print a line for each
 		vector<Variant> singleton_variants;
 		vector<GenotypingResult> singleton_likelihoods;
-		variant.separate_variants(&singleton_variants, &genotyping_result.at(i), &singleton_likelihoods);
-		vector<VariantStats> singleton_stats;
-		variant.variant_statistics(unique_kmers->at(i), singleton_stats);
+		variant->separate_variants(&singleton_variants, &genotyping_result.at(i), &singleton_likelihoods);
 
 		for (size_t j = 0; j < singleton_variants.size(); ++j) {
 			Variant v = singleton_variants[j];
@@ -591,13 +602,7 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 				if (a > 1) info << ",";
 				info << setprecision(6) << v.allele_frequency(defined_alleles[a], this->add_reference);				
 			}
-			info << ";UK=" << singleton_stats.at(j).nr_unique_kmers; // UK
-			info << ";AK="; // AK
-			for (unsigned int a = 0; a < nr_alleles; ++a) {
-				if (a > 0) info << ",";
-				info << singleton_stats.at(j).kmer_counts[a];
-			}
-
+			info << ";UK=" << nr_unique_kmers; // UK
 			info << ";MA=" << nr_missing;
 
 			// if IDs were given in input, write them to output as well
@@ -607,7 +612,7 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 			this->phasing_outfile << "GT:KC" << "\t"; // FORMAT
 
 			// determine phasing
-			if (ignore_imputed && (singleton_stats.at(j).nr_unique_kmers == 0)){
+			if (ignore_imputed && (nr_unique_kmers == 0)){
 				this->phasing_outfile << "./."; // GT (phased)
 			} else {
 				pair<unsigned char,unsigned char> haplotype = singleton_likelihoods.at(j).get_haplotype();
@@ -620,7 +625,7 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 				if (hap2_undefined) hap2 = ".";
 				this->phasing_outfile << (unsigned int) haplotype.first << "|" << (unsigned int) haplotype.second; // GT (phased)
 			}
-			this->phasing_outfile << ":" << singleton_stats[j].coverage << endl; // KC
+			this->phasing_outfile << ":" << coverage << endl; // KC
 			counter += 1;
 		}
 	}
@@ -636,18 +641,24 @@ void VariantReader::close_phasing_outfile() {
 	this->phasing_outfile_open = false;
 }
 
-size_t VariantReader::nr_of_genomic_kmers() const {
-	return this->fasta_reader.get_total_kmers(this->kmer_size);
-}
-
 size_t VariantReader::nr_of_paths() const {
 	return this->nr_paths;
 }
 
 void VariantReader::get_left_overhang(std::string chromosome, size_t index, size_t length, DnaSequence& result) const {
-	size_t cur_start = this->variants_per_chromosome.at(chromosome).at(index).get_start_position();
+	if (this->variants_per_chromosome.at(chromosome).at(index) == nullptr) {
+		throw runtime_error("VariantReader::get_left_overhang: variants have been deleted by delete_variant funtion. Re-build object.");
+	}
+
+	if (index > 0) {
+		if  (this->variants_per_chromosome.at(chromosome).at(index-1) == nullptr) {
+			throw runtime_error("VariantReader::get_left_overhang: variants have been deleted by delete_variant funtion. Re-build object.");
+		}
+	}
+
+	size_t cur_start = this->variants_per_chromosome.at(chromosome).at(index)->get_start_position();
 	size_t prev_end = 0;
-	if (index > 0) prev_end = this->variants_per_chromosome.at(chromosome).at(index-1).get_end_position();
+	if (index > 0) prev_end = this->variants_per_chromosome.at(chromosome).at(index-1)->get_end_position();
 	size_t overhang_start = cur_start - length;
 	if (overhang_start < prev_end) overhang_start = prev_end;
 	size_t overhang_end = cur_start;
@@ -655,11 +666,34 @@ void VariantReader::get_left_overhang(std::string chromosome, size_t index, size
 }
 
 void VariantReader::get_right_overhang(std::string chromosome, size_t index, size_t length, DnaSequence& result) const {
-	size_t cur_end = this->variants_per_chromosome.at(chromosome).at(index).get_end_position();
+	if (this->variants_per_chromosome.at(chromosome).at(index) == nullptr) {
+		throw runtime_error("VariantReader::get_right_overhang: variants have been deleted by delete_variant funtion. Re-build object.");
+	}
+
+	if (index < (this->variants_per_chromosome.at(chromosome).size() - 1)) {
+		if (this->variants_per_chromosome.at(chromosome).at(index+1) == nullptr){
+			throw runtime_error("VariantReader::get_right_overhang: variants have been deleted by delete_variant funtion. Re-build object.");
+		}
+	}
+
+	size_t cur_end = this->variants_per_chromosome.at(chromosome).at(index)->get_end_position();
 	size_t next_start = this->fasta_reader.get_size_of(chromosome);
-	if (index < (this->variants_per_chromosome.at(chromosome).size() - 1)) next_start = this->variants_per_chromosome.at(chromosome).at(index+1).get_start_position();
+	if (index < (this->variants_per_chromosome.at(chromosome).size() - 1)) next_start = this->variants_per_chromosome.at(chromosome).at(index+1)->get_start_position();
 	size_t overhang_end = cur_end + length;
 	if (overhang_end > next_start) overhang_end = next_start;
 	size_t overhang_start = cur_end;
 	this->fasta_reader.get_subsequence(chromosome, overhang_start, overhang_end, result);
+}
+
+void VariantReader::delete_variant(string chromosome, size_t index) {
+	if (index < size_of(chromosome)) {
+		if (this->variants_per_chromosome.at(chromosome)[index] != nullptr) {
+			assert(this->variants_per_chromosome.at(chromosome)[index].unique());
+			this->variants_per_chromosome.at(chromosome)[index].reset();
+			this->variants_per_chromosome.at(chromosome)[index] = nullptr;
+			this->variants_deleted = true;
+		}
+	} else {
+		throw runtime_error("VariantReader::get_variant: index out of bounds.");
+	}
 }

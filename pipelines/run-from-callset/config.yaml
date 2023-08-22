@@ -1,17 +1,19 @@
 # input vcf with variants to be genotyped
-vcf: callset.vcf
+vcf: /path/to/variants.vcf
 
 # reference genome
-reference: ref.fa
+reference: /path/to/reference.fa
 
 # path to reads (FASTA/FASTQ format, uncompressed)
 # for each sample that shall be genotyped
 reads:
- sample1: reads-sample1.fa
- sample2: reads-sample2.fa
+ sample1: /path/to/reads-sample1.fa
+ sample2: /path/to/reads-sample2.fa
 
 # path to PanGenie exectuable
-pangenie: ../../pangenie/build/src/PanGenie
+pangenie_genotype: /path/to/PanGenie
+pangenie_index: /path/to/PanGenie-index
+
 
 # name of the output directory
 outdir: results

@@ -7,10 +7,34 @@
 #include <utility>
 #include "copynumber.hpp"
 #include "kmerpath.hpp"
+#include <cereal/access.hpp>
+#include <cereal/types/map.hpp>
+#include <cereal/types/memory.hpp>
+#include <cereal/types/vector.hpp>
+
 
 /*
 * Represents the set of unique kmers for a variant position.
 */
+
+// serialization of std::pair, code taken from: https://github.com/USCiLab/cereal/issues/547
+namespace cereal
+{
+    template<class Archive, class F, class S>
+    void save(Archive& ar, const std::pair<F, S>& pair)
+    {
+        ar(pair.first, pair.second);
+    }
+
+    template<class Archive, class F, class S>
+    void load(Archive& ar, std::pair<F, S>& pair)
+    {
+        ar(pair.first, pair.second);
+    }
+
+    template <class Archive, class F, class S> 
+    struct specialize<Archive, std::pair<F, S>, cereal::specialization::non_member_load_save> {};
+}
 
 
 class UniqueKmers {
@@ -19,6 +43,7 @@ public:
 	* @param variant_position genomic variant position
 	* @param alleles defines which path (= index) covers each allele (= alleles[index])
 	**/
+	UniqueKmers() = default;
 	UniqueKmers(size_t variant_position, std::vector<unsigned char>& alleles);
 	/** returns the variant position **/
 	size_t get_variant_position();
@@ -30,6 +55,8 @@ public:
 	/** checks if kmer at index kmer_index is on path path_id **/
 	bool kmer_on_path(size_t kmer_index, size_t path_id) const;
 	unsigned short get_readcount_of(size_t kmer_index);
+	/** modify kmer count of an already inserted kmer **/
+	void update_readcount(size_t kmer_index, unsigned short new_count);
 	/** number of unique kmers **/
 	size_t size() const;
 	/** return number of paths **/
@@ -51,6 +78,13 @@ public:
 	bool is_undefined_allele (unsigned char allele_id) const;
 	/** set allele to undefined **/
 	void set_undefined_allele (unsigned char allele_id);
+	/** look up allele covered by a path **/
+	unsigned char get_allele(unsigned short path_id) const;
+
+	template<class Archive>
+	void serialize(Archive& archive) {
+		archive(variant_pos, current_index, kmer_to_count, alleles, path_to_allele, local_coverage);
+	}
 
 private:
 	size_t variant_pos;
@@ -62,5 +96,6 @@ private:
 	std::vector<unsigned char> path_to_allele;
 	unsigned short local_coverage;
 	friend class EmissionProbabilityComputer;
+	friend cereal::access;
 };
 # endif // UNIQUEKMERS_HPP

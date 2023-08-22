@@ -48,7 +48,7 @@ JellyfishCounter::JellyfishCounter (string readfile, size_t kmer_size, size_t nr
 
 }
 
-JellyfishCounter::JellyfishCounter (string readfile, string kmerfile, size_t kmer_size, size_t nr_threads, uint64_t hash)
+JellyfishCounter::JellyfishCounter (string readfile, vector<string> kmerfiles, size_t kmer_size, size_t nr_threads, uint64_t hash)
 {
 	jellyfish::mer_dna::k(kmer_size); // Set length of mers
 	const uint64_t hash_size    = hash; // Initial size of hash.
@@ -62,21 +62,21 @@ JellyfishCounter::JellyfishCounter (string readfile, string kmerfile, size_t kme
 
 	// convert the filenames to char**
 	vector<char*> reads_args = to_args(readfile);
-	vector<char*> kmer_args = to_args(kmerfile);
 
-	// process input kmers
-	{
+	// process input kmers contained in the provided FASTQ files
+	for (auto kmerfile : kmerfiles) {
+		vector<char*> kmer_args = to_args(kmerfile);
 		mer_counter jellyfish_counter(num_threads, (*jellyfish_hash), &kmer_args[0], (&kmer_args[0])+1, canonical, PRIME);
 		jellyfish_counter.exec_join(num_threads);
+
+		// delete the kmerfile char**
+		for(size_t i = 0; i < kmer_args.size(); i++)
+			delete[] kmer_args[i];
 	}
 
 	// process read kmers
 	mer_counter jellyfish_counter(num_threads, (*jellyfish_hash), &reads_args[0], (&reads_args[0])+1, canonical, UPDATE);
 	jellyfish_counter.exec_join(num_threads);
-
-	// delete the kmerfile char**
-	for(size_t i = 0; i < kmer_args.size(); i++)
-		delete[] kmer_args[i];
 
 	// delete the readfile char**
 	for(size_t i = 0; i < reads_args.size(); i++)

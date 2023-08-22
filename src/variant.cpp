@@ -49,12 +49,12 @@ DnaSequence construct_right_flank(vector<DnaSequence>& alleles, size_t position,
 	return flank;
 }
 
-Variant::Variant(string left_flank, string right_flank, string chromosome, size_t start_position, size_t end_position, vector<string> alleles, vector<unsigned char> paths, string variant_id)
+Variant::Variant(string left_flank, string right_flank, string chromosome, size_t start_position, size_t end_position, vector<string> alleles, vector<unsigned char> paths) //, string variant_id)
 	:left_flank(left_flank),
 	 right_flank(right_flank),
 	 chromosome(chromosome),
 	 start_position(start_position),
-	 variant_ids({variant_id}),
+//	 variant_ids({variant_id}),
 	 paths(paths),
 	 flanks_added(false)
 
@@ -76,12 +76,12 @@ Variant::Variant(string left_flank, string right_flank, string chromosome, size_
 	this->set_values(end_position);
 }
 
-Variant::Variant(DnaSequence& left_flank, DnaSequence& right_flank, string chromosome, size_t start_position, size_t end_position, vector<DnaSequence>& alleles, vector<unsigned char>& paths, string variant_id)
+Variant::Variant(DnaSequence& left_flank, DnaSequence& right_flank, string chromosome, size_t start_position, size_t end_position, vector<DnaSequence>& alleles, vector<unsigned char>& paths) //, string variant_id)
 	:left_flank(left_flank),
 	 right_flank(right_flank),
 	 chromosome(chromosome),
 	 start_position(start_position),
-	 variant_ids({variant_id}),
+//	 variant_ids({variant_id}),
 	 paths(paths),
 	 flanks_added(false)
 {
@@ -302,7 +302,7 @@ void Variant::combine_variants (Variant const &v2){
 	this->allele_sequences.insert(this->allele_sequences.end(), v2.allele_sequences.begin(), v2.allele_sequences.end());
 	this->uncovered_alleles.insert(this->uncovered_alleles.end(), v2.uncovered_alleles.begin(), v2.uncovered_alleles.end());
 	this->paths = new_paths;
-	this->variant_ids.insert(this->variant_ids.end(), v2.variant_ids.begin(), v2.variant_ids.end());
+//	this->variant_ids.insert(this->variant_ids.end(), v2.variant_ids.begin(), v2.variant_ids.end());
 }
 
 void Variant::separate_variants (vector<Variant>* resulting_variants, const GenotypingResult* input_genotyping, vector<GenotypingResult>* resulting_genotyping) const {
@@ -344,7 +344,7 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 		size_t current_end = current_start + alleles[0].size();
 
 		// construct new variant object
-		Variant v(left, right, this->chromosome, current_start, current_end, alleles, paths_per_variant.at(i), this->variant_ids.at(i));
+		Variant v(left, right, this->chromosome, current_start, current_end, alleles, paths_per_variant.at(i)); //, this->variant_ids.at(i));
 
 		resulting_variants->push_back(v);
 		if (input_genotyping != nullptr) {
@@ -387,7 +387,7 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 }
 
 
-void Variant::variant_statistics (UniqueKmers* unique_kmers, vector<VariantStats>& result) const {
+void Variant::variant_statistics (shared_ptr<UniqueKmers> unique_kmers, vector<VariantStats>& result) const {
 	size_t nr_variants = this->allele_sequences.size();
 	assert (this->uncovered_alleles.size() == nr_variants);
 
@@ -510,12 +510,13 @@ float Variant::allele_frequency(unsigned char allele_index, bool ignore_ref_path
 }
 
 string Variant::get_id() const {
-	string result = "";
-	for (size_t i = 0; i < this->variant_ids.size(); ++i) {
-		if (i > 0) result += ";";
-		result += this->variant_ids.at(i);
-	}
-	return result;
+//	string result = "";
+//	for (size_t i = 0; i < this->variant_ids.size(); ++i) {
+//		if (i > 0) result += ";";
+//		result += this->variant_ids.at(i);
+//	}
+//	return result;
+	return ".";
 }
 
 bool Variant::is_undefined_allele(size_t allele_id) const {

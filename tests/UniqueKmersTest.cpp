@@ -23,6 +23,13 @@ TEST_CASE("UniqueKmers testcase 1", "[UniqueKmers testcase 1]"){
 		REQUIRE(u.get_variant_position() == 1000);
 		REQUIRE(u.get_readcount_of(i) == counts[i]);
 	}
+
+	// change counts
+	u.update_readcount(0, 99);
+	REQUIRE(u.get_readcount_of(0) == 99);
+
+	// no kmer with index 4 exists
+	CHECK_THROWS(u.update_readcount(4, 10));
 }
 
 TEST_CASE("UniqueKmers get_copynumber_of", "[UniqueKmers get_copynumber_of]"){

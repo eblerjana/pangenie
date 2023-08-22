@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 #include <unordered_map>
 #include "uniquekmers.hpp"
 #include "copynumber.hpp"
@@ -20,12 +21,12 @@ public:
 	/**
 	* @param uniquekmers all unique kmers for this position
 	 **/
-	EmissionProbabilityComputer(UniqueKmers* uniquekmers, ProbabilityTable* probabilities);
+	EmissionProbabilityComputer(std::shared_ptr<UniqueKmers> uniquekmers, ProbabilityTable* probabilities);
 	/** get emission probability for a state in the HMM **/
 	long double get_emission_probability(unsigned char allele_id1, unsigned char allele_id2) const;
 
 private:
-	UniqueKmers* uniquekmers;
+	std::shared_ptr<UniqueKmers> uniquekmers;
 	ProbabilityTable* probabilities;
 	bool all_zeros;
 	ProbabilityMatrix state_to_prob;

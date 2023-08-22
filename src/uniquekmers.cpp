@@ -7,8 +7,8 @@ using namespace std;
 UniqueKmers::UniqueKmers(size_t variant_position, vector<unsigned char>& alleles)
 	:variant_pos(variant_position),
 	 current_index(0),
-	 local_coverage(0),
-	 path_to_allele(alleles.size())
+	 path_to_allele(alleles.size()),
+	 local_coverage(0)
 {
 	for (size_t i = 0; i < alleles.size(); ++i) {
 		unsigned char a = alleles[i];
@@ -50,6 +50,14 @@ unsigned short UniqueKmers::get_readcount_of(size_t kmer_index) {
 		return this->kmer_to_count[kmer_index];
 	} else {
 		throw runtime_error("UniqueKmers::get_readcount_of: requested kmer index: " + to_string(kmer_index) + " does not exist.");
+	}
+}
+
+void UniqueKmers::update_readcount(size_t kmer_index, unsigned short new_count) {
+	if (kmer_index <  this->current_index) {
+		this->kmer_to_count[kmer_index] = new_count;
+	} else {
+		throw runtime_error("UniqueKmers::update_readcount: requested kmer index: " + to_string(kmer_index) + " does not exist.");
 	}
 }
 
@@ -111,6 +119,8 @@ ostream& operator<< (ostream& stream, const UniqueKmers& uk) {
 	for (size_t  i = 0; i < uk.path_to_allele.size(); ++i) {
 		stream << i << " covers allele " << (unsigned int) uk.path_to_allele.at(i) << endl;
 	}
+
+	stream << "local coverage: " << uk.local_coverage << endl;
 	return stream;
 }
 
@@ -146,4 +156,11 @@ void UniqueKmers::set_undefined_allele (unsigned char allele_id) {
 		throw runtime_error("UniqueKmers::set_undefined_allele: allele_id " + to_string(allele_id) + " does not exist.");
 	}
 	this->alleles[allele_id].second = true;
+}
+
+unsigned char UniqueKmers::get_allele(unsigned short path_id) const {
+	if (path_id >= this->path_to_allele.size()) {
+		throw runtime_error("UniqueKmers:get_allele: index out of bounds.");
+	}
+	return this->path_to_allele[path_id];
 }
