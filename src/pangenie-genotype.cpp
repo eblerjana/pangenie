@@ -119,6 +119,8 @@ int main(int argc, char* argv[]) {
 		kmersize = stoi(argument_parser.get_argument('k'));
 		bool add_reference = true;
 
+		cerr << endl << "NOTE: by running PanGenie-index first to pre-process data, you can reduce memory usage and speed up PanGenie. This is helpful especially when genotyping the same variants across multiple samples." << endl << endl;
+
 		int exit_code = run_single_command(outname, readfile, reffile, vcffile, kmersize, outname, sample_name, nr_jellyfish_threads, nr_core_threads, only_genotyping, only_phasing, effective_N, regularization, count_only_graph, ignore_imputed, add_reference, sampling_size, hash_size);
 
 		getrusage(RUSAGE_SELF, &rss_total);
