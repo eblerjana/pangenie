@@ -236,7 +236,7 @@ Running PanGenie without preprocessing, ``PanGenie`` needs 2 hours and 35 minute
 
 The typical use case is to run PanGenie on a whole genome dataset. The following example is just a little demo illustrating how to run PanGenie. 
 
-We run PanGenie given a pangenome graph (VCF file,``test-variants.vcf``), sequencing reads (FASTA/FASTQ file, ``test-reads.fa``) and a reference sequence (FASTA file, ``test-reference.fa``) provided in the ``demo/`` folder. After installation, PanGenie's genotyping algorithm can be run using the following command (which will take a few seconds for this example):
+We run PanGenie given a pangenome graph (VCF file,``test-variants.vcf``), sequencing reads (FASTA/FASTQ file, ``test-reads.fa``) and a reference sequence (FASTA file, ``test-reference.fa``) provided in the ``demo/`` folder. After installation, PanGenie's genotyping algorithm can be run using the following commands (which will take a few seconds for this example):
 
 ``` bat
 PanGenie-index -r test-reference.fa -v test-variants.vcf -o preprocessing -e 100000
