@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
-	argument_parser.add_command("PanGenie-genotype [options] -f <index-prefix> -i <reads.fa/fq> -o <outfile-prefix>\nPanGenie-genotype [options] -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf> -o <outfile-prefix>");
+	argument_parser.add_command("PanGenie [options] -f <index-prefix> -i <reads.fa/fq> -o <outfile-prefix>\nPanGenie [options] -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf> -o <outfile-prefix>");
 	argument_parser.add_optional_argument('r', "", "reference genome in FASTA format. NOTE: INPUT FASTA FILE MUST NOT BE COMPRESSED");
 	argument_parser.add_optional_argument('v', "", "variants in VCF format. NOTE: INPUT VCF FILE MUST NOT BE COMPRESSED");
 	argument_parser.add_optional_argument('k', "31", "kmer size");
