@@ -11,7 +11,7 @@ reads:
  sample2: /path/to/reads-sample2.fa
 
 # path to PanGenie exectuable
-pangenie_genotype: /path/to/PanGenie-genotype
+pangenie_genotype: /path/to/PanGenie
 pangenie_index: /path/to/PanGenie-index
 
 

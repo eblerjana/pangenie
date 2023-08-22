@@ -136,7 +136,7 @@ rule pangenie_preprocessing:
 	shell:
 		"""
 		mkdir -p {wildcards.outdir}/pangenie/indexing/
-		{pangenie_index} -v {input.vcf} -r {input.reference} -o {params.prefix} -j {threads} -t {threads} -e 100000 &> {log}
+		{pangenie_index} -v {input.vcf} -r {input.reference} -o {params.prefix} -j {threads} -t {threads} &> {log}
 		"""
 
 
@@ -159,7 +159,7 @@ rule pangenie_genotyping:
 	params:
 		prefix = "{outdir}/pangenie/{sample}_graph"
 	shell:
-		"{pangenie_genotype} -i {input.reads} -f {input.index}index -o {params.prefix} -j {threads} -t {threads} -e 100000 &> {log}"
+		"{pangenie_genotype} -i {input.reads} -f {input.index}index -o {params.prefix} -j {threads} -t {threads} &> {log}"
 
 
 
