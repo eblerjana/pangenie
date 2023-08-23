@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
-	argument_parser.add_command("PanGenie-index [options] -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf> -o <index-prefix>");
+	argument_parser.add_command("PanGenie-index [options] -r <reference.fa> -v <variants.vcf> -o <index-prefix>");
 	argument_parser.add_mandatory_argument('r', "reference genome in FASTA format. NOTE: INPUT FASTA FILE MUST NOT BE COMPRESSED");
 	argument_parser.add_mandatory_argument('v', "variants in VCF format. NOTE: INPUT VCF FILE MUST NOT BE COMPRESSED");
 	argument_parser.add_mandatory_argument('o', "prefix of the output files. NOTE: the given path must not include non-existent folders");
