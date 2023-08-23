@@ -132,7 +132,7 @@ author: Jana Ebler
 
 version: v3.0.0
 usage: 
-PanGenie-index [options] -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf> -o <index-prefix>
+PanGenie-index [options] -r <reference.fa> -v <variants.vcf> -o <index-prefix>
 
 options:
 	-e VAL	size of hash used by jellyfish (default: 3000000000).
