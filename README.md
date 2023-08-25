@@ -85,7 +85,17 @@ We typically generate such VCFs from haplotype-resolved assemblies using this pi
 
 #### What should I do if my input VCF contains overlapping variants?
 
-In this case you can run PanGenie using the Snakemake pipeline provided in ``pipelines/run-from-callset/``. This automatically merges overlapping alleles into mult-allelic VCF, runs PanGenie and later converts the output VCF back to the original representation.
+* In case your input VCF was produced from a pangenome graph using ``vg decompose``, or by the [Minigraph-Cactus](https://github.com/ComparativeGenomicsToolkit/cactus) or [pggb](https://github.com/pangenome/pggb) pipelines, you first need to filter your VCF with [vcfbub](https://github.com/pangenome/vcfbub) to remove LV > 0 records using this command:
+
+  ``` bat
+  vcfbub -l 0 -r 100000 --input <your-vcf-file> > pangenie-ready.vcf
+  ```
+
+  For ``Minigraph-Cactus`` VCFs, we also have a more sophisticated filtering pipeline (see https://github.com/eblerjana/genotyping-pipelines/tree/main/prepare-vcf-MC) that can be used alternatively. It not only runs ``vcfbub``, but additionally adds annotations to the alleles encoding variants nested inside of graph bubbles, which can be helpful for downstream analyses of the genotypes. Note that currently, this MC-specific pipeline can only be applied to human data.
+
+
+
+* For other callset VCFs (e.g. produced by callers like [PAV](https://github.com/EichlerLab/pav)) you can run PanGenie using the Snakemake pipeline provided in ``pipelines/run-from-callset/``. This automatically merges overlapping alleles into mult-allelic VCF, runs PanGenie and later converts the output VCF back to the original representation.
 Note that running this pipeline is not necessary if you are using the input VCFs provided below in Section "Data and genotypes". These VCFs can directly be given as input to PanGenie.
 
 
