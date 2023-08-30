@@ -76,6 +76,7 @@ This graph is represented in terms of a VCF file that needs to have certain prop
 - **multi-sample** - it needs to contain haplotype information of at least one known sample
 - **fully-phased** - haplotype information of the known panel samples are represented by phased genotypes and each sample must be phased in **one single block** (i.e. from start to end).
 - **non-overlapping variants** - the VCF represents a pangenome graph. Therefore, overlapping variation must be represented in a single, multi-allelic variant record.
+- **sequence-resolved** - the REF and ALT sequences need to be provided explicitly (i.e. symbolic records are not allowed)
 
 Note especially the third property listed above. See the figure below for an illustration of how overlapping variant alleles need to be represented in the input VCF provided to PanGenie.
 
