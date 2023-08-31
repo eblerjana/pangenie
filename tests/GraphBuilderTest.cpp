@@ -283,9 +283,7 @@ TEST_CASE("GraphBuilder overlapping variants", "[GraphBuilder overlapping varian
 	string fasta = "../tests/data/small1.fa";
 
 	map<string, shared_ptr<Graph>> graph;
-	GraphBuilder(vcf, fasta, graph, "../tests/data/empty-segments.fa", 10, false);
-	// should have skipped variant that is contained in another
-	REQUIRE(graph.at("chrA")->size() == 1);
+	REQUIRE_THROWS(GraphBuilder(vcf, fasta, graph, "../tests/data/empty-segments.fa", 10, false));
 }
 
 TEST_CASE("GraphBuilder get_chromosomes", "[GraphBuilder get_chromosomes]") {
