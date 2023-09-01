@@ -131,8 +131,9 @@ void GraphBuilder::construct_graph(std::string filename, FastaReader* fasta_read
 		current_start_pos -= 1;
 		// if variant is contained in previous one, skip it
 		if ((previous_chrom == current_chrom) && (current_start_pos < previous_end_pos)) {
-			cerr << "GraphBuilder: skip variant at " << current_chrom << ":" << current_start_pos << " since it is contained in a previous one."  << endl;
-			continue;
+			stringstream err_msg;
+			err_msg << "GraphBuilder: variant at " << current_chrom << ":" << current_start_pos << " overlaps previous one. VCF does not represent a pangenome graph."  << endl;
+			throw runtime_error(err_msg.str());
 		}
 
 		// get REF allele

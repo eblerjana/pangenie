@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
 	cerr << endl;
 	cerr << "program: PanGenie - genotyping based on kmer-counting and known haplotype sequences." << endl;
 	cerr << "author: Jana Ebler" << endl << endl;
-	cerr << "version: v3.0.0" << endl;
+	cerr << "version: v3.0.1" << endl;
 
 	string reffile = "";
 	string vcffile = "";
@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
 	bool only_genotyping = true;
 	bool only_phasing = false;
 	long double effective_N = 0.00001L;
-	long double regularization = 0.001L;
+	long double regularization = 0.01L;
 	bool count_only_graph = true;
 	bool ignore_imputed = false;
 	size_t sampling_size = 0;
