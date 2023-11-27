@@ -237,7 +237,7 @@ void Graph::write_genotypes(string filename, const vector<GenotypingResult>& gen
 			}
 
 			// output genotype likelihoods
-			vector<long double> likelihoods = genotype_likelihoods.get_all_likelihoods(nr_alleles);
+			vector<long double> likelihoods = genotype_likelihoods.get_all_likelihoods();
 			if (likelihoods.size() < 3) {
 				ostringstream oss;
 				oss << "Graph::write_genotypes_of: too few likelihoods (" << likelihoods.size() << ") computed for variant at position " << v.get_start_position() << endl;

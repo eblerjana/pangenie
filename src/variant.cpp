@@ -348,14 +348,14 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 
 		resulting_variants->push_back(v);
 		if (input_genotyping != nullptr) {
-			// construct GenotypingResult
-			GenotypingResult g;
 			// precompute alleles
 			vector<unsigned char> precomputed_ids (this->nr_of_alleles());
 			for (size_t a0 = 0; a0 < this->nr_of_alleles(); ++a0) {
 				unsigned char single_allele0 = this->allele_combinations[a0][i];
 				precomputed_ids[a0] = single_allele0;
 			}
+			unsigned char max_allele = *max_element(std::begin(precomputed_ids), std::end(precomputed_ids));
+			GenotypingResult g(max_allele+1);
 			// iterate through all genotypes and determine the genotype likelihoods for single variant
 			for (size_t a0 = 0; a0 < this->nr_of_alleles(); ++a0) {
 				// determine allele a0 genotype corresponds to

@@ -513,7 +513,7 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 			}
 
 			// output genotype likelihoods
-			vector<long double> likelihoods = genotype_likelihoods.get_all_likelihoods(nr_alleles);
+			vector<long double> likelihoods = genotype_likelihoods.get_all_likelihoods();
 			if (likelihoods.size() < 3) {
 				ostringstream oss;
 				oss << "VariantReader::write_genotypes_of: too few likelihoods (" << likelihoods.size() << ") computed for variant at position " << v.get_start_position() << endl;

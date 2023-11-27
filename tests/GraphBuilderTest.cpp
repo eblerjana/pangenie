@@ -215,11 +215,11 @@ TEST_CASE("GraphBuilder write_genotypes_of", "[GraphBuilder write_genotypes_of]"
 	REQUIRE(chromosomes[1] == expected_chromosomes[1]);
 
 	// generate a GenotypingResult for chrA
-	vector<GenotypingResult> genotypes_chrA(7);
+	vector<GenotypingResult> genotypes_chrA(7, GenotypingResult(2));
 	
 	for (size_t i = 0; i < 7; ++i) {
 		if (i == 2) continue;
-		GenotypingResult r;
+		GenotypingResult r(2);
 		r.add_to_likelihood(0,0,0.2);
 		r.add_to_likelihood(0,1,0.7);
 		r.add_to_likelihood(1,1,0.1);
@@ -227,7 +227,7 @@ TEST_CASE("GraphBuilder write_genotypes_of", "[GraphBuilder write_genotypes_of]"
 	}
 
 	// third variant is multiallelic
-	GenotypingResult r;
+	GenotypingResult r(3);
 	r.add_to_likelihood(0,0,0.2);
 	r.add_to_likelihood(0,1,0.0);
 	r.add_to_likelihood(0,2,0.2);
@@ -240,9 +240,9 @@ TEST_CASE("GraphBuilder write_genotypes_of", "[GraphBuilder write_genotypes_of]"
 
 
 	// generate a GenotypingResult for chrB
-	vector<GenotypingResult> genotypes_chrB(2);
+	vector<GenotypingResult> genotypes_chrB(2, GenotypingResult(2));
 	for (size_t i = 0; i < 2; ++i) {
-		GenotypingResult r;
+		GenotypingResult r(2);
 		r.add_to_likelihood(0,0,0.1);
 		r.add_to_likelihood(0,1,0.1);
 		r.add_to_likelihood(1,1,0.8);
@@ -358,7 +358,7 @@ TEST_CASE("GraphBuilder variant_ids2", "[GraphBuilder variant_ids2]") {
 
 	map<string, shared_ptr<Graph>> graph;
 	GraphBuilder v(vcf, fasta, graph, "../tests/data/empty-segments.fa", 10, true);
-	vector<GenotypingResult> genotypes(2);
+	vector<GenotypingResult> genotypes(2, GenotypingResult(4));
 	REQUIRE(graph.size() == 1);
 	graph.at("chrA")->write_genotypes("../tests/data/small1-ids-genotypes.vcf", genotypes, true, "sample");
 }
@@ -366,7 +366,7 @@ TEST_CASE("GraphBuilder variant_ids2", "[GraphBuilder variant_ids2]") {
 TEST_CASE("GraphBuilder close_to_start", "[GraphBuilder close_to_start]") {
 	string vcf = "../tests/data/close.vcf";
 	string fasta = "../tests/data/close.fa";
-	vector<GenotypingResult> genotypes(1);
+	vector<GenotypingResult> genotypes(1, GenotypingResult(3));
 
 	map<string, shared_ptr<Graph>> graph;
 	GraphBuilder v(vcf, fasta, graph, "../tests/data/empty-segments.fa", 31, true);

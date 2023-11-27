@@ -189,11 +189,11 @@ TEST_CASE("VariantReader write_genotypes_of", "[VariantReader write_genotypes_of
 	REQUIRE(chromosomes[1] == expected_chromosomes[1]);
 
 	// generate a GenotypingResult for chrA
-	vector<GenotypingResult> genotypes_chrA(7);
+	vector<GenotypingResult> genotypes_chrA(7, GenotypingResult(2));
 	
 	for (size_t i = 0; i < 7; ++i) {
 		if (i == 2) continue;
-		GenotypingResult r;
+		GenotypingResult r(2);
 		r.add_to_likelihood(0,0,0.2);
 		r.add_to_likelihood(0,1,0.7);
 		r.add_to_likelihood(1,1,0.1);
@@ -201,7 +201,7 @@ TEST_CASE("VariantReader write_genotypes_of", "[VariantReader write_genotypes_of
 	}
 
 	// third variant is multiallelic
-	GenotypingResult r;
+	GenotypingResult r(3);
 	r.add_to_likelihood(0,0,0.2);
 	r.add_to_likelihood(0,1,0.0);
 	r.add_to_likelihood(0,2,0.2);
@@ -214,9 +214,9 @@ TEST_CASE("VariantReader write_genotypes_of", "[VariantReader write_genotypes_of
 
 
 	// generate a GenotypingResult for chrB
-	vector<GenotypingResult> genotypes_chrB(2);
+	vector<GenotypingResult> genotypes_chrB(2, GenotypingResult(2));
 	for (size_t i = 0; i < 2; ++i) {
-		GenotypingResult r;
+		GenotypingResult r(2);
 		r.add_to_likelihood(0,0,0.1);
 		r.add_to_likelihood(0,1,0.1);
 		r.add_to_likelihood(1,1,0.8);
@@ -326,7 +326,7 @@ TEST_CASE("VariantReader variant_ids2", "[VariantReader variant_ids2]") {
 	string vcf = "../tests/data/small1-ids.vcf";
 	string fasta = "../tests/data/small1.fa";
 	VariantReader v(vcf, fasta, 10, true);
-	vector<GenotypingResult> genotypes(2);
+	vector<GenotypingResult> genotypes(2, GenotypingResult(4));
 	v.open_genotyping_outfile("../tests/data/small1-ids-genotypes.vcf");
 	
 	v.write_genotypes_of("chrA", genotypes);
@@ -335,7 +335,7 @@ TEST_CASE("VariantReader variant_ids2", "[VariantReader variant_ids2]") {
 TEST_CASE("VariantReader close_to_start", "[VariantReader close_to_start]") {
 	string vcf = "../tests/data/close.vcf";
 	string fasta = "../tests/data/close.fa";
-	vector<GenotypingResult> genotypes(1);
+	vector<GenotypingResult> genotypes(1, GenotypingResult(3));
 	VariantReader v(vcf, fasta, 31, true);
 	v.open_genotyping_outfile("../tests/data/small1-ids-close.vcf");
 	v.write_genotypes_of("chr10", genotypes);

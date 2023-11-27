@@ -25,13 +25,19 @@ void print_column(vector<long double>* column, ColumnIndexer* indexer) {
 HMM::HMM(vector<shared_ptr<UniqueKmers>>* unique_kmers, ProbabilityTable* probabilities, bool run_genotyping, bool run_phasing, double recombrate, bool uniform, long double effective_N, vector<unsigned short>* only_paths, bool normalize)
 	: unique_kmers(unique_kmers),
 	 probabilities(probabilities),
-	 genotyping_result(unique_kmers->size()),
 	 recombrate(recombrate),
 	 uniform(uniform),
 	 effective_N(effective_N)
 {
 	this->column_indexer = new ColumnIndexer(unique_kmers, only_paths);
 	this->previous_backward_column = nullptr;
+	
+	
+	this->genotyping_result.reserve(unique_kmers->size());
+	// prepare GenotypingResult objects
+	for (size_t i = 0; i < unique_kmers->size(); ++i) {
+		genotyping_result.push_back(GenotypingResult(unique_kmers->at(i)->get_max_allele()+1));
+	}
 
 	if (run_genotyping) {
 		compute_forward_prob();

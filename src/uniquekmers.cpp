@@ -164,3 +164,12 @@ unsigned char UniqueKmers::get_allele(unsigned short path_id) const {
 	}
 	return this->path_to_allele[path_id];
 }
+
+
+unsigned char UniqueKmers::get_max_allele() const {
+	unsigned char max_allele = 0;
+	for (auto it = alleles.begin(); it != alleles.end(); ++it) {
+		if (it->first > max_allele) max_allele = it->first;
+	}
+	return max_allele;
+}

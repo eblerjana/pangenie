@@ -14,7 +14,7 @@
 
 class GenotypingResult {
 public:
-	GenotypingResult();
+	GenotypingResult(size_t nr_alleles);
 	/** add value to genotype likelihood
 	* @param allele1 first genotype allele (arbitrary order)
 	* @param allele2 second genotype allele
@@ -28,7 +28,7 @@ public:
 	/** get likelihood of genotype allele1/allele2 (=allele2/allele1). **/
 	long double get_genotype_likelihood(unsigned char allele1, unsigned char allele2) const;
 	/** get all likelihoods ordered as defined in VCF specification. **/
-	std::vector<long double> get_all_likelihoods (size_t nr_alleles) const;
+	std::vector<long double> get_all_likelihoods () const;
 	/** get all likelihoods for genotypes containing the given alleles. Likelihoods are normalized so sum up to 1. 
 	NOTE: haplotype alleles are set only if they occur in the list of given alleles. Otherwise (i.e. if undefined), they are 0.**/
 	GenotypingResult get_specific_likelihoods (std::vector<unsigned char>& alleles) const;
@@ -56,13 +56,17 @@ public:
 		archive(genotype_to_likelihood, haplotype_1, haplotype_2, local_coverage, unique_kmers);
 	}
 
+	size_t size() const;
+
 private:
 	/** map genotype -> likelihood. genotype alleles are ordered in ascending order **/
-	std::map < std::pair<unsigned char,unsigned char>, long double > genotype_to_likelihood;
+//	std::map < std::pair<unsigned char,unsigned char>, long double > genotype_to_likelihood;
+	std::vector<long double> genotype_to_likelihood; 
 	unsigned char haplotype_1;
 	unsigned char haplotype_2;
 	unsigned short local_coverage;
 	unsigned short unique_kmers;
+	unsigned char nr_alleles;
 	friend cereal::access;
 };
 #endif // GENOTYPINGRESULT_HPP

@@ -5,12 +5,20 @@
 
 using namespace std;
 
-GenotypingResult::GenotypingResult()
+GenotypingResult::GenotypingResult(size_t nr_alleles)
 	:haplotype_1(0),
 	 haplotype_2(0),
 	 local_coverage(0),
 	 unique_kmers(0)
-{}
+{
+	if (nr_alleles < 2) {
+		this->nr_alleles = 2;
+	} else {
+		this->nr_alleles = nr_alleles;
+	}
+	
+	this->genotype_to_likelihood = vector<long double>((this->nr_alleles * (this->nr_alleles + 1)) / 2, 0.0L);
+}
 
 pair<unsigned char, unsigned char> genotype_from_alleles (unsigned char allele1, unsigned char allele2) {
 	// always put allele with smaller index first
@@ -25,7 +33,9 @@ pair<unsigned char, unsigned char> genotype_from_alleles (unsigned char allele1,
 
 void GenotypingResult::add_to_likelihood(unsigned char allele1, unsigned char allele2, long double value) {
 	pair<unsigned char, unsigned char> genotype = genotype_from_alleles(allele1, allele2);
-	this->genotype_to_likelihood[genotype] += value;
+	// determine index
+	size_t index = ((genotype.second * (genotype.second + 1)) / 2) + genotype.first;
+	this->genotype_to_likelihood[index] += value;
 }
 
 void GenotypingResult::add_first_haplotype_allele(unsigned char allele) {
@@ -38,38 +48,22 @@ void GenotypingResult::add_second_haplotype_allele(unsigned char allele) {
 
 long double GenotypingResult::get_genotype_likelihood (unsigned char allele1, unsigned char allele2) const {
 	pair<unsigned char, unsigned char> genotype = genotype_from_alleles(allele1, allele2);
-	auto it = this->genotype_to_likelihood.find(genotype);
-	if (it != this->genotype_to_likelihood.end()) {
-		return this->genotype_to_likelihood.at(genotype);
-	} else {
-		return 0.0L;
-	}
+	size_t index = ((genotype.second * (genotype.second + 1)) / 2) + genotype.first;
+	return this->genotype_to_likelihood.at(index);
 }
 
-vector<long double> GenotypingResult::get_all_likelihoods (size_t nr_alleles) const {
+vector<long double> GenotypingResult::get_all_likelihoods () const {
 	assert (nr_alleles < 256);
-
-	// determine number of possible genotypes
-	size_t nr_genotypes = (nr_alleles * (nr_alleles + 1)) / 2;
-
-	vector<long double> result(nr_genotypes, 0.0L);
-	for (auto const& l : this->genotype_to_likelihood) {
-		unsigned char allele1 = l.first.first;
-		unsigned char allele2 = l.first.second;
-
-		// determine index (according to VCF-specification)
-		size_t index = ((allele2 * (allele2 + 1)) / 2) + allele1;
-		if (index >= result.size()) {
-			throw runtime_error("GenotypeResult::get_all_likelihoods: genotype does not match number of alleles.");
-		}
-		result[index] = l.second;
-	}
-	return result;
+	return this->genotype_to_likelihood;
 }
 
 GenotypingResult GenotypingResult::get_specific_likelihoods (vector<unsigned char>& alleles) const {
-	GenotypingResult result;
 	size_t nr_alleles = alleles.size();
+	unsigned char max_allele = 0;
+	if (alleles.size() > 0) {
+		max_allele = *max_element(std::begin(alleles), std::end(alleles));
+	}
+	GenotypingResult result(max_allele+1);
 	assert (nr_alleles < 256);
 	long double sum = 0.0L;
 	for (unsigned char i = 0; i < nr_alleles; ++i) {
@@ -85,11 +79,12 @@ GenotypingResult GenotypingResult::get_specific_likelihoods (vector<unsigned cha
 	return result;
 }
 
+
 size_t GenotypingResult::get_genotype_quality (unsigned char allele1, unsigned char allele2) const {
 	// check if likelihoods are normalized
 	long double sum = 0.0;
 	for (const auto& l : this->genotype_to_likelihood) {
-		sum += l.second;
+		sum += l;
 	}
 
 	if (abs(sum-1) > 0.0000000001) {
@@ -110,33 +105,38 @@ pair<unsigned char, unsigned char> GenotypingResult::get_haplotype() const {
 	return make_pair(this->haplotype_1, this->haplotype_2);
 }
 
+
 void GenotypingResult::divide_likelihoods_by(long double value) {
 	for (auto it = this->genotype_to_likelihood.begin(); it != this->genotype_to_likelihood.end(); ++it) {
-		it->second = it->second / value;
+		*it = (*it / value);
 	}
 }
 
+
 pair<int, int> GenotypingResult::get_likeliest_genotype() const {
-	// if empty, set genotype to unknown
-	if (this->genotype_to_likelihood.size() == 0) {
-		return make_pair(-1,-1);
-	}
 
 	long double best_value = 0.0L;
-	pair<unsigned char, unsigned char> best_genotype = make_pair(0,0); 
-	for (auto const& l : this->genotype_to_likelihood) {
-		if (l.second >= best_value) {
-			best_value = l.second;
-			best_genotype = l.first;
+	pair<unsigned char, unsigned char> best_genotype = make_pair(0,0);
+
+	for (unsigned char allele1 = 0; allele1 < this->nr_alleles; ++allele1) {
+		for (unsigned char allele2 = allele1; allele2 < this->nr_alleles; ++allele2) {
+			size_t index = ((allele2 * (allele2 + 1)) / 2) + allele1;
+			if (this->genotype_to_likelihood.at(index) >= best_value) {
+				best_value = this->genotype_to_likelihood.at(index);
+				best_genotype = make_pair(allele1, allele2);
+			}
 		}
 	}
 
-	// make sure there is a unique maximum
-	for (auto const& l : this->genotype_to_likelihood) {
-		if (best_genotype != l.first) {
-			if (abs(l.second-best_value) < 0.0000000001) {
-				// not unique
-				return make_pair(-1,-1);
+
+	for (unsigned char allele1 = 0; allele1 < this->nr_alleles; ++allele1) {
+		for (unsigned char allele2 = allele1; allele2 < this->nr_alleles; ++allele2) {
+			size_t index = ((allele2 * (allele2 + 1)) / 2) + allele1;
+			if (best_genotype != pair<unsigned char, unsigned char>(allele1, allele2)) {
+				if (abs(this->genotype_to_likelihood.at(index) - best_value) < 0.0000000001) {
+					// not unique
+					return make_pair(-1,-1);
+				}
 			}
 		}
 	}
@@ -154,16 +154,25 @@ ostream& operator<<(ostream& os, const GenotypingResult& res) {
 	os << "haplotype allele 2: " << res.haplotype_2 << endl;
 	os << "local coverage: " << res.local_coverage << endl;
 	os << "nr of unique kmers: " << res.unique_kmers << endl;
-	for (auto it = res.genotype_to_likelihood.begin(); it != res.genotype_to_likelihood.end(); ++it) {
-		os << (unsigned int) it->first.first << "/" << (unsigned int) it->first.second << ": " << it->second << endl;
+
+	for (size_t allele1 = 0; allele1 < res.nr_alleles; ++allele1) {
+		for (size_t allele2 = allele1; allele2 < res.nr_alleles; ++allele2) {
+			size_t index = ((allele2 * (allele2 + 1)) / 2) + allele1;
+			os << (unsigned int) allele1 << "/" << allele2 << ":" << res.genotype_to_likelihood.at(index) << endl;
+		}
 	}
 	return os;
 }
 
+
 void GenotypingResult::combine(GenotypingResult& likelihoods) {
-	for (auto it = likelihoods.genotype_to_likelihood.begin(); it != likelihoods.genotype_to_likelihood.end(); ++it) {
-		pair<unsigned char, unsigned char> genotype = it->first;
-		this->genotype_to_likelihood[genotype] += it->second;
+
+	if (this->nr_alleles > likelihoods.nr_alleles) {
+		std::transform (this->genotype_to_likelihood.begin(), this->genotype_to_likelihood.begin() + likelihoods.genotype_to_likelihood.size(), likelihoods.genotype_to_likelihood.begin(), this->genotype_to_likelihood.begin(), std::plus<long double>());
+	} else {
+		this->nr_alleles = likelihoods.nr_alleles;
+		this->genotype_to_likelihood.resize(likelihoods.genotype_to_likelihood.size());
+		std::transform (this->genotype_to_likelihood.begin(), this->genotype_to_likelihood.end(), likelihoods.genotype_to_likelihood.begin(), this->genotype_to_likelihood.begin(), std::plus<long double>());
 	}
 }
 
@@ -171,7 +180,7 @@ void GenotypingResult::normalize () {
 	// sum up probabilities
 	long double normalization_sum = 0.0L;
 	for (auto it = this->genotype_to_likelihood.begin(); it != this->genotype_to_likelihood.end(); ++it) {
-		normalization_sum += it->second;
+		normalization_sum += *it;
 	}
 
 	if (normalization_sum > 0) {
@@ -179,20 +188,28 @@ void GenotypingResult::normalize () {
 	}
 }
 
+
 void GenotypingResult::set_unique_kmers(unsigned short nr_unique_kmers) {
 	assert (nr_unique_kmers < 65536);
 	this->unique_kmers = nr_unique_kmers;
 }
+
 
 void GenotypingResult::set_coverage(unsigned short coverage) {
 	assert (coverage < 65536);
 	this->local_coverage = coverage;
 }
 
+
 unsigned short GenotypingResult::nr_unique_kmers() const {
 	return this->unique_kmers;
 }
 
+
 unsigned short GenotypingResult::coverage() const {
 	return this->local_coverage;
+}
+
+size_t GenotypingResult::size() const {
+	return this->nr_alleles;
 }

@@ -196,6 +196,7 @@ TEST_CASE("HMM undefined_alleles2", "[HMM get_undefined_alleles1]") {
 	// expected likelihoods, as computed by hand
 	vector<double> expected_likelihoods = {0.0,0.0,0.0,0.11813512445,0.1617937574,0.72007111814};
 	vector<double> computed_likelihoods;
+
 	for (auto result : hmm.get_genotyping_result()) {
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,0));
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,1));
@@ -217,7 +218,6 @@ TEST_CASE("HMM undefined_alleles2", "[HMM get_undefined_alleles1]") {
 	}
 
 	REQUIRE( compare_vectors(expected_specific_likelihoods, computed_likelihoods) );
-
 }
 
 TEST_CASE("HMM only_undefined_alleles", "[HMM only_undefined_alleles]") {
@@ -259,6 +259,7 @@ TEST_CASE("HMM only_undefined_alleles", "[HMM only_undefined_alleles]") {
 	}
 
 	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
+
 
 	computed_likelihoods.clear();
 	// extract only likelihoods for defined genotypes

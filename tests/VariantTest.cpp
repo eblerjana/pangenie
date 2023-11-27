@@ -171,7 +171,7 @@ TEST_CASE("Variant separate_variants_likelihoods", "Variant separate_variants_li
 	Variant v3 ("GACT", "GGAA", "chr2", 13, 14, {"G", "GTC"}, {0,0,1,0});
 	Variant v4 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,0,1,1});
 
-	GenotypingResult g;
+	GenotypingResult g(3);
 	g.add_to_likelihood(0,0,0.05);
 	g.add_to_likelihood(0,1,0.05);
 	g.add_to_likelihood(1,1,0.0);
@@ -217,7 +217,7 @@ TEST_CASE("Variant separate_variants_likelihoods", "Variant separate_variants_li
 
 	// computed genotype likelihoods
 	for (size_t i = 0; i < 3; ++i) {
-		vector<long double> computed = single_genotypes[i].get_all_likelihoods(2);
+		vector<long double> computed = single_genotypes[i].get_all_likelihoods();
 		REQUIRE(computed.size() == expected[i].size());
 		for (size_t j = 0; j < expected[i].size(); ++j) {
 			REQUIRE(doubles_equal(computed[j], expected[i][j]));
@@ -240,7 +240,7 @@ TEST_CASE("Variant separate_variants_likelihoods", "Variant separate_variants_li
 
 TEST_CASE("Variant separate_variants_single", "[Variants separate_variants_single]") {
 	Variant v ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,0,1,1});
-	GenotypingResult g;
+	GenotypingResult g(2);
 	g.add_to_likelihood(0,0,0.1);
 	g.add_to_likelihood(0,1,0.7);
 	g.add_to_likelihood(1,1,0.2);
@@ -292,7 +292,7 @@ TEST_CASE("Variant separate_variants_single", "[Variants separate_variants_singl
 
 TEST_CASE("Variant separate_variants_single2", "[Variants separate_variants_single]") {
 	Variant v ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {1,1});
-	GenotypingResult g;
+	GenotypingResult g(2);
 	g.add_to_likelihood(0,0,0.1);
 	g.add_to_likelihood(0,1,0.7);
 	g.add_to_likelihood(1,1,0.2);
@@ -436,7 +436,7 @@ TEST_CASE("Variant combine_combined2", "[Variant combine_combined]") {
 	REQUIRE(v1.get_allele_string(1) == "ATGCCC");
 	REQUIRE(v1.get_allele_string(2) == "GTCCCG");
 
-	GenotypingResult g;
+	GenotypingResult g(3);
 	g.add_to_likelihood(0,0,0.9);
 	g.add_to_likelihood(0,1,0.05);
 	g.add_to_likelihood(0,2,0.05);
@@ -535,7 +535,7 @@ TEST_CASE("Variant separate_variants_likelihoods_uncovered", "Variant separate_v
 	// second allele is not covered by any path
 	Variant v2 ("AACT", "ACTG", "chr2", 7, 8, {"G", "C", "T"}, {0,2}); //, "VAR2");
 
-	GenotypingResult g;
+	GenotypingResult g(2);
 	g.add_to_likelihood(0,0,0.05);
 	g.add_to_likelihood(0,1,0.05);
 	g.add_to_likelihood(1,1,0.9);
@@ -572,7 +572,7 @@ TEST_CASE("Variant separate_variants_likelihoods_uncovered", "Variant separate_v
 
 	// computed genotype likelihoods
 	for (size_t i = 0; i < 2; ++i) {
-		vector<long double> computed = single_genotypes[i].get_all_likelihoods(nr_alleles[i]);
+		vector<long double> computed = single_genotypes[i].get_all_likelihoods();
 		REQUIRE(computed.size() == expected[i].size());
 		for (size_t j = 0; j < expected[i].size(); ++j) {
 			REQUIRE(doubles_equal(computed[j], expected[i][j]));
@@ -602,7 +602,7 @@ TEST_CASE("Variant separate_variants_likelihoods_uncovered", "Variant separate_v
 
 TEST_CASE("Variant separate_variants_likelihoods_single_uncovered", "[Variant separate_variants_likelihoods_single_uncovered]") {
 	Variant v ("ATGA", "CTGA", "chr1", 7, 8, {"A", "T"}, {1,1});
-	GenotypingResult g;
+	GenotypingResult g(2);
 	g.add_to_likelihood(1,1,1.0);
 	g.add_first_haplotype_allele(1);
 	g.add_second_haplotype_allele(1);

@@ -80,6 +80,8 @@ public:
 	void set_undefined_allele (unsigned char allele_id);
 	/** look up allele covered by a path **/
 	unsigned char get_allele(unsigned short path_id) const;
+	/** return max allele **/
+	unsigned char get_max_allele() const;
 
 	template<class Archive>
 	void serialize(Archive& archive) {
