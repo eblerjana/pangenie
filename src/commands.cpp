@@ -492,8 +492,8 @@ int run_single_command(string precomputed_prefix, string readfile, string reffil
 		if (nr_paths > 500) cerr << "Warning: panel is large and PanGenie might take a long time genotyping. Try reducing the panel size prior to genotyping." << endl;
 		// handle case when sampling_size is not set
 		if (sampling_size == 0) {
-			if (nr_paths > 90) {
-				sampling_size = 45;
+			if (nr_paths > 220) {
+				sampling_size = 110;
 			} else {
 				sampling_size = nr_paths;		
 			}
@@ -932,8 +932,8 @@ int run_genotype_command(string precomputed_prefix, string readfile, string outn
 			if (nr_paths > 500) cerr << "Warning: panel is large and PanGenie might take a long time genotyping. Try reducing the panel size prior to genotyping." << endl;
 			// handle case when sampling_size is not set
 			if (sampling_size == 0) {
-				if (nr_paths > 90) {
-					sampling_size = 45;
+				if (nr_paths > 220) {
+					sampling_size = 110;
 				} else {
 					sampling_size = nr_paths;		
 				}
