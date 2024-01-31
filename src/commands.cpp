@@ -497,6 +497,9 @@ int run_single_command(string precomputed_prefix, string readfile, string reffil
 			} else {
 				sampling_size = nr_paths;		
 			}
+		} else if (sampling_size > nr_paths) {
+			// make sure that sampling size does not exceed nr_paths in panel
+			sampling_size = nr_paths;
 		}
 
 		PathSampler path_sampler(nr_paths);
@@ -937,6 +940,9 @@ int run_genotype_command(string precomputed_prefix, string readfile, string outn
 				} else {
 					sampling_size = nr_paths;		
 				}
+			} else if (sampling_size > nr_paths) {
+				// make sure that sampling size does not exceed nr_paths in panel
+				sampling_size = nr_paths;
 			}
 
 			PathSampler path_sampler(nr_paths);
