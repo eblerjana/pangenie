@@ -100,9 +100,12 @@ void HMM::compute_backward_prob() {
 	// backward pass
 	for (int column_index = column_count-1; column_index >= 0; --column_index) {
 		compute_backward_column(column_index);
-		// store number of unique kmers and coverage
-		this->genotyping_result.at(column_index).set_unique_kmers(this->unique_kmers->at(column_index)->size());
-		this->genotyping_result.at(column_index).set_coverage(this->unique_kmers->at(column_index)->get_coverage());
+	}
+	
+	// store the number of unique kmers and coverage
+	for (size_t i = 0; i < this->unique_kmers->size(); ++i) {
+		this->genotyping_result.at(i).set_unique_kmers(this->unique_kmers->at(i)->size());
+		this->genotyping_result.at(i).set_coverage(this->unique_kmers->at(i)->get_coverage());
 	}
 }
 

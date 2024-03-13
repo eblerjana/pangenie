@@ -58,6 +58,7 @@ TEST_CASE("HMM skip_reference_position", "[HMM skip_reference_position]") {
 	shared_ptr<UniqueKmers> u2 =  shared_ptr<UniqueKmers> ( new UniqueKmers (2500, path_to_allele));
 	u2->insert_kmer(10, a1);
 	u2->insert_kmer(20, a2);
+	u2->set_coverage(22);
 
 	path_to_allele = {0, 1};
 	shared_ptr<UniqueKmers> u3 = shared_ptr<UniqueKmers> (new UniqueKmers (3000, path_to_allele));
@@ -76,15 +77,23 @@ TEST_CASE("HMM skip_reference_position", "[HMM skip_reference_position]") {
 
 	// expected likelihoods, as computed by hand
 	vector<double> expected_likelihoods = { 0.0509465435, 0.9483202731, 0.0007331832, 0.0, 0.0, 0.0, 0.9678020017, 0.031003181, 0.0011948172 };
+	vector<unsigned short> expected_coverages = {5, 22, 5};
+	vector<unsigned short> expected_uk = {2, 2, 2}; 
 	vector<double> computed_likelihoods;
+	vector<unsigned short> computed_coverages;
+	vector<unsigned short> computed_uk;
 	unsigned int index = 0;
 	for (auto result : hmm.get_genotyping_result()) {
+		computed_coverages.push_back(result.coverage());
+		computed_uk.push_back(result.nr_unique_kmers());
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,0));
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,1));
 		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
 		index += 1;
 	}
 	REQUIRE( compare_vectors(expected_likelihoods, computed_likelihoods) );
+	REQUIRE( computed_coverages == expected_coverages);
+	REQUIRE( computed_uk == expected_uk);
 }
 
 
