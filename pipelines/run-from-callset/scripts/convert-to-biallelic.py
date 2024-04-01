@@ -3,25 +3,45 @@
 import sys
 import argparse
 from collections import defaultdict
+import os
+import pickle
 
 parser = argparse.ArgumentParser(prog='convert-to-biallelic.py', description='cat <multiallelic VCF> | python convert-to-biallelic.py <biallelic VCF>')
 parser.add_argument('vcf', metavar='VCF', help='original VCF containing REF/ALT of each Variant ID.')
+parser.add_argument('--cache', action="store_true", default=False, help="Use cache file for <biallelic VCF>")
+parser.add_argument('--make-cache', action="store_true", default=False, help="Only make cache file for <biallelic VCF>")
 args = parser.parse_args()
 
-# chromosome ->  ID -> [start, REF, ALT] per chromosome
-chrom_to_variants = defaultdict(lambda: defaultdict(list))
+# load from cache
+if args.cache:
+	# test if cache file exist
+	if not os.path.exists(args.vcf + '.convert_cache'):
+		print("Run python convert-to-biallelic.py --make-cache <biallelic VCF> before using --cache")
+		exit(1)
+		
+	with open(args.vcf + '.convert_cache', "rb") as f:
+		chrom_to_variants = pickle.load(f)
+else:
+	# chromosome ->  ID -> [start, REF, ALT] per chromosome
+	chrom_to_variants = defaultdict(lambda: defaultdict(list))
 
-# read the biallelic VCF containing REF/ALT for all variant IDs and store them
-for line in open(args.vcf, 'r'):
-	if line.startswith('#'):
-		continue
-	fields = line.split()
-	info_field = { i.split('=')[0] : i.split('=')[1] for i in fields[7].split(';')}
-	assert 'ID' in info_field
-	ids = info_field['ID'].split(',')
-	alleles = fields[4].split(',')
-	for id,allele in zip(ids, alleles):
-		chrom_to_variants[fields[0]][id] = [fields[1], fields[3], allele]
+	# read the biallelic VCF containing REF/ALT for all variant IDs and store them
+	for line in open(args.vcf, 'r'):
+		if line.startswith('#'):
+			continue
+		fields = line.split()
+		info_field = { i.split('=')[0] : i.split('=')[1] for i in fields[7].split(';')}
+		assert 'ID' in info_field
+		ids = info_field['ID'].split(',')
+		alleles = fields[4].split(',')
+		for id,allele in zip(ids, alleles):
+			chrom_to_variants[fields[0]][id] = [fields[1], fields[3], allele]
+
+# make cache only
+if args.make_cache:
+	with open(args.vcf + '.convert_cache', "wb") as f:
+		pickle.dump(dict(chrom_to_variants), f)
+	exit(0)
 
 for line in sys.stdin:
 	if line.startswith('#'):
