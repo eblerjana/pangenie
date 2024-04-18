@@ -3,6 +3,7 @@
 #include "../src/copynumber.hpp"
 #include <vector>
 #include <string>
+#include "utils.hpp"
 
 using namespace std;
 
@@ -147,6 +148,66 @@ TEST_CASE("UniqueKmers kmers_on_alleles3", "[UniqueKmers kmers_on_alleles3]") {
 	REQUIRE(counts.size() == 1);
 	REQUIRE(counts[1] == 1);
 }
+
+
+
+
+TEST_CASE("UniqueKmers covered_kmers_on_alleles1", "[UniqueKmers covered_kmers_on_alleles]") {
+	vector<unsigned char> path_to_allele = {0,0};
+	UniqueKmers u (1000, path_to_allele);
+
+	vector<unsigned short> read_counts = {5, 1};
+	vector<vector<unsigned char>> alleles = { {2}, {0} };
+	u.insert_kmer (read_counts[0], alleles[0]);
+	u.insert_kmer (read_counts[1], alleles[1]);
+
+	map<unsigned char, float> fractions = u.covered_kmers_on_alleles();
+	REQUIRE(fractions.size() == 2);
+	REQUIRE(doubles_equal(fractions[0], 1.0));
+	REQUIRE(doubles_equal(fractions[2], 1.0));
+}
+
+
+
+TEST_CASE("UniqueKmers covered_kmers_on_alleles2", "[UniqueKmers covered_kmers_on_alleles]") {
+	vector<unsigned char> path_to_allele = {2,1,0};
+	UniqueKmers u (1000, path_to_allele);
+
+	vector<unsigned short> read_counts = {1,2,0,3,0,5};
+	vector<vector<unsigned char>> alleles = { {0}, {1}, {2} };
+	u.insert_kmer (read_counts[0], alleles[0]);
+	u.insert_kmer (read_counts[1], alleles[0]);
+	u.insert_kmer (read_counts[2], alleles[0]);
+	u.insert_kmer (read_counts[3], alleles[1]);
+	u.insert_kmer (read_counts[4], alleles[2]);
+	u.insert_kmer (read_counts[5], alleles[2]);
+
+	map<unsigned char, float> fractions = u.covered_kmers_on_alleles();
+	REQUIRE(fractions.size() == 3);
+	REQUIRE(doubles_equal(fractions[0], 2.0/3.0));
+	REQUIRE(doubles_equal(fractions[1], 1.0));
+	REQUIRE(doubles_equal(fractions[2], 0.5));
+}
+
+
+TEST_CASE("UniqueKmers covered_kmers_on_alleles3", "[UniqueKmers covered_kmers_on_alleles]") {
+	vector<unsigned char> path_to_allele = {2,1,0};
+	UniqueKmers u (1000, path_to_allele);
+
+	vector<unsigned short> read_counts = {10,0};
+	vector<vector<unsigned char>> alleles = { {0}, {1}, {2} };
+	u.insert_kmer (read_counts[0], alleles[2]);
+	u.insert_kmer (read_counts[1], alleles[0]);
+
+	map<unsigned char, float> fractions = u.covered_kmers_on_alleles();
+
+	REQUIRE(fractions.size() == 3);
+	REQUIRE(doubles_equal(fractions[0], 0.0));
+	REQUIRE(doubles_equal(fractions[1], -1.0));
+	REQUIRE(doubles_equal(fractions[2], 1.0));
+}
+
+
 
 TEST_CASE("UniqueKmers get_path_ids", "[UniqueKmers get_path_ids]") {
 	vector<unsigned char> path_to_allele = {0,0,2,1};

@@ -28,6 +28,7 @@
 #include "stepwiseuniquekmercomputer.hpp"
 #include "uniquekmercomputer.hpp"
 #include "threadpool.hpp"
+#include "haplotypesampler.hpp"
 
 using namespace std;
 
@@ -1075,6 +1076,191 @@ int run_genotype_command(string precomputed_prefix, string readfile, string outn
 	cerr << "Max RSS after updating unique kmers: \t" << (rss_unique_kmers.ru_maxrss / 1E6) << " GB" << endl;
 	cerr << "Max RSS after selecting paths: \t" << (rss_path_sampling.ru_maxrss / 1E6) << " GB" << endl;
 	cerr << "Max RSS after genotyping: \t" << (rss_hmm.ru_maxrss / 1E6) << " GB" << endl;
+	cerr << "Max RSS: \t" << (rss_total.ru_maxrss / 1E6) << " GB" << endl;
+    cerr << "#######################################" << endl << endl;
+	return 0;
+
+}
+
+
+int run_sampling(string precomputed_prefix, string readfile, string outname, size_t nr_jellyfish_threads, size_t nr_core_threads, long double effective_N, long double regularization, bool count_only_graph, uint64_t hash_size)
+{
+
+	Timer timer;
+	double time_read_serialized = 0.0;
+	double time_unique_kmers = 0.0;
+	double time_kmer_counting = 0.0;
+	double time_probabilities = 0.0;
+	double time_sampling = 0.0;
+	double time_total = 0.0;
+
+	struct rusage rss_read_serialized;
+	struct rusage rss_unique_kmers;
+	struct rusage rss_kmer_counting;
+	struct rusage rss_probabilities;
+	struct rusage rss_sampling;
+	struct rusage rss_total;
+
+	// check if input files exist and are uncompressed
+	check_input_file(readfile);
+
+	vector<string> chromosomes;
+	Results results;
+
+	{
+		UniqueKmersMap unique_kmers_list;
+		ProbabilityTable probabilities;
+		string segment_file = precomputed_prefix + "_path_segments.fasta";
+        check_input_file(segment_file);
+		size_t available_threads_uk;
+		size_t nr_cores_uk;
+		unsigned short nr_paths = 0;
+
+
+		// re-construct UniqueKmersMap + chromosomes from input file (-f)
+		string unique_kmers_archive = precomputed_prefix + "_UniqueKmersMap.cereal";
+        check_input_file(unique_kmers_archive);
+		cerr << "Reading precomputed UniqueKmersMap from " << unique_kmers_archive << " ..." << endl;
+		ifstream is(unique_kmers_archive, std::ios::binary);
+		cereal::BinaryInputArchive archive_is( is );
+		archive_is(unique_kmers_list);
+
+		// check if there are any variants
+		size_t variants_read = 0;
+		for (auto it = unique_kmers_list.unique_kmers.begin(); it != unique_kmers_list.unique_kmers.end(); ++it) {
+			chromosomes.push_back(it->first);
+			if (it->second.size() > 0) {
+				nr_paths = it->second.at(0)->get_nr_paths();
+				variants_read += it->second.size();
+			}
+		}
+
+		cerr << "Read " << variants_read << " variants from provided UniqueKmersMap archive." << endl;
+
+		// if no variants present, nothing to be done. Exit program.
+		if (variants_read == 0) return 0;
+
+		// there must be paths given.
+		if (nr_paths == 0) {
+			throw runtime_error("PanGenie-index: no haplotype paths given.");
+		}
+
+		getrusage(RUSAGE_SELF, &rss_read_serialized);
+		time_read_serialized = timer.get_interval_time();
+
+		/**
+		*  2) K-mer counting in sequencing reads
+		*/
+
+		{
+			/**
+			* Step 1: Count kmers in the sequencing reads of the sample using Jellyfish
+			* or read already computed counts from .jf file.
+			*/
+
+			size_t kmersize = unique_kmers_list.kmersize;
+
+			shared_ptr<KmerCounter> read_kmer_counts = nullptr;
+			// determine kmer copynumbers in reads
+			if (readfile.substr(std::max(3, (int) readfile.size())-3) == std::string(".jf")) {
+				cerr << "Read pre-computed read kmer counts ..." << endl;
+				jellyfish::mer_dna::k(kmersize);
+				read_kmer_counts = shared_ptr<JellyfishReader>(new JellyfishReader(readfile, kmersize));
+			} else {
+				cerr << "Count kmers in reads ..." << endl;
+
+				if (count_only_graph) {
+					read_kmer_counts = shared_ptr<JellyfishCounter>(new JellyfishCounter(readfile, {segment_file}, kmersize, nr_jellyfish_threads, hash_size));
+				} else {
+					read_kmer_counts = shared_ptr<JellyfishCounter>(new JellyfishCounter(readfile, kmersize, nr_jellyfish_threads, hash_size));
+				}
+			}
+
+
+			/**
+			* Step 2: Compute k-mer coverage and precompute probabilities.
+			*/
+			size_t kmer_abundance_peak = read_kmer_counts->computeHistogram(10000, count_only_graph, outname + "_histogram.histo");
+			cerr << "Computed kmer abundance peak: " << kmer_abundance_peak << endl;
+
+			getrusage(RUSAGE_SELF, &rss_kmer_counting);
+			time_kmer_counting = timer.get_interval_time();
+
+			probabilities = ProbabilityTable(kmer_abundance_peak / 4, kmer_abundance_peak*4, 2*kmer_abundance_peak, regularization);
+		
+			getrusage(RUSAGE_SELF, &rss_probabilities);
+			time_probabilities = timer.get_interval_time();
+
+
+			/**
+			* Step 3: Fill the UniqueKmers object with sample-specific kmer counts.
+			* Also, estimate the local kmer coverage from nearby kmers.
+			*/
+
+			cerr << "Determine read k-mer counts for unique kmers ..." << endl;
+			available_threads_uk = min(thread::hardware_concurrency(), (unsigned int) chromosomes.size());
+			nr_cores_uk = min(nr_core_threads, available_threads_uk);
+			if (nr_cores_uk < nr_core_threads) {
+				cerr << "Warning: using " << nr_cores_uk << " for determining unique kmers." << endl;
+			}
+			
+			{
+				ThreadPool threadPool (nr_cores_uk);
+				for (auto chromosome : chromosomes) {
+					UniqueKmersMap* unique_kmers = &unique_kmers_list;
+					ProbabilityTable* probs = &probabilities;
+					function<void()> f_fill_readkmers = bind(fill_read_kmercounts, chromosome, unique_kmers, read_kmer_counts, probs, precomputed_prefix, kmer_abundance_peak);
+					threadPool.submit(f_fill_readkmers);
+				}
+			}
+
+			// determine the total runtime needed to update kmer information
+			for (auto it = unique_kmers_list.runtimes.begin(); it != unique_kmers_list.runtimes.end(); ++it) {
+				time_unique_kmers += it->second;
+			}
+
+			getrusage(RUSAGE_SELF, &rss_unique_kmers);
+			timer.get_interval_time();
+
+		}
+
+
+		/**
+		* 3) Check path coverages of haplotypes and print them.
+		*/
+
+		{
+			for (auto chromosome : chromosomes) {
+				cout << "# Statistics for " << chromosome << endl;
+				vector<shared_ptr<UniqueKmers>>* unique_kmers = &unique_kmers_list.unique_kmers[chromosome];
+				HaplotypeSampler haplotype_sampler(unique_kmers);
+				haplotype_sampler.rank_haplotypes();
+			}
+		
+			getrusage(RUSAGE_SELF, &rss_sampling);
+			timer.get_interval_time();
+		}
+	}
+
+	getrusage(RUSAGE_SELF, &rss_total);
+	time_sampling = timer.get_interval_time();
+	time_total = timer.get_total_time();
+
+	cerr << endl << "###### Summary PanGenie-genotype ######" << endl;
+	// output times
+	cerr << "time spent reading UniqueKmersMap from disk: \t" << time_read_serialized << " sec" << endl;
+	cerr << "time spent counting kmers in reads (wallclock): \t" << time_kmer_counting << " sec" << endl;
+	cerr << "time spent pre-computing probabilities: \t" << time_probabilities << " sec" << endl;
+	cerr << "time spent updating unique kmers: \t" << time_unique_kmers << " sec" << endl;
+	cerr << "time spent sampling: \t" << time_sampling << " sec" << endl;
+	cerr << "total wallclock time sampling: " << time_total  << " sec" << endl;
+
+	cerr << endl;
+	cerr << "Max RSS after reading UniqueKmersMap from disk: \t" << (rss_read_serialized.ru_maxrss / 1E6) << " GB" << endl;
+	cerr << "Max RSS after counting kmers in reads: \t" << (rss_kmer_counting.ru_maxrss / 1E6) << " GB" << endl;
+	cerr << "Max RSS after pre-computing probabilities: \t" << (rss_probabilities.ru_maxrss / 1E6) << " GB" << endl;
+	cerr << "Max RSS after updating unique kmers: \t" << (rss_unique_kmers.ru_maxrss / 1E6) << " GB" << endl;
+	cerr << "Max RSS after sampling: \t" << (rss_sampling.ru_maxrss / 1E6) << " GB" << endl;
 	cerr << "Max RSS: \t" << (rss_total.ru_maxrss / 1E6) << " GB" << endl;
     cerr << "#######################################" << endl << endl;
 	return 0;

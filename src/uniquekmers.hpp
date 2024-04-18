@@ -74,6 +74,8 @@ public:
 	unsigned short get_coverage() const;
 	/** returns a map which contains the number of unique kmers covering each allele **/
 	std::map<unsigned char, int> kmers_on_alleles () const;
+	/** returns a map which contains the fraction of kmers with non-zero counts per allele **/
+	std::map<unsigned char, float> covered_kmers_on_alleles () const;
 	/** check whether allele is undefined **/
 	bool is_undefined_allele (unsigned char allele_id) const;
 	/** set allele to undefined **/

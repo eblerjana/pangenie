@@ -9,6 +9,7 @@ add_library(PanGenieLib SHARED
 	genotypingresult.cpp
 	graphbuilder.cpp
 	graph.cpp
+	haplotypesampler.cpp
 	histogram.cpp
 	hmm.cpp
 	jellyfishcounter.cpp
@@ -33,6 +34,11 @@ add_executable(PanGenie-index pangenie-index.cpp)
 target_link_libraries(PanGenie-index PanGenieLib ${JELLYFISH_LDFLAGS_OTHER} ${ZLIB_LDFLAGS_OTHER} ${CEREAL_LDFLAGS_OTHER})
 target_link_libraries(PanGenie-index PanGenieLib ${JELLYFISH_LIBRARIES} ${ZLIB_LIBRARIES} ${CEREAL_LIBRARIES})
 
+
 add_executable(PanGenie pangenie-genotype.cpp)
 target_link_libraries(PanGenie PanGenieLib ${JELLYFISH_LDFLAGS_OTHER} ${ZLIB_LDFLAGS_OTHER} ${CEREAL_LDFLAGS_OTHER})
 target_link_libraries(PanGenie PanGenieLib ${JELLYFISH_LIBRARIES} ${ZLIB_LIBRARIES} ${CEREAL_LIBRARIES})
+
+add_executable(Sampling pangenie-sampling.cpp)
+target_link_libraries(Sampling PanGenieLib ${JELLYFISH_LDFLAGS_OTHER} ${ZLIB_LDFLAGS_OTHER} ${CEREAL_LDFLAGS_OTHER})
+target_link_libraries(Sampling PanGenieLib ${JELLYFISH_LIBRARIES} ${ZLIB_LIBRARIES} ${CEREAL_LIBRARIES})

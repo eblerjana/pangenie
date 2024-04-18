@@ -140,6 +140,27 @@ map<unsigned char, int> UniqueKmers::kmers_on_alleles () const {
 	return result;
 }
 
+map<unsigned char, float> UniqueKmers::covered_kmers_on_alleles () const {
+	map<unsigned char, float> result;
+	for (auto it = this->alleles.begin(); it != this->alleles.end(); ++it) {
+		float covered_kmers = 0;
+		float total_kmers = 0;
+		for (size_t k = 0; k < this->size(); ++k) {
+
+			if (this->alleles.at(it->first).first.get_position(k) > 0) {
+				total_kmers += 1;
+				if (this->kmer_to_count[k] > 0) covered_kmers += 1;
+			}
+		}
+		if (total_kmers > 0) {
+			result[it->first] = covered_kmers / total_kmers;
+		} else {
+			result[it->first] = -1.0;
+		}
+	}
+	return result;
+}
+
 bool UniqueKmers::is_undefined_allele (unsigned char allele_id) const {
 	// check if allele id exists
 	auto it = this->alleles.find(allele_id);
