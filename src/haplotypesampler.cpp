@@ -31,7 +31,7 @@ void HaplotypeSampler::rank_haplotypes() const {
 		// print out for now
 		cout << "Ranked haplotypes for bubble position: " << unique_kmers->get_variant_position() << endl;
 		for (auto p : path_coverages) {
-			cout << "path" << p.first << "\t" << p.second << "\t" << nr_kmers[unique_kmers->get_allele(p.first)] << endl;
+			cout << "path" << p.first << "\t" << p.second << "\t" << (unsigned int) unique_kmers->get_allele(p.first) << "\t" << nr_kmers[unique_kmers->get_allele(p.first)] << endl;
 		}
 	}
 }
