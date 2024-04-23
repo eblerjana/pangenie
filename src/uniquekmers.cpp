@@ -149,7 +149,7 @@ map<unsigned char, float> UniqueKmers::covered_kmers_on_alleles () const {
 
 			if (this->alleles.at(it->first).first.get_position(k) > 0) {
 				total_kmers += 1;
-				if (this->kmer_to_count[k] > 0) covered_kmers += 1;
+				if (this->kmer_to_count[k] > 2) covered_kmers += 1;
 			}
 		}
 		if (total_kmers > 0) {
