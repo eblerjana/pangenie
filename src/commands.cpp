@@ -1233,7 +1233,7 @@ int run_sampling(string precomputed_prefix, string readfile, string outname, siz
 			for (auto chromosome : chromosomes) {
 				cout << "# Statistics for " << chromosome << endl;
 				vector<shared_ptr<UniqueKmers>>* unique_kmers = &unique_kmers_list.unique_kmers[chromosome];
-				HaplotypeSampler haplotype_sampler(unique_kmers);
+				HaplotypeSampler haplotype_sampler(unique_kmers, 0);
 				haplotype_sampler.rank_haplotypes();
 			}
 		

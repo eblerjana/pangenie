@@ -156,7 +156,7 @@ TEST_CASE("UniqueKmers covered_kmers_on_alleles1", "[UniqueKmers covered_kmers_o
 	vector<unsigned char> path_to_allele = {0,0};
 	UniqueKmers u (1000, path_to_allele);
 
-	vector<unsigned short> read_counts = {5, 1};
+	vector<unsigned short> read_counts = {5, 3};
 	vector<vector<unsigned char>> alleles = { {2}, {0} };
 	u.insert_kmer (read_counts[0], alleles[0]);
 	u.insert_kmer (read_counts[1], alleles[1]);
@@ -173,7 +173,7 @@ TEST_CASE("UniqueKmers covered_kmers_on_alleles2", "[UniqueKmers covered_kmers_o
 	vector<unsigned char> path_to_allele = {2,1,0};
 	UniqueKmers u (1000, path_to_allele);
 
-	vector<unsigned short> read_counts = {1,2,0,3,0,5};
+	vector<unsigned short> read_counts = {4,5,0,3,0,5};
 	vector<vector<unsigned char>> alleles = { {0}, {1}, {2} };
 	u.insert_kmer (read_counts[0], alleles[0]);
 	u.insert_kmer (read_counts[1], alleles[0]);

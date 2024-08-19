@@ -155,7 +155,7 @@ map<unsigned char, float> UniqueKmers::covered_kmers_on_alleles () const {
 		if (total_kmers > 0) {
 			result[it->first] = covered_kmers / total_kmers;
 		} else {
-			result[it->first] = -1.0;
+			result[it->first] = 1.0;
 		}
 	}
 	return result;

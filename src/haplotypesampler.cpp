@@ -1,5 +1,6 @@
 #include "haplotypesampler.hpp"
 #include <algorithm>
+#include <cassert>
 #include <map>
 #include <math.h>
 
@@ -37,7 +38,7 @@ void HaplotypeSampler::rank_haplotypes() const {
 }
 
 void HaplotypeSampler::compute_viterbi_path() {
-	size_t column_count = this->unique_kmers.size();
+	size_t column_count = this->unique_kmers->size();
 	init(this->viterbi_columns, column_count);
 	init(this->viterbi_backtrace_columns, column_count);
 
@@ -57,8 +58,8 @@ void HaplotypeSampler::compute_viterbi_path() {
 	// find the best value in the last column
 	size_t best_index = 0;
 	long double best_value = 0.0L;
-	DPColumn* last column = this->viterbi_columns.at(column_count-1);
-	assert (last_column) != nullptr;
+	DPColumn* last_column = this->viterbi_columns.at(column_count-1);
+	assert (last_column != nullptr);
 	for (size_t i = 0; i < last_column->column.size(); ++i) {
 		long double entry = last_column->column.at(i);
 		if (entry >= best_value) {
@@ -92,7 +93,7 @@ void HaplotypeSampler::compute_viterbi_path() {
 
 void HaplotypeSampler::compute_viterbi_column(size_t column_index) {
 	// TODO implement this
-	assert (column_index < this->column_indexer->size());
+	assert (column_index < this->unique_kmers->size());
 
 	// check whether column was computed already
 	if (this->viterbi_columns[column_index] != nullptr) return;
@@ -101,7 +102,7 @@ void HaplotypeSampler::compute_viterbi_column(size_t column_index) {
 	DPColumn* previous_column = nullptr;
 
 	// number of paths
-	size_t nr_paths = this->unique_kmers->get_nr_paths();
+	size_t nr_paths = this->unique_kmers->at(column_index)->get_nr_paths();
 
 	// TODO: class that computes Transition probabilities?
 
@@ -118,4 +119,4 @@ void HaplotypeSampler::compute_viterbi_column(size_t column_index) {
 
 }
 
-void HaplotypeSampler::update_unique_kmers();
+void HaplotypeSampler::update_unique_kmers() {}

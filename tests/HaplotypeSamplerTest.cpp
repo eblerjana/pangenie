@@ -30,7 +30,7 @@ TEST_CASE("HaplotypeSampler", "[HaplotypeSampler]"){
 
 	vector<shared_ptr<UniqueKmers>> unique_kmers = {u1,u2};
 
-	HaplotypeSampler haplotypesampler = HaplotypeSampler(&unique_kmers);
+	HaplotypeSampler haplotypesampler = HaplotypeSampler(&unique_kmers, 0);
 	haplotypesampler.rank_haplotypes();
 
 }
