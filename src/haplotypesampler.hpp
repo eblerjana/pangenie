@@ -3,15 +3,35 @@
 
 #include <vector>
 #include <memory>
+#include <stdexcept>
+#include <cassert>
 #include "uniquekmers.hpp"
 
 
 struct DPColumn {
-	std::vector<long double> column;
+	std::vector<unsigned int> column;
 };
 
 struct SampledPaths {
 	std::vector<std::vector<size_t>> sampled_paths;
+	/**
+	* Given a column index, and a vector, mark indexes
+	* occuring in this column as False.  
+	**/
+	std::vector<bool> mask_indexes(size_t column_index, size_t max_index) {
+		std::vector<bool> masked(max_index+1, true);
+		for (auto p : sampled_paths) {
+			if (column_index >= p.size()) {
+				throw std::runtime_error("HaplotypeSampler::SampledPaths::mask_indexes: column_index exceeds number of columns.");
+			}
+			size_t index = p[column_index];
+			if (index > max_index) {
+				throw std::runtime_error("HaplotypeSampler::SampledPaths::mask_indexes: observed index exceeds max_index.");
+			}
+			masked[index] = false;
+		}
+		return masked;
+	}
 };
 
 
@@ -23,6 +43,9 @@ public:
 	**/
 	HaplotypeSampler(std::vector<std::shared_ptr<UniqueKmers>>* unique_kmers, size_t size);
 	void rank_haplotypes() const;
+
+	// keeping it public for testing purposes ..
+	void get_column_minima(std::vector<unsigned int>& column, std::vector<bool>& mask, size_t& first_id, size_t& second_id, unsigned int& first_val, unsigned int& second_val);
 
 	
 private:
@@ -40,13 +63,14 @@ private:
 	**/
 	void compute_viterbi_column(size_t column_index);
 
-	/** Update the UniqueKmers object to represent the downsampled grah **/
+	/** Update the UniqueKmers object to represent the downsampled graph **/
 	void update_unique_kmers();
 
 	std::vector<std::shared_ptr<UniqueKmers>>* unique_kmers;
 	std::vector<DPColumn*> viterbi_columns;
 	SampledPaths sampled_paths;
 	std::vector< std::vector<size_t>* > viterbi_backtrace_columns;
+	std::vector<bool> prev_indexes;
 
 	template<class T>
 	void init(std::vector< T* >& c, size_t size) {

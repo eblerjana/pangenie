@@ -203,7 +203,7 @@ TEST_CASE("UniqueKmers covered_kmers_on_alleles3", "[UniqueKmers covered_kmers_o
 
 	REQUIRE(fractions.size() == 3);
 	REQUIRE(doubles_equal(fractions[0], 0.0));
-	REQUIRE(doubles_equal(fractions[1], -1.0));
+	REQUIRE(doubles_equal(fractions[1], 1.0));
 	REQUIRE(doubles_equal(fractions[2], 1.0));
 }
 

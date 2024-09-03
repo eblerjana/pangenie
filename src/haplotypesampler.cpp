@@ -6,9 +6,41 @@
 
 using namespace std;
 
+
 HaplotypeSampler::HaplotypeSampler(vector<shared_ptr<UniqueKmers>>* unique_kmers, size_t size)
 	:unique_kmers(unique_kmers)
 {}
+
+void HaplotypeSampler::get_column_minima(std::vector<unsigned int>& column, std::vector<bool>& mask, size_t& first_id, size_t& second_id, unsigned int& first_val, unsigned int& second_val)
+{
+ 
+	assert (column.size() > 1);
+	assert (column.size() == mask.size());
+ 
+    first_val = std::numeric_limits<unsigned int>::max();
+	second_val = std::numeric_limits<unsigned int>::max();
+
+    for (size_t i = 0; i < column.size(); i++) {
+		// if masked with false, ignore.
+		if (!mask[i]) continue;
+
+        /* If current element is smaller than first
+        then update both first and second */
+        if (column[i] < first_val) {
+            second_val = first_val;
+			second_id = first_id;
+			first_val = column[i];
+            first_id = i;
+        }
+ 
+        /* If arr[i] is in between first and second
+        then update second */
+        else if (column[i] < second_val && i != first_id)
+            second_val = column[i];
+			second_id = i;
+    }
+}
+
 
 // std::vector<std::shared_ptr<UniqueKmers>>*
 void HaplotypeSampler::rank_haplotypes() const {
@@ -116,6 +148,14 @@ void HaplotypeSampler::compute_viterbi_column(size_t column_index) {
 
 	// backtrace column
 	vector<size_t>* backtrace_column = new vector<size_t>();
+
+	// determine indices of not yet covered haplotypes (boolean vector)
+	vector<bool> current_indexes = this->sampled_paths.mask_indexes(column_index, nr_paths);
+
+	// TODO: precompute minima for each index in current column
+	// TODO: fill DP column based on precomputed minima
+
+
 
 }
 

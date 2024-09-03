@@ -34,3 +34,22 @@ TEST_CASE("HaplotypeSampler", "[HaplotypeSampler]"){
 	haplotypesampler.rank_haplotypes();
 
 }
+
+TEST_CASE("HaplotypeSampler get_column_minima", "[HaplotypeSampler get_column_minima]") {
+	vector<unsigned int> column = {10, 2, 14, 1};
+	vector<bool> mask = {true, true, true, true};
+
+	unsigned int first_val;
+	unsigned int second_val;
+	size_t first_id;
+	size_t second_id;
+
+	HaplotypeSampler h (nullptr, 0);
+
+	h.get_column_minima(column, mask, first_id, second_id, first_val, second_val);
+
+	REQUIRE(first_id == 3);
+	REQUIRE(second_id == 1);
+	REQUIRE(first_val == 1);
+	REQUIRE(second_val == 2);
+}

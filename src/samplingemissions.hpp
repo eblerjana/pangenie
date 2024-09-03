@@ -7,7 +7,7 @@
 class SamplingEmissions {
 public:
 	SamplingEmissions(std::shared_ptr<UniqueKmers> uniquekmers);
-	float get_emission_cost(unsigned char allele_id);
+	unsigned int get_emission_cost(unsigned char allele_id);
 private:
 	std::vector<unsigned int> allele_penalties;
 
