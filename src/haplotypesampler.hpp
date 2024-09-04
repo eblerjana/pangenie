@@ -41,7 +41,7 @@ public:
 	* @param unique_kmers stores the set of unique kmers for each variant position
 	* @param size size of the subsampled graph. Viterbi will be run this number of times
 	**/
-	HaplotypeSampler(std::vector<std::shared_ptr<UniqueKmers>>* unique_kmers, size_t size);
+	HaplotypeSampler(std::vector<std::shared_ptr<UniqueKmers>>* unique_kmers, size_t size, double recombrate = 1.26, long double effective_N = 25000.0L);
 	void rank_haplotypes() const;
 
 	// keeping it public for testing purposes ..
@@ -71,6 +71,8 @@ private:
 	SampledPaths sampled_paths;
 	std::vector< std::vector<size_t>* > viterbi_backtrace_columns;
 	std::vector<bool> prev_indexes;
+	double recombrate;
+	long double effective_N;
 
 	template<class T>
 	void init(std::vector< T* >& c, size_t size) {

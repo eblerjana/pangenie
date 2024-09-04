@@ -1,4 +1,6 @@
 #include "haplotypesampler.hpp"
+#include "samplingemissions.hpp"
+#include "samplingtransitions.hpp"
 #include <algorithm>
 #include <cassert>
 #include <map>
@@ -7,8 +9,10 @@
 using namespace std;
 
 
-HaplotypeSampler::HaplotypeSampler(vector<shared_ptr<UniqueKmers>>* unique_kmers, size_t size)
-	:unique_kmers(unique_kmers)
+HaplotypeSampler::HaplotypeSampler(vector<shared_ptr<UniqueKmers>>* unique_kmers, size_t size, double recombrate, long double effective_N)
+	:unique_kmers(unique_kmers),
+	 recombrate(recombrate),
+	 effective_N(effective_N)
 {}
 
 void HaplotypeSampler::get_column_minima(std::vector<unsigned int>& column, std::vector<bool>& mask, size_t& first_id, size_t& second_id, unsigned int& first_val, unsigned int& second_val)
@@ -19,6 +23,9 @@ void HaplotypeSampler::get_column_minima(std::vector<unsigned int>& column, std:
  
     first_val = std::numeric_limits<unsigned int>::max();
 	second_val = std::numeric_limits<unsigned int>::max();
+
+	first_id = std::numeric_limits<unsigned int>::max();
+	second_id = std::numeric_limits<unsigned int>::max();
 
     for (size_t i = 0; i < column.size(); i++) {
 		// if masked with false, ignore.
@@ -31,14 +38,11 @@ void HaplotypeSampler::get_column_minima(std::vector<unsigned int>& column, std:
 			second_id = first_id;
 			first_val = column[i];
             first_id = i;
-        }
- 
-        /* If arr[i] is in between first and second
-        then update second */
-        else if (column[i] < second_val && i != first_id)
+        } else if ( (column[i] < second_val) && (i != first_id)) {
             second_val = column[i];
 			second_id = i;
-    }
+    	}
+	}
 }
 
 
@@ -132,6 +136,7 @@ void HaplotypeSampler::compute_viterbi_column(size_t column_index) {
 
 	// get previous column
 	DPColumn* previous_column = nullptr;
+	vector<bool> prev_mask;
 
 	// number of paths
 	size_t nr_paths = this->unique_kmers->at(column_index)->get_nr_paths();
@@ -140,6 +145,9 @@ void HaplotypeSampler::compute_viterbi_column(size_t column_index) {
 
 	if (column_index > 0) {
 		previous_column = this->viterbi_columns[column_index - 1];
+
+		// bitvector marking which path ids shall be ignored (removed in previous DP iterations)
+		prev_mask = this->sampled_paths.mask_indexes(column_index-1, nr_paths-1);
 	}
 
 	DPColumn* current_column = new DPColumn();
@@ -147,15 +155,82 @@ void HaplotypeSampler::compute_viterbi_column(size_t column_index) {
 	// TODO: class for computing emission probabilities?
 
 	// backtrace column
-	vector<size_t>* backtrace_column = new vector<size_t>();
+	vector<size_t>* backtrace_column = new vector<size_t>(nr_paths);
 
 	// determine indices of not yet covered haplotypes (boolean vector)
 	vector<bool> current_indexes = this->sampled_paths.mask_indexes(column_index, nr_paths);
 
-	// TODO: precompute minima for each index in current column
-	// TODO: fill DP column based on precomputed minima
+	// precompute minima for each index in current column. helper[i] contains the value of
+	// the minimum value of all positions except i in previous columns.
+	vector<unsigned int> helper_val(nr_paths);
+	vector<unsigned int> helper_id(nr_paths);
+
+	// currently masked indexes (removed in previous DP iterations)
+	vector<bool> cur_mask = this->sampled_paths.mask_indexes(column_index, nr_paths-1);
+
+	SamplingTransitions* transition_cost_computer = nullptr;
+	SamplingEmissions emission_cost_computer(this->unique_kmers->at(column_index));
 
 
+	if (column_index > 0) {
+		// compute smallest and second smallest element in previous column
+		size_t first_id, second_id;
+		unsigned int first_val, second_val;
+		this->get_column_minima(previous_column->column, prev_mask, first_id, second_id, first_val, second_val);
+		// fill helper vector
+		for (size_t i = 0; i < nr_paths; ++i) {
+			if (cur_mask[i]) {
+				if (i == first_id) {
+					// need to consider second smallest value from previous column
+					helper_val[i] = second_val;
+					helper_id[i] = second_id;
+				} else {
+					// need to consider minimum from previous column
+					helper_val[i] = first_val;
+					helper_val[i] = first_id;
+				}
+			} else {
+				helper_val[i] = numeric_limits<unsigned int>::max();
+				helper_id[i] = numeric_limits<unsigned int>::max();
+			}
+		}
+
+		// set up SamplingTransitions
+		size_t from_variant = this->unique_kmers->at(column_index-1)->get_variant_position();
+		size_t to_variant = this->unique_kmers->at(column_index)->get_variant_position();
+		transition_cost_computer = new SamplingTransitions(from_variant, to_variant, this->recombrate, nr_paths, this->effective_N);
+	}
+
+	// TODO: check for overflows (see WH code)!!
+
+	// fill DP column based on precomputed minima
+	for (size_t i = 0; i < nr_paths; ++i) {
+		// if current index is masked, skip.
+		if (cur_mask[i]) {
+			current_column->column.push_back(numeric_limits<unsigned int>::max());
+			continue;
+		}
+		unsigned int previous_cell = 0;
+		if (column_index > 0) {
+			// check of previous value exists for same path (might be masked)
+			// keep track of where the minimum came from and store in backtrace table
+			previous_cell = helper_val[i] + transition_cost_computer->compute_transition_cost(true);
+			backtrace_column->operator[](i) = helper_id[i];
+
+			if (prev_mask[i]) {
+				unsigned int same = previous_column->column.at(i) + transition_cost_computer->compute_transition_cost(false);
+				if (same < previous_cell) {
+					previous_cell = same;
+					backtrace_column->operator[](i) = i;
+				}
+			}
+		}
+		// add Emission costs
+		size_t allele = this->unique_kmers->at(column_index)->get_allele(i);
+		current_column->column.push_back(previous_cell + emission_cost_computer.get_emission_cost(allele));
+	}
+
+	// TODO store the column etc.
 
 }
 

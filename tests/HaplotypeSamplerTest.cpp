@@ -53,3 +53,106 @@ TEST_CASE("HaplotypeSampler get_column_minima", "[HaplotypeSampler get_column_mi
 	REQUIRE(first_val == 1);
 	REQUIRE(second_val == 2);
 }
+
+TEST_CASE("HaplotypeSampler get_column_minima2", "[HaplotypeSampler get_column_minima2]") {
+	vector<unsigned int> column = {10, 2, 14, 2};
+	vector<bool> mask = {true, true, true, true};
+
+	unsigned int first_val;
+	unsigned int second_val;
+	size_t first_id;
+	size_t second_id;
+
+	HaplotypeSampler h (nullptr, 0);
+
+	h.get_column_minima(column, mask, first_id, second_id, first_val, second_val);
+
+	REQUIRE(first_id == 1);
+	REQUIRE(second_id == 3);
+	REQUIRE(first_val == 2);
+	REQUIRE(second_val == 2);
+}
+
+TEST_CASE("HaplotypeSampler get_column_minima3", "[HaplotypeSampler get_column_minima3]") {
+	vector<unsigned int> column = {10, 10, 10, 10};
+	vector<bool> mask = {true, true, true, true};
+
+	unsigned int first_val;
+	unsigned int second_val;
+	size_t first_id;
+	size_t second_id;
+
+	HaplotypeSampler h (nullptr, 0);
+
+	h.get_column_minima(column, mask, first_id, second_id, first_val, second_val);
+
+	REQUIRE(first_id == 0);
+	REQUIRE(second_id == 1);
+	REQUIRE(first_val == 10);
+	REQUIRE(second_val == 10);
+}
+
+
+TEST_CASE("HaplotypeSampler get_column_minima4", "[HaplotypeSampler get_column_minima4]") {
+	vector<unsigned int> column = {10, 10, 20};
+	vector<bool> mask = {true, true, true};
+
+	unsigned int first_val;
+	unsigned int second_val;
+	size_t first_id;
+	size_t second_id;
+
+	HaplotypeSampler h (nullptr, 0);
+
+	h.get_column_minima(column, mask, first_id, second_id, first_val, second_val);
+
+	REQUIRE(first_id == 0);
+	REQUIRE(second_id == 1);
+	REQUIRE(first_val == 10);
+	REQUIRE(second_val == 10);
+
+	column = {10, 20, 20};
+	h.get_column_minima(column, mask, first_id, second_id, first_val, second_val);
+
+	REQUIRE(first_id == 0);
+	REQUIRE(second_id == 1);
+	REQUIRE(first_val == 10);
+	REQUIRE(second_val == 20);
+	
+}
+
+TEST_CASE("HaplotypeSampler get_column_minima5", "[HaplotypeSampler get_column_minima5]") {
+	vector<unsigned int> column = {10, 20, 30};
+	vector<bool> mask = {true, true, true};
+
+	unsigned int first_val;
+	unsigned int second_val;
+	size_t first_id;
+	size_t second_id;
+
+	HaplotypeSampler h (nullptr, 0);
+	h.get_column_minima(column, mask, first_id, second_id, first_val, second_val);
+
+
+	REQUIRE(first_id == 0);
+	REQUIRE(second_id == 1);
+	REQUIRE(first_val == 10);
+	REQUIRE(second_val == 20);
+
+	mask = {true, false, true};
+	h.get_column_minima(column, mask, first_id, second_id, first_val, second_val);
+
+	REQUIRE(first_id == 0);
+	REQUIRE(second_id == 2);
+	REQUIRE(first_val == 10);
+	REQUIRE(second_val == 30);
+
+	mask = {false, true, true};
+	h.get_column_minima(column, mask, first_id, second_id, first_val, second_val);
+
+	REQUIRE(first_id == 1);
+	REQUIRE(second_id == 2);
+	REQUIRE(first_val == 20);
+	REQUIRE(second_val == 30);
+	
+}
