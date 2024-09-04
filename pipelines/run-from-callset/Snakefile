@@ -60,7 +60,7 @@ rule add_ids:
 	input:
 		'{outdir}/input-vcf/input-missing-removed.vcf'
 	output:
-		'{outdir}/input-vcf/callset.vcf'
+		'{outdir}/input-vcf/callset.vcf.gz'
 	benchmark:
 		'{outdir}/benchmarks/add-ids.txt'
 	log:
@@ -68,13 +68,13 @@ rule add_ids:
 	conda:
 		'env/merging.yml'
 	shell:
-		'cat {input} | python3 {scripts}/add-ids.py 2> {log} 1> {output}'
+		'cat {input} | python3 {scripts}/add-ids.py 2> {log} | bgzip > {output}'
 
 
 # create biallelic VCF with one record per ALT allele
 rule normalize:
 	input:
-		'{outdir}/input-vcf/callset.vcf'
+		'{outdir}/input-vcf/callset.vcf.gz'
 	output:
 		'{outdir}/input-vcf/callset-biallelic.vcf'
 	benchmark:
@@ -172,7 +172,7 @@ rule pangenie_genotyping:
 rule convert_back_biallelic_representation:
 	input:
 		pangenie='{outdir}/pangenie/{sample}_graph_genotyping.vcf',
-		panel='{outdir}/input-vcf/callset.vcf'
+		panel='{outdir}/input-vcf/callset-biallelic.vcf.gz'
 	output:
 		'{outdir}/pangenie/{sample}_genotypes-biallelic.vcf'
 	resources:
