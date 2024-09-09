@@ -20,7 +20,7 @@ SamplingEmissions::SamplingEmissions(shared_ptr<UniqueKmers> unique_kmers) {
 			assert(this->allele_penalties[it->first] < 25);
 		} else {
 			// Note: this value is based on the max number of unique kmers (which is 300)
-			this->allele_penalties[it->second] = 25.0;
+			this->allele_penalties[it->first] = 25.0;
 		}
 	}
 }

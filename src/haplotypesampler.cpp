@@ -8,14 +8,33 @@
 
 using namespace std;
 
+void print_dpcolumn(DPColumn* column) {
+	for (size_t i = 0; i < column->column.size(); ++i) {
+		cout << column->column.at(i) << endl;
+	}
+}
 
-HaplotypeSampler::HaplotypeSampler(vector<shared_ptr<UniqueKmers>>* unique_kmers, size_t size, double recombrate, long double effective_N)
+HaplotypeSampler::HaplotypeSampler(vector<shared_ptr<UniqueKmers>>* unique_kmers, size_t size, double recombrate, long double effective_N, vector<unsigned int>* best_scores)
 	:unique_kmers(unique_kmers),
 	 recombrate(recombrate),
 	 effective_N(effective_N)
-{}
+{
 
-void HaplotypeSampler::get_column_minima(std::vector<unsigned int>& column, std::vector<bool>& mask, size_t& first_id, size_t& second_id, unsigned int& first_val, unsigned int& second_val)
+	// generate size Viterbi paths
+	for (size_t i = 0; i < size; ++i) {
+		compute_viterbi_path(best_scores);
+	}
+
+	// Update unique_kmers
+	update_unique_kmers();
+
+	// clean up
+	init(this->viterbi_columns, 0);
+	init(this->viterbi_backtrace_columns, 0);
+	
+}
+
+void HaplotypeSampler::get_column_minima(std::vector<unsigned int>& column, std::vector<bool>& mask, size_t& first_id, size_t& second_id, unsigned int& first_val, unsigned int& second_val) const
 {
  
 	assert (column.size() > 1);
@@ -73,7 +92,7 @@ void HaplotypeSampler::rank_haplotypes() const {
 	}
 }
 
-void HaplotypeSampler::compute_viterbi_path() {
+void HaplotypeSampler::compute_viterbi_path(vector<unsigned int>* best_scores) {
 	size_t column_count = this->unique_kmers->size();
 	init(this->viterbi_columns, column_count);
 	init(this->viterbi_backtrace_columns, column_count);
@@ -92,16 +111,21 @@ void HaplotypeSampler::compute_viterbi_path() {
 	}
 
 	// find the best value in the last column
-	size_t best_index = 0;
-	long double best_value = 0.0L;
 	DPColumn* last_column = this->viterbi_columns.at(column_count-1);
+	size_t best_index = 0;
+	unsigned int best_value = last_column->column.at(0);
 	assert (last_column != nullptr);
-	for (size_t i = 0; i < last_column->column.size(); ++i) {
-		long double entry = last_column->column.at(i);
-		if (entry >= best_value) {
+	for (size_t i = 1; i < last_column->column.size(); ++i) {
+		unsigned int entry = last_column->column.at(i);
+		if (entry < best_value) {
 			best_value = entry;
 			best_index = i;
 		}
+	}
+
+	// keep track of best DP score
+	if (best_scores != nullptr) {
+		best_scores->push_back(best_value);
 	}
 
 	// backtracking
@@ -151,6 +175,7 @@ void HaplotypeSampler::compute_viterbi_column(size_t column_index) {
 	}
 
 	DPColumn* current_column = new DPColumn();
+	current_column->column = vector<unsigned int> (nr_paths);
 
 	// TODO: class for computing emission probabilities?
 
@@ -168,6 +193,9 @@ void HaplotypeSampler::compute_viterbi_column(size_t column_index) {
 	// currently masked indexes (removed in previous DP iterations)
 	vector<bool> cur_mask = this->sampled_paths.mask_indexes(column_index, nr_paths-1);
 
+//	cout << "CUR MASK" << endl;
+//	for (unsigned int k = 0; k < cur_mask.size(); ++k) cout << cur_mask[k] << endl; 
+
 	SamplingTransitions* transition_cost_computer = nullptr;
 	SamplingEmissions emission_cost_computer(this->unique_kmers->at(column_index));
 
@@ -177,6 +205,9 @@ void HaplotypeSampler::compute_viterbi_column(size_t column_index) {
 		size_t first_id, second_id;
 		unsigned int first_val, second_val;
 		this->get_column_minima(previous_column->column, prev_mask, first_id, second_id, first_val, second_val);
+		cout << "PREV COLUMN:" << endl;
+		print_dpcolumn(previous_column);
+		cout << "COL MIN " << first_val << " " << first_id << " " << second_val << " " << second_id << endl;
 		// fill helper vector
 		for (size_t i = 0; i < nr_paths; ++i) {
 			if (cur_mask[i]) {
@@ -206,8 +237,8 @@ void HaplotypeSampler::compute_viterbi_column(size_t column_index) {
 	// fill DP column based on precomputed minima
 	for (size_t i = 0; i < nr_paths; ++i) {
 		// if current index is masked, skip.
-		if (cur_mask[i]) {
-			current_column->column.push_back(numeric_limits<unsigned int>::max());
+		if (!cur_mask[i]) {
+			current_column->column[i] = numeric_limits<unsigned int>::max();
 			continue;
 		}
 		unsigned int previous_cell = 0;
@@ -227,11 +258,25 @@ void HaplotypeSampler::compute_viterbi_column(size_t column_index) {
 		}
 		// add Emission costs
 		size_t allele = this->unique_kmers->at(column_index)->get_allele(i);
-		current_column->column.push_back(previous_cell + emission_cost_computer.get_emission_cost(allele));
+		cout << "cell " << i << " " << previous_cell << " + " << emission_cost_computer.get_emission_cost(allele) << " (allele: " << (unsigned int) allele << ")" << endl;
+		current_column->column[i] = previous_cell + emission_cost_computer.get_emission_cost(allele);
 	}
 
-	// TODO store the column etc.
+	// store the column and clean up
+	this->viterbi_columns.at(column_index) = current_column;
+	this->viterbi_backtrace_columns.at(column_index) = backtrace_column;
 
+	if (transition_cost_computer != nullptr) {
+		delete transition_cost_computer;
+	}
+
+	print_dpcolumn(current_column);
 }
 
-void HaplotypeSampler::update_unique_kmers() {}
+void HaplotypeSampler::update_unique_kmers() {
+	// TODO implement this
+}
+
+SampledPaths HaplotypeSampler::get_sampled_paths() const {
+	return this->sampled_paths;
+}

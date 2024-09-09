@@ -40,12 +40,18 @@ public:
 	/**
 	* @param unique_kmers stores the set of unique kmers for each variant position
 	* @param size size of the subsampled graph. Viterbi will be run this number of times
+	* @param recombrate recombination rate
+	* @param effective_N effective population size
+	* @param best_scores vector in which DP score of each iteration is stored (mainly used for testing purposes)
 	**/
-	HaplotypeSampler(std::vector<std::shared_ptr<UniqueKmers>>* unique_kmers, size_t size, double recombrate = 1.26, long double effective_N = 25000.0L);
+	HaplotypeSampler(std::vector<std::shared_ptr<UniqueKmers>>* unique_kmers, size_t size, double recombrate = 1.26, long double effective_N = 25000.0L, std::vector<unsigned int>* best_scores = nullptr);
 	void rank_haplotypes() const;
 
 	// keeping it public for testing purposes ..
-	void get_column_minima(std::vector<unsigned int>& column, std::vector<bool>& mask, size_t& first_id, size_t& second_id, unsigned int& first_val, unsigned int& second_val);
+	void get_column_minima(std::vector<unsigned int>& column, std::vector<bool>& mask, size_t& first_id, size_t& second_id, unsigned int& first_val, unsigned int& second_val) const;
+
+	// return sampled paths (also mainly for testing purposes)
+	SampledPaths get_sampled_paths() const;
 
 	
 private:
@@ -54,7 +60,7 @@ private:
 	* so that these nodes are ignored in the next pass (= call to this function). Used Viterbi
 	* paths are stored in member variable "sampled_paths".
 	**/
-	void compute_viterbi_path();
+	void compute_viterbi_path(std::vector<unsigned int>* best_scores = nullptr);
 	
 	/**
 	* Compute one column. Make sure that when iterating through the paths (= states), those paths
@@ -70,7 +76,6 @@ private:
 	std::vector<DPColumn*> viterbi_columns;
 	SampledPaths sampled_paths;
 	std::vector< std::vector<size_t>* > viterbi_backtrace_columns;
-	std::vector<bool> prev_indexes;
 	double recombrate;
 	long double effective_N;
 
