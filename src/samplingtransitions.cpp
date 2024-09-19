@@ -9,7 +9,7 @@ SamplingTransitions::SamplingTransitions(size_t from_variant, size_t to_variant,
 	long double distance = (to_variant - from_variant) * 0.000004L * ((long double) recomb_rate) * effective_N;
 	// use Li-Stephans pair HMM transitions TODO: correct?
 	long double recomb_prob = (1.0L - exp(-distance / (long double) nr_paths) )* (1.0L / (long double) nr_paths);
-	this->cost = round(-10.0 * log10(recomb_prob));
+	this->cost = -10.0 * log10(recomb_prob);
 }
 
 unsigned int SamplingTransitions::compute_transition_cost(bool recombination) {

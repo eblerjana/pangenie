@@ -13,7 +13,7 @@ TEST_CASE("SamplingTransitions compute_transition_cost1", "[SamplingTransitions 
 	double recomb_prob =  0.04455105238;
 	double no_recomb_prob = recomb_prob + 0.77724473806;
 
-	unsigned int expected_cost = round(-10.0 * log10(recomb_prob));
+	unsigned int expected_cost = -10.0 * log10(recomb_prob);
 
 	REQUIRE(s.compute_transition_cost(false) == 0);
 	REQUIRE(s.compute_transition_cost(true) == expected_cost);

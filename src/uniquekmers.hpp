@@ -98,6 +98,7 @@ private:
 	std::vector<unsigned char> path_to_allele;
 	unsigned short local_coverage;
 	friend class EmissionProbabilityComputer;
+	friend class HaplotypeSampler;
 	friend cereal::access;
 };
 # endif // UNIQUEKMERS_HPP
