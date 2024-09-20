@@ -1,0 +1,19 @@
+Still misses (proper) testcases:
+
+- HaplotypeSampler: update_unique_kmers
+- Variant: separate_variants with SampledPanel 
+
+
+Implementation:
+
+- Enable output of the sampled panel in VCF format (standalone command) and genotyping command (make optional)
+	* overload separate_variants function to work with SampledPanel objects
+	* overload write function for writing phased panel VCF with resulting Variants/SampledPanel objects
+	* In command PanGenie-sample: output final sampled panel VCF in the end
+	* In command PanGenie-genotype: make it optional to output the phased panel in the end: do this as last step after genotyping is done by:
+		(1) create list of SampledPanel objects from UniqueKmers objects right before they go out of stepwiseuniquekmercomputer
+		(2) use SampledPanel objects together with Graph objects to output the panel VCF (using the above functions)
+
+- increase variable sizes for alleles: now unsigned char --> convert to unsigned short to allow for more alleles/paths
+- experiment with alternative ways of implementing KmerPath objects (allele to kmer mapping)
+- experiment with smaller hash sizes for jellyfish (does this decrease memory with still exceptable speed?)

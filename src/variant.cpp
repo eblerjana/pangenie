@@ -387,6 +387,76 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 }
 
 
+void Variant::separate_variants_panel (vector<Variant>* resulting_variants, const SampledPanel* input_sampling, vector<SampledPanel>* resulting_sampling) const {
+	size_t nr_variants = this->allele_sequences.size();
+	assert (this->uncovered_alleles.size() == nr_variants);
+
+	// construct paths
+	vector<vector<unsigned char>> paths_per_variant (nr_variants);
+	for (size_t i = 0; i < this->paths.size(); ++i) {
+		unsigned char a = this->get_allele_on_path(i);
+		vector<unsigned char> allele = this->allele_combinations.at(a);
+		assert (allele.size() == nr_variants);
+		for (size_t v = 0; v < nr_variants; v++) {
+			// get allele at this position
+			unsigned char allele_id = allele.at(v);
+			paths_per_variant.at(v).push_back(allele_id);
+		}
+	}
+
+	// use reference allele to construct flanking sequences for each variant
+	vector<DnaSequence> reference_allele;
+	for (size_t i = 0; i < nr_variants; ++i) {
+		unsigned char allele_id = this->allele_combinations.at(0).at(i);
+		reference_allele.push_back(this->allele_sequences.at(i).at(allele_id));
+		if (i < (nr_variants - 1)) {
+			reference_allele.push_back(this->inner_flanks[i]);
+		}
+	}
+
+	reference_allele.insert(reference_allele.begin(), this->left_flank);
+	reference_allele.push_back(this->right_flank);
+
+	size_t current_start = this->start_position;
+
+	for (size_t i = 0; i < nr_variants; ++i) {
+		DnaSequence left = construct_left_flank(reference_allele, i*2 + 1, this->left_flank.size());
+		DnaSequence right = construct_right_flank(reference_allele, i*2 + 1, this->right_flank.size());
+		vector<DnaSequence> alleles = this->allele_sequences.at(i);
+		size_t current_end = current_start + alleles[0].size();
+
+		// construct new variant object
+		Variant v(left, right, this->chromosome, current_start, current_end, alleles, paths_per_variant.at(i)); //, this->variant_ids.at(i));
+
+		resulting_variants->push_back(v);
+		if (input_sampling != nullptr) {
+			// precompute alleles
+			vector<unsigned char> precomputed_ids (this->nr_of_alleles());
+			for (size_t a0 = 0; a0 < this->nr_of_alleles(); ++a0) {
+				unsigned char single_allele0 = this->allele_combinations[a0][i];
+				precomputed_ids[a0] = single_allele0;
+			}
+			// Iterate through all paths and determine single alleles
+			size_t nr_paths = input_sampling->get_nr_paths();
+			vector<unsigned char> single_alleles(nr_paths);
+			for (size_t p = 0; p < nr_paths; ++p) {
+				unsigned char combined_allele = input_sampling->get_allele_on_path(p);
+				single_alleles[p] = precomputed_ids[combined_allele];
+			}
+
+			// create SampledPanel object for this variant
+			SampledPanel p(single_alleles);
+			resulting_sampling->push_back(p);
+		}
+		// update start position
+		current_start = current_end;
+		if (i < (nr_variants-1)) {
+			current_start += this->inner_flanks[i].size();
+		}
+	}
+}
+
+
 void Variant::variant_statistics (shared_ptr<UniqueKmers> unique_kmers, vector<VariantStats>& result) const {
 	size_t nr_variants = this->allele_sequences.size();
 	assert (this->uncovered_alleles.size() == nr_variants);

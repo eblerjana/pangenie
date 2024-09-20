@@ -11,6 +11,7 @@
 #include "genotypingresult.hpp"
 #include "dnasequence.hpp"
 #include "uniquekmers.hpp"
+#include "sampledpanel.hpp"
 
 /** 
 * Represents a variant.
@@ -46,8 +47,10 @@ public:
 	void remove_flanking_sequence();
 	/** combine variants into a multi-allelic variant **/
 	void combine_variants (Variant const &v2);
-	/** separate variants that have been combined **/
+	/** separate variants that have been combined and construct GenotypingResult objects accordingly **/
 	void separate_variants (std::vector<Variant>* resulting_variants, const GenotypingResult* input_genotyping = nullptr, std::vector<GenotypingResult>* resulting_genotyping = nullptr) const;
+	/** separate variants that have been combined and construct SampledPanel objects accordingly **/
+	void separate_variants_panel (std::vector<Variant>* resulting_variants, const SampledPanel* input_sampling = nullptr, std::vector<SampledPanel>* resulting_sampling = nullptr) const;
 	/** total number of alleles of the variant **/
 	size_t nr_of_alleles() const;
 	/** total number of paths covering the variant **/

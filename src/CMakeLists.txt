@@ -19,6 +19,7 @@ add_library(PanGenieLib SHARED
 	pathsampler.cpp
 	probabilitycomputer.cpp
 	probabilitytable.cpp
+	sampledpanel.cpp
 	samplingemissions.cpp
 	samplingtransitions.cpp
 	sequenceutils.cpp
