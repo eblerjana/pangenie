@@ -22,13 +22,15 @@ HaplotypeSampler::HaplotypeSampler(vector<shared_ptr<UniqueKmers>>* unique_kmers
 	 effective_N(effective_N)
 {
 
+	if (size < 1) return;
+
 	// generate size Viterbi paths
 	for (size_t i = 0; i < size; ++i) {
 		compute_viterbi_path(best_scores);
 	}
 
 	// Update unique_kmers
-	if (size > 0) update_unique_kmers();
+	update_unique_kmers();
 
 	// clean up
 	init(this->viterbi_columns, 0);
@@ -195,9 +197,6 @@ void HaplotypeSampler::compute_viterbi_column(size_t column_index) {
 	// currently masked indexes (removed in previous DP iterations)
 	vector<bool> cur_mask = this->sampled_paths.mask_indexes(column_index, nr_paths-1);
 
-//	cout << "CUR MASK" << endl;
-//	for (unsigned int k = 0; k < cur_mask.size(); ++k) cout << cur_mask[k] << endl; 
-
 	SamplingTransitions* transition_cost_computer = nullptr;
 	SamplingEmissions emission_cost_computer(this->unique_kmers->at(column_index));
 
@@ -212,9 +211,6 @@ void HaplotypeSampler::compute_viterbi_column(size_t column_index) {
 		size_t first_id, second_id;
 		unsigned int first_val, second_val;
 		this->get_column_minima(previous_column->column, prev_mask, first_id, second_id, first_val, second_val);
-		cout << "PREV COLUMN:" << endl;
-		print_dpcolumn(previous_column);
-		cout << "COL MIN " << first_val << " " << first_id << " " << second_val << " " << second_id << endl;
 		// fill helper vector
 		for (size_t i = 0; i < nr_paths; ++i) {
 			if (cur_mask[i]) {
@@ -268,7 +264,6 @@ void HaplotypeSampler::compute_viterbi_column(size_t column_index) {
 		}
 		// add Emission costs
 		size_t allele = this->unique_kmers->at(column_index)->get_allele(i);
-		cout << "cell " << i << " " << previous_cell << " + " << emission_cost_computer.get_emission_cost(allele) << " (allele: " << (unsigned int) allele << ")" << endl;
 		current_column->column[i] = previous_cell + emission_cost_computer.get_emission_cost(allele);
 
 		// check if there was an overflow
@@ -279,13 +274,9 @@ void HaplotypeSampler::compute_viterbi_column(size_t column_index) {
 	this->viterbi_columns.at(column_index) = current_column;
 	this->viterbi_backtrace_columns.at(column_index) = backtrace_column;
 
-//	print_dpcolumn(current_column);
-
 	if (transition_cost_computer != nullptr) {
 		delete transition_cost_computer;
 	}
-
-	print_dpcolumn(current_column);
 }
 
 void HaplotypeSampler::update_unique_kmers() {
@@ -293,8 +284,6 @@ void HaplotypeSampler::update_unique_kmers() {
 	size_t nr_paths = this->sampled_paths.sampled_paths.size();
 	size_t nr_columns = this->unique_kmers->size();
 	for (size_t i = 0; i < nr_columns; ++i) {
-		cout << "OLD UniqueKmers object:" << endl;
-		cout << *this->unique_kmers->at(i) << endl;
 		vector<unsigned char> updated_path_to_allele(nr_paths);
 		std::map<unsigned char, std::pair<KmerPath, bool>> updated_alleles;
 		// iterate all paths sampled at this position
@@ -308,9 +297,6 @@ void HaplotypeSampler::update_unique_kmers() {
 		// update the UniqueKmers object
 		this->unique_kmers->operator[](i)->path_to_allele = updated_path_to_allele;
 		this->unique_kmers->operator[](i)->alleles = updated_alleles;
-
-		cout << "UPDATED UniqueKmers object:" << endl;
-		cout << *this->unique_kmers->at(i) << endl;
 	}
 }
 

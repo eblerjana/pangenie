@@ -31,10 +31,12 @@ int main(int argc, char* argv[]) {
 	long double regularization = 0.01L;
 	bool count_only_graph = true;
 	uint64_t hash_size = 3000000000;
+	size_t panel_size = 0;
+	double recombrate = 1.26;
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
-	argument_parser.add_command("PanGenie-index [options] -f <index-prefix> -i <reads.fa/fq> -o <outfile-prefix>\nSampling [options] -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf> -o <outfile-prefix>");
+	argument_parser.add_command("PanGenie-sampling [options] -f <index-prefix> -i <reads.fa/fq> -o <outfile-prefix>\nSampling [options] -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf> -o <outfile-prefix>");
 	argument_parser.add_optional_argument('r', "", "reference genome in FASTA format. NOTE: INPUT FASTA FILE MUST NOT BE COMPRESSED");
 	argument_parser.add_optional_argument('v', "", "variants in VCF format. NOTE: INPUT VCF FILE MUST NOT BE COMPRESSED");
 	argument_parser.add_optional_argument('k', "31", "kmer size");
@@ -45,6 +47,7 @@ int main(int argc, char* argv[]) {
 	argument_parser.add_optional_argument('t', "1", "number of threads to use for core algorithm. Largest number of threads possible is the number of chromosomes given in the VCF");
 	argument_parser.add_flag_argument('c', "count all read kmers instead of only those located in graph");
 	argument_parser.add_optional_argument('e', "3000000000", "size of hash used by jellyfish");
+	argument_parser.add_optional_argument('x', "0", "to which size the input panel shall be reduced.");
 
 	argument_parser.exactly_one('f', 'v');
 	argument_parser.exactly_one('f', 'r');
@@ -69,6 +72,7 @@ int main(int argc, char* argv[]) {
 	nr_jellyfish_threads = stoi(argument_parser.get_argument('j'));
 	nr_core_threads = stoi(argument_parser.get_argument('t'));
 	count_only_graph = !argument_parser.get_flag('c');
+	panel_size = stoi(argument_parser.get_argument('x'));
 	istringstream iss(argument_parser.get_argument('e'));
 	iss >> hash_size;
 
@@ -76,7 +80,7 @@ int main(int argc, char* argv[]) {
 	precomputed_prefix = argument_parser.get_argument('f');
 
 	// run sampling
-	int exit_code = run_sampling(precomputed_prefix, readfile, outname, nr_jellyfish_threads, nr_core_threads, effective_N, regularization, count_only_graph, hash_size);
+	int exit_code = run_sampling(precomputed_prefix, readfile, outname, nr_jellyfish_threads, nr_core_threads, effective_N, regularization, count_only_graph, hash_size, panel_size, recombrate);
 
 	getrusage(RUSAGE_SELF, &rss_total);
 

@@ -36,6 +36,8 @@ int main(int argc, char* argv[]) {
 	bool ignore_imputed = false;
 	size_t sampling_size = 0;
 	uint64_t hash_size = 3000000000;
+	size_t panel_size = 0;
+	double recombrate = 1.26;
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
@@ -55,6 +57,7 @@ int main(int argc, char* argv[]) {
 	argument_parser.add_flag_argument('u', "output genotype ./. for variants not covered by any unique kmers");
 	argument_parser.add_optional_argument('a', "0", "sample subsets of paths of this size");
 	argument_parser.add_optional_argument('e', "3000000000", "size of hash used by jellyfish");
+	argument_parser.add_optional_argument('x', "0", "to which size the input panel shall be reduced.");
 
 	argument_parser.exactly_one('f', 'v');
 	argument_parser.exactly_one('f', 'r');
@@ -95,6 +98,7 @@ int main(int argc, char* argv[]) {
 	count_only_graph = !argument_parser.get_flag('c');
 	ignore_imputed = argument_parser.get_flag('u');
 	sampling_size = stoi(argument_parser.get_argument('a'));
+	panel_size = stoi(argument_parser.get_argument('x'));
 	istringstream iss(argument_parser.get_argument('e'));
 	iss >> hash_size;
 
@@ -102,7 +106,7 @@ int main(int argc, char* argv[]) {
 		precomputed_prefix = argument_parser.get_argument('f');
 
 		// run genotyping
-		int exit_code = run_genotype_command(precomputed_prefix, readfile, outname, sample_name, nr_jellyfish_threads, nr_core_threads, only_genotyping, only_phasing, effective_N, regularization, count_only_graph, ignore_imputed, sampling_size, hash_size);
+		int exit_code = run_genotype_command(precomputed_prefix, readfile, outname, sample_name, nr_jellyfish_threads, nr_core_threads, only_genotyping, only_phasing, effective_N, regularization, count_only_graph, ignore_imputed, sampling_size, hash_size, panel_size, recombrate);
 
 		getrusage(RUSAGE_SELF, &rss_total);
 
@@ -121,7 +125,7 @@ int main(int argc, char* argv[]) {
 
 		cerr << endl << "NOTE: by running PanGenie-index first to pre-process data, you can reduce memory usage and speed up PanGenie. This is helpful especially when genotyping the same variants across multiple samples." << endl << endl;
 
-		int exit_code = run_single_command(outname, readfile, reffile, vcffile, kmersize, outname, sample_name, nr_jellyfish_threads, nr_core_threads, only_genotyping, only_phasing, effective_N, regularization, count_only_graph, ignore_imputed, add_reference, sampling_size, hash_size);
+		int exit_code = run_single_command(outname, readfile, reffile, vcffile, kmersize, outname, sample_name, nr_jellyfish_threads, nr_core_threads, only_genotyping, only_phasing, effective_N, regularization, count_only_graph, ignore_imputed, add_reference, sampling_size, hash_size, panel_size, recombrate);
 
 		getrusage(RUSAGE_SELF, &rss_total);
 
