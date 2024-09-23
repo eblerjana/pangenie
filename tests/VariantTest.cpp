@@ -793,3 +793,50 @@ TEST_CASE("Variant separate_variants_identical", "[Variant separate_variants_ide
 	REQUIRE(single_variants.size() == 1);
 	REQUIRE(single_variants[0] == v4);
 }
+
+
+TEST_CASE("Variant separate_variants_panel", "Variant separate_variants_panel") {
+	Variant v1 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"},      {0,0,1,1});
+	Variant v2 ("AACT", "ACTG", "chr2", 7, 10, {"GAG", "ACC"}, {0,1,1,1});
+	Variant v3 ("GACT", "GGAA", "chr2", 13, 14, {"G", "GTC"},  {0,0,1,0});
+	Variant v4 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,0,1,1});
+
+	v1.combine_variants(v2);
+	cout << v1 << endl;
+	v1.combine_variants(v3);
+	cout << v1 << endl;
+
+	vector<unsigned char> path_to_allele = {0,2,1,3,3,2,0,1};
+	SampledPanel sampled_panel(path_to_allele);
+	vector<Variant> single_variants;
+	vector<SampledPanel> single_panels;
+	v1.separate_variants_panel(&single_variants, &sampled_panel, &single_panels);
+
+	// expected SampledPaths. Note: order of alleles internally changes
+	vector<unsigned char> sampled1 = {0,1,0,1,1,1,0,0};
+	vector<unsigned char> sampled2 = {0,1,1,1,1,1,0,1};
+	vector<unsigned char> sampled3 = {0,0,0,1,1,0,0,0};
+	vector<vector<unsigned char>> expected = {sampled1, sampled2, sampled3};
+
+	REQUIRE(single_panels.size() == 3);
+
+	for (size_t i = 0; i < 3; ++i) {
+		REQUIRE(single_panels[i].get_all_paths() == expected[i]);
+	}
+}
+
+
+TEST_CASE("Variant separate_variants_panel_single", "Variant separate_variants_panel_single") {
+	Variant v ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,0,1,1});
+
+	vector<unsigned char> path_to_allele = {0,1,1,0,1,0,0,1,0,1,1,1,0};
+	SampledPanel sampled_panel(path_to_allele);
+	vector<Variant> single_variants;
+	vector<SampledPanel> single_panels;
+	v.separate_variants_panel(&single_variants, &sampled_panel, &single_panels);
+
+	vector<unsigned char> expected = {0,1,1,0,1,0,0,1,0,1,1,1,0};
+
+	REQUIRE(single_panels.size() == 1);
+	REQUIRE(single_panels[0].get_all_paths() == expected);
+}

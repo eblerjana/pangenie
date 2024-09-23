@@ -308,7 +308,7 @@ void prepare_unique_kmers_stepwise(string chromosome, KmerCounter* genomic_kmer_
 
 
 // TODO: implement after adapting UniqueKmerComputer
-void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, shared_ptr<KmerCounter> read_kmer_counts, shared_ptr<Graph> graph, ProbabilityTable* probs, UniqueKmersMap* unique_kmers_map, size_t kmer_coverage) {
+void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, shared_ptr<KmerCounter> read_kmer_counts, shared_ptr<Graph> graph, ProbabilityTable* probs, UniqueKmersMap* unique_kmers_map, size_t kmer_coverage, size_t panel_size, double recombrate, long double effective_N) {
 	Timer timer;
 	UniqueKmerComputer kmer_computer(genomic_kmer_counts, read_kmer_counts, graph, kmer_coverage);
 	std::vector<shared_ptr<UniqueKmers>> unique_kmers;
@@ -320,6 +320,7 @@ void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, s
 	}
 	// store runtime
 	lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
+	HaplotypeSampler sampler(&unique_kmers_map->unique_kmers[chromosome], panel_size, recombrate, effective_N);
 	unique_kmers_map->runtimes.insert(pair<string, double>(chromosome, timer.get_total_time()));
 }
 
@@ -463,7 +464,7 @@ int run_single_command(string precomputed_prefix, string readfile, string reffil
 				UniqueKmersMap* result = &unique_kmers_list;
 				KmerCounter* genomic_counts = &genomic_kmer_counts;
 				ProbabilityTable* probs = &probabilities;
-				function<void()> f_unique_kmers = bind(prepare_unique_kmers, chromosome, genomic_counts, read_kmer_counts, graph_segment, probs, result, kmer_abundance_peak);
+				function<void()> f_unique_kmers = bind(prepare_unique_kmers, chromosome, genomic_counts, read_kmer_counts, graph_segment, probs, result, kmer_abundance_peak, panel_size, recombrate, effective_N);
 				threadPool.submit(f_unique_kmers);
 			}
 		}
@@ -1108,6 +1109,8 @@ int run_sampling(string precomputed_prefix, string readfile, string outname, siz
 
 	vector<string> chromosomes;
 	Results results;
+	map<string, vector<SampledPanel>> chrom_to_sampled;
+
 
 	{
 		UniqueKmersMap unique_kmers_list;
@@ -1221,28 +1224,45 @@ int run_sampling(string precomputed_prefix, string readfile, string outname, siz
 				time_unique_kmers += it->second;
 			}
 
-			getrusage(RUSAGE_SELF, &rss_unique_kmers);
-			timer.get_interval_time();
 
-		}
-
-
-		/**
-		* 3) Check path coverages of haplotypes and print them.
-		*/
-
-		{
+			// convert the UniqueKmers information into SampledPanels
 			for (auto chromosome : chromosomes) {
-				cout << "# Statistics for " << chromosome << endl;
-				vector<shared_ptr<UniqueKmers>>* unique_kmers = &unique_kmers_list.unique_kmers[chromosome];
-				HaplotypeSampler haplotype_sampler(unique_kmers, 0);
-				haplotype_sampler.rank_haplotypes();
+				for (size_t i = 0; i < unique_kmers_list.unique_kmers[chromosome].size(); ++i) {
+					vector<unsigned short> path_ids;
+					vector<unsigned char> allele_ids;
+					unique_kmers_list.unique_kmers[chromosome][i]->get_path_ids(path_ids, allele_ids);
+					chrom_to_sampled[chromosome].push_back(SampledPanel(allele_ids));
+				}
 			}
-		
-			getrusage(RUSAGE_SELF, &rss_sampling);
+
+			getrusage(RUSAGE_SELF, &rss_unique_kmers);
 			timer.get_interval_time();
 		}
 	}
+
+	/**
+	* 3) print the sampled VCF.
+	**/
+
+	// write the output VCF
+	cerr << "Write results to VCF ..." << endl;
+	bool write_header = true;
+	for (auto it = chrom_to_sampled.begin(); it != chrom_to_sampled.end(); ++it) {
+		// read serialized Graph object corresponding to current chromosome
+		Graph graph;
+        string graph_filename = precomputed_prefix + "_" + it->first + "_Graph.cereal";
+		cerr << "Reading precomputed Graph for chromosome " << it->first << " ..." <<  " from " << graph_filename << endl;
+		ifstream os(graph_filename, std::ios::binary);
+		cereal::BinaryInputArchive archive( os );
+		archive(graph);
+
+		graph.write_sampled_panel(outname + "_genotyping.vcf", it->second, write_header);
+
+		// write header only for first chromosome
+		write_header = false;
+	}
+
+
 
 	getrusage(RUSAGE_SELF, &rss_total);
 	time_sampling = timer.get_interval_time();

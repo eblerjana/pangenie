@@ -362,21 +362,155 @@ void Graph::write_phasing(string filename, const vector<GenotypingResult>& genot
 			if (ignore_imputed && (nr_unique_kmers == 0)){
 				phasing_outfile << "./."; // GT (phased)
 			} else {
+
 				pair<unsigned char,unsigned char> haplotype = singleton_likelihoods.at(j).get_haplotype();
 				// check if the haplotype allele is undefined
 				bool hap1_undefined = v.is_undefined_allele(haplotype.first);
 				bool hap2_undefined = v.is_undefined_allele(haplotype.second);
-				string hap1 (1, haplotype.first);
-				string hap2 (1, haplotype.second);
-				if (hap1_undefined) hap1 = ".";
-				if (hap2_undefined) hap2 = ".";
-				phasing_outfile << (unsigned int) haplotype.first << "|" << (unsigned int) haplotype.second; // GT (phased)
+				if (hap1_undefined) {
+					phasing_outfile << ".|";
+				} else {
+					phasing_outfile << (unsigned int) genotype_likelihoods.get_haplotype().first << "|";
+				}
+
+				if (hap2_undefined) {
+					phasing_outfile << ".";
+				} else {
+					phasing_outfile << (unsigned int) genotype_likelihoods.get_haplotype().second;
+				} 
 			}
 			phasing_outfile << ":" << coverage << endl; // KC
 			counter += 1;
 		}
 	}
 }
+
+
+void Graph::write_sampled_panel(string filename, const vector<SampledPanel>& sampled_paths, bool write_header) {
+	if (this->variants_deleted) {
+		throw runtime_error("Graph::write_sampled_panel: variants have been deleted by delete_variant funtion. Re-build object.");
+	}
+
+	if (sampled_paths.size() != this->size()) {
+		throw runtime_error("Graph::write_sampled_panel: number of variants and number of computed phasings differ.");
+	}
+
+	ofstream panel_outfile;
+	if (write_header) {
+		panel_outfile.open(filename);
+		if (! panel_outfile.is_open()) {
+			throw runtime_error("Graph::write_sampled_panel: panel output file cannot be opened. Note that the filename must not contain non-existing directories.");
+		}
+
+		// determine number of paths by looking into first SampledPanel object (assuming the number of paths is constant, which is always the case)
+		size_t nr_paths = sampled_paths[0].get_nr_paths();
+
+
+		// write VCF header lines
+		panel_outfile << "##fileformat=VCFv4.2" << endl;
+		panel_outfile << "##fileDate=" << graph_get_date() << endl;
+		// TODO output command line
+		panel_outfile << "##INFO=<ID=AF,Number=A,Type=Float,Description=\"Allele Frequency\">" << endl;
+		panel_outfile << "##INFO=<ID=UK,Number=1,Type=Integer,Description=\"Total number of unique kmers.\">" << endl;
+		panel_outfile << "##INFO=<ID=MA,Number=1,Type=Integer,Description=\"Number of alleles missing in panel haplotypes.\">" << endl;
+		panel_outfile << "##INFO=<ID=ID,Number=A,Type=String,Description=\"Variant IDs.\">" << endl;
+		panel_outfile << "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">" << endl;
+		panel_outfile << "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT";
+
+		for (size_t i = 0; i < nr_paths; ++i) {
+			if (i > 0) panel_outfile << "\t";
+			panel_outfile << "sampledHT" << i;
+		}
+		panel_outfile << endl;
+
+	} else {
+		panel_outfile.open(filename, std::ios_base::app);
+		if (! panel_outfile.is_open()) {
+			throw runtime_error("Graph::write_sampled_panel: panel output file cannot be opened. Note that the filename must not contain non-existing directories.");
+		}
+	}
+
+	size_t counter = 0;
+	for (size_t i = 0; i < this->size(); ++i) {
+		shared_ptr<Variant> variant = this->variants.at(i);
+
+		// separate (possibly combined) variant into single variants and print a line for each
+		vector<Variant> singleton_variants;
+		vector<SampledPanel> singleton_sampled;
+		variant->separate_variants_panel(&singleton_variants, &sampled_paths.at(i), &singleton_sampled);
+
+		for (size_t j = 0; j < singleton_sampled.size(); ++j) {
+			Variant v = singleton_variants[j];
+			v.remove_flanking_sequence();
+			panel_outfile << v.get_chromosome() << "\t"; // CHROM
+			panel_outfile << (v.get_start_position() + 1) << "\t"; // POS
+			panel_outfile << v.get_id() << "\t"; // ID
+			panel_outfile << v.get_allele_string(0) << "\t"; // REF
+
+			// get alternative alleles
+			size_t nr_alleles = v.nr_of_alleles();
+			if (nr_alleles < 2) {
+				ostringstream oss;
+				oss << "Graph::write_sampled_panel: less than 2 alleles given for variant at position " << v.get_start_position() << endl;
+				throw runtime_error(oss.str());
+			}
+
+			vector<string> alt_alleles;
+			vector<unsigned char> defined_alleles = {0};
+			for (size_t i = 1; i < nr_alleles; ++i) {
+				DnaSequence allele = v.get_allele_sequence(i);
+				// skip alleles that are undefined
+				if (! v.is_undefined_allele(i)) {
+					alt_alleles.push_back(allele.to_string());
+					defined_alleles.push_back(i);
+				}
+			}
+
+			string alt_string = "";
+			for (unsigned char a = 0; a < alt_alleles.size(); ++a) {
+				if (a > 0) alt_string += ',';
+				alt_string += alt_alleles[a];
+			}
+
+			size_t nr_missing = v.nr_missing_alleles();
+			SampledPanel paths = singleton_sampled.at(j);
+			if (nr_missing > 0) paths = singleton_sampled.at(j).get_specific_alleles(defined_alleles);
+
+			panel_outfile << alt_string << "\t"; // ALT
+			panel_outfile << ".\t"; // QUAL
+			panel_outfile << "PASS" << "\t"; // FILTER
+			// output allele frequencies of all alleles
+			ostringstream info;
+			info << "AF=";
+			for (unsigned int a = 1; a < defined_alleles.size(); ++a) {
+				if (a > 1) info << ",";
+				info << setprecision(6) << v.allele_frequency(defined_alleles[a], this->add_reference);				
+			}
+			info << ";MA=" << nr_missing;
+
+			// if IDs were given in input, write them to output as well
+			if (!this->variant_ids[counter].empty()) info << ";ID=" << get_ids(alt_alleles, counter, false);
+
+			panel_outfile << info.str() << "\t"; // INFO
+			panel_outfile << "GT" << "\t"; // FORMAT
+
+			// determine phasing
+			vector<unsigned char> alleles = paths.get_all_paths();
+			for (size_t a = 0; a < alleles.size(); ++a) {
+				if (a > 1) panel_outfile << "\t";
+				// check if original allele was undefined
+				if (v.is_undefined_allele(singleton_sampled.at(j).get_allele_on_path(a))) {
+					panel_outfile << ".";
+				} else {
+					panel_outfile << (unsigned int) alleles[a];
+				}
+			}
+			panel_outfile << endl;
+			counter += 1;
+		}
+	}
+}
+
 
 void Graph::get_left_overhang(size_t index, size_t length, DnaSequence& result) const {
 	if (this->variants.at(index) == nullptr) {
