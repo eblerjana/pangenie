@@ -813,10 +813,10 @@ TEST_CASE("Variant separate_variants_panel", "Variant separate_variants_panel") 
 	v1.separate_variants_panel(&single_variants, &sampled_panel, &single_panels);
 
 	// expected SampledPaths. Note: order of alleles internally changes
-	vector<unsigned char> sampled1 = {0,1,0,1,1,1,0,0};
-	vector<unsigned char> sampled2 = {0,1,1,1,1,1,0,1};
-	vector<unsigned char> sampled3 = {0,0,0,1,1,0,0,0};
-	vector<vector<unsigned char>> expected = {sampled1, sampled2, sampled3};
+	vector<int> sampled1 = {0,1,0,1,1,1,0,0};
+	vector<int> sampled2 = {0,1,1,1,1,1,0,1};
+	vector<int> sampled3 = {0,0,0,1,1,0,0,0};
+	vector<vector<int>> expected = {sampled1, sampled2, sampled3};
 
 	REQUIRE(single_panels.size() == 3);
 
@@ -826,7 +826,7 @@ TEST_CASE("Variant separate_variants_panel", "Variant separate_variants_panel") 
 }
 
 
-TEST_CASE("Variant separate_variants_panel_single", "Variant separate_variants_panel_single") {
+TEST_CASE("Variant separate_variants_panel_single", "[Variant separate_variants_panel_single]") {
 	Variant v ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,0,1,1});
 
 	vector<unsigned char> path_to_allele = {0,1,1,0,1,0,0,1,0,1,1,1,0};
@@ -835,8 +835,32 @@ TEST_CASE("Variant separate_variants_panel_single", "Variant separate_variants_p
 	vector<SampledPanel> single_panels;
 	v.separate_variants_panel(&single_variants, &sampled_panel, &single_panels);
 
-	vector<unsigned char> expected = {0,1,1,0,1,0,0,1,0,1,1,1,0};
+	vector<int> expected = {0,1,1,0,1,0,0,1,0,1,1,1,0};
 
 	REQUIRE(single_panels.size() == 1);
 	REQUIRE(single_panels[0].get_all_paths() == expected);
+}
+
+TEST_CASE("Variant separate_variants_panel2", "[Variant separate_variants_panel2]") {
+	Variant v1 ("AAAA", "CCCC", "chr1", 16636, 16637, {"T", "TA", "TAAA", "NNN"}, {0,1,1,3,2,3});
+	Variant v2 ("AAAA", "CCCC", "chr1", 16638, 16639, {"A", "T", "NN", "NNN"},    {2,1,2,3,0,1});
+
+	v1.combine_variants(v2);
+
+	vector<unsigned char> path_to_allele(v1.nr_of_paths());
+	for (size_t i = 0; i < v1.nr_of_paths(); i++) {
+		path_to_allele[i] = v1.get_allele_on_path(i);
+	}
+
+	SampledPanel sampled_panel(path_to_allele);
+	vector<Variant> single_variants;
+	vector<SampledPanel> single_panels;
+	v1.separate_variants_panel(&single_variants, &sampled_panel, &single_panels);
+
+	vector<int> sampled1 = {0,1,1,3,2,3};
+	vector<int> sampled2 = {2,1,2,3,0,1};
+
+	REQUIRE(single_panels[0].get_all_paths() == sampled1);
+	REQUIRE(single_panels[1].get_all_paths() == sampled2);
+
 }

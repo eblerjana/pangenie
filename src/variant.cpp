@@ -265,7 +265,6 @@ void Variant::combine_variants (Variant const &v2){
 		unsigned char right_allele = v2.paths.at(p);
 		index_to_path[p] = make_pair(left_allele, right_allele);
 		path_to_index[make_pair(left_allele,right_allele)].push_back(p);
-		cout << "path_to_index " << (unsigned int) left_allele << " " << (unsigned int) right_allele << " " << p << endl;
 	}
 
 	// add REF-REF allele
@@ -436,7 +435,6 @@ void Variant::separate_variants_panel (vector<Variant>* resulting_variants, cons
 			for (size_t a0 = 0; a0 < this->nr_of_alleles(); ++a0) {
 				unsigned char single_allele0 = this->allele_combinations[a0][i];
 				precomputed_ids[a0] = single_allele0;
-				cout << "precomputed_ids[" << (unsigned int) a0 << "] = " << (unsigned int) single_allele0 << endl; 
 			}
 			// Iterate through all paths and determine single alleles
 			size_t nr_paths = input_sampling->get_nr_paths();

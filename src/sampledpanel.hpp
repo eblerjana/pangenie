@@ -6,12 +6,13 @@
 class SampledPanel {
 public:
 	SampledPanel(std::vector<unsigned char> path_to_allele);
-	unsigned char get_allele_on_path(size_t path) const;
-	std::vector<unsigned char> get_all_paths() const;
+	SampledPanel(std::vector<int> path_to_allele);
+	int get_allele_on_path(size_t path) const;
+	std::vector<int> get_all_paths() const;
 	size_t get_nr_paths() const;
 	SampledPanel get_specific_alleles(std::vector<unsigned char>& alleles) const;
 private:
-	std::vector<unsigned char> path_to_allele;
+	std::vector<int> path_to_allele;
 };
 
 #endif // SAMPLED_PANEL

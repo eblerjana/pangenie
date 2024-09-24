@@ -495,14 +495,15 @@ void Graph::write_sampled_panel(string filename, const vector<SampledPanel>& sam
 			panel_outfile << "GT" << "\t"; // FORMAT
 
 			// determine phasing
-			vector<unsigned char> alleles = paths.get_all_paths();
+			vector<int> alleles = paths.get_all_paths();
 			for (size_t a = 0; a < alleles.size(); ++a) {
-				if (a > 1) panel_outfile << "\t";
+				if (a > 0) panel_outfile << "\t";
 				// check if original allele was undefined
 				if (v.is_undefined_allele(singleton_sampled.at(j).get_allele_on_path(a))) {
+					assert (alleles[a] == -1);
 					panel_outfile << ".";
 				} else {
-					panel_outfile << (unsigned int) alleles[a];
+					panel_outfile << alleles[a];
 				}
 			}
 			panel_outfile << endl;

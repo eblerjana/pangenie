@@ -1094,14 +1094,13 @@ int run_sampling(string precomputed_prefix, string readfile, string outname, siz
 	double time_unique_kmers = 0.0;
 	double time_kmer_counting = 0.0;
 	double time_probabilities = 0.0;
-	double time_sampling = 0.0;
+	double time_writing = 0.0;
 	double time_total = 0.0;
 
 	struct rusage rss_read_serialized;
 	struct rusage rss_unique_kmers;
 	struct rusage rss_kmer_counting;
 	struct rusage rss_probabilities;
-	struct rusage rss_sampling;
 	struct rusage rss_total;
 
 	// check if input files exist and are uncompressed
@@ -1224,6 +1223,7 @@ int run_sampling(string precomputed_prefix, string readfile, string outname, siz
 				time_unique_kmers += it->second;
 			}
 
+			timer.get_interval_time();
 
 			// convert the UniqueKmers information into SampledPanels
 			for (auto chromosome : chromosomes) {
@@ -1236,7 +1236,7 @@ int run_sampling(string precomputed_prefix, string readfile, string outname, siz
 			}
 
 			getrusage(RUSAGE_SELF, &rss_unique_kmers);
-			timer.get_interval_time();
+
 		}
 	}
 
@@ -1256,7 +1256,7 @@ int run_sampling(string precomputed_prefix, string readfile, string outname, siz
 		cereal::BinaryInputArchive archive( os );
 		archive(graph);
 
-		graph.write_sampled_panel(outname + "_genotyping.vcf", it->second, write_header);
+		graph.write_sampled_panel(outname + "_panel.vcf", it->second, write_header);
 
 		// write header only for first chromosome
 		write_header = false;
@@ -1265,24 +1265,24 @@ int run_sampling(string precomputed_prefix, string readfile, string outname, siz
 
 
 	getrusage(RUSAGE_SELF, &rss_total);
-	time_sampling = timer.get_interval_time();
+	time_writing = timer.get_interval_time();
 	time_total = timer.get_total_time();
 
-	cerr << endl << "###### Summary PanGenie-genotype ######" << endl;
+	cerr << endl << "###### Summary PanGenie-sampling ######" << endl;
 	// output times
 	cerr << "time spent reading UniqueKmersMap from disk: \t" << time_read_serialized << " sec" << endl;
 	cerr << "time spent counting kmers in reads (wallclock): \t" << time_kmer_counting << " sec" << endl;
 	cerr << "time spent pre-computing probabilities: \t" << time_probabilities << " sec" << endl;
-	cerr << "time spent updating unique kmers: \t" << time_unique_kmers << " sec" << endl;
-	cerr << "time spent sampling: \t" << time_sampling << " sec" << endl;
+	cerr << "time spent updating unique kmers and sampling: \t" << time_unique_kmers << " sec" << endl;
+	cerr << "time spent writing output VCF: \t" << time_writing << " sec" << endl;
 	cerr << "total wallclock time sampling: " << time_total  << " sec" << endl;
 
 	cerr << endl;
 	cerr << "Max RSS after reading UniqueKmersMap from disk: \t" << (rss_read_serialized.ru_maxrss / 1E6) << " GB" << endl;
 	cerr << "Max RSS after counting kmers in reads: \t" << (rss_kmer_counting.ru_maxrss / 1E6) << " GB" << endl;
 	cerr << "Max RSS after pre-computing probabilities: \t" << (rss_probabilities.ru_maxrss / 1E6) << " GB" << endl;
-	cerr << "Max RSS after updating unique kmers: \t" << (rss_unique_kmers.ru_maxrss / 1E6) << " GB" << endl;
-	cerr << "Max RSS after sampling: \t" << (rss_sampling.ru_maxrss / 1E6) << " GB" << endl;
+	cerr << "Max RSS after updating unique kmers and sampling: \t" << (rss_unique_kmers.ru_maxrss / 1E6) << " GB" << endl;
+	cerr << "Max RSS after writing VCF: \t" << (rss_total.ru_maxrss / 1E6) << " GB" << endl;
 	cerr << "Max RSS: \t" << (rss_total.ru_maxrss / 1E6) << " GB" << endl;
     cerr << "#######################################" << endl << endl;
 	return 0;

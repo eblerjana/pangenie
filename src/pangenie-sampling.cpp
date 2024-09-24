@@ -18,10 +18,6 @@ int main(int argc, char* argv[]) {
 	cerr << "author: Jana Ebler" << endl << endl;
 	cerr << "version: v3.0.1" << endl;
 
-	string reffile = "";
-	string vcffile = "";
-	size_t kmersize = 31;
-
 	string precomputed_prefix = "";
 	string readfile = "";
 	string outname = "result";
@@ -36,22 +32,16 @@ int main(int argc, char* argv[]) {
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
-	argument_parser.add_command("PanGenie-sampling [options] -f <index-prefix> -i <reads.fa/fq> -o <outfile-prefix>\nSampling [options] -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf> -o <outfile-prefix>");
-	argument_parser.add_optional_argument('r', "", "reference genome in FASTA format. NOTE: INPUT FASTA FILE MUST NOT BE COMPRESSED");
-	argument_parser.add_optional_argument('v', "", "variants in VCF format. NOTE: INPUT VCF FILE MUST NOT BE COMPRESSED");
+	argument_parser.add_command("PanGenie-sampling [options] -f <index-prefix> -i <reads.fa/fq> -o <outfile-prefix>");
 	argument_parser.add_optional_argument('k', "31", "kmer size");
 	argument_parser.add_mandatory_argument('i', "sequencing reads in FASTA/FASTQ format or Jellyfish database in jf format. NOTE: INPUT FASTA/Q FILE MUST NOT BE COMPRESSED");
-	argument_parser.add_optional_argument('f', "", "Filename prefix of files computed by PanGenie-index (i.e. option -o used with PanGenie-index)");
+	argument_parser.add_mandatory_argument('f', "Filename prefix of files computed by PanGenie-index (i.e. option -o used with PanGenie-index)");
 	argument_parser.add_optional_argument('o', "result", "prefix of the output files. NOTE: the given path must not include non-existent folders");
 	argument_parser.add_optional_argument('j', "1", "number of threads to use for kmer-counting");
 	argument_parser.add_optional_argument('t', "1", "number of threads to use for core algorithm. Largest number of threads possible is the number of chromosomes given in the VCF");
 	argument_parser.add_flag_argument('c', "count all read kmers instead of only those located in graph");
 	argument_parser.add_optional_argument('e', "3000000000", "size of hash used by jellyfish");
 	argument_parser.add_optional_argument('x', "0", "to which size the input panel shall be reduced.");
-
-	argument_parser.exactly_one('f', 'v');
-	argument_parser.exactly_one('f', 'r');
-	argument_parser.not_both('f', 'k');
 
 	try {
 		argument_parser.parse(argc, argv);

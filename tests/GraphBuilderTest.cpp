@@ -418,3 +418,58 @@ TEST_CASE("GraphBuilder unknown_alleles2", "[GraphBuilder unknown_alleles2]") {
 	string expected_ids = "var3,var2,var1";
 	REQUIRE(expected_ids == computed_ids);
 }
+
+TEST_CASE("GraphBuilder write_sampled_panel", "[GraphBuilder write_sampled_panel]") {
+	string vcf = "../tests/data/small4.vcf";
+	string fasta = "../tests/data/small1.fa";
+
+	// read variants from VCF file
+	map<string, shared_ptr<Graph>> graph;
+	GraphBuilder v(vcf, fasta, graph, "../tests/data/empty-segments.fa", 10, false);
+
+	vector<string> chromosomes;
+	vector<string> expected_chromosomes = {"chrA"};
+	v.get_chromosomes(&chromosomes);
+
+	REQUIRE(chromosomes.size() == expected_chromosomes.size());
+	REQUIRE(chromosomes[0] == expected_chromosomes[0]);
+	REQUIRE(graph["chrA"]->size() == 1);
+
+	// create SampledPanel object
+	vector<unsigned char> path_to_allele(graph["chrA"]->get_variant(0).nr_of_paths());
+	for (size_t i = 0; i < graph["chrA"]->get_variant(0).nr_of_paths(); i++) {
+		path_to_allele[i] = graph["chrA"]->get_variant(0).get_allele_on_path(i);
+	}
+
+	SampledPanel sampled_panel(path_to_allele);
+	vector<SampledPanel> s = {sampled_panel};
+	graph.at("chrA")->write_sampled_panel("../tests/data/small4-sampled-panel.vcf", s, true);
+
+	string line;
+	vector<vector<string>> computed_lines;
+
+	// read the file produced to make sure paths were correctly written
+	ifstream output_vcf("../tests/data/small4-sampled-panel.vcf");
+	while (getline(output_vcf, line)) {
+		vector<string> tokens;
+		if (line.size() == 0) continue;
+		if (line[0] == '#') {
+			// skip VCF header lines
+			continue;
+		}
+	
+		// split line by tabs
+		istringstream iss(line);
+		string token;
+		while(getline(iss, token, '\t'))
+			tokens.push_back(token);
+
+		computed_lines.push_back(tokens);
+	}
+
+	REQUIRE(computed_lines.size() == 2);
+	vector<string> expected_line1 = {"chrA", "161", ".", "G", "TA,TAAA", ".", "PASS", "AF=0.375,0.416667;MA=2", "GT", "0", "1", "1", "1", "2", "1", "2", "2", "2", "1", "1", "0", "2", "2", ".", ".", "1", "2", "2", "1", "2", "2", "1", "0"};
+	vector<string> expected_line2 = {"chrA", "166", ".", "G", "T", ".", "PASS", "AF=0.666667;MA=6", "GT", ".", "1", ".", ".", ".", "1", "1", "1", "1", "1", "1", "0", "1", "1", ".", ".", "1", "1", "1", "1",	"1", "1", "1", "0"};
+	REQUIRE(computed_lines[0] == expected_line1);
+	REQUIRE(computed_lines[1] == expected_line2);
+}
