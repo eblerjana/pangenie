@@ -284,21 +284,16 @@ void HaplotypeSampler::update_unique_kmers() {
 	size_t nr_paths = this->sampled_paths.sampled_paths.size();
 	size_t nr_columns = this->unique_kmers->size();
 	for (size_t i = 0; i < nr_columns; ++i) {
-		vector<unsigned char> updated_path_to_allele(nr_paths);
-		std::map<unsigned char, std::pair<KmerPath, bool>> updated_alleles;
+		vector<unsigned short> p(nr_paths);
 		// iterate all paths sampled at this position
 		for (size_t j = 0; j < nr_paths; ++j) {
 			// insert sampled paths
-			unsigned int sampled_path = this->sampled_paths.sampled_paths[j][i];
-			unsigned char allele = this->unique_kmers->at(i)->get_allele(sampled_path);
-			updated_path_to_allele[j] = allele;
-			updated_alleles[allele] = this->unique_kmers->at(i)->alleles[allele];
+			p[j] = this->sampled_paths.sampled_paths[j][i];
 		}
-		// update the UniqueKmers object
-		this->unique_kmers->operator[](i)->path_to_allele = updated_path_to_allele;
-		this->unique_kmers->operator[](i)->alleles = updated_alleles;
+		this->unique_kmers->operator[](i)->update_paths(p);
 	}
 }
+
 
 SampledPaths HaplotypeSampler::get_sampled_paths() const {
 	return this->sampled_paths;

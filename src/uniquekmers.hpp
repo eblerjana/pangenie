@@ -82,6 +82,8 @@ public:
 	void set_undefined_allele (unsigned char allele_id);
 	/** look up allele covered by a path **/
 	unsigned char get_allele(unsigned short path_id) const;
+	/** update UniqueKmers object by keeping only the paths provided **/
+	void update_paths(std::vector<unsigned short>& path_ids);
 
 	template<class Archive>
 	void serialize(Archive& archive) {

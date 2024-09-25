@@ -185,3 +185,33 @@ unsigned char UniqueKmers::get_allele(unsigned short path_id) const {
 	}
 	return this->path_to_allele[path_id];
 }
+
+void UniqueKmers::update_paths(vector<unsigned short>& path_ids) {
+	size_t nr_paths = path_ids.size();
+	vector<unsigned char> updated_path_to_allele(nr_paths);
+	map<unsigned char, std::pair<KmerPath, bool>> updated_alleles;
+	for (size_t i = 0; i < path_ids.size(); ++i) {
+		unsigned char allele = this->get_allele(path_ids[i]);
+		updated_path_to_allele[i] = allele;
+		updated_alleles[allele] = this->alleles[allele];
+	}
+
+	// update the KmerPath objects and the kmer counts
+	map<size_t, vector<unsigned char>> kmer_to_alleles;
+	for (auto it = updated_alleles.begin(); it != updated_alleles.end(); ++it) {
+		for (size_t k = 0; k < this->size(); ++k) {
+			if (it->second.first.get_position(k)) {
+				kmer_to_alleles[k].push_back(it->first);
+			}
+		}
+	}
+	this->path_to_allele = updated_path_to_allele;
+	this->alleles.clear();
+	vector<unsigned short> old_counts = this->kmer_to_count;
+	this->kmer_to_count.clear();
+	this->current_index = 0;
+
+	for (auto it = kmer_to_alleles.begin(); it != kmer_to_alleles.end(); ++it) {
+		this->insert_kmer(old_counts[it->first], it->second);
+	}
+}

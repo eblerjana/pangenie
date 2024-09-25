@@ -802,9 +802,7 @@ TEST_CASE("Variant separate_variants_panel", "Variant separate_variants_panel") 
 	Variant v4 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,0,1,1});
 
 	v1.combine_variants(v2);
-	cout << v1 << endl;
 	v1.combine_variants(v3);
-	cout << v1 << endl;
 
 	vector<unsigned char> path_to_allele = {0,2,1,3,3,2,0,1};
 	SampledPanel sampled_panel(path_to_allele);

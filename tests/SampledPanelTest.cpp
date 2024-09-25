@@ -24,8 +24,16 @@ TEST_CASE("SampledPanel get_specific_alleles", "[SampledPanel get_specific_allel
 	vector<unsigned char> specific_alleles = {1,2};
 	vector<int> expected = {-1,0,0,-1,-1,1,0,-1,0,-1};
 
+	REQUIRE(expected == s.get_specific_alleles(specific_alleles).get_all_paths());
+}
+
+
+TEST_CASE("SampledPanel get_specific_alleles2", "[SampledPanel get_specific_alleles2]") {
+
+	vector<unsigned char> path_to_allele = {0,1,1,0,3,2,1,0,1,4};
+	SampledPanel s (path_to_allele);
+	vector<unsigned char> specific_alleles = {};
+	vector<int> expected = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
 
 	REQUIRE(expected == s.get_specific_alleles(specific_alleles).get_all_paths());
-
-
 }
