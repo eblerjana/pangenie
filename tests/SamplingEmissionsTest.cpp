@@ -36,7 +36,7 @@ TEST_CASE("SamplingEmissions get_emission_cost1", "[SamplingEmissions get_emissi
 	REQUIRE(s1.get_emission_cost(0) == 0);
 
 	SamplingEmissions s2 (u2);
-	REQUIRE(s2.get_emission_cost(0) == 0);
+	REQUIRE(s2.get_emission_cost(0) == 25);
 	REQUIRE(s2.get_emission_cost(1) == 3);
 }
 
@@ -101,4 +101,27 @@ TEST_CASE("SamplingEmissions get_emission_cost3", "[SamplingEmissions get_emissi
 	SamplingEmissions s1 (u1);
 	REQUIRE(s1.get_emission_cost(0) == 0);
 	REQUIRE(s1.get_emission_cost(1) == 25);
+}
+
+TEST_CASE("SamplingEmissions undefined_allele", "[SamplingEmissions undefined_allele]") {
+	vector<unsigned char> path_to_allele = {0,1,2};
+	shared_ptr<UniqueKmers> u =  shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
+	vector<unsigned char> a1 = {0};
+	vector<unsigned char> a2 = {1};
+	vector<unsigned char> a3 = {2};
+	u->set_undefined_allele(1);
+	u->insert_kmer(20, a1);
+	u->insert_kmer(2, a3);
+
+	// check fractions computed by UniqueKmers object
+	map<unsigned char, float> fractions = u->covered_kmers_on_alleles();
+	REQUIRE(fractions.size() == 3);
+	REQUIRE(doubles_equal(fractions[0], 1.0));
+	REQUIRE(doubles_equal(fractions[1], 1.0));
+	REQUIRE(doubles_equal(fractions[2], 0.0));
+
+	SamplingEmissions s(u);
+	REQUIRE(s.get_emission_cost(0) == 0);
+	REQUIRE(s.get_emission_cost(1) == 25);
+	REQUIRE(s.get_emission_cost(2) == 25);
 }

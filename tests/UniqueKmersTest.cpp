@@ -393,3 +393,44 @@ TEST_CASE("UniqueKmers update_paths3", "[UniqueKmers update_paths3]") {
 	REQUIRE(u.get_readcount_of(0) == 10);
 	REQUIRE(u.get_readcount_of(1) == 20);
 }
+
+TEST_CASE("UniqueKmers update_paths4", "[UniqueKmers update_paths4]") {
+	vector<unsigned short> counts = {10,20};
+	vector<unsigned char> path_to_allele = {0,1};
+	UniqueKmers u (100, path_to_allele);
+	u.set_undefined_allele(0);
+
+	// no kmers on allele 0
+	vector<vector<unsigned char>> alleles = {{1}, {1}};
+	for (size_t i = 0; i < 2; ++i) {
+		u.insert_kmer(counts[i], alleles[i]);
+		REQUIRE(u.kmer_on_path(i,1));
+	}
+
+	for (size_t i = 0; i < 2; ++i) {
+		REQUIRE(u.get_readcount_of(i) == counts[i]);
+	}
+
+	REQUIRE(u.size() == 2);
+	REQUIRE(u.kmer_on_path(0,1));
+	REQUIRE(u.kmer_on_path(1,1));
+	REQUIRE(!u.kmer_on_path(0,0));
+	REQUIRE(!u.kmer_on_path(1,0));
+	REQUIRE(u.is_undefined_allele(0));
+
+	vector<unsigned short> updated_paths = {0,1};
+	u.update_paths(updated_paths);
+
+	vector<unsigned short> computed_paths;
+	vector<unsigned char> computed_alleles;
+	vector<unsigned short> expected_paths = {0,1};
+	vector<unsigned char> expected_alleles = {0,1};
+	u.get_path_ids(computed_paths, computed_alleles);
+	REQUIRE(expected_paths == computed_paths);
+	REQUIRE(expected_alleles == computed_alleles);
+	REQUIRE(u.kmer_on_path(0,1));
+	REQUIRE(u.kmer_on_path(1,1));
+	REQUIRE(!u.kmer_on_path(0,0));
+	REQUIRE(!u.kmer_on_path(1,0));
+	REQUIRE(u.is_undefined_allele(0));	
+}

@@ -1,9 +1,4 @@
-Still misses (proper) testcases:
 
-- HaplotypeSampler: update_unique_kmers 
-- Variant: separate_variants with SampledPanel (DONE)
-- SampledPath: get_specific_alleles (DONE)
-- Graph: write_sampled_panel (DONE)
 
 
 Implementation:
@@ -13,9 +8,27 @@ Implementation:
 	* overload write function for writing phased panel VCF with resulting Variants/SampledPanel objects (DONE)
 	* In command PanGenie-sample: output final sampled panel VCF in the end (DONE)
 	* In command PanGenie-genotype: make it optional to output the phased panel in the end: do this as last step after genotyping is done by:
-		(1) create list of SampledPanel objects from UniqueKmers objects right before they go out of stepwiseuniquekmercomputer
-		(2) use SampledPanel objects together with Graph objects to output the panel VCF (using the above functions)
+		(1) create list of SampledPanel objects from UniqueKmers objects right before they go out of stepwiseuniquekmercomputer (DONE)
+		(2) use SampledPanel objects together with Graph objects to output the panel VCF (using the above functions) (DONE)
 
+Still misses (proper) testcases:
+
+- HaplotypeSampler: update_unique_kmers (DONE)
+- Variant: separate_variants with SampledPanel (DONE)
+- SampledPath: get_specific_alleles (DONE)
+- Graph: write_sampled_panel (DONE)
+- Commands: 
+	- generate testcase for small region 
+	- determine expected likelihooods (obtained from UniqueKmers objects + HMM)
+	- check that running command produces the same results
+
+Testing steps:
+run sampling on real world data with standalone tool to see how well it performs
+does genotyping improve with this step, or at least not get worse?
+check runtime and memory with sampling, what are the bottlenecks?
+
+
+Polishing the code:
 - increase variable sizes for alleles: now unsigned char --> convert to unsigned short to allow for more alleles/paths
 - experiment with alternative ways of implementing KmerPath objects (allele to kmer mapping)
 - experiment with smaller hash sizes for jellyfish (does this decrease memory with still exceptable speed?)

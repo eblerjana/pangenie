@@ -190,6 +190,7 @@ void UniqueKmers::update_paths(vector<unsigned short>& path_ids) {
 	size_t nr_paths = path_ids.size();
 	vector<unsigned char> updated_path_to_allele(nr_paths);
 	map<unsigned char, std::pair<KmerPath, bool>> updated_alleles;
+	vector<unsigned char> undefined_alleles;
 	for (size_t i = 0; i < path_ids.size(); ++i) {
 		unsigned char allele = this->get_allele(path_ids[i]);
 		updated_path_to_allele[i] = allele;
@@ -204,12 +205,19 @@ void UniqueKmers::update_paths(vector<unsigned short>& path_ids) {
 				kmer_to_alleles[k].push_back(it->first);
 			}
 		}
+		if (it->second.second) undefined_alleles.push_back(it->first);
 	}
 	this->path_to_allele = updated_path_to_allele;
 	this->alleles.clear();
+	for (auto a : updated_path_to_allele) {
+		this->alleles[a] = make_pair(KmerPath(), false);
+	}
+
 	vector<unsigned short> old_counts = this->kmer_to_count;
 	this->kmer_to_count.clear();
 	this->current_index = 0;
+	// set undefined alleles
+	for (auto a : undefined_alleles) this->set_undefined_allele(a);
 
 	for (auto it = kmer_to_alleles.begin(); it != kmer_to_alleles.end(); ++it) {
 		this->insert_kmer(old_counts[it->first], it->second);
