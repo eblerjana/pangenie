@@ -4,12 +4,10 @@
 #include <sstream>
 #include <sys/resource.h>
 #include <sys/stat.h>
-#include <mutex>
 #include <thread>
 #include <algorithm>
 #include <fstream>
 #include <stdexcept>
-#include <memory>
 #include <zlib.h>
 #include <cereal/archives/binary.hpp>
 #include <cstdio>
@@ -57,22 +55,6 @@ void check_input_file(string &filename) {
 	}
 }
 
-struct UniqueKmersMap {
-	size_t kmersize;
-	mutex kmers_mutex;
-	map<string, vector<shared_ptr<UniqueKmers>>> unique_kmers;
-	map<string, double> runtimes;
-
-	template <class Archive>
-	void save(Archive& ar) const {
-		ar(kmersize, unique_kmers, runtimes);
-	}
-
-	template <class Archive>
-	void load(Archive& ar) {
-		ar(kmersize, unique_kmers, runtimes);
-	}
-};
 
 struct Results {
 	mutex result_mutex;
@@ -491,6 +473,7 @@ int run_single_command(string precomputed_prefix, string readfile, string reffil
 			for (auto it = unique_kmers_list.unique_kmers.begin(); it != unique_kmers_list.unique_kmers.end(); ++it) {
 				if (it->second.size() > 0) {
 					nr_paths = it->second.at(0)->get_nr_paths();
+					break;
 				}
 			}
 
@@ -954,11 +937,28 @@ int run_genotype_command(string precomputed_prefix, string readfile, string outn
 		}
 
 
+		// Delete again later
+		cerr << "Storing unique kmer information ..." << endl;
+		{
+  			ofstream os("TEST_UniqueKmersList.cereal", std::ios::binary);
+  			cereal::BinaryOutputArchive archive( os );
+			archive(unique_kmers_list);
+		}
+
+
+
 		/**
 		* 3) Genotyping. Construct a HMM and run the Forward-Backward algorithm to compute genotype likelihoods.
 		*/
 
 		{
+			// update nr_paths
+			for (auto it = unique_kmers_list.unique_kmers.begin(); it != unique_kmers_list.unique_kmers.end(); ++it) {
+				if (it->second.size() > 0) {
+					nr_paths = it->second.at(0)->get_nr_paths();
+					break;
+				}
+			}
 			// TODO: for too large panels, print warning
 			if (nr_paths > 500) cerr << "Warning: panel is large and PanGenie might take a long time genotyping. Try reducing the panel size prior to genotyping." << endl;
 			// handle case when sampling_size is not set

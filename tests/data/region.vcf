@@ -1,0 +1,48 @@
+##fileformat=VCFv4.2
+##FILTER=<ID=PASS,Description="All filters passed">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##INFO=<ID=CONFLICT,Number=.,Type=String,Description="Sample names for which there are multiple paths in the graph with conflicting alleles">
+##INFO=<ID=AC,Number=A,Type=Integer,Description="Total number of alternate alleles in called genotypes">
+##INFO=<ID=AF,Number=A,Type=Float,Description="Estimated allele frequency in the range (0,1]">
+##INFO=<ID=NS,Number=1,Type=Integer,Description="Number of samples with data">
+##INFO=<ID=AN,Number=1,Type=Integer,Description="Total number of alleles in called genotypes">
+##INFO=<ID=LV,Number=1,Type=Integer,Description="Level in the snarl tree (0=top level)">
+##INFO=<ID=PS,Number=1,Type=String,Description="ID of variant corresponding to parent snarl">
+##INFO=<ID=AT,Number=R,Type=String,Description="Allele Traversal as path in graph">
+##contig=<ID=chr1,length=248387328>
+##contig=<ID=chr10,length=134758134>
+##contig=<ID=chr11,length=135127769>
+##contig=<ID=chr12,length=133324548>
+##contig=<ID=chr13,length=113566686>
+##contig=<ID=chr14,length=101161492>
+##contig=<ID=chr15,length=99753195>
+##contig=<ID=chr16,length=96330374>
+##contig=<ID=chr17,length=84276897>
+##contig=<ID=chr18,length=80542538>
+##contig=<ID=chr19,length=61707364>
+##contig=<ID=chr2,length=242696752>
+##contig=<ID=chr20,length=66210255>
+##contig=<ID=chr21,length=45090682>
+##contig=<ID=chr22,length=51324926>
+##contig=<ID=chr3,length=201105948>
+##contig=<ID=chr4,length=193574945>
+##contig=<ID=chr5,length=182045439>
+##contig=<ID=chr6,length=172126628>
+##contig=<ID=chr7,length=160567428>
+##contig=<ID=chr8,length=146259331>
+##contig=<ID=chr9,length=150617247>
+##contig=<ID=chrM,length=16569>
+##contig=<ID=chrX,length=154259566>
+##contig=<ID=chrY,length=62460029>
+##bcftools_pluginVersion=1.10.2+htslib-1.10.2
+##bcftools_pluginCommand=plugin fill-tags -Oz -o results/prepare-vcf-MC/vcf/MC-hgsvc3-hprc-chm13/MC-hgsvc3-hprc-chm13_corrected-sex-chromosomes.vcf.gz -- -t AN,AC,AF; Date=Fri Mar  8 10:22:12 2024
+##bcftools_viewVersion=1.19+htslib-1.19.1
+##bcftools_viewCommand=view --samples ^GRCh38 --force-samples results/prepare-vcf-MC/vcf/MC-hgsvc3-hprc-chm13/MC-hgsvc3-hprc-chm13_corrected-sex-chromosomes.vcf.gz; Date=Fri Mar  8 10:46:26 2024
+##bcftools_viewCommand=view --min-ac 1; Date=Fri Mar  8 10:46:26 2024
+##bcftools_viewCommand=view --trim-alt-alleles results/prepare-vcf-MC/vcf/MC-hgsvc3-hprc-chm13/MC-hgsvc3-hprc-chm13_filtered.vcf; Date=Fri Mar  8 12:44:12 2024
+##INFO=<ID=ID,Number=A,Type=String,Description="Variant IDs per ALT allele.">
+##bcftools_viewVersion=1.12+htslib-1.11
+##bcftools_viewCommand=view -r chr1:49500-49800 ../hgsvc3/experiments/genotyping-1kg/results/prepare-vcf-MC/vcf/MC-hgsvc3-hprc-chm13/MC-hgsvc3-hprc-chm13_filtered_ids.vcf.gz; Date=Mon Sep 30 16:45:08 2024
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	HG00096	HG00171	HG00268	HG00358	HG00438	HG00512	HG00513	HG00514	HG00621	HG00673	HG00731	HG00732	HG00733	HG00735	HG00741	HG00864	HG01071	HG01106	HG01109	HG01114	HG01123	HG01175	HG01243	HG01258	HG01352	HG01358	HG01361	HG01457	HG01505	HG01573	HG01596	HG01890	HG01891	HG01928	HG01952	HG01978	HG02011	HG02018	HG02055	HG02059	HG02080	HG02106	HG02109	HG02145	HG02148	HG02257	HG02282	HG02486	HG02492	HG02554	HG02559	HG02572	HG02587	HG02622	HG02630	HG02666	HG02717	HG02723	HG02769	HG02818	HG02886	HG02953	HG03009	HG03065	HG03098	HG03248	HG03371	HG03452	HG03453	HG03456	HG03486	HG03492	HG03516	HG03520	HG03540	HG03579	HG03683	HG03732	HG03807	HG04036	HG04217	NA12329	NA18534	NA18906	NA18939	NA18989	NA19036	NA19129	NA19238	NA19239	NA19240	NA19317	NA19331	NA19347	NA19384	NA19434	NA19650	NA19705	NA19836	NA19983	NA20129	NA20355	NA20509	NA20847	NA21309	NA21487	NA24385
+chr1	139	>50027902>50027905	T	C	60	.	AC=70;AF=0.404624;AN=172;AT=>50027902>50027903>50027905,>50027902>50027904>50027905;NS=104;LV=0;ID=chr1-49638-SNV->50027902>50027904>50027905-1	GT	.|0	0|.	0|0	0|1	.|.	.|0	.|.	0|.	0|0	0|1	0|0	0|0	0|0	0|0	0|1	.|1	0|0	0|0	.|1	0|1	0|1	0|.	1|0	0|.	1|0	0|1	1|0	.|0	0|.	0|0	.|0	0|0	0|1	0|0	0|0	0|1	1|.	.|1	1|0	.|0	1|0	0|0	1|0	0|0	0|0	.|0	0|.	0|1	0|.	1|1	1|.	0|1	.|0	0|0	1|0	1|.	1|1	0|0	.|0	1|1	1|1	.|1	1|0	0|1	.|0	0|0	1|1	0|.	0|0	1|.	1|0	1|.	1|0	1|1	1|1	1|1	0|1	0|1	.|0	.|0	1|.	.|0	0|0	0|1	1|0	1|0	1|.	0|1	0|1	0|1	0|0	0|.	.|.	.|1	0|1	1|0	.|0	1|1	0|0	1|1	1|0	0|1	0|0	.|.	1|1	0|1	1|1
+chr1	208	>50027911>50027916	TG	CG,CA	60	.	AC=144,15;AF=0.83815,0.0867052;AN=172;AT=>50027911>50027912>50027914>50027916,>50027911>50027913>50027914>50027916,>50027911>50027913>50027915>50027916;NS=104;LV=0;ID=chr1-49707-SNV->50027911>50027913>50027914-1,chr1-49707-COMPLEX->50027911>50027913>50027915>50027916-2	GT	.|1	1|.	0|1	1|1	.|.	.|1	.|.	1|.	1|1	1|1	1|0	1|1	1|1	1|0	1|1	.|1	1|1	1|1	.|1	1|1	1|1	1|.	1|1	1|.	1|1	1|1	1|1	.|1	1|.	1|1	.|1	1|1	1|1	0|1	0|1	1|0	1|.	.|0	1|1	.|1	0|1	0|1	1|1	1|1	1|1	.|1	1|.	1|1	1|.	1|1	1|.	0|1	.|1	1|1	1|2	1|.	1|1	1|1	.|2	1|1	2|2	.|1	0|1	1|2	.|1	1|0	1|1	1|.	1|1	1|.	2|1	1|.	1|1	1|1	2|1	1|2	1|2	1|1	.|1	.|1	1|.	.|1	1|1	1|2	1|1	1|1	1|.	1|2	1|2	1|2	1|1	1|.	.|.	.|1	1|1	1|1	.|1	0|1	1|1	2|1	1|1	1|2	1|1	.|.	1|1	1|1	1|1
