@@ -86,7 +86,7 @@ We typically generate such VCFs from haplotype-resolved assemblies using this pi
 
 #### What should I do if my input VCF contains overlapping variants?
 
-* In case your input VCF was produced from a pangenome graph using ``vg decompose``, you first need to filter your VCF with [vcfbub](https://github.com/pangenome/vcfbub) to remove LV > 0 records using this command:
+* In case your input VCF was produced from a pangenome graph using ``vg deconstruct``, you first need to filter your VCF with [vcfbub](https://github.com/pangenome/vcfbub) to remove LV > 0 records using this command:
 
   ``` bat
   vcfbub -l 0 -r 100000 --input <your-vcf-file> > pangenie-ready.vcf
