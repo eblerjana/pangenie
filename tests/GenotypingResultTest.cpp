@@ -261,3 +261,11 @@ TEST_CASE("GenotypingResult coverage_kmers", "[GenotypingResult coverage_kmers]"
 	g.set_unique_kmers(300);
 	REQUIRE(g.nr_unique_kmers() == 300);
 }
+
+TEST_CASE("GenotypingResult contains_no_likelihoods", "[GenotypingResult contains_no_likelihoods]") {
+	GenotypingResult g;
+	g.set_coverage(30);
+	REQUIRE(g.contains_no_likelihoods());
+	g.add_to_likelihood(0,0,2);
+	REQUIRE(!g.contains_no_likelihoods());
+}

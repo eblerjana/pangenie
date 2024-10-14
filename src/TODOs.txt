@@ -18,9 +18,11 @@ Still misses (proper) testcases:
 - SampledPath: get_specific_alleles (DONE)
 - Graph: write_sampled_panel (DONE)
 - Commands: 
-	- generate testcase for small region 
-	- determine expected likelihooods (obtained from UniqueKmers objects + HMM)
-	- check that running command produces the same results
+	- generate testcase for small region (DONE)
+	- determine expected likelihooods (obtained from UniqueKmers objects + HMM) (DONE)
+	- check that running command produces the same results (DONE)
+
+Figure out how to treat cases with only 0 alleles, they are reported with ./. genotypes. Is that the same for cases where there are e.g. only 1s? (DONE)
 
 Testing steps:
 run sampling on real world data with standalone tool to see how well it performs

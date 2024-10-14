@@ -290,12 +290,7 @@ void HaplotypeSampler::update_unique_kmers() {
 			// insert sampled paths
 			p[j] = this->sampled_paths.sampled_paths[j][i];
 		}
-		cout << "Before update" << endl;
-		cout << *this->unique_kmers->operator[](i) << endl;
 		this->unique_kmers->operator[](i)->update_paths(p);
-		cout << "After update" << endl;
-		cout << *this->unique_kmers->operator[](i) << endl;
-		cout << endl;
 	}
 }
 

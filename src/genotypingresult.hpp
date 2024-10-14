@@ -50,6 +50,8 @@ public:
 	void set_coverage(unsigned short coverage);
 	unsigned short nr_unique_kmers() const;
 	unsigned short coverage() const;
+	/** returns true if there are no likelihoods stored **/
+	bool contains_no_likelihoods() const;
 
 	template<class Archive>
 	void serialize(Archive& archive) {

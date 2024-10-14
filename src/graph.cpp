@@ -209,8 +209,21 @@ void Graph::write_genotypes(string filename, const vector<GenotypingResult>& gen
 
 			// keep only likelihoods for genotypes with defined alleles
 			size_t nr_missing = v.nr_missing_alleles();
-			GenotypingResult genotype_likelihoods = singleton_likelihoods.at(j);
-			if (nr_missing > 0) genotype_likelihoods = singleton_likelihoods.at(j).get_specific_likelihoods(defined_alleles);
+			GenotypingResult genotype_likelihoods_tmp = singleton_likelihoods.at(j);
+			GenotypingResult genotype_likelihoods;
+
+			// in case GenotypingResult is empty (i.e. no likelihoods computed), which is the case
+			// if only reference paths cover the position, set likelihood for 0/0 allele to 1.
+			if (genotype_likelihoods_tmp.contains_no_likelihoods()) {
+				genotype_likelihoods_tmp.add_to_likelihood(0,0,1.0);
+			}
+
+			if (nr_missing > 0) {
+				genotype_likelihoods = genotype_likelihoods_tmp.get_specific_likelihoods(defined_alleles);
+			} else {
+				genotype_likelihoods = genotype_likelihoods_tmp;
+			}
+
 			nr_alleles = defined_alleles.size();
 
 			info << ";UK=" << nr_unique_kmers; // UK
@@ -245,7 +258,7 @@ void Graph::write_genotypes(string filename, const vector<GenotypingResult>& gen
 			}
 
 			ostringstream oss;
-			oss << log10(likelihoods[0]);
+			oss << setprecision(4) << log10(likelihoods[0]);
 			for (size_t j = 1; j < likelihoods.size(); ++j) {
 				oss << "," << setprecision(4) << log10(likelihoods[j]);
 			}

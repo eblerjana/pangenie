@@ -356,16 +356,19 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 				unsigned char single_allele0 = this->allele_combinations[a0][i];
 				precomputed_ids[a0] = single_allele0;
 			}
-			// iterate through all genotypes and determine the genotype likelihoods for single variant
-			for (size_t a0 = 0; a0 < this->nr_of_alleles(); ++a0) {
-				// determine allele a0 genotype corresponds to
-				unsigned char single_allele0 = precomputed_ids[a0];
-				for (size_t a1 = a0; a1 < this->nr_of_alleles(); ++a1) {
-					// determine allele a1 genotype corresponds to
-					unsigned char single_allele1 = precomputed_ids[a1];
-					// update genotype likelihood
-					long double combined_likelihood = input_genotyping->get_genotype_likelihood(a0, a1);
-					g.add_to_likelihood(single_allele0, single_allele1, combined_likelihood);
+
+			if (!input_genotyping->contains_no_likelihoods()) {
+				// iterate through all genotypes and determine the genotype likelihoods for single variant
+				for (size_t a0 = 0; a0 < this->nr_of_alleles(); ++a0) {
+					// determine allele a0 genotype corresponds to
+					unsigned char single_allele0 = precomputed_ids[a0];
+					for (size_t a1 = a0; a1 < this->nr_of_alleles(); ++a1) {
+						// determine allele a1 genotype corresponds to
+						unsigned char single_allele1 = precomputed_ids[a1];
+						// update genotype likelihood
+						long double combined_likelihood = input_genotyping->get_genotype_likelihood(a0, a1);
+						g.add_to_likelihood(single_allele0, single_allele1, combined_likelihood);
+					}
 				}
 			}
 			// get the haplotype alleles of the combined variant

@@ -196,3 +196,7 @@ unsigned short GenotypingResult::nr_unique_kmers() const {
 unsigned short GenotypingResult::coverage() const {
 	return this->local_coverage;
 }
+
+bool GenotypingResult::contains_no_likelihoods() const {
+	return this->genotype_to_likelihood.empty();
+}

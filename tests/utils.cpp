@@ -1,8 +1,8 @@
 #include "utils.hpp"
 #include <math.h>
-#include <iostream>
 #include <sstream>
 #include <fstream>
+#include <iostream>
 
 using namespace std;
 
@@ -19,7 +19,7 @@ bool compare_vectors (vector<double>& v1, vector<double>& v2) {
 	return true;
 }
 
-void parse_vcf_lines(string& filename, vector<vector<string>>& computed_lines) {
+void parse_vcf_lines(string filename, vector<vector<string>>& computed_lines) {
 	ifstream file(filename);
 	string line;
 	while(getline(file, line)) {
