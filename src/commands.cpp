@@ -937,16 +937,6 @@ int run_genotype_command(string precomputed_prefix, string readfile, string outn
 		}
 
 
-		// Delete again later
-		cerr << "Storing unique kmer information ..." << endl;
-		{
-  			ofstream os("TEST_UniqueKmersList.cereal", std::ios::binary);
-  			cereal::BinaryOutputArchive archive( os );
-			archive(unique_kmers_list);
-		}
-
-
-
 		/**
 		* 3) Genotyping. Construct a HMM and run the Forward-Backward algorithm to compute genotype likelihoods.
 		*/

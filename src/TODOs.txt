@@ -30,6 +30,8 @@ does genotyping improve with this step, or at least not get worse?
 check runtime and memory with sampling, what are the bottlenecks?
 
 
+Make sure the -x argument is not larger than the size of the panel
+
 Polishing the code:
 - increase variable sizes for alleles: now unsigned char --> convert to unsigned short to allow for more alleles/paths
 - experiment with alternative ways of implementing KmerPath objects (allele to kmer mapping)
