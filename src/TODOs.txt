@@ -24,6 +24,10 @@ Still misses (proper) testcases:
 
 Figure out how to treat cases with only 0 alleles, they are reported with ./. genotypes. Is that the same for cases where there are e.g. only 1s? (DONE)
 
+There might be a deadlock like problem in line 235 (commands.cpp) leading to a big slowdown in HaplotypeSampling / uniquekmer filling, because the remaining threads need to wait.
+Can the lock be set after sampling (to just update runtime?)
+
+
 Testing steps:
 run sampling on real world data with standalone tool to see how well it performs
 does genotyping improve with this step, or at least not get worse?
