@@ -151,6 +151,10 @@ void HaplotypeSampler::compute_viterbi_path(vector<unsigned int>* best_scores) {
 
 		// update the best index
 		best_index = this->viterbi_backtrace_columns.at(column_index)->at(best_index);
+
+		// current column is no longer needed. Delete it.
+		delete this->viterbi_backtrace_columns[column_index];
+		this->viterbi_backtrace_columns[column_index] = nullptr;
 		column_index -= 1;
 	}
 }
