@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <cassert>
 #include "uniquekmers.hpp"
+#include "samplingemissions.hpp"
 
 
 struct DPColumn {
@@ -76,6 +77,8 @@ private:
 	std::vector<DPColumn*> viterbi_columns;
 	SampledPaths sampled_paths;
 	std::vector< std::vector<size_t>* > viterbi_backtrace_columns;
+	std::vector<bool> prev_mask;
+	std::vector<SamplingEmissions> emission_costs;
 	double recombrate;
 	long double effective_N;
 

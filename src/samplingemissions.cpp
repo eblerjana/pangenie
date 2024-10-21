@@ -10,7 +10,7 @@ SamplingEmissions::SamplingEmissions(shared_ptr<UniqueKmers> unique_kmers) {
 	vector<unsigned char> unique_alleles;
 	unique_kmers->get_allele_ids(unique_alleles);
 	unsigned char max_allele = *max_element(std::begin(unique_alleles), std::end(unique_alleles));
-	this->allele_penalties = vector<unsigned int>(max_allele+1);
+	this->allele_penalties = vector<unsigned char>(max_allele+1);
 	unsigned int default_penalty = 25;
 
 	// precompute penalities

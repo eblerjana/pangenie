@@ -9,7 +9,7 @@ public:
 	SamplingEmissions(std::shared_ptr<UniqueKmers> uniquekmers);
 	unsigned int get_emission_cost(unsigned char allele_id);
 private:
-	std::vector<unsigned int> allele_penalties;
+	std::vector<unsigned char> allele_penalties;
 
 };
 

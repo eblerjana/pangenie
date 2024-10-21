@@ -1,5 +1,4 @@
 #include "haplotypesampler.hpp"
-#include "samplingemissions.hpp"
 #include "samplingtransitions.hpp"
 #include "timer.hpp"
 #include <algorithm>
@@ -26,6 +25,13 @@ HaplotypeSampler::HaplotypeSampler(vector<shared_ptr<UniqueKmers>>* unique_kmers
 
 	if (size < 1) return;
 
+	// initialize SamplingEmissions
+	this->emission_costs.reserve(unique_kmers->size());
+	for (size_t column_index = 0; column_index < unique_kmers->size(); ++column_index) {
+		this->emission_costs.push_back(SamplingEmissions(this->unique_kmers->at(column_index)));
+	}
+
+
 	// generate size Viterbi paths
 	for (size_t i = 0; i < size; ++i) {
 		compute_viterbi_path(best_scores);
@@ -36,7 +42,7 @@ HaplotypeSampler::HaplotypeSampler(vector<shared_ptr<UniqueKmers>>* unique_kmers
 	// Update unique_kmers
 	update_unique_kmers();
 
-	cerr << "HaplotypeSampler update_unique_kmers " << unique_kmers->at(0)->get_variant_position() << ": " << timer.get_interval_time() << " sec" << endl;;
+	cerr << "HaplotypeSampler update_unique_kmers " << unique_kmers->at(0)->get_variant_position() << ": " << timer.get_interval_time() << " sec" << endl;
 
 	// clean up
 	init(this->viterbi_columns, 0);
@@ -181,8 +187,6 @@ void HaplotypeSampler::compute_viterbi_column(size_t column_index) {
 	// number of paths
 	size_t nr_paths = this->unique_kmers->at(column_index)->get_nr_paths();
 
-	// TODO: class that computes Transition probabilities?
-
 	if (column_index > 0) {
 		previous_column = this->viterbi_columns[column_index - 1];
 
@@ -205,8 +209,6 @@ void HaplotypeSampler::compute_viterbi_column(size_t column_index) {
 	vector<bool> cur_mask = this->sampled_paths.mask_indexes(column_index, nr_paths-1);
 
 	SamplingTransitions* transition_cost_computer = nullptr;
-	SamplingEmissions emission_cost_computer(this->unique_kmers->at(column_index));
-
 
 	if (column_index > 0) {
 		// set up SamplingTransitions
@@ -271,7 +273,7 @@ void HaplotypeSampler::compute_viterbi_column(size_t column_index) {
 		}
 		// add Emission costs
 		size_t allele = this->unique_kmers->at(column_index)->get_allele(i);
-		current_column->column[i] = previous_cell + emission_cost_computer.get_emission_cost(allele);
+		current_column->column[i] = previous_cell + emission_costs.at(column_index).get_emission_cost(allele);
 
 		// check if there was an overflow
 		if (current_column->column[i] < previous_cell) current_column->column[i] = numeric_limits<unsigned int>::max();
