@@ -1,6 +1,7 @@
 #include "haplotypesampler.hpp"
 #include "samplingemissions.hpp"
 #include "samplingtransitions.hpp"
+#include "timer.hpp"
 #include <algorithm>
 #include <cassert>
 #include <map>
@@ -21,6 +22,7 @@ HaplotypeSampler::HaplotypeSampler(vector<shared_ptr<UniqueKmers>>* unique_kmers
 	 recombrate(recombrate),
 	 effective_N(effective_N)
 {
+	Timer timer;
 
 	if (size < 1) return;
 
@@ -29,8 +31,12 @@ HaplotypeSampler::HaplotypeSampler(vector<shared_ptr<UniqueKmers>>* unique_kmers
 		compute_viterbi_path(best_scores);
 	}
 
+	cerr << "HaplotypeSampler compute_viterbi_path " << unique_kmers->at(0)->get_variant_position() << ": " << timer.get_interval_time() << " sec" << endl;
+
 	// Update unique_kmers
 	update_unique_kmers();
+
+	cerr << "HaplotypeSampler update_unique_kmers " << unique_kmers->at(0)->get_variant_position() << ": " << timer.get_interval_time() << " sec" << endl;;
 
 	// clean up
 	init(this->viterbi_columns, 0);
@@ -132,6 +138,7 @@ void HaplotypeSampler::compute_viterbi_path(vector<unsigned int>* best_scores) {
 		best_scores->push_back(best_value);
 	}
 
+
 	// backtracking
 	this->sampled_paths.sampled_paths.push_back(vector<size_t>(column_count));
 	size_t column_index = column_count - 1;
@@ -153,6 +160,8 @@ void HaplotypeSampler::compute_viterbi_path(vector<unsigned int>* best_scores) {
 		best_index = this->viterbi_backtrace_columns.at(column_index)->at(best_index);
 
 		// current column is no longer needed. Delete it.
+		delete this->viterbi_columns[column_index];
+		this->viterbi_columns[column_index] = nullptr;
 		delete this->viterbi_backtrace_columns[column_index];
 		this->viterbi_backtrace_columns[column_index] = nullptr;
 		column_index -= 1;
@@ -160,7 +169,6 @@ void HaplotypeSampler::compute_viterbi_path(vector<unsigned int>* best_scores) {
 }
 
 void HaplotypeSampler::compute_viterbi_column(size_t column_index) {
-	// TODO implement this
 	assert (column_index < this->unique_kmers->size());
 
 	// check whether column was computed already
@@ -185,13 +193,8 @@ void HaplotypeSampler::compute_viterbi_column(size_t column_index) {
 	DPColumn* current_column = new DPColumn();
 	current_column->column = vector<unsigned int> (nr_paths);
 
-	// TODO: class for computing emission probabilities?
-
 	// backtrace column
 	vector<size_t>* backtrace_column = new vector<size_t>(nr_paths);
-
-	// determine indices of not yet covered haplotypes (boolean vector)
-	vector<bool> current_indexes = this->sampled_paths.mask_indexes(column_index, nr_paths);
 
 	// precompute minima for each index in current column. helper[i] contains the value of
 	// the minimum value of all positions except i in previous columns.
