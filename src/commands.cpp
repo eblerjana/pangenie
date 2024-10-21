@@ -124,7 +124,7 @@ void fill_read_kmercounts(string chromosome, UniqueKmersMap* unique_kmers_map, s
 					if (!(p_cn0 > 0.0 || p_cn1 > 0.0 || p_cn2 > 0.0)) cerr << "Warining: only zero probabilities for " << kmers[i] << " at " << chrom << " " << start << endl; 
 
 					kmers_used += 1;
-					lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
+//					lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
 					unique_kmers_map->unique_kmers[chromosome][var_index]->update_readcount(i, count);
 				}
 			}
@@ -132,7 +132,7 @@ void fill_read_kmercounts(string chromosome, UniqueKmersMap* unique_kmers_map, s
 			// determine local kmer coverage
 			unsigned short local_coverage = compute_local_coverage(flanking_kmers, read_kmer_counts, kmer_coverage);
 
-			lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
+//			lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
 			unique_kmers_map->unique_kmers[chromosome][var_index]->set_coverage(local_coverage);
 			var_index += 1;
         }
@@ -142,7 +142,7 @@ void fill_read_kmercounts(string chromosome, UniqueKmersMap* unique_kmers_map, s
 	// Haplotype sampling
 	HaplotypeSampler sampler(&unique_kmers_map->unique_kmers[chromosome], panel_size, recombrate, effective_N);
 	// store runtime
-	lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
+//	lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
 	unique_kmers_map->runtimes[chromosome] = timer.get_total_time();
 }
 
