@@ -150,7 +150,7 @@ TEST_CASE("UniqueKmers kmers_on_alleles3", "[UniqueKmers kmers_on_alleles3]") {
 }
 
 
-
+/**
 
 TEST_CASE("UniqueKmers covered_kmers_on_alleles1", "[UniqueKmers covered_kmers_on_alleles]") {
 	vector<unsigned char> path_to_allele = {0,0};
@@ -206,7 +206,7 @@ TEST_CASE("UniqueKmers covered_kmers_on_alleles3", "[UniqueKmers covered_kmers_o
 	REQUIRE(doubles_equal(fractions[1], 1.0));
 	REQUIRE(doubles_equal(fractions[2], 1.0));
 }
-
+**/
 
 
 TEST_CASE("UniqueKmers get_path_ids", "[UniqueKmers get_path_ids]") {

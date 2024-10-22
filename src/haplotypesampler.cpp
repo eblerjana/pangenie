@@ -83,33 +83,6 @@ void HaplotypeSampler::get_column_minima(std::vector<unsigned int>& column, std:
 }
 
 
-// std::vector<std::shared_ptr<UniqueKmers>>*
-void HaplotypeSampler::rank_haplotypes() const {
-	for (auto unique_kmers : *this->unique_kmers) {
-		vector<pair<unsigned int, float>> path_coverages;
-
-		unsigned int nr_paths = unique_kmers->get_nr_paths();
-
-		// determine fractions of present kmers per allele
-		map<unsigned char, float> fractions = unique_kmers->covered_kmers_on_alleles();
-		map<unsigned char, int> nr_kmers = unique_kmers->kmers_on_alleles();
-
-		// determine fractions for each path
-		for (unsigned int p = 0; p < nr_paths; ++p) {
-			path_coverages.push_back(make_pair(p, fractions.at(unique_kmers->get_allele(p))));
-		}
-
-		// sort paths by coverage
-		sort(path_coverages.begin(), path_coverages.end(), [](pair<unsigned int, float> &left, pair<unsigned int, float> &right) {return left.second < right.second;});
-
-		// print out for now
-		cout << "Ranked haplotypes for bubble position: " << unique_kmers->get_variant_position() << endl;
-		for (auto p : path_coverages) {
-			cout << "path" << p.first << "\t" << p.second << "\t" << (unsigned int) unique_kmers->get_allele(p.first) << "\t" << nr_kmers[unique_kmers->get_allele(p.first)] << endl;
-		}
-	}
-}
-
 void HaplotypeSampler::compute_viterbi_path(vector<unsigned int>* best_scores) {
 	size_t column_count = this->unique_kmers->size();
 	init(this->viterbi_columns, column_count);
@@ -161,7 +134,7 @@ void HaplotypeSampler::compute_viterbi_path(vector<unsigned int>* best_scores) {
 			}
 		}
 		// store the best path
-		this->sampled_paths.sampled_paths[paths_sampled][column_index] = (best_index);
+		this->sampled_paths.sampled_paths[paths_sampled][column_index] = best_index;
 
 		if (column_index == 0) break;
 
@@ -255,7 +228,7 @@ void HaplotypeSampler::compute_viterbi_column(size_t column_index) {
 		if (column_index > 0) {
 			// check of previous value exists for same path (might be masked)
 			// keep track of where the minimum came from and store in backtrace table
-			previous_cell = helper_val[i] +transition_cost_computer->compute_transition_cost(true);
+			previous_cell = helper_val[i] + transition_cost_computer->compute_transition_cost(true);
 
 			// check if there was an overflow
 			if (previous_cell < helper_val[i]) previous_cell = numeric_limits<unsigned int>::max();

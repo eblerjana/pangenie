@@ -23,11 +23,14 @@ TEST_CASE("SamplingEmissions get_emission_cost1", "[SamplingEmissions get_emissi
 	u2->insert_kmer(1, a2);
 
 	// check fractions computed by UniqueKmers object
-	map<unsigned char, float> fractions = u1->covered_kmers_on_alleles();
+	map<unsigned char, float> fractions;
+	fractions[0] = u1->fraction_present_kmers_on_allele(0);
 	REQUIRE(fractions.size() == 1);
 	REQUIRE(doubles_equal(fractions[0], 1.0));
 
-	fractions = u2->covered_kmers_on_alleles();
+	fractions.clear();
+	fractions[0] = u2->fraction_present_kmers_on_allele(0);
+	fractions[1] = u2->fraction_present_kmers_on_allele(1);
 	REQUIRE(fractions.size() == 2);
 	REQUIRE(doubles_equal(fractions[0], 1.0));
 	REQUIRE(doubles_equal(fractions[1], 0.5));
@@ -62,12 +65,17 @@ TEST_CASE("SamplingEmissions get_emission_cost2", "[SamplingEmissions get_emissi
 	u2->insert_kmer(0, a2);
 
 	// check fractions computed by UniqueKmers object
-	map<unsigned char, float> fractions = u1->covered_kmers_on_alleles();
-	REQUIRE(fractions.size() == 2);
+	map<unsigned char, float> fractions;
+	fractions[0] = u1->fraction_present_kmers_on_allele(0);
+	fractions[1] = u1->fraction_present_kmers_on_allele(1);
+
 	REQUIRE(doubles_equal(fractions[0], 2.0/3.0));
 	REQUIRE(doubles_equal(fractions[1], 1.0));
 
-	fractions = u2->covered_kmers_on_alleles();
+	fractions.clear();
+	fractions[0] = u2->fraction_present_kmers_on_allele(0);
+	fractions[1] = u2->fraction_present_kmers_on_allele(1);
+
 	REQUIRE(fractions.size() == 2);
 	REQUIRE(doubles_equal(fractions[0], 0.0));
 	REQUIRE(doubles_equal(fractions[1], 1.0/3.0));
@@ -93,8 +101,10 @@ TEST_CASE("SamplingEmissions get_emission_cost3", "[SamplingEmissions get_emissi
 
 
 	// check fractions computed by UniqueKmers object
-	map<unsigned char, float> fractions = u1->covered_kmers_on_alleles();
-	REQUIRE(fractions.size() == 2);
+	map<unsigned char, float> fractions;
+	fractions[0] = u1->fraction_present_kmers_on_allele(0);
+	fractions[1] = u1->fraction_present_kmers_on_allele(1);
+
 	REQUIRE(doubles_equal(fractions[0], 1.0));
 	REQUIRE(doubles_equal(fractions[1], 0.0));
 
@@ -114,7 +124,11 @@ TEST_CASE("SamplingEmissions undefined_allele", "[SamplingEmissions undefined_al
 	u->insert_kmer(2, a3);
 
 	// check fractions computed by UniqueKmers object
-	map<unsigned char, float> fractions = u->covered_kmers_on_alleles();
+	map<unsigned char, float> fractions;
+	fractions[0] = u->fraction_present_kmers_on_allele(0);
+	fractions[1] = u->fraction_present_kmers_on_allele(1);
+	fractions[2] = u->fraction_present_kmers_on_allele(2);
+
 	REQUIRE(fractions.size() == 3);
 	REQUIRE(doubles_equal(fractions[0], 1.0));
 	REQUIRE(doubles_equal(fractions[1], 1.0));

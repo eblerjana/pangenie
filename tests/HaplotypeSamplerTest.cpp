@@ -31,8 +31,6 @@ TEST_CASE("HaplotypeSampler", "[HaplotypeSampler]"){
 	vector<shared_ptr<UniqueKmers>> unique_kmers = {u1,u2};
 
 	HaplotypeSampler haplotypesampler = HaplotypeSampler(&unique_kmers, 0);
-	haplotypesampler.rank_haplotypes();
-
 }
 
 TEST_CASE("HaplotypeSampler get_column_minima", "[HaplotypeSampler get_column_minima]") {

@@ -21,11 +21,11 @@ struct SampledPaths {
 	**/
 	std::vector<bool> mask_indexes(size_t column_index, size_t max_index) {
 		std::vector<bool> masked(max_index+1, true);
-		for (auto p : sampled_paths) {
-			if (column_index >= p.size()) {
+		for (size_t i = 0; i < sampled_paths.size(); ++i) {
+			if (column_index >= sampled_paths[i].size()) {
 				throw std::runtime_error("HaplotypeSampler::SampledPaths::mask_indexes: column_index exceeds number of columns.");
 			}
-			size_t index = p[column_index];
+			size_t index = sampled_paths[i][column_index];
 			if (index > max_index) {
 				throw std::runtime_error("HaplotypeSampler::SampledPaths::mask_indexes: observed index exceeds max_index.");
 			}
@@ -46,7 +46,6 @@ public:
 	* @param best_scores vector in which DP score of each iteration is stored (mainly used for testing purposes)
 	**/
 	HaplotypeSampler(std::vector<std::shared_ptr<UniqueKmers>>* unique_kmers, size_t size, double recombrate = 1.26, long double effective_N = 25000.0L, std::vector<unsigned int>* best_scores = nullptr);
-	void rank_haplotypes() const;
 
 	// keeping it public for testing purposes ..
 	void get_column_minima(std::vector<unsigned int>& column, std::vector<bool>& mask, size_t& first_id, size_t& second_id, unsigned int& first_val, unsigned int& second_val) const;

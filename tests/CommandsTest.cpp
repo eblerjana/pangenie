@@ -15,6 +15,7 @@
 using namespace std;
 
 TEST_CASE("Commands run_genotype_command1", "[Commands run_genotype_command1]") {
+
 	string precomputed_prefix = "../tests/data/index";
 	string readfile = "../tests/data/region-reads.fa";
 	string outname = "../tests/data/testfull";
@@ -36,6 +37,7 @@ TEST_CASE("Commands run_genotype_command1", "[Commands run_genotype_command1]") 
 	/** (1) produce results with command **/
 
 	run_genotype_command(precomputed_prefix, readfile, outname, sample_name, nr_jellyfish_threads, nr_core_threads, only_genotyping, only_phasing, effective_N, regularization, count_only_graph, ignore_imputed, sampling_size, hash_size, panel_size, recombrate, output_panel);
+
 	// check if output file exists
 	{
 		ifstream file(outname + "_genotyping.vcf");

@@ -17,7 +17,9 @@
 * Represents the set of unique kmers for a variant position.
 */
 
+
 // serialization of std::pair, code taken from: https://github.com/USCiLab/cereal/issues/547
+/**
 namespace cereal
 {
     template<class Archive, class F, class S>
@@ -34,7 +36,27 @@ namespace cereal
 
     template <class Archive, class F, class S> 
     struct specialize<Archive, std::pair<F, S>, cereal::specialization::non_member_load_save> {};
-}
+} **/
+
+struct AlleleInfo {
+	AlleleInfo() {
+		kmer_path = KmerPath();
+		is_undefined = false;
+	}
+
+	KmerPath kmer_path;
+	bool is_undefined;
+
+	template <class Archive>
+	void save(Archive& ar) const {
+		ar(kmer_path, is_undefined);
+	}
+
+	template <class Archive>
+	void load(Archive& ar) {
+		ar(kmer_path, is_undefined);
+	}
+};
 
 
 class UniqueKmers {
@@ -74,8 +96,12 @@ public:
 	unsigned short get_coverage() const;
 	/** returns a map which contains the number of unique kmers covering each allele **/
 	std::map<unsigned char, int> kmers_on_alleles () const;
-	/** returns a map which contains the fraction of kmers with non-zero counts per allele **/
-	std::map<unsigned char, float> covered_kmers_on_alleles () const;
+	/** returns the number of unique kmers on given allele */
+	unsigned short kmers_on_allele(unsigned char allele_id) const;
+	/** returns the number of read-supported kmers on given allele **/
+	unsigned short present_kmers_on_allele(unsigned char allele_id) const;
+	/** returns the fraction of read-supported kmers on given allele **/
+	float fraction_present_kmers_on_allele(unsigned char allele_id) const;
 	/** check whether allele is undefined **/
 	bool is_undefined_allele (unsigned char allele_id) const;
 	/** set allele to undefined **/
@@ -95,7 +121,7 @@ private:
 	size_t current_index;
 	std::vector<unsigned short> kmer_to_count;
 	// stores kmers of each allele and whether the allele is undefined
-	std::map<unsigned char, std::pair<KmerPath, bool>> alleles;
+	std::map<unsigned char, AlleleInfo> alleles;
 	// defines which alleles are carried by each path (=index)
 	std::vector<unsigned char> path_to_allele;
 	unsigned short local_coverage;
