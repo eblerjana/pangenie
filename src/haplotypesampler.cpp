@@ -31,13 +31,15 @@ HaplotypeSampler::HaplotypeSampler(vector<shared_ptr<UniqueKmers>>* unique_kmers
 		this->emission_costs.push_back(SamplingEmissions(this->unique_kmers->at(column_index)));
 	}
 
+	cerr << "HaplotypeSampler initialize SamplingEmissions " << unique_kmers->at(0)->get_variant_position() << ": " << timer.get_interval_time() << " sec" << endl;
 
 	// generate size Viterbi paths
 	for (size_t i = 0; i < size; ++i) {
 		compute_viterbi_path(best_scores);
+		cerr << "HaplotypeSampler compute_viterbi_path iteration " << i << ": " << unique_kmers->at(0)->get_variant_position() << ": " << timer.get_interval_time() << " sec" << endl;
 	}
 
-	cerr << "HaplotypeSampler compute_viterbi_path " << unique_kmers->at(0)->get_variant_position() << ": " << timer.get_interval_time() << " sec" << endl;
+	cerr << "HaplotypeSampler compute_viterbi_path total: " << unique_kmers->at(0)->get_variant_position() << ": " << timer.get_interval_time() << " sec" << endl;
 
 	// Update unique_kmers
 	update_unique_kmers();
@@ -128,9 +130,9 @@ void HaplotypeSampler::compute_viterbi_path(vector<unsigned int>* best_scores) {
 
 	// find the best value in the last column
 	DPColumn* last_column = this->viterbi_columns.at(column_count-1);
+	assert (last_column != nullptr);
 	size_t best_index = 0;
 	unsigned int best_value = last_column->column.at(0);
-	assert (last_column != nullptr);
 	for (size_t i = 1; i < last_column->column.size(); ++i) {
 		unsigned int entry = last_column->column.at(i);
 		if (entry < best_value) {
@@ -147,6 +149,7 @@ void HaplotypeSampler::compute_viterbi_path(vector<unsigned int>* best_scores) {
 
 	// backtracking
 	this->sampled_paths.sampled_paths.push_back(vector<size_t>(column_count));
+	size_t paths_sampled = this->sampled_paths.sampled_paths.size()-1;
 	size_t column_index = column_count - 1;
 	while(true) {
 		// columns might have to be re-computed
@@ -158,7 +161,7 @@ void HaplotypeSampler::compute_viterbi_path(vector<unsigned int>* best_scores) {
 			}
 		}
 		// store the best path
-		this->sampled_paths.sampled_paths[this->sampled_paths.sampled_paths.size()-1][column_index] = (best_index);
+		this->sampled_paths.sampled_paths[paths_sampled][column_index] = (best_index);
 
 		if (column_index == 0) break;
 
