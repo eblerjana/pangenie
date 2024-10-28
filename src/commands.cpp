@@ -216,7 +216,7 @@ void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, s
 
 
 
-int run_single_command(string precomputed_prefix, string readfile, string reffile, string vcffile, size_t kmersize, string outname, string sample_name, size_t nr_jellyfish_threads, size_t nr_core_threads, bool only_genotyping, bool only_phasing, long double effective_N, long double regularization, bool count_only_graph, bool ignore_imputed, bool add_reference, size_t sampling_size, uint64_t hash_size, size_t panel_size, double recombrate, bool output_panel)
+int run_single_command(string precomputed_prefix, string readfile, string reffile, string vcffile, size_t kmersize, string outname, string sample_name, size_t nr_jellyfish_threads, size_t nr_core_threads, bool only_genotyping, bool only_phasing, long double effective_N, long double regularization, bool count_only_graph, bool ignore_imputed, bool add_reference, size_t sampling_size, uint64_t hash_size, size_t panel_size, double recombrate, bool output_panel,  long double sampling_effective_N)
 {
 
 	Timer timer;
@@ -699,7 +699,7 @@ int run_index_command(string reffile, string vcffile, size_t kmersize, string ou
 
 }
 
-int run_genotype_command(string precomputed_prefix, string readfile, string outname, string sample_name, size_t nr_jellyfish_threads, size_t nr_core_threads, bool only_genotyping, bool only_phasing, long double effective_N, long double regularization, bool count_only_graph, bool ignore_imputed, size_t sampling_size, uint64_t hash_size, size_t panel_size, double recombrate, bool output_panel)
+int run_genotype_command(string precomputed_prefix, string readfile, string outname, string sample_name, size_t nr_jellyfish_threads, size_t nr_core_threads, bool only_genotyping, bool only_phasing, long double effective_N, long double regularization, bool count_only_graph, bool ignore_imputed, size_t sampling_size, uint64_t hash_size, size_t panel_size, double recombrate, bool output_panel,  long double sampling_effective_N)
 {
 
 	Timer timer;
@@ -829,7 +829,7 @@ int run_genotype_command(string precomputed_prefix, string readfile, string outn
 				for (auto chromosome : chromosomes) {
 					UniqueKmersMap* unique_kmers = &unique_kmers_list;
 					ProbabilityTable* probs = &probabilities;
-					function<void()> f_fill_readkmers = bind(fill_read_kmercounts, chromosome, unique_kmers, read_kmer_counts, probs, precomputed_prefix, kmer_abundance_peak, panel_size, recombrate, effective_N);
+					function<void()> f_fill_readkmers = bind(fill_read_kmercounts, chromosome, unique_kmers, read_kmer_counts, probs, precomputed_prefix, kmer_abundance_peak, panel_size, recombrate, sampling_effective_N);
 					threadPool.submit(f_fill_readkmers);
 				}
 			}
@@ -1028,7 +1028,7 @@ int run_genotype_command(string precomputed_prefix, string readfile, string outn
 }
 
 
-int run_sampling(string precomputed_prefix, string readfile, string outname, size_t nr_jellyfish_threads, size_t nr_core_threads, long double effective_N, long double regularization, bool count_only_graph, uint64_t hash_size, size_t panel_size, double recombrate)
+int run_sampling(string precomputed_prefix, string readfile, string outname, size_t nr_jellyfish_threads, size_t nr_core_threads, long double effective_N, long double regularization, bool count_only_graph, uint64_t hash_size, size_t panel_size, double recombrate, long double sampling_effective_N)
 {
 
 	Timer timer;
@@ -1155,7 +1155,7 @@ int run_sampling(string precomputed_prefix, string readfile, string outname, siz
 				for (auto chromosome : chromosomes) {
 					UniqueKmersMap* unique_kmers = &unique_kmers_list;
 					ProbabilityTable* probs = &probabilities;
-					function<void()> f_fill_readkmers = bind(fill_read_kmercounts, chromosome, unique_kmers, read_kmer_counts, probs, precomputed_prefix, kmer_abundance_peak, panel_size, recombrate, effective_N);
+					function<void()> f_fill_readkmers = bind(fill_read_kmercounts, chromosome, unique_kmers, read_kmer_counts, probs, precomputed_prefix, kmer_abundance_peak, panel_size, recombrate, sampling_effective_N);
 					threadPool.submit(f_fill_readkmers);
 				}
 			}

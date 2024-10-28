@@ -29,6 +29,8 @@ int main(int argc, char* argv[]) {
 	uint64_t hash_size = 3000000000;
 	size_t panel_size = 0;
 	double recombrate = 1.26;
+	// TOD0: for testing purposes
+	long double sampling_effective_N = 0.00001L;
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
@@ -42,6 +44,7 @@ int main(int argc, char* argv[]) {
 	argument_parser.add_flag_argument('c', "count all read kmers instead of only those located in graph");
 	argument_parser.add_optional_argument('e', "3000000000", "size of hash used by jellyfish");
 	argument_parser.add_optional_argument('x', "0", "to which size the input panel shall be reduced.");
+	argument_parser.add_optional_argument('y', "0.00001", "effective population size for sampling step.");
 
 	try {
 		argument_parser.parse(argc, argv);
@@ -65,12 +68,13 @@ int main(int argc, char* argv[]) {
 	panel_size = stoi(argument_parser.get_argument('x'));
 	istringstream iss(argument_parser.get_argument('e'));
 	iss >> hash_size;
+	sampling_effective_N = stof(argument_parser.get_argument('y'));
 
 
 	precomputed_prefix = argument_parser.get_argument('f');
 
 	// run sampling
-	int exit_code = run_sampling(precomputed_prefix, readfile, outname, nr_jellyfish_threads, nr_core_threads, effective_N, regularization, count_only_graph, hash_size, panel_size, recombrate);
+	int exit_code = run_sampling(precomputed_prefix, readfile, outname, nr_jellyfish_threads, nr_core_threads, effective_N, regularization, count_only_graph, hash_size, panel_size, recombrate, sampling_effective_N);
 
 	getrusage(RUSAGE_SELF, &rss_total);
 
