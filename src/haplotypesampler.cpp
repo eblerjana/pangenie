@@ -121,8 +121,7 @@ void HaplotypeSampler::compute_viterbi_path(vector<unsigned int>* best_scores) {
 
 
 	// backtracking
-	this->sampled_paths.sampled_paths.push_back(vector<size_t>(column_count));
-	size_t paths_sampled = this->sampled_paths.sampled_paths.size()-1;
+	vector<size_t> path(column_count);
 	size_t column_index = column_count - 1;
 	while(true) {
 		// columns might have to be re-computed
@@ -134,7 +133,7 @@ void HaplotypeSampler::compute_viterbi_path(vector<unsigned int>* best_scores) {
 			}
 		}
 		// store the best path
-		this->sampled_paths.sampled_paths[paths_sampled][column_index] = best_index;
+		path[column_index] = best_index;
 
 		if (column_index == 0) break;
 
@@ -148,6 +147,7 @@ void HaplotypeSampler::compute_viterbi_path(vector<unsigned int>* best_scores) {
 		this->viterbi_backtrace_columns[column_index] = nullptr;
 		column_index -= 1;
 	}
+	this->sampled_paths.sampled_paths.push_back(path);
 }
 
 void HaplotypeSampler::compute_viterbi_column(size_t column_index) {
@@ -174,7 +174,7 @@ void HaplotypeSampler::compute_viterbi_column(size_t column_index) {
 	current_column->column = vector<unsigned int> (nr_paths);
 
 	// backtrace column
-	vector<size_t>* backtrace_column = new vector<size_t>(nr_paths);
+	vector<size_t>* backtrace_column = new vector<size_t>(nr_paths, numeric_limits<unsigned int>::max());
 
 	// precompute minima for each index in current column. helper[i] contains the value of
 	// the minimum value of all positions except i in previous columns.
@@ -183,7 +183,7 @@ void HaplotypeSampler::compute_viterbi_column(size_t column_index) {
 
 	// currently masked indexes (removed in previous DP iterations)
 	vector<bool> cur_mask = this->sampled_paths.mask_indexes(column_index, nr_paths-1);
-
+ 
 	SamplingTransitions* transition_cost_computer = nullptr;
 
 	if (column_index > 0) {
@@ -206,7 +206,7 @@ void HaplotypeSampler::compute_viterbi_column(size_t column_index) {
 				} else {
 					// need to consider minimum from previous column
 					helper_val[i] = first_val;
-					helper_val[i] = first_id;
+					helper_id[i] = first_id;
 				}
 			} else {
 				helper_val[i] = numeric_limits<unsigned int>::max();
@@ -258,6 +258,7 @@ void HaplotypeSampler::compute_viterbi_column(size_t column_index) {
 	// store the column and clean up
 	this->viterbi_columns.at(column_index) = current_column;
 	this->viterbi_backtrace_columns.at(column_index) = backtrace_column;
+
 
 	if (transition_cost_computer != nullptr) {
 		delete transition_cost_computer;

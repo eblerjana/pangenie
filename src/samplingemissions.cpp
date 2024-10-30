@@ -12,6 +12,7 @@ SamplingEmissions::SamplingEmissions(shared_ptr<UniqueKmers> unique_kmers) {
 	unsigned char max_allele = *max_element(std::begin(unique_alleles), std::end(unique_alleles));
 	this->allele_penalties = vector<unsigned char>(max_allele+1);
 	unsigned int default_penalty = 25;
+//	unsigned int default_penalty = 100;
 
 	for (auto a : unique_alleles) {
 		if (unique_kmers->is_undefined_allele(a)) {
@@ -23,6 +24,7 @@ SamplingEmissions::SamplingEmissions(shared_ptr<UniqueKmers> unique_kmers) {
 
 		if (fraction > 0.0) {
 			this->allele_penalties[a] = -10.0 * log10(fraction);
+//			this->allele_penalties[a] = 100.0 - 100.0 * fraction;
 			assert(this->allele_penalties[a] < default_penalty);
 		} else {
 			// Note: this value is based on the max number of unique kmers (which is 300)
