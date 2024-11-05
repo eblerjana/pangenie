@@ -193,6 +193,7 @@ void UniqueKmers::update_paths(vector<unsigned short>& path_ids) {
 	vector<unsigned char> updated_path_to_allele(nr_paths);
 	map<unsigned char, AlleleInfo> updated_alleles;
 	vector<unsigned char> undefined_alleles;
+
 	for (size_t i = 0; i < path_ids.size(); ++i) {
 		unsigned char allele = this->get_allele(path_ids[i]);
 		updated_path_to_allele[i] = allele;

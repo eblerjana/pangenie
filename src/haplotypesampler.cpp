@@ -16,7 +16,7 @@ void print_dpcolumn(DPColumn* column) {
 	cout << "--------" << endl;
 }
 
-HaplotypeSampler::HaplotypeSampler(vector<shared_ptr<UniqueKmers>>* unique_kmers, size_t size, double recombrate, long double effective_N, vector<unsigned int>* best_scores)
+HaplotypeSampler::HaplotypeSampler(vector<shared_ptr<UniqueKmers>>* unique_kmers, size_t size, double recombrate, long double effective_N, vector<unsigned int>* best_scores, bool add_reference)
 	:unique_kmers(unique_kmers),
 	 recombrate(recombrate),
 	 effective_N(effective_N)
@@ -40,6 +40,8 @@ HaplotypeSampler::HaplotypeSampler(vector<shared_ptr<UniqueKmers>>* unique_kmers
 	}
 
 	cerr << "HaplotypeSampler compute_viterbi_path total: " << unique_kmers->at(0)->get_variant_position() << ": " << timer.get_interval_time() << " sec" << endl;
+
+	if (add_reference) this->sampled_paths.sampled_paths.push_back(vector<size_t>(unique_kmers->size(), 0));
 
 	// Update unique_kmers
 	update_unique_kmers();

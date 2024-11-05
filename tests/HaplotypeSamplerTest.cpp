@@ -328,3 +328,69 @@ TEST_CASE("HaplotypeSampler update_unique_kmers", "[HaplotypeSampler update_uniq
 		REQUIRE(u2->kmer_on_path(i, 1));
 	}
 }
+
+
+TEST_CASE("HaplotypeSampler update_unique_kmers_reference", "[HaplotypeSampler update_unique_kmers_reference]") {
+	vector<unsigned char> path_to_allele = {0, 1, 2};
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers(1000000, path_to_allele));
+	vector<unsigned char> a1 = {0};
+	vector<unsigned char> a2 = {1};
+	vector<unsigned char> a3 = {2};
+	u1->insert_kmer(10, a1);
+	u1->insert_kmer(10, a1);
+	u1->insert_kmer(7, a1);
+	u1->insert_kmer(1, a2);
+	u1->insert_kmer(2, a2);
+	u1->insert_kmer(1, a2);
+	u1->insert_kmer(20, a2);
+	u1->insert_kmer(11, a3);
+	u1->insert_kmer(10, a3);
+	u1->insert_kmer(1, a3);
+	u1->set_coverage(5);
+
+	path_to_allele = {0, 1, 1};
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers(2000000, path_to_allele));
+	u2->insert_kmer(1, a1);
+	u2->insert_kmer(1, a1);
+	u2->insert_kmer(20, a2);
+	u2->insert_kmer(22, a2);
+	u2->set_coverage(5);
+
+	vector<shared_ptr<UniqueKmers>> unique_kmers = {u1,u2};
+	vector<unsigned int> best_scores;
+	HaplotypeSampler h(&unique_kmers,2, 1.26, 25000.0L, &best_scores, true);
+
+	SampledPaths s = h.get_sampled_paths();
+	REQUIRE(s.sampled_paths.size() == 3);
+
+	vector<size_t> expected_path1 = {2,2};
+	vector<size_t> expected_path2 = {0,1};
+	vector<size_t> expected_path3 = {0,0};
+	REQUIRE(s.sampled_paths[0] == expected_path1);
+	REQUIRE(s.sampled_paths[1] == expected_path2);
+	REQUIRE(s.sampled_paths[2] == expected_path3);
+
+	REQUIRE(u1->size() == 6);
+	vector<unsigned short> expected_counts = {10,10,7,11,10,1};
+	for (size_t i = 0; i < expected_counts.size(); ++i) {
+		REQUIRE(u1->get_readcount_of(i) == expected_counts[i]);
+	}
+
+	for (size_t i = 0; i < 3; ++i) {
+		REQUIRE(u1->kmer_on_path(i+3, 0));
+		REQUIRE(u1->kmer_on_path(i, 1));
+		REQUIRE(u1->kmer_on_path(i, 2));
+	}
+
+	REQUIRE(u2->size() == 4);
+	expected_counts = {1, 1, 20, 22};
+	for (size_t i = 0; i < expected_counts.size(); ++i) {
+		REQUIRE(u2->get_readcount_of(i) == expected_counts[i]);
+	}
+
+	for (size_t i = 0; i < 2; ++i) {
+		REQUIRE(u2->kmer_on_path(i+2, 0));
+		REQUIRE(u2->kmer_on_path(i+2, 1));
+		REQUIRE(u2->kmer_on_path(i, 2));
+	}
+}
