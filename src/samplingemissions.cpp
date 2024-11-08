@@ -23,7 +23,7 @@ SamplingEmissions::SamplingEmissions(shared_ptr<UniqueKmers> unique_kmers) {
 		float fraction = unique_kmers->fraction_present_kmers_on_allele(a);
 
 		if (fraction > 0.0) {
-			this->allele_penalties[a] = -10.0 * log10(fraction);
+			this->allele_penalties[a] = -100.0 * log10(fraction);
 //			this->allele_penalties[a] = 100.0 - 100.0 * fraction;
 			assert(this->allele_penalties[a] < default_penalty);
 		} else {
