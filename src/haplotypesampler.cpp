@@ -137,6 +137,10 @@ void HaplotypeSampler::compute_viterbi_path(vector<unsigned int>* best_scores) {
 		// store the best path
 		path[column_index] = best_index;
 
+		// penalize allele covered by selected path
+		unsigned char best_allele = this->unique_kmers->at(column_index)->get_allele(best_index);
+		emission_costs.at(column_index).penalize(best_allele);
+
 		if (column_index == 0) break;
 
 		// update the best index

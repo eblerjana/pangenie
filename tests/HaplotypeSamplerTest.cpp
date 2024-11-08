@@ -215,7 +215,8 @@ TEST_CASE("HaplotypeSampler Viterbi2", "[HaplotypeSampler Viterbi2]") {
 	HaplotypeSampler h(&unique_kmers,2, 1.26, 25000.0L, &best_scores);
 	REQUIRE(best_scores.size() == 2);
 	REQUIRE(best_scores[0] == 1);
-	REQUIRE(best_scores[1] == 4);
+//	REQUIRE(best_scores[1] == 4); // without penalizing chosen allele
+	REQUIRE(best_scores[1] == 14);
 
 	SampledPaths s = h.get_sampled_paths();
 	REQUIRE(s.sampled_paths.size() == 2);
@@ -257,7 +258,8 @@ TEST_CASE("HaplotypeSampler Viterbi3", "[HaplotypeSampler Viterbi3]") {
 	HaplotypeSampler h(&unique_kmers,2, 1.26, 25000.0L, &best_scores);
 	REQUIRE(best_scores.size() == 2);
 	REQUIRE(best_scores[0] == 1);
-	REQUIRE(best_scores[1] == 4);
+//	REQUIRE(best_scores[1] == 4); // without penalizing chosen allele
+	REQUIRE(best_scores[1] == 14);
 
 	SampledPaths s = h.get_sampled_paths();
 	REQUIRE(s.sampled_paths.size() == 2);
