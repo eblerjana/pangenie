@@ -11,6 +11,7 @@ public:
 	void penalize(unsigned char allele_id);
 private:
 	std::vector<unsigned char> allele_penalties;
+	unsigned int default_penalty;
 
 };
 
