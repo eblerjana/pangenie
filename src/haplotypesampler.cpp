@@ -5,6 +5,7 @@
 #include <cassert>
 #include <map>
 #include <math.h>
+#include <fstream>
 
 using namespace std;
 
@@ -16,7 +17,7 @@ void print_dpcolumn(DPColumn* column) {
 	cout << "--------" << endl;
 }
 
-HaplotypeSampler::HaplotypeSampler(vector<shared_ptr<UniqueKmers>>* unique_kmers, size_t size, double recombrate, long double effective_N, vector<unsigned int>* best_scores, bool add_reference)
+HaplotypeSampler::HaplotypeSampler(vector<shared_ptr<UniqueKmers>>* unique_kmers, size_t size, double recombrate, long double effective_N, vector<unsigned int>* best_scores, bool add_reference, string debugfile)
 	:unique_kmers(unique_kmers),
 	 recombrate(recombrate),
 	 effective_N(effective_N)
@@ -30,6 +31,37 @@ HaplotypeSampler::HaplotypeSampler(vector<shared_ptr<UniqueKmers>>* unique_kmers
 	for (size_t column_index = 0; column_index < unique_kmers->size(); ++column_index) {
 		this->emission_costs.push_back(SamplingEmissions(this->unique_kmers->at(column_index)));
 	}
+
+
+	// DEBUGGING: write allele costs to a file
+	if (debugfile != "") {
+		ofstream debug_outfile;
+		debug_outfile.open(debugfile);
+		for (size_t column_index = 0; column_index < unique_kmers->size(); ++column_index) {
+			// get transition cost
+			unsigned int trans_cost = 0;
+			if (column_index > 0) {
+				size_t from_variant = this->unique_kmers->at(column_index-1)->get_variant_position();
+				size_t to_variant = this->unique_kmers->at(column_index)->get_variant_position();
+				size_t nr_paths = this->unique_kmers->at(column_index)->get_nr_paths();
+				trans_cost = SamplingTransitions(from_variant, to_variant, this->recombrate, nr_paths, this->effective_N).compute_transition_cost(true);
+			}
+
+			std::map<unsigned char, int> kmers_on_alleles = this->unique_kmers->at(column_index)->kmers_on_alleles();
+			bool first = true;
+			debug_outfile << "variant_" << this->unique_kmers->at(column_index)->get_variant_position() << ", trans_cost: " << trans_cost << " ";
+			for (auto a : kmers_on_alleles) {
+				unsigned char cost = this->emission_costs.at(column_index).get_emission_cost(a.first);
+				if (!first) debug_outfile << ",";
+				debug_outfile << "cost:" <<  (unsigned int) cost << "(allele: " << (unsigned int) a.first  << ", #kmers:" << a.second << ")";
+				first = false;
+			}
+			debug_outfile << endl;
+		}
+	}
+	// DEBUGGING: END
+
+
 
 	cerr << "HaplotypeSampler initialize SamplingEmissions " << unique_kmers->at(0)->get_variant_position() << ": " << timer.get_interval_time() << " sec" << endl;
 

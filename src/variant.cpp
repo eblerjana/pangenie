@@ -441,6 +441,7 @@ void Variant::separate_variants_panel (vector<Variant>* resulting_variants, cons
 			}
 			// Iterate through all paths and determine single alleles
 			size_t nr_paths = input_sampling->get_nr_paths();
+			size_t nr_unique_kmers = input_sampling->get_unique_kmers();
 			vector<unsigned char> single_alleles(nr_paths);
 			for (size_t p = 0; p < nr_paths; ++p) {
 				unsigned char combined_allele = input_sampling->get_allele_on_path(p);
@@ -448,7 +449,7 @@ void Variant::separate_variants_panel (vector<Variant>* resulting_variants, cons
 			}
 
 			// create SampledPanel object for this variant
-			SampledPanel p(single_alleles);
+			SampledPanel p(single_alleles, nr_unique_kmers);
 			resulting_sampling->push_back(p);
 		}
 		// update start position

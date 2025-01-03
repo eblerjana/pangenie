@@ -5,16 +5,18 @@
 
 using namespace std;
 
-SampledPanel::SampledPanel(vector<unsigned char> path_to_allele)
-	:path_to_allele(path_to_allele.size())
+SampledPanel::SampledPanel(vector<unsigned char> path_to_allele, size_t nr_unique_kmers)
+	:path_to_allele(path_to_allele.size()),
+	 unique_kmers(nr_unique_kmers)
 {
 	for (size_t i = 0; i < path_to_allele.size(); ++i) {
 		this->path_to_allele[i] = (int) path_to_allele[i];
 	}
 }
 
-SampledPanel::SampledPanel(vector<int> path_to_allele)
-	:path_to_allele(path_to_allele)
+SampledPanel::SampledPanel(vector<int> path_to_allele, size_t nr_unique_kmers)
+	:path_to_allele(path_to_allele),
+	 unique_kmers(nr_unique_kmers)
 {}
 
 int SampledPanel::get_allele_on_path(size_t path_id) const{
@@ -30,6 +32,10 @@ size_t SampledPanel::get_nr_paths() const {
 
 vector<int> SampledPanel::get_all_paths() const {
 	return this->path_to_allele;
+}
+
+size_t SampledPanel::get_unique_kmers() const {
+	return this->unique_kmers;
 }
 
 SampledPanel SampledPanel::get_specific_alleles(vector<unsigned char>& alleles) const {
@@ -48,5 +54,5 @@ SampledPanel SampledPanel::get_specific_alleles(vector<unsigned char>& alleles) 
 		}
 	}
 
-	return SampledPanel(updated_alleles);
+	return SampledPanel(updated_alleles, this->unique_kmers);
 }

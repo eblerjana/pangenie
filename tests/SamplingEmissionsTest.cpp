@@ -39,7 +39,7 @@ TEST_CASE("SamplingEmissions get_emission_cost1", "[SamplingEmissions get_emissi
 	REQUIRE(s1.get_emission_cost(0) == 0);
 
 	SamplingEmissions s2 (u2);
-	REQUIRE(s2.get_emission_cost(0) == 25);
+	REQUIRE(s2.get_emission_cost(0) == 50);
 	REQUIRE(s2.get_emission_cost(1) == 3);
 }
 
@@ -85,7 +85,7 @@ TEST_CASE("SamplingEmissions get_emission_cost2", "[SamplingEmissions get_emissi
 	REQUIRE(s1.get_emission_cost(1) == 0);
 
 	SamplingEmissions s2 (u2);
-	REQUIRE(s2.get_emission_cost(0) == 25);
+	REQUIRE(s2.get_emission_cost(0) == 50);
 	REQUIRE(s2.get_emission_cost(1) == 4);
 }
 
@@ -136,6 +136,6 @@ TEST_CASE("SamplingEmissions undefined_allele", "[SamplingEmissions undefined_al
 
 	SamplingEmissions s(u);
 	REQUIRE(s.get_emission_cost(0) == 0);
-	REQUIRE(s.get_emission_cost(1) == 25);
+	REQUIRE(s.get_emission_cost(1) == 50);
 	REQUIRE(s.get_emission_cost(2) == 25);
 }

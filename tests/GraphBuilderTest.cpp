@@ -441,7 +441,7 @@ TEST_CASE("GraphBuilder write_sampled_panel", "[GraphBuilder write_sampled_panel
 		path_to_allele[i] = graph["chrA"]->get_variant(0).get_allele_on_path(i);
 	}
 
-	SampledPanel sampled_panel(path_to_allele);
+	SampledPanel sampled_panel(path_to_allele, 14);
 	vector<SampledPanel> s = {sampled_panel};
 	graph.at("chrA")->write_sampled_panel("../tests/data/small4-sampled-panel.vcf", s, true);
 
@@ -468,8 +468,8 @@ TEST_CASE("GraphBuilder write_sampled_panel", "[GraphBuilder write_sampled_panel
 	}
 
 	REQUIRE(computed_lines.size() == 2);
-	vector<string> expected_line1 = {"chrA", "161", ".", "G", "TA,TAAA", ".", "PASS", "AF=0.375,0.416667;MA=2", "GT", "0", "1", "1", "1", "2", "1", "2", "2", "2", "1", "1", "0", "2", "2", ".", ".", "1", "2", "2", "1", "2", "2", "1", "0"};
-	vector<string> expected_line2 = {"chrA", "166", ".", "G", "T", ".", "PASS", "AF=0.666667;MA=6", "GT", ".", "1", ".", ".", ".", "1", "1", "1", "1", "1", "1", "0", "1", "1", ".", ".", "1", "1", "1", "1",	"1", "1", "1", "0"};
+	vector<string> expected_line1 = {"chrA", "161", ".", "G", "TA,TAAA", ".", "PASS", "AF=0.375,0.416667;UK=14;MA=2", "GT", "0", "1", "1", "1", "2", "1", "2", "2", "2", "1", "1", "0", "2", "2", ".", ".", "1", "2", "2", "1", "2", "2", "1", "0"};
+	vector<string> expected_line2 = {"chrA", "166", ".", "G", "T", ".", "PASS", "AF=0.666667;UK=14;MA=6", "GT", ".", "1", ".", ".", ".", "1", "1", "1", "1", "1", "1", "0", "1", "1", ".", ".", "1", "1", "1", "1",	"1", "1", "1", "0"};
 	REQUIRE(computed_lines[0] == expected_line1);
 	REQUIRE(computed_lines[1] == expected_line2);
 }

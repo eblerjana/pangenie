@@ -45,7 +45,7 @@ public:
 	* @param effective_N effective population size
 	* @param best_scores vector in which DP score of each iteration is stored (mainly used for testing purposes)
 	**/
-	HaplotypeSampler(std::vector<std::shared_ptr<UniqueKmers>>* unique_kmers, size_t size, double recombrate = 1.26, long double effective_N = 25000.0L, std::vector<unsigned int>* best_scores = nullptr, bool add_reference = false);
+	HaplotypeSampler(std::vector<std::shared_ptr<UniqueKmers>>* unique_kmers, size_t size, double recombrate = 1.26, long double effective_N = 25000.0L, std::vector<unsigned int>* best_scores = nullptr, bool add_reference = false, std::string debugfile="");
 
 	// keeping it public for testing purposes ..
 	void get_column_minima(std::vector<unsigned int>& column, std::vector<bool>& mask, size_t& first_id, size_t& second_id, unsigned int& first_val, unsigned int& second_val) const;

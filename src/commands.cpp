@@ -140,7 +140,7 @@ void fill_read_kmercounts(string chromosome, UniqueKmersMap* unique_kmers_map, s
 	gzclose(file);
 
 	// Haplotype sampling
-	HaplotypeSampler sampler(&unique_kmers_map->unique_kmers[chromosome], panel_size, recombrate, effective_N, nullptr, add_reference);
+	HaplotypeSampler sampler(&unique_kmers_map->unique_kmers[chromosome], panel_size, recombrate, effective_N, nullptr, add_reference); //, "debug_" + chromosome + ".txt");
 	// store runtime
 //	lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
 	unique_kmers_map->runtimes[chromosome] = timer.get_total_time();
@@ -209,7 +209,7 @@ void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, s
 		unique_kmers_map->unique_kmers.insert(pair<string, vector<shared_ptr<UniqueKmers>>> (chromosome, move(unique_kmers)));
 	}
 	// store runtime
-	HaplotypeSampler sampler(&unique_kmers_map->unique_kmers[chromosome], panel_size, recombrate, effective_N, nullptr, reference_added);
+	HaplotypeSampler sampler(&unique_kmers_map->unique_kmers[chromosome], panel_size, recombrate, effective_N, nullptr, reference_added); //, "debug_" + chromosome + ".txt");
 	unique_kmers_map->runtimes.insert(pair<string, double>(chromosome, timer.get_total_time()));
 }
 
@@ -479,7 +479,8 @@ int run_single_command(string precomputed_prefix, string readfile, string reffil
 					vector<unsigned short> path_ids;
 					vector<unsigned char> allele_ids;
 					unique_kmers_list.unique_kmers[chromosome][i]->get_path_ids(path_ids, allele_ids);
-					chrom_to_sampled[chromosome].push_back(SampledPanel(allele_ids));
+					size_t nr_unique_kmers = unique_kmers_list.unique_kmers[chromosome][i]->size();
+					chrom_to_sampled[chromosome].push_back(SampledPanel(allele_ids, nr_unique_kmers));
 				}
 			}
 		}
@@ -959,7 +960,8 @@ int run_genotype_command(string precomputed_prefix, string readfile, string outn
 					vector<unsigned short> path_ids;
 					vector<unsigned char> allele_ids;
 					unique_kmers_list.unique_kmers[chromosome][i]->get_path_ids(path_ids, allele_ids);
-					chrom_to_sampled[chromosome].push_back(SampledPanel(allele_ids));
+					size_t nr_unique_kmers = unique_kmers_list.unique_kmers[chromosome][i]->size();
+					chrom_to_sampled[chromosome].push_back(SampledPanel(allele_ids, nr_unique_kmers));
 				}
 			}
 		} 
@@ -1178,7 +1180,8 @@ int run_sampling(string precomputed_prefix, string readfile, string outname, siz
 					vector<unsigned short> path_ids;
 					vector<unsigned char> allele_ids;
 					unique_kmers_list.unique_kmers[chromosome][i]->get_path_ids(path_ids, allele_ids);
-					chrom_to_sampled[chromosome].push_back(SampledPanel(allele_ids));
+					size_t nr_unique_kmers = unique_kmers_list.unique_kmers[chromosome][i]->size();
+					chrom_to_sampled[chromosome].push_back(SampledPanel(allele_ids, nr_unique_kmers));
 				}
 			}
 

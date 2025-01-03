@@ -446,6 +446,7 @@ void Graph::write_sampled_panel(string filename, const vector<SampledPanel>& sam
 	size_t counter = 0;
 	for (size_t i = 0; i < this->size(); ++i) {
 		shared_ptr<Variant> variant = this->variants.at(i);
+		size_t nr_unique_kmers = sampled_paths.at(i).get_unique_kmers();
 
 		// separate (possibly combined) variant into single variants and print a line for each
 		vector<Variant> singleton_variants;
@@ -499,6 +500,8 @@ void Graph::write_sampled_panel(string filename, const vector<SampledPanel>& sam
 				if (a > 1) info << ",";
 				info << setprecision(6) << v.allele_frequency(defined_alleles[a], this->add_reference);				
 			}
+
+			info << ";UK=" << nr_unique_kmers;
 			info << ";MA=" << nr_missing;
 
 			// if IDs were given in input, write them to output as well

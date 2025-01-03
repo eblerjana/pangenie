@@ -805,7 +805,7 @@ TEST_CASE("Variant separate_variants_panel", "Variant separate_variants_panel") 
 	v1.combine_variants(v3);
 
 	vector<unsigned char> path_to_allele = {0,2,1,3,3,2,0,1};
-	SampledPanel sampled_panel(path_to_allele);
+	SampledPanel sampled_panel(path_to_allele, 20);
 	vector<Variant> single_variants;
 	vector<SampledPanel> single_panels;
 	v1.separate_variants_panel(&single_variants, &sampled_panel, &single_panels);
@@ -820,6 +820,7 @@ TEST_CASE("Variant separate_variants_panel", "Variant separate_variants_panel") 
 
 	for (size_t i = 0; i < 3; ++i) {
 		REQUIRE(single_panels[i].get_all_paths() == expected[i]);
+		REQUIRE(single_panels[i].get_unique_kmers() == 20);
 	}
 }
 
@@ -828,7 +829,7 @@ TEST_CASE("Variant separate_variants_panel_single", "[Variant separate_variants_
 	Variant v ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,0,1,1});
 
 	vector<unsigned char> path_to_allele = {0,1,1,0,1,0,0,1,0,1,1,1,0};
-	SampledPanel sampled_panel(path_to_allele);
+	SampledPanel sampled_panel(path_to_allele, 13);
 	vector<Variant> single_variants;
 	vector<SampledPanel> single_panels;
 	v.separate_variants_panel(&single_variants, &sampled_panel, &single_panels);
@@ -837,6 +838,7 @@ TEST_CASE("Variant separate_variants_panel_single", "[Variant separate_variants_
 
 	REQUIRE(single_panels.size() == 1);
 	REQUIRE(single_panels[0].get_all_paths() == expected);
+	REQUIRE(single_panels[0].get_unique_kmers() == 13);
 }
 
 TEST_CASE("Variant separate_variants_panel2", "[Variant separate_variants_panel2]") {
@@ -850,7 +852,7 @@ TEST_CASE("Variant separate_variants_panel2", "[Variant separate_variants_panel2
 		path_to_allele[i] = v1.get_allele_on_path(i);
 	}
 
-	SampledPanel sampled_panel(path_to_allele);
+	SampledPanel sampled_panel(path_to_allele, 3);
 	vector<Variant> single_variants;
 	vector<SampledPanel> single_panels;
 	v1.separate_variants_panel(&single_variants, &sampled_panel, &single_panels);
@@ -860,5 +862,7 @@ TEST_CASE("Variant separate_variants_panel2", "[Variant separate_variants_panel2
 
 	REQUIRE(single_panels[0].get_all_paths() == sampled1);
 	REQUIRE(single_panels[1].get_all_paths() == sampled2);
+	REQUIRE(single_panels[0].get_unique_kmers() == 3);
+	REQUIRE(single_panels[1].get_unique_kmers() == 3);
 
 }
