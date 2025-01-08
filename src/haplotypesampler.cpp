@@ -17,7 +17,7 @@ void print_dpcolumn(DPColumn* column) {
 	cout << "--------" << endl;
 }
 
-HaplotypeSampler::HaplotypeSampler(vector<shared_ptr<UniqueKmers>>* unique_kmers, size_t size, double recombrate, long double effective_N, vector<unsigned int>* best_scores, bool add_reference, string debugfile)
+HaplotypeSampler::HaplotypeSampler(vector<shared_ptr<UniqueKmers>>* unique_kmers, size_t size, double recombrate, long double effective_N, vector<unsigned int>* best_scores, bool add_reference, string path_output, string chromosome)
 	:unique_kmers(unique_kmers),
 	 recombrate(recombrate),
 	 effective_N(effective_N)
@@ -32,7 +32,42 @@ HaplotypeSampler::HaplotypeSampler(vector<shared_ptr<UniqueKmers>>* unique_kmers
 		this->emission_costs.push_back(SamplingEmissions(this->unique_kmers->at(column_index)));
 	}
 
+	cerr << "HaplotypeSampler initialize SamplingEmissions " << unique_kmers->at(0)->get_variant_position() << ": " << timer.get_interval_time() << " sec" << endl;
 
+	// generate size Viterbi paths
+	for (size_t i = 0; i < size; ++i) {
+		compute_viterbi_path(best_scores);
+		cerr << "HaplotypeSampler compute_viterbi_path iteration " << i << ": " << unique_kmers->at(0)->get_variant_position() << ": " << timer.get_interval_time() << " sec" << endl;
+	}
+
+	cerr << "HaplotypeSampler compute_viterbi_path total: " << unique_kmers->at(0)->get_variant_position() << ": " << timer.get_interval_time() << " sec" << endl;
+
+	if (add_reference) this->sampled_paths.sampled_paths.push_back(vector<size_t>(unique_kmers->size(), 0));
+
+	// print the sampled paths if requested
+	if (path_output != "") {
+		ofstream path_outfile;
+		path_outfile.open(path_output);
+
+		// print the header line
+		path_outfile << "#chromosome\tposition";
+		for (size_t path_id = 0; path_id < this->sampled_paths.sampled_paths.size(); ++path_id) {
+			path_outfile << "\tHaplotypeID_path" << path_id << "\tRecombination_path" << path_id;
+		}
+		path_outfile << endl;
+
+		// print stats for each position
+		for (size_t column_index = 0; column_index < unique_kmers->size(); ++column_index) {
+			path_outfile << chromosome << "\t" << this->unique_kmers->at(column_index)->get_variant_position();
+			for (size_t path_id = 0; path_id < this->sampled_paths.sampled_paths.size(); ++path_id) {
+				path_outfile << "\t" << this->sampled_paths.sampled_paths.at(path_id).at(column_index);
+				path_outfile << "\t" << this->sampled_paths.recombination(column_index, path_id);
+			}
+			path_outfile << endl;
+		}
+	}
+
+	/** 
 	// DEBUGGING: write allele costs to a file
 	if (debugfile != "") {
 		ofstream debug_outfile;
@@ -60,20 +95,8 @@ HaplotypeSampler::HaplotypeSampler(vector<shared_ptr<UniqueKmers>>* unique_kmers
 		}
 	}
 	// DEBUGGING: END
+	**/
 
-
-
-	cerr << "HaplotypeSampler initialize SamplingEmissions " << unique_kmers->at(0)->get_variant_position() << ": " << timer.get_interval_time() << " sec" << endl;
-
-	// generate size Viterbi paths
-	for (size_t i = 0; i < size; ++i) {
-		compute_viterbi_path(best_scores);
-		cerr << "HaplotypeSampler compute_viterbi_path iteration " << i << ": " << unique_kmers->at(0)->get_variant_position() << ": " << timer.get_interval_time() << " sec" << endl;
-	}
-
-	cerr << "HaplotypeSampler compute_viterbi_path total: " << unique_kmers->at(0)->get_variant_position() << ": " << timer.get_interval_time() << " sec" << endl;
-
-	if (add_reference) this->sampled_paths.sampled_paths.push_back(vector<size_t>(unique_kmers->size(), 0));
 
 	// Update unique_kmers
 	update_unique_kmers();

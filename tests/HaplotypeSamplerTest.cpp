@@ -396,3 +396,30 @@ TEST_CASE("HaplotypeSampler update_unique_kmers_reference", "[HaplotypeSampler u
 		REQUIRE(u2->kmer_on_path(i, 2));
 	}
 }
+
+TEST_CASE("HaplotypeSampler SampledPaths::mask_indexes", "[HaplotypeSampler SampledPaths::mask_indexes]") {
+	SampledPaths s;
+	s.sampled_paths = { {0,0,1,1}, {1,1,2,0}};
+	vector<bool> mask = s.mask_indexes(1,2);
+	// three paths in total, 0 and 1 have been picked at pos 1.
+	vector<bool> expected = {false, false, true};
+	REQUIRE(mask == expected);
+	mask = s.mask_indexes(2,2);
+	expected = {true, false, false};
+	REQUIRE(mask == expected);
+	REQUIRE_THROWS(s.mask_indexes(4,2));
+	REQUIRE_THROWS(s.mask_indexes(2,1));
+}
+
+TEST_CASE("HaplotypeSampler SampledPaths::recombination", "[HaplotypeSampler SampledPaths::recombination]") {
+	SampledPaths s;
+	s.sampled_paths = { {0,0,1,1}, {1,1,2,0}};
+	REQUIRE(!s.recombination(0,0));
+	REQUIRE(!s.recombination(1,0));
+	REQUIRE(s.recombination(2,0));
+	REQUIRE(!s.recombination(3,0));
+	REQUIRE(!s.recombination(0,1));
+	REQUIRE(!s.recombination(1,1));
+	REQUIRE(s.recombination(2,1));
+	REQUIRE(s.recombination(3,1));
+}

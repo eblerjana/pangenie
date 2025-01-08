@@ -33,6 +33,29 @@ struct SampledPaths {
 		}
 		return masked;
 	}
+
+	/**
+	* Given a column index and a path id, determine if there
+	* was a recombination event between positions column_index-1 
+	* and column_index.
+	**/	
+	bool recombination(size_t column_index, size_t path_id) {
+		if (path_id >= sampled_paths.size()) {
+			throw std::runtime_error("HaplotypeSampler::SampledPaths::recombination: path_id does not exist.");
+		}
+
+		if (column_index >= sampled_paths[path_id].size()) {
+			throw std::runtime_error("HaplotypeSampler::SampledPaths::recombination: column_id does not exist.");
+		}
+
+		if (column_index > 0) {
+			// recombination event if selected path changes
+			return sampled_paths[path_id][column_index - 1] != sampled_paths[path_id][column_index];
+		} else {
+			// for first column, always set to false
+			return false;
+		}
+	}
 };
 
 
@@ -44,8 +67,11 @@ public:
 	* @param recombrate recombination rate
 	* @param effective_N effective population size
 	* @param best_scores vector in which DP score of each iteration is stored (mainly used for testing purposes)
+	* @param add_reference add reference sequence as an additional sampled path
+	* @param path_output output paths of sampled path_ids to file
+	* @param chromosome name of the chromosome (only used when writing path_output)
 	**/
-	HaplotypeSampler(std::vector<std::shared_ptr<UniqueKmers>>* unique_kmers, size_t size, double recombrate = 1.26, long double effective_N = 25000.0L, std::vector<unsigned int>* best_scores = nullptr, bool add_reference = false, std::string debugfile="");
+	HaplotypeSampler(std::vector<std::shared_ptr<UniqueKmers>>* unique_kmers, size_t size, double recombrate = 1.26, long double effective_N = 25000.0L, std::vector<unsigned int>* best_scores = nullptr, bool add_reference = false, std::string path_output="", std::string chromosome = "None");
 
 	// keeping it public for testing purposes ..
 	void get_column_minima(std::vector<unsigned int>& column, std::vector<bool>& mask, size_t& first_id, size_t& second_id, unsigned int& first_val, unsigned int& second_val) const;
