@@ -357,7 +357,7 @@ int run_single_command(string precomputed_prefix, string readfile, string reffil
 					ProbabilityTable* probs = &probabilities;
 					string output_paths = "";
 					if (output_panel) output_paths = outname + "_paths_" + chromosome + ".tsv";
-					function<void()> f_unique_kmers = bind(prepare_unique_kmers, chromosome, genomic_counts, read_kmer_counts, graph_segment, probs, result, kmer_abundance_peak, panel_size, recombrate, effective_N, add_reference, output_paths);
+					function<void()> f_unique_kmers = bind(prepare_unique_kmers, chromosome, genomic_counts, read_kmer_counts, graph_segment, probs, result, kmer_abundance_peak, panel_size, recombrate, sampling_effective_N, add_reference, output_paths);
 					threadPool.submit(f_unique_kmers);
 				}
 			}
