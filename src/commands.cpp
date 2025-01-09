@@ -140,7 +140,7 @@ void fill_read_kmercounts(string chromosome, UniqueKmersMap* unique_kmers_map, s
 	gzclose(file);
 
 	// Haplotype sampling
-	HaplotypeSampler sampler(&unique_kmers_map->unique_kmers[chromosome], panel_size, recombrate, effective_N, nullptr, add_reference, output_paths); //, "debug_" + chromosome + ".txt");
+	HaplotypeSampler sampler(&unique_kmers_map->unique_kmers[chromosome], panel_size, recombrate, effective_N, nullptr, add_reference, output_paths, chromosome); //, "debug_" + chromosome + ".txt");
 	// store runtime
 //	lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
 	unique_kmers_map->runtimes[chromosome] = timer.get_total_time();
@@ -209,7 +209,7 @@ void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, s
 		unique_kmers_map->unique_kmers.insert(pair<string, vector<shared_ptr<UniqueKmers>>> (chromosome, move(unique_kmers)));
 	}
 	// store runtime
-	HaplotypeSampler sampler(&unique_kmers_map->unique_kmers[chromosome], panel_size, recombrate, effective_N, nullptr, reference_added, output_paths); //, "debug_" + chromosome + ".txt");
+	HaplotypeSampler sampler(&unique_kmers_map->unique_kmers[chromosome], panel_size, recombrate, effective_N, nullptr, reference_added, output_paths, chromosome); //, "debug_" + chromosome + ".txt");
 	unique_kmers_map->runtimes.insert(pair<string, double>(chromosome, timer.get_total_time()));
 }
 
