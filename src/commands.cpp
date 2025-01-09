@@ -356,7 +356,7 @@ int run_single_command(string precomputed_prefix, string readfile, string reffil
 					KmerCounter* genomic_counts = &genomic_kmer_counts;
 					ProbabilityTable* probs = &probabilities;
 					string output_paths = "";
-					if (output_panel) output_paths = "DEBUG_paths_" + chromosome + ".tsv";
+					if (output_panel) output_paths = outname + "_paths_" + chromosome + ".tsv";
 					function<void()> f_unique_kmers = bind(prepare_unique_kmers, chromosome, genomic_counts, read_kmer_counts, graph_segment, probs, result, kmer_abundance_peak, panel_size, recombrate, effective_N, add_reference, output_paths);
 					threadPool.submit(f_unique_kmers);
 				}
@@ -832,7 +832,7 @@ int run_genotype_command(string precomputed_prefix, string readfile, string outn
 					UniqueKmersMap* unique_kmers = &unique_kmers_list;
 					ProbabilityTable* probs = &probabilities;
 					string output_paths = "";
-					if (output_panel) output_paths = "DEBUG_paths_" + chromosome + ".tsv";
+					if (output_panel) output_paths = outname + "_paths_" + chromosome + ".tsv";
 					function<void()> f_fill_readkmers = bind(fill_read_kmercounts, chromosome, unique_kmers, read_kmer_counts, probs, precomputed_prefix, kmer_abundance_peak, panel_size, recombrate, sampling_effective_N, unique_kmers_list.add_reference, output_paths);
 					threadPool.submit(f_fill_readkmers);
 				}
@@ -848,14 +848,6 @@ int run_genotype_command(string precomputed_prefix, string readfile, string outn
 
 		}
 
-
-	// serialization of UniqueKmersMap object
-	cerr << "Storing unique kmer information ..." << endl;
-	{
-  		ofstream os("region2_UniqueKmersList.cereal", std::ios::binary);
-  		cereal::BinaryOutputArchive archive( os );
-		archive(unique_kmers_list);
-	}
 
 		/**
 		* 3) Genotyping. Construct a HMM and run the Forward-Backward algorithm to compute genotype likelihoods.
@@ -1165,7 +1157,7 @@ int run_sampling(string precomputed_prefix, string readfile, string outname, siz
 				for (auto chromosome : chromosomes) {
 					UniqueKmersMap* unique_kmers = &unique_kmers_list;
 					ProbabilityTable* probs = &probabilities;
-					string output_paths = "DEBUG_paths_" + chromosome + ".tsv";
+					string output_paths = outname + "_paths_" + chromosome + ".tsv";
 
 					function<void()> f_fill_readkmers = bind(fill_read_kmercounts, chromosome, unique_kmers, read_kmer_counts, probs, precomputed_prefix, kmer_abundance_peak, panel_size, recombrate, sampling_effective_N, unique_kmers_list.add_reference, output_paths);
 					threadPool.submit(f_fill_readkmers);
