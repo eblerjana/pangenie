@@ -5,7 +5,7 @@
 
 using namespace std;
 
-SampledPanel::SampledPanel(vector<unsigned char> path_to_allele, size_t nr_unique_kmers)
+SampledPanel::SampledPanel(vector<unsigned short> path_to_allele, size_t nr_unique_kmers)
 	:path_to_allele(path_to_allele.size()),
 	 unique_kmers(nr_unique_kmers)
 {
@@ -38,7 +38,7 @@ size_t SampledPanel::get_unique_kmers() const {
 	return this->unique_kmers;
 }
 
-SampledPanel SampledPanel::get_specific_alleles(vector<unsigned char>& alleles) const {
+SampledPanel SampledPanel::get_specific_alleles(vector<unsigned short>& alleles) const {
 	map<int, size_t> allele_to_idx;
 	vector<int> updated_alleles(path_to_allele.size());
 	for (size_t i = 0; i < alleles.size(); ++i) {

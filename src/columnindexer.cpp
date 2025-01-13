@@ -11,7 +11,7 @@ ColumnIndexer::ColumnIndexer (vector<shared_ptr<UniqueKmers>>* unique_kmers, vec
 	size_t column_count = unique_kmers->size();
 	for (size_t column_index = 0; column_index < column_count; ++ column_index) {
 		vector<unsigned short> current_paths;
-		vector<unsigned char> current_alleles;
+		vector<unsigned short> current_alleles;
 		unique_kmers->at(column_index)->get_path_ids(current_paths, current_alleles, only_paths);
 		unsigned short nr_paths = current_paths.size();	
 
@@ -56,7 +56,7 @@ unsigned short ColumnIndexer::get_path(unsigned short path_index) const {
 	}
 }
 
-unsigned char ColumnIndexer::get_allele (unsigned short path_index, size_t column_index) const {
+unsigned short ColumnIndexer::get_allele (unsigned short path_index, size_t column_index) const {
 	// get the path corresponding to the path index
 	unsigned short path = this->get_path(path_index);
 	// look up the allele covered by that path

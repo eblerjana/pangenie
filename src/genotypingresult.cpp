@@ -12,9 +12,9 @@ GenotypingResult::GenotypingResult()
 	 unique_kmers(0)
 {}
 
-pair<unsigned char, unsigned char> genotype_from_alleles (unsigned char allele1, unsigned char allele2) {
+pair<unsigned short, unsigned short> genotype_from_alleles (unsigned short allele1, unsigned short allele2) {
 	// always put allele with smaller index first
-	pair<unsigned char,unsigned char> genotype;
+	pair<unsigned short,unsigned short> genotype;
 	if (allele1 < allele2) {
 		genotype = make_pair(allele1, allele2);
 	} else {
@@ -23,21 +23,21 @@ pair<unsigned char, unsigned char> genotype_from_alleles (unsigned char allele1,
 	return genotype;
 }
 
-void GenotypingResult::add_to_likelihood(unsigned char allele1, unsigned char allele2, long double value) {
-	pair<unsigned char, unsigned char> genotype = genotype_from_alleles(allele1, allele2);
+void GenotypingResult::add_to_likelihood(unsigned short allele1, unsigned short allele2, long double value) {
+	pair<unsigned short, unsigned short> genotype = genotype_from_alleles(allele1, allele2);
 	this->genotype_to_likelihood[genotype] += value;
 }
 
-void GenotypingResult::add_first_haplotype_allele(unsigned char allele) {
+void GenotypingResult::add_first_haplotype_allele(unsigned short allele) {
 	this->haplotype_1 = allele;
 }
 
-void GenotypingResult::add_second_haplotype_allele(unsigned char allele) {
+void GenotypingResult::add_second_haplotype_allele(unsigned short allele) {
 	this->haplotype_2 = allele;
 }
 
-long double GenotypingResult::get_genotype_likelihood (unsigned char allele1, unsigned char allele2) const {
-	pair<unsigned char, unsigned char> genotype = genotype_from_alleles(allele1, allele2);
+long double GenotypingResult::get_genotype_likelihood (unsigned short allele1, unsigned short allele2) const {
+	pair<unsigned short, unsigned short> genotype = genotype_from_alleles(allele1, allele2);
 	auto it = this->genotype_to_likelihood.find(genotype);
 	if (it != this->genotype_to_likelihood.end()) {
 		return this->genotype_to_likelihood.at(genotype);
@@ -54,8 +54,8 @@ vector<long double> GenotypingResult::get_all_likelihoods (size_t nr_alleles) co
 
 	vector<long double> result(nr_genotypes, 0.0L);
 	for (auto const& l : this->genotype_to_likelihood) {
-		unsigned char allele1 = l.first.first;
-		unsigned char allele2 = l.first.second;
+		unsigned short allele1 = l.first.first;
+		unsigned short allele2 = l.first.second;
 
 		// determine index (according to VCF-specification)
 		size_t index = ((allele2 * (allele2 + 1)) / 2) + allele1;
@@ -67,13 +67,13 @@ vector<long double> GenotypingResult::get_all_likelihoods (size_t nr_alleles) co
 	return result;
 }
 
-GenotypingResult GenotypingResult::get_specific_likelihoods (vector<unsigned char>& alleles) const {
+GenotypingResult GenotypingResult::get_specific_likelihoods (vector<unsigned short>& alleles) const {
 	GenotypingResult result;
 	size_t nr_alleles = alleles.size();
 	assert (nr_alleles < 256);
 	long double sum = 0.0L;
-	for (unsigned char i = 0; i < nr_alleles; ++i) {
-		for (unsigned char j = i; j < nr_alleles; ++j) {
+	for (unsigned short i = 0; i < nr_alleles; ++i) {
+		for (unsigned short j = i; j < nr_alleles; ++j) {
 			long double likelihood = this->get_genotype_likelihood(alleles[i], alleles[j]);
 			if (this->haplotype_1 == alleles[i]) result.haplotype_1 = i;
 			if (this->haplotype_2 == alleles[j]) result.haplotype_2 = j;
@@ -85,7 +85,7 @@ GenotypingResult GenotypingResult::get_specific_likelihoods (vector<unsigned cha
 	return result;
 }
 
-size_t GenotypingResult::get_genotype_quality (unsigned char allele1, unsigned char allele2) const {
+size_t GenotypingResult::get_genotype_quality (unsigned short allele1, unsigned short allele2) const {
 	// check if likelihoods are normalized
 	long double sum = 0.0;
 	for (const auto& l : this->genotype_to_likelihood) {
@@ -106,7 +106,7 @@ size_t GenotypingResult::get_genotype_quality (unsigned char allele1, unsigned c
 	}
 }
 
-pair<unsigned char, unsigned char> GenotypingResult::get_haplotype() const {
+pair<unsigned short, unsigned short> GenotypingResult::get_haplotype() const {
 	return make_pair(this->haplotype_1, this->haplotype_2);
 }
 
@@ -123,7 +123,7 @@ pair<int, int> GenotypingResult::get_likeliest_genotype() const {
 	}
 
 	long double best_value = 0.0L;
-	pair<unsigned char, unsigned char> best_genotype = make_pair(0,0); 
+	pair<unsigned short, unsigned short> best_genotype = make_pair(0,0); 
 	for (auto const& l : this->genotype_to_likelihood) {
 		if (l.second >= best_value) {
 			best_value = l.second;
@@ -162,7 +162,7 @@ ostream& operator<<(ostream& os, const GenotypingResult& res) {
 
 void GenotypingResult::combine(GenotypingResult& likelihoods) {
 	for (auto it = likelihoods.genotype_to_likelihood.begin(); it != likelihoods.genotype_to_likelihood.end(); ++it) {
-		pair<unsigned char, unsigned char> genotype = it->first;
+		pair<unsigned short, unsigned short> genotype = it->first;
 		this->genotype_to_likelihood[genotype] += it->second;
 	}
 }

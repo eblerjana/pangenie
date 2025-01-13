@@ -20,22 +20,22 @@ public:
 	* @param allele2 second genotype allele
 	* @param value to add to the genotype likelihood
 	**/
-	void add_to_likelihood(unsigned char allele1, unsigned char allele2, long double value);
+	void add_to_likelihood(unsigned short allele1, unsigned short allele2, long double value);
 	/** add allele on haplotype 1 **/
-	void add_first_haplotype_allele(unsigned char allele);
+	void add_first_haplotype_allele(unsigned short allele);
 	/** add allele on haplotype 2 **/
-	void add_second_haplotype_allele(unsigned char allele);
+	void add_second_haplotype_allele(unsigned short allele);
 	/** get likelihood of genotype allele1/allele2 (=allele2/allele1). **/
-	long double get_genotype_likelihood(unsigned char allele1, unsigned char allele2) const;
+	long double get_genotype_likelihood(unsigned short allele1, unsigned short allele2) const;
 	/** get all likelihoods ordered as defined in VCF specification. **/
 	std::vector<long double> get_all_likelihoods (size_t nr_alleles) const;
 	/** get all likelihoods for genotypes containing the given alleles. Likelihoods are normalized so sum up to 1. 
 	NOTE: haplotype alleles are set only if they occur in the list of given alleles. Otherwise (i.e. if undefined), they are 0.**/
-	GenotypingResult get_specific_likelihoods (std::vector<unsigned char>& alleles) const;
+	GenotypingResult get_specific_likelihoods (std::vector<unsigned short>& alleles) const;
 	/** get genotype quality (phred scaled prob that genotype is wrong) **/
-	size_t get_genotype_quality (unsigned char allele1, unsigned char allele2) const;
+	size_t get_genotype_quality (unsigned short allele1, unsigned short allele2) const;
 	/** get haplotype **/
-	std::pair<unsigned char, unsigned char> get_haplotype() const;
+	std::pair<unsigned short, unsigned short> get_haplotype() const;
 	/** divide all likelihoods by given value **/
 	void divide_likelihoods_by(long double value);
 	/** get genotype with highest likelihood **/
@@ -60,9 +60,9 @@ public:
 
 private:
 	/** map genotype -> likelihood. genotype alleles are ordered in ascending order **/
-	std::map < std::pair<unsigned char,unsigned char>, long double > genotype_to_likelihood;
-	unsigned char haplotype_1;
-	unsigned char haplotype_2;
+	std::map < std::pair<unsigned short,unsigned short>, long double > genotype_to_likelihood;
+	unsigned short haplotype_1;
+	unsigned short haplotype_2;
 	unsigned short local_coverage;
 	unsigned short unique_kmers;
 	friend cereal::access;

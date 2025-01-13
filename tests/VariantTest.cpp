@@ -181,11 +181,11 @@ TEST_CASE("Variant separate_variants_likelihoods", "Variant separate_variants_li
 	g.add_first_haplotype_allele(0);
 	g.add_second_haplotype_allele(2);
 
-	vector<unsigned char> path_to_allele = {0, 0, 2, 1};
+	vector<unsigned short> path_to_allele = {0, 0, 2, 1};
 	shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers> (new UniqueKmers(0, path_to_allele));
-	vector<unsigned char> alleles1 = {0};
-	vector<unsigned char> alleles2 = {1};
-	vector<unsigned char> alleles3 = {2};
+	vector<unsigned short> alleles1 = {0};
+	vector<unsigned short> alleles2 = {1};
+	vector<unsigned short> alleles3 = {2};
 	
 	for (size_t i = 0; i < 3; ++i) {
 		u->insert_kmer(20, alleles1);
@@ -213,7 +213,7 @@ TEST_CASE("Variant separate_variants_likelihoods", "Variant separate_variants_li
 
 	// expected genotype likelihoods
 	vector<vector<double>> expected = { {0.05,0.35,0.6}, {0.05,0.35,0.6}, {0.1,0.8,0.1} };
-	pair<unsigned char,unsigned char> expected_haplotype = make_pair(0,1);
+	pair<unsigned short,unsigned short> expected_haplotype = make_pair(0,1);
 
 	// computed genotype likelihoods
 	for (size_t i = 0; i < 3; ++i) {
@@ -245,10 +245,10 @@ TEST_CASE("Variant separate_variants_single", "[Variants separate_variants_singl
 	g.add_to_likelihood(0,1,0.7);
 	g.add_to_likelihood(1,1,0.2);
 
-	vector<unsigned char> allele_paths = {0, 0, 1, 1};
+	vector<unsigned short> allele_paths = {0, 0, 1, 1};
 	shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers> (new UniqueKmers(0, allele_paths));
-	vector<unsigned char> alleles1 = {0,1};
-	vector<unsigned char> alleles2 = {1};
+	vector<unsigned short> alleles1 = {0,1};
+	vector<unsigned short> alleles2 = {1};
 	for (size_t i = 0; i < 10; ++i) {
 		u->insert_kmer(20, alleles1);
 	}
@@ -297,10 +297,10 @@ TEST_CASE("Variant separate_variants_single2", "[Variants separate_variants_sing
 	g.add_to_likelihood(0,1,0.7);
 	g.add_to_likelihood(1,1,0.2);
 
-	vector<unsigned char> path_to_allele = {1, 1};
+	vector<unsigned short> path_to_allele = {1, 1};
 	shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers> (new UniqueKmers (0, path_to_allele));
-	vector<unsigned char> alleles1 = {0};
-	vector<unsigned char> alleles2 = {1};
+	vector<unsigned short> alleles1 = {0};
+	vector<unsigned short> alleles2 = {1};
 	u->insert_kmer(20, alleles1);
 	u->insert_kmer(20, alleles1);
 	u->insert_kmer(20, alleles2);
@@ -443,11 +443,11 @@ TEST_CASE("Variant combine_combined2", "[Variant combine_combined]") {
 	g.add_first_haplotype_allele(0);
 	g.add_second_haplotype_allele(2);
 
-	vector<unsigned char> path_to_allele = {0, 0, 0, 0, 0, 0, 2, 1, 0};
+	vector<unsigned short> path_to_allele = {0, 0, 0, 0, 0, 0, 2, 1, 0};
 	shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers>( new UniqueKmers(0, path_to_allele));
-	vector<unsigned char> alleles1 = {0};
-	vector<unsigned char> alleles2 = {1};
-	vector<unsigned char> alleles3 = {2};	
+	vector<unsigned short> alleles1 = {0};
+	vector<unsigned short> alleles2 = {1};
+	vector<unsigned short> alleles3 = {2};	
 	for (size_t i = 0; i < 10; i++) {
 		u->insert_kmer(20, alleles1);
 	}
@@ -474,9 +474,9 @@ TEST_CASE("Variant combine_combined2", "[Variant combine_combined]") {
 	REQUIRE(doubles_equal(single_genotypes[0].get_genotype_likelihood(0,1), 0.05));
 	REQUIRE(doubles_equal(single_genotypes[0].get_genotype_likelihood(1,1), 0.0));
 
-	REQUIRE(single_genotypes[0].get_haplotype() == pair<unsigned char,unsigned char>(0,1));
-	REQUIRE(single_genotypes[1].get_haplotype() == pair<unsigned char,unsigned char>(0,1));
-	REQUIRE(single_genotypes[2].get_haplotype() == pair<unsigned char,unsigned char>(0,0));
+	REQUIRE(single_genotypes[0].get_haplotype() == pair<unsigned short,unsigned short>(0,1));
+	REQUIRE(single_genotypes[1].get_haplotype() == pair<unsigned short,unsigned short>(0,1));
+	REQUIRE(single_genotypes[2].get_haplotype() == pair<unsigned short,unsigned short>(0,0));
 
 	vector<vector<unsigned int>> expected_counts = { {12,4}, {12,4}, {14,2} };
 	for (size_t i = 0; i < 3; ++i) {
@@ -542,10 +542,10 @@ TEST_CASE("Variant separate_variants_likelihoods_uncovered", "Variant separate_v
 	g.add_first_haplotype_allele(0);
 	g.add_second_haplotype_allele(0);
 
-	vector<unsigned char> path_to_allele = {0, 1};
+	vector<unsigned short> path_to_allele = {0, 1};
 	shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers> (new UniqueKmers (0, path_to_allele));
-	vector<unsigned char> alleles1 = {0};
-	vector<unsigned char> alleles2 = {1};
+	vector<unsigned short> alleles1 = {0};
+	vector<unsigned short> alleles2 = {1};
 	for (size_t i = 0; i < 3; ++i) {
 		u->insert_kmer(20, alleles1);
 	}
@@ -567,7 +567,7 @@ TEST_CASE("Variant separate_variants_likelihoods_uncovered", "Variant separate_v
 	// expected genotype likelihoods
 	// order of alleles changes: uncovered allele has index 2 after separation
 	vector<vector<double>> expected = { {0.05,0.05,0.9}, {0.05, 0.0, 0.0, 0.05, 0.0, 0.9}};
-	pair<unsigned char,unsigned char> expected_haplotype = make_pair(0,0);
+	pair<unsigned short,unsigned short> expected_haplotype = make_pair(0,0);
 	vector<unsigned int> nr_alleles = {2,3};
 
 	// computed genotype likelihoods
@@ -607,10 +607,10 @@ TEST_CASE("Variant separate_variants_likelihoods_single_uncovered", "[Variant se
 	g.add_first_haplotype_allele(1);
 	g.add_second_haplotype_allele(1);
 	
-	vector<unsigned char> path_to_allele = {1, 1};
+	vector<unsigned short> path_to_allele = {1, 1};
 	shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers> (new UniqueKmers(0, path_to_allele));
-	vector<unsigned char> alleles1 = {0};
-	vector<unsigned char> alleles2 = {1};
+	vector<unsigned short> alleles1 = {0};
+	vector<unsigned short> alleles2 = {1};
 	u->insert_kmer(20, alleles1);
 	u->insert_kmer(30, alleles2);
 	u->insert_kmer(25, alleles2);
@@ -804,7 +804,7 @@ TEST_CASE("Variant separate_variants_panel", "Variant separate_variants_panel") 
 	v1.combine_variants(v2);
 	v1.combine_variants(v3);
 
-	vector<unsigned char> path_to_allele = {0,2,1,3,3,2,0,1};
+	vector<unsigned short> path_to_allele = {0,2,1,3,3,2,0,1};
 	SampledPanel sampled_panel(path_to_allele, 20);
 	vector<Variant> single_variants;
 	vector<SampledPanel> single_panels;
@@ -828,7 +828,7 @@ TEST_CASE("Variant separate_variants_panel", "Variant separate_variants_panel") 
 TEST_CASE("Variant separate_variants_panel_single", "[Variant separate_variants_panel_single]") {
 	Variant v ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,0,1,1});
 
-	vector<unsigned char> path_to_allele = {0,1,1,0,1,0,0,1,0,1,1,1,0};
+	vector<unsigned short> path_to_allele = {0,1,1,0,1,0,0,1,0,1,1,1,0};
 	SampledPanel sampled_panel(path_to_allele, 13);
 	vector<Variant> single_variants;
 	vector<SampledPanel> single_panels;
@@ -847,7 +847,7 @@ TEST_CASE("Variant separate_variants_panel2", "[Variant separate_variants_panel2
 
 	v1.combine_variants(v2);
 
-	vector<unsigned char> path_to_allele(v1.nr_of_paths());
+	vector<unsigned short> path_to_allele(v1.nr_of_paths());
 	for (size_t i = 0; i < v1.nr_of_paths(); i++) {
 		path_to_allele[i] = v1.get_allele_on_path(i);
 	}

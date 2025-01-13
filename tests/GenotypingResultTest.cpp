@@ -23,7 +23,7 @@ TEST_CASE("GenotypingResult get_genotype_likelihood", "[GenotypingResult get_gen
 	r.add_first_haplotype_allele(0);
 	r.add_second_haplotype_allele(1);
 
-	REQUIRE(r.get_haplotype() == pair<unsigned char, unsigned char>(0,1));
+	REQUIRE(r.get_haplotype() == pair<unsigned short, unsigned short>(0,1));
 	REQUIRE(r.get_likeliest_genotype() == pair<int, int>(1,1));
 }
 
@@ -122,7 +122,7 @@ TEST_CASE("GenotypingResult get_specific_likelihoods", "[GenotypingResult get_sp
 		REQUIRE(doubles_equal(all_likelihoods[i], expected_likelihoods[i]));
 	}
 
-	vector<unsigned char> defined_alleles = {0,2};
+	vector<unsigned short> defined_alleles = {0,2};
 	GenotypingResult specific_likelihoods = r.get_specific_likelihoods(defined_alleles);
 	vector<long double> likelihoods = specific_likelihoods.get_all_likelihoods(2);
 	vector<long double> expected_specific_likelihoods = {0.0243902439, 0.73170731706, 0.24390243902};
@@ -145,7 +145,7 @@ TEST_CASE("GenotypingResult get_specific_likelihoods2", "[GenotypingResult get_s
 		REQUIRE(doubles_equal(all_likelihoods[i], expected_likelihoods[i]));
 	}
 
-	vector<unsigned char> defined_alleles = {0,1};
+	vector<unsigned short> defined_alleles = {0,1};
 	GenotypingResult specific_likelihoods = r.get_specific_likelihoods(defined_alleles);
 	vector<long double> likelihoods = specific_likelihoods.get_all_likelihoods(2);
 

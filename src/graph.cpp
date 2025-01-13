@@ -18,7 +18,7 @@ string graph_get_date() {
 }
 
 void Graph::insert_ids(vector<DnaSequence>& alleles, vector<string>& variant_ids, bool reference_added) {
-	vector<unsigned char> index = graph_construct_index(alleles, reference_added);
+	vector<unsigned short> index = graph_construct_index(alleles, reference_added);
 	assert(index.size() < 256);
 	// insert IDs in the lex. order of their corresponding alleles
 	vector<string> sorted_ids;
@@ -29,14 +29,14 @@ void Graph::insert_ids(vector<DnaSequence>& alleles, vector<string>& variant_ids
 }
 
 string Graph::get_ids(vector<string>& alleles, size_t variant_index, bool reference_added) {
-	vector<unsigned char> index = graph_construct_index(alleles, reference_added);
+	vector<unsigned short> index = graph_construct_index(alleles, reference_added);
 	assert(index.size() < 256);
 	vector<string> sorted_ids(index.size());
-	for (unsigned char i = 0; i < index.size(); ++i) {
+	for (unsigned short i = 0; i < index.size(); ++i) {
 		sorted_ids[index[i]] = this->variant_ids.at(variant_index)[i];
 	}
 	string result = "";
-	for (unsigned char i = 0; i < sorted_ids.size(); ++i) {
+	for (unsigned short i = 0; i < sorted_ids.size(); ++i) {
 		if (i > 0) result += ',';
 		result += sorted_ids[i];
 	}
@@ -180,7 +180,7 @@ void Graph::write_genotypes(string filename, const vector<GenotypingResult>& gen
 			}
 
 			vector<string> alt_alleles;
-			vector<unsigned char> defined_alleles = {0};
+			vector<unsigned short> defined_alleles = {0};
 			for (size_t i = 1; i < nr_alleles; ++i) {
 				DnaSequence allele = v.get_allele_sequence(i);
 				// skip alleles that are undefined
@@ -191,7 +191,7 @@ void Graph::write_genotypes(string filename, const vector<GenotypingResult>& gen
 			}
 
 			string alt_string = "";
-			for (unsigned char a = 0; a < alt_alleles.size(); ++a) {
+			for (unsigned short a = 0; a < alt_alleles.size(); ++a) {
 				if (a > 0) alt_string += ',';
 				alt_string += alt_alleles[a];
 			}
@@ -332,7 +332,7 @@ void Graph::write_phasing(string filename, const vector<GenotypingResult>& genot
 			}
 
 			vector<string> alt_alleles;
-			vector<unsigned char> defined_alleles = {0};
+			vector<unsigned short> defined_alleles = {0};
 			for (size_t i = 1; i < nr_alleles; ++i) {
 				DnaSequence allele = v.get_allele_sequence(i);
 				// skip alleles that are undefined
@@ -343,7 +343,7 @@ void Graph::write_phasing(string filename, const vector<GenotypingResult>& genot
 			}
 
 			string alt_string = "";
-			for (unsigned char a = 0; a < alt_alleles.size(); ++a) {
+			for (unsigned short a = 0; a < alt_alleles.size(); ++a) {
 				if (a > 0) alt_string += ',';
 				alt_string += alt_alleles[a];
 			}
@@ -376,7 +376,7 @@ void Graph::write_phasing(string filename, const vector<GenotypingResult>& genot
 				phasing_outfile << "./."; // GT (phased)
 			} else {
 
-				pair<unsigned char,unsigned char> haplotype = singleton_likelihoods.at(j).get_haplotype();
+				pair<unsigned short,unsigned short> haplotype = singleton_likelihoods.at(j).get_haplotype();
 				// check if the haplotype allele is undefined
 				bool hap1_undefined = v.is_undefined_allele(haplotype.first);
 				bool hap2_undefined = v.is_undefined_allele(haplotype.second);
@@ -470,7 +470,7 @@ void Graph::write_sampled_panel(string filename, const vector<SampledPanel>& sam
 			}
 
 			vector<string> alt_alleles;
-			vector<unsigned char> defined_alleles = {0};
+			vector<unsigned short> defined_alleles = {0};
 			for (size_t i = 1; i < nr_alleles; ++i) {
 				DnaSequence allele = v.get_allele_sequence(i);
 				// skip alleles that are undefined
@@ -481,7 +481,7 @@ void Graph::write_sampled_panel(string filename, const vector<SampledPanel>& sam
 			}
 
 			string alt_string = "";
-			for (unsigned char a = 0; a < alt_alleles.size(); ++a) {
+			for (unsigned short a = 0; a < alt_alleles.size(); ++a) {
 				if (a > 0) alt_string += ',';
 				alt_string += alt_alleles[a];
 			}

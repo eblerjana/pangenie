@@ -479,7 +479,7 @@ int run_single_command(string precomputed_prefix, string readfile, string reffil
 			for (auto chromosome : chromosomes) {
 				for (size_t i = 0; i < unique_kmers_list.unique_kmers[chromosome].size(); ++i) {
 					vector<unsigned short> path_ids;
-					vector<unsigned char> allele_ids;
+					vector<unsigned short> allele_ids;
 					unique_kmers_list.unique_kmers[chromosome][i]->get_path_ids(path_ids, allele_ids);
 					size_t nr_unique_kmers = unique_kmers_list.unique_kmers[chromosome][i]->size();
 					chrom_to_sampled[chromosome].push_back(SampledPanel(allele_ids, nr_unique_kmers));
@@ -953,7 +953,7 @@ int run_genotype_command(string precomputed_prefix, string readfile, string outn
 			for (auto chromosome : chromosomes) {
 				for (size_t i = 0; i < unique_kmers_list.unique_kmers[chromosome].size(); ++i) {
 					vector<unsigned short> path_ids;
-					vector<unsigned char> allele_ids;
+					vector<unsigned short> allele_ids;
 					unique_kmers_list.unique_kmers[chromosome][i]->get_path_ids(path_ids, allele_ids);
 					size_t nr_unique_kmers = unique_kmers_list.unique_kmers[chromosome][i]->size();
 					chrom_to_sampled[chromosome].push_back(SampledPanel(allele_ids, nr_unique_kmers));
@@ -1175,7 +1175,7 @@ int run_sampling(string precomputed_prefix, string readfile, string outname, siz
 			for (auto chromosome : chromosomes) {
 				for (size_t i = 0; i < unique_kmers_list.unique_kmers[chromosome].size(); ++i) {
 					vector<unsigned short> path_ids;
-					vector<unsigned char> allele_ids;
+					vector<unsigned short> allele_ids;
 					unique_kmers_list.unique_kmers[chromosome][i]->get_path_ids(path_ids, allele_ids);
 					size_t nr_unique_kmers = unique_kmers_list.unique_kmers[chromosome][i]->size();
 					chrom_to_sampled[chromosome].push_back(SampledPanel(allele_ids, nr_unique_kmers));

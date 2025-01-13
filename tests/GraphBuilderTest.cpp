@@ -313,7 +313,7 @@ TEST_CASE("GraphBuilder construct_index", "[GraphBuilder construct_index]") {
 	for (auto s : sequences) {
 		alleles.push_back(DnaSequence(s));
 	}
-	vector<unsigned char> expected = {1,0,2,3};
+	vector<unsigned short> expected = {1,0,2,3};
 	REQUIRE(graph_construct_index(alleles, true) == expected);
 }
 
@@ -436,7 +436,7 @@ TEST_CASE("GraphBuilder write_sampled_panel", "[GraphBuilder write_sampled_panel
 	REQUIRE(graph["chrA"]->size() == 1);
 
 	// create SampledPanel object
-	vector<unsigned char> path_to_allele(graph["chrA"]->get_variant(0).nr_of_paths());
+	vector<unsigned short> path_to_allele(graph["chrA"]->get_variant(0).nr_of_paths());
 	for (size_t i = 0; i < graph["chrA"]->get_variant(0).nr_of_paths(); i++) {
 		path_to_allele[i] = graph["chrA"]->get_variant(0).get_allele_on_path(i);
 	}

@@ -11,10 +11,10 @@
 using namespace std;
 
 TEST_CASE("HMM get_genotyping_result", "[HMM get_genotyping_result]") {
-	vector<unsigned char> path_to_allele = {0, 1};
+	vector<unsigned short> path_to_allele = {0, 1};
 	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers(2000, path_to_allele));
-	vector<unsigned char> a1 = {0};
-	vector<unsigned char> a2 = {1};
+	vector<unsigned short> a1 = {0};
+	vector<unsigned short> a2 = {1};
 	u1->insert_kmer(10, a1);
 	u1->insert_kmer(10, a2);
 	u1->set_coverage(5);
@@ -45,10 +45,10 @@ TEST_CASE("HMM get_genotyping_result", "[HMM get_genotyping_result]") {
 }
 
 TEST_CASE("HMM skip_reference_position", "[HMM skip_reference_position]") {
-	vector<unsigned char> path_to_allele = {0, 1};
+	vector<unsigned short> path_to_allele = {0, 1};
 	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
-	vector<unsigned char> a1 = {0};
-	vector<unsigned char> a2 = {1};
+	vector<unsigned short> a1 = {0};
+	vector<unsigned short> a2 = {1};
 	u1->insert_kmer(10, a1);
 	u1->insert_kmer(10, a2);
 	u1->set_coverage(5);
@@ -98,10 +98,10 @@ TEST_CASE("HMM skip_reference_position", "[HMM skip_reference_position]") {
 
 
 TEST_CASE("HMM get_genotyping_result_normalized", "[HMM get_genotyping_result_normalized]") {
-	vector<unsigned char> path_to_allele = {0, 1};
+	vector<unsigned short> path_to_allele = {0, 1};
 	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers> (new UniqueKmers (2000, path_to_allele));
-	vector<unsigned char> a1 = {0};
-	vector<unsigned char> a2 = {1};
+	vector<unsigned short> a1 = {0};
+	vector<unsigned short> a2 = {1};
 	u1->insert_kmer(10, a1);
 	u1->insert_kmer(10, a2);
 
@@ -131,10 +131,10 @@ TEST_CASE("HMM get_genotyping_result_normalized", "[HMM get_genotyping_result_no
 }
 
 TEST_CASE("HMM undefined_alleles1", "[HMM get_undefined_alleles1]") {
-	vector<unsigned char> path_to_allele = {0, 1};
+	vector<unsigned short> path_to_allele = {0, 1};
 	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers> (new UniqueKmers (2000, path_to_allele));
-	vector<unsigned char> a1 = {0};
-	vector<unsigned char> a2 = {1};
+	vector<unsigned short> a1 = {0};
+	vector<unsigned short> a2 = {1};
 	u1->set_undefined_allele(0);
 	REQUIRE (u1->is_undefined_allele(0));
 	u1->insert_kmer(10, a1);
@@ -168,7 +168,7 @@ TEST_CASE("HMM undefined_alleles1", "[HMM get_undefined_alleles1]") {
 	computed_likelihoods.clear();
 	// extract only likelihoods for defined genotypes
 	vector<double> expected_specific_likelihoods = {1.0, 0.0, 0.0, 0.97855858361, 0.01875778106, 0.00268363531};
-	vector<vector<unsigned char>> defined_alleles = {{1}, {0,1}};
+	vector<vector<unsigned short>> defined_alleles = {{1}, {0,1}};
 	vector<GenotypingResult> result = hmm.get_genotyping_result();
 	for (unsigned int i = 0; i < result.size(); ++i) {
 		GenotypingResult final_likelihood = result[i].get_specific_likelihoods(defined_alleles[i]);
@@ -181,10 +181,10 @@ TEST_CASE("HMM undefined_alleles1", "[HMM get_undefined_alleles1]") {
 }
 
 TEST_CASE("HMM undefined_alleles2", "[HMM get_undefined_alleles1]") {
-	vector<unsigned char> path_to_allele = {0, 0};
+	vector<unsigned short> path_to_allele = {0, 0};
 	shared_ptr<UniqueKmers> u1 =  shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
-	vector<unsigned char> a1 = {0};
-	vector<unsigned char> a2 = {1};
+	vector<unsigned short> a1 = {0};
+	vector<unsigned short> a2 = {1};
 
 	path_to_allele = {1, 0};
 	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
@@ -216,7 +216,7 @@ TEST_CASE("HMM undefined_alleles2", "[HMM get_undefined_alleles1]") {
 	computed_likelihoods.clear();
 	// extract only likelihoods for defined genotypes
 	vector<double> expected_specific_likelihoods = {0.0, 0.0, 0.0, 1.0, 0.0, 0.0};
-	vector<vector<unsigned char>> defined_alleles = {{0,1}, {0}};
+	vector<vector<unsigned short>> defined_alleles = {{0,1}, {0}};
 	vector<GenotypingResult> result = hmm.get_genotyping_result();
 	for (unsigned int i = 0; i < result.size(); ++i) {
 		GenotypingResult final_likelihood = result[i].get_specific_likelihoods(defined_alleles[i]);
@@ -230,10 +230,10 @@ TEST_CASE("HMM undefined_alleles2", "[HMM get_undefined_alleles1]") {
 }
 
 TEST_CASE("HMM only_undefined_alleles", "[HMM only_undefined_alleles]") {
-	vector<unsigned char> path_to_allele = {0, 1};
+	vector<unsigned short> path_to_allele = {0, 1};
 	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
-	vector<unsigned char> a1 = {0};
-	vector<unsigned char> a2 = {1};
+	vector<unsigned short> a1 = {0};
+	vector<unsigned short> a2 = {1};
 	// set both alleles to undefined
 	u1->set_undefined_allele(0);
 	u1->set_undefined_allele(1);
@@ -272,7 +272,7 @@ TEST_CASE("HMM only_undefined_alleles", "[HMM only_undefined_alleles]") {
 	computed_likelihoods.clear();
 	// extract only likelihoods for defined genotypes
 	vector<double> expected_specific_likelihoods = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-	vector<vector<unsigned char>> defined_alleles = {{}, {}};
+	vector<vector<unsigned short>> defined_alleles = {{}, {}};
 	vector<GenotypingResult> result = hmm.get_genotyping_result();
 	for (unsigned int i = 0; i < result.size(); ++i) {
 		GenotypingResult final_likelihood = result[i].get_specific_likelihoods(defined_alleles[i]);
@@ -286,10 +286,10 @@ TEST_CASE("HMM only_undefined_alleles", "[HMM only_undefined_alleles]") {
 
 
 TEST_CASE("HMM no_alt_allele", "[HMM no_alt_allele]") {
-	vector<unsigned char> path_to_allele = {0, 0, 0};
+	vector<unsigned short> path_to_allele = {0, 0, 0};
 	shared_ptr<UniqueKmers> u =  shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
-	vector<unsigned char> a1 = {0,1};
-	vector<unsigned char> a2 = {};
+	vector<unsigned short> a1 = {0,1};
+	vector<unsigned short> a2 = {};
 
 	u->insert_kmer(10, a1);
 	u->insert_kmer(5, a2);
@@ -312,10 +312,10 @@ TEST_CASE("HMM no_alt_allele", "[HMM no_alt_allele]") {
 
 
 TEST_CASE("HMM no_ref_allele", "[HMM no_ref_allele]") {
-	vector<unsigned char> path_to_allele = {1, 1, 1};
+	vector<unsigned short> path_to_allele = {1, 1, 1};
 	shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
-	vector<unsigned char> a1 = {0,1};
-	vector<unsigned char> a2 = {};
+	vector<unsigned short> a1 = {0,1};
+	vector<unsigned short> a2 = {};
 	u->insert_kmer (20, a1);
 	u->insert_kmer (10, a2);
 
@@ -335,7 +335,7 @@ TEST_CASE("HMM no_ref_allele", "[HMM no_ref_allele]") {
 
 
 TEST_CASE("HMM no_unique_kmers", "[HMM no_unique_kmers]") {
-	vector<unsigned char> path_to_allele = {0, 1};
+	vector<unsigned short> path_to_allele = {0, 1};
 	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
 	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
 
@@ -362,7 +362,7 @@ TEST_CASE("HMM no_unique_kmers", "[HMM no_unique_kmers]") {
 
 
 TEST_CASE("HMM no_unique_kmers2", "[HMM no_unique_kmers2]") {
-	vector<unsigned char> path_to_allele = {0, 0, 1};
+	vector<unsigned short> path_to_allele = {0, 0, 1};
 	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
 	path_to_allele = {0, 1, 1};
 	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
@@ -390,10 +390,10 @@ TEST_CASE("HMM no_unique_kmers2", "[HMM no_unique_kmers2]") {
 
 
 TEST_CASE("HMM no_unique_kmers3", "[HMM no_unique_kmers3]") {
-	vector<unsigned char> path_to_allele = {0, 1};
+	vector<unsigned short> path_to_allele = {0, 1};
 	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
-	vector<unsigned char> a1 = {0};
-	vector<unsigned char> a2 = {1};
+	vector<unsigned short> a1 = {0};
+	vector<unsigned short> a2 = {1};
 	u1->insert_kmer(10, a1);
 	u1->insert_kmer(10, a2);
 
@@ -414,18 +414,18 @@ TEST_CASE("HMM no_unique_kmers3", "[HMM no_unique_kmers3]") {
 	
 	// expected likelihoods, as computed by hand
 	vector<double> expected_likelihoods = {0.00264169937, 0.99471660125, 0.00264169937, 0.02552917716, 0.94894164567, 0.02552917716, 0.002961313333, 0.99407737333, 0.002961313333};
-	vector<unsigned char> expected_haplotype1 = {0,0,0};
-	vector<unsigned char> expected_haplotype2 = {1,1,1};
+	vector<unsigned short> expected_haplotype1 = {0,0,0};
+	vector<unsigned short> expected_haplotype2 = {1,1,1};
 	vector<vector<unsigned int>> expected_counts = { {1,1}, {0,0}, {1,1} };
 	vector<double> computed_likelihoods;
-	vector<unsigned char> computed_haplotype1;
-	vector<unsigned char> computed_haplotype2;
+	vector<unsigned short> computed_haplotype1;
+	vector<unsigned short> computed_haplotype2;
 	unsigned int index = 0;
 	for (auto result : hmm.get_genotyping_result()) {
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,0));
 		computed_likelihoods.push_back(result.get_genotype_likelihood(0,1));
 		computed_likelihoods.push_back(result.get_genotype_likelihood(1,1));
-		pair<unsigned char,unsigned char> ht = result.get_haplotype();
+		pair<unsigned short,unsigned short> ht = result.get_haplotype();
 		computed_haplotype1.push_back(ht.first);
 		computed_haplotype2.push_back(ht.second);
 		index += 1;
@@ -439,7 +439,7 @@ TEST_CASE("HMM no_unique_kmers3", "[HMM no_unique_kmers3]") {
 
 
 TEST_CASE("HMM no_unique_kmers_uniform", "[HMM no_unique_kmers_uniorm]") {
-	vector<unsigned char> path_to_allele = {0, 1, 1};
+	vector<unsigned short> path_to_allele = {0, 1, 1};
 	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
 	path_to_allele = {0, 0, 1};
 	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
@@ -466,10 +466,10 @@ TEST_CASE("HMM no_unique_kmers_uniform", "[HMM no_unique_kmers_uniorm]") {
 
 TEST_CASE("HMM only_kmers", "[HMM only_kmers]") {
 	// PGGTyper-kmers: insert one ref and one alt path and allow uniform transitions between paths
-	vector<unsigned char> path_to_allele = {0, 1};
+	vector<unsigned short> path_to_allele = {0, 1};
 	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>( new UniqueKmers (2000, path_to_allele));
-	vector<unsigned char> a1 = {0};
-	vector<unsigned char> a2 = {1};
+	vector<unsigned short> a1 = {0};
+	vector<unsigned short> a2 = {1};
 	u1->insert_kmer(10, a1);
 	u1->insert_kmer(12, a2);
 
@@ -508,10 +508,10 @@ TEST_CASE("HMM only_kmers", "[HMM only_kmers]") {
 
 
 TEST_CASE("HMM emissions_zero", "[HMM emissions_zero]") {
-	vector<unsigned char> path_to_allele = {0, 1};
+	vector<unsigned short> path_to_allele = {0, 1};
 	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (1000, path_to_allele));
-	vector<unsigned char> a1 = {0};
-	vector<unsigned char> a2 = {1};
+	vector<unsigned short> a1 = {0};
+	vector<unsigned short> a2 = {1};
 	u1->insert_kmer(10, a1);
 	u1->insert_kmer(10, a2);
 
@@ -551,10 +551,10 @@ TEST_CASE("HMM emissions_zero", "[HMM emissions_zero]") {
 
 
 TEST_CASE("HMM underflow", "[HMM underflow]") {
-	vector<unsigned char> path_to_allele = {0, 1};
+	vector<unsigned short> path_to_allele = {0, 1};
 	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (1000, path_to_allele));
-	vector<unsigned char> a1 = {0};
-	vector<unsigned char> a2 = {1};
+	vector<unsigned short> a1 = {0};
+	vector<unsigned short> a2 = {1};
 	u1->insert_kmer(10, a1);
 	u1->insert_kmer(10, a2);
 
@@ -588,11 +588,11 @@ TEST_CASE("HMM underflow", "[HMM underflow]") {
 
 
 TEST_CASE("HMM get_genotyping_result_neutral_kmers", "[HMM get_genotyping_result_with_kmer]") {
-	vector<unsigned char> path_to_allele = {0, 1};
+	vector<unsigned short> path_to_allele = {0, 1};
 	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
-	vector<unsigned char> a1 = {0};
-	vector<unsigned char> a2 = {1};
-	vector<unsigned char> a3 = {0,1};
+	vector<unsigned short> a1 = {0};
+	vector<unsigned short> a2 = {1};
+	vector<unsigned short> a3 = {0,1};
 	u1->insert_kmer(10, a1);
 	u1->insert_kmer(10, a2);
 	u1->insert_kmer(12, a3);
@@ -634,12 +634,12 @@ TEST_CASE("HMM get_genotyping_result_neutral_kmers", "[HMM get_genotyping_result
 
 TEST_CASE("HMM only_paths", "[HMM only_paths]") {
 	// want to only consider the following paths. All others should be ignored.
-	vector<unsigned char> path_to_allele = {0, 2, 1, 1};
+	vector<unsigned short> path_to_allele = {0, 2, 1, 1};
 	vector<unsigned short> only_paths = {0,3};
 	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
-	vector<unsigned char> a1 = {0};
-	vector<unsigned char> a2 = {1};
-	vector<unsigned char> a3 = {2};
+	vector<unsigned short> a1 = {0};
+	vector<unsigned short> a2 = {1};
+	vector<unsigned short> a3 = {2};
 	u1->insert_kmer(10, a1);
 	u1->insert_kmer(10, a2);
 
@@ -671,8 +671,8 @@ TEST_CASE("HMM only_paths", "[HMM only_paths]") {
 }
 
 TEST_CASE("HMM no_only_paths2", "[HMM only_paths2]") {
-	vector<unsigned char> path_to_allele = {0, 1, 2};
-	vector<unsigned char> a2 = {2};
+	vector<unsigned short> path_to_allele = {0, 1, 2};
+	vector<unsigned short> a2 = {2};
 	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
 	u1->insert_kmer(12, a2);
 
@@ -704,10 +704,10 @@ TEST_CASE("HMM no_only_paths2", "[HMM only_paths2]") {
 TEST_CASE("HMM combine_results", "[HMM combine_results]") {
 
 	// construct first HMM
-	vector<unsigned char> path_to_allele = {0, 1};
+	vector<unsigned short> path_to_allele = {0, 1};
 	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers(2000, path_to_allele));
-	vector<unsigned char> a1 = {0};
-	vector<unsigned char> a2 = {1};
+	vector<unsigned short> a1 = {0};
+	vector<unsigned short> a2 = {1};
 	u1->insert_kmer(10, a1);
 	u1->insert_kmer(10, a2);
 	u1->set_coverage(5);
@@ -776,8 +776,8 @@ TEST_CASE("HMM combine_results", "[HMM combine_results]") {
 
 
 TEST_CASE("HMM normalize", "[HMM normalize]") {
-	vector<unsigned char> path_to_allele = {0, 1, 2};
-	vector<unsigned char> a2 = {2};
+	vector<unsigned short> path_to_allele = {0, 1, 2};
+	vector<unsigned short> a2 = {2};
 	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
 	u1->insert_kmer(12, a2);
 

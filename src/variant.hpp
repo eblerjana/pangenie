@@ -19,7 +19,7 @@
 
 struct VariantStats {
 	size_t nr_unique_kmers;
-	std::map<unsigned char, int> kmer_counts;
+	std::map<unsigned short, int> kmer_counts;
 	unsigned short coverage;
 };
 
@@ -35,12 +35,12 @@ public:
 	* @param paths vector containing the allele each path covers (i-th path covers allele at paths[i])
 	* @param variant_id ID of the variant (ID column of the VCF)
 	*
-	* Currently, the largest number of alleles and paths supported is 256. This is because unsigned chars are used to store allele ids. For merged variants, the number of alleles can get as
-	* high as the number of paths (if every path carries a different allele), therefore the limit on the number of paths is also 256 to avoid overflows.
+	* Currently, the largest number of alleles and paths supported is 65536. This is because unsigned shorts are used to store allele ids. For merged variants, the number of alleles can get as
+	* high as the number of paths (if every path carries a different allele), therefore the limit on the number of paths is also 65536 to avoid overflows.
 	**/
 	Variant() = default;
-	Variant(std::string left_flank, std::string right_flank, std::string chromosome, size_t start_position, size_t end_position, std::vector<std::string> alleles, std::vector<unsigned char> paths); //, std::string variant_id = ".");
-	Variant(DnaSequence& left_flank, DnaSequence& right_flank, std::string chromosome, size_t start_position, size_t end_position, std::vector<DnaSequence>& alleles, std::vector<unsigned char>& paths); //, std::string variant_id = ".");
+	Variant(std::string left_flank, std::string right_flank, std::string chromosome, size_t start_position, size_t end_position, std::vector<std::string> alleles, std::vector<unsigned short> paths); //, std::string variant_id = ".");
+	Variant(DnaSequence& left_flank, DnaSequence& right_flank, std::string chromosome, size_t start_position, size_t end_position, std::vector<DnaSequence>& alleles, std::vector<unsigned short>& paths); //, std::string variant_id = ".");
 	/** add flanking sequences left and right of variant **/
 	void add_flanking_sequence();
 	/** remove flanking sequences left and right of variant **/
@@ -66,18 +66,18 @@ public:
 	/** get chromosome **/
 	std::string get_chromosome() const;
 	/** check if given allele is covered by the given path **/
-	bool allele_on_path(unsigned char allele_index, size_t path_index) const;
+	bool allele_on_path(unsigned short allele_index, size_t path_index) const;
 	/** get index of allele located on given path **/
-	unsigned char get_allele_on_path(size_t path_index) const;
+	unsigned short get_allele_on_path(size_t path_index) const;
 	/** get paths that cover a given allele **/
-	void get_paths_of_allele(unsigned char allele_index, std::vector<size_t>& result) const;
+	void get_paths_of_allele(unsigned short allele_index, std::vector<size_t>& result) const;
 	/** check if this is a combined variant **/
 	bool is_combined() const;
 	friend std::ostream& operator<<(std::ostream& os, const Variant& var);
 	friend bool operator==(const Variant& v1, const Variant& v2);
 	friend bool operator!=(const Variant& v1, const Variant& v2);
 	/** compute allele frequency of the given allele **/
-	float allele_frequency(unsigned char allele_index, bool ignore_ref_path = false) const;
+	float allele_frequency(unsigned short allele_index, bool ignore_ref_path = false) const;
 	/** return variant ID **/
 	std::string get_id() const;
 	/** check whether the given allele is undefined **/
@@ -108,10 +108,10 @@ private:
 	// allele sequences of individual variants
 	std::vector<std::vector<DnaSequence>> allele_sequences;
 	// combined alleles
-	std::vector<std::vector<unsigned char>> allele_combinations;
+	std::vector<std::vector<unsigned short>> allele_combinations;
 	// alleles not covered by any path
-	std::vector<std::vector<unsigned char>> uncovered_alleles;
-	std::vector<unsigned char> paths;
+	std::vector<std::vector<unsigned short>> uncovered_alleles;
+	std::vector<unsigned short> paths;
 	bool flanks_added;
 	void set_values(size_t end_position);
 	friend cereal::access;

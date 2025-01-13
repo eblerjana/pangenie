@@ -69,9 +69,9 @@ TEST_CASE("Commands run_genotype_command1", "[Commands run_genotype_command1]") 
 	REQUIRE(genotypes.size() == 2);
 	genotypes[0].normalize();
 	genotypes[1].normalize();
-	vector<unsigned char> defined1 = {0,1};
-	vector<unsigned char> defined2 = {0,1,2};
-	vector<vector<unsigned char>> defined = {{0,1}, {0,1,2}};
+	vector<unsigned short> defined1 = {0,1};
+	vector<unsigned short> defined2 = {0,1,2};
+	vector<vector<unsigned short>> defined = {{0,1}, {0,1,2}};
 	vector<string> expected_likelihoods = {};
 
 	for(size_t i = 0; i < 2; ++i) {
@@ -149,9 +149,9 @@ TEST_CASE("Commands run_genotype_command2", "[Commands run_genotype_command2]") 
 	REQUIRE(genotypes.size() == 2);
 	genotypes[0].normalize();
 	genotypes[1].normalize();
-	vector<unsigned char> defined1 = {0,1};
-	vector<unsigned char> defined2 = {0,1,2};
-	vector<vector<unsigned char>> defined = {{0,1}, {0,1,2}};
+	vector<unsigned short> defined1 = {0,1};
+	vector<unsigned short> defined2 = {0,1,2};
+	vector<vector<unsigned short>> defined = {{0,1}, {0,1,2}};
 	vector<string> expected_likelihoods = {};
 
 	for(size_t i = 0; i < 2; ++i) {

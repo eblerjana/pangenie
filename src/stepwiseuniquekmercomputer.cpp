@@ -7,7 +7,7 @@
 
 using namespace std;
 
-void stepwise_unique_kmers(DnaSequence& allele, unsigned char index, size_t kmer_size, map<jellyfish::mer_dna, vector<unsigned char>>& occurences) {
+void stepwise_unique_kmers(DnaSequence& allele, unsigned short index, size_t kmer_size, map<jellyfish::mer_dna, vector<unsigned short>>& occurences) {
 	//enumerate kmers
 	map<jellyfish::mer_dna, size_t> counts;
 	size_t extra_shifts = kmer_size;
@@ -59,15 +59,15 @@ void StepwiseUniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKm
 		// set parameters of distributions
 		size_t kmer_size = this->variants->get_kmer_size();
 		
-		map <jellyfish::mer_dna, vector<unsigned char>> occurences;
+		map <jellyfish::mer_dna, vector<unsigned short>> occurences;
 		const Variant& variant = this->variants->get_variant(v);
 		stringstream outline;
 		outline << variant.get_chromosome() << "\t" << variant.get_start_position() << "\t" << variant.get_end_position() << "\t";
 	
-		vector<unsigned char> path_to_alleles;
+		vector<unsigned short> path_to_alleles;
 		assert(variant.nr_of_paths() < 65535);
 		for (unsigned short p = 0; p < variant.nr_of_paths(); ++p) {
-			unsigned char a = variant.get_allele_on_path(p);
+			unsigned short a = variant.get_allele_on_path(p);
 			path_to_alleles.push_back(a);
 		}
 
@@ -76,7 +76,7 @@ void StepwiseUniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKm
 		u->set_coverage(0);
 		size_t nr_alleles = variant.nr_of_alleles();
 
-		for (unsigned char a = 0; a < nr_alleles; ++a) {
+		for (unsigned short a = 0; a < nr_alleles; ++a) {
 			// consider all alleles not undefined
 			if (variant.is_undefined_allele(a)) {
 				// skip kmers of alleles that are undefined
@@ -175,14 +175,14 @@ void StepwiseUniqueKmerComputer::compute_unique_kmers_fasta(vector<shared_ptr<Un
 		// set parameters of distributions
 		size_t kmer_size = this->variants->get_kmer_size();
 		
-		map <jellyfish::mer_dna, vector<unsigned char>> occurences;
+		map <jellyfish::mer_dna, vector<unsigned short>> occurences;
 		const Variant& variant = this->variants->get_variant(v);
 		stringstream outline;
 	
-		vector<unsigned char> path_to_alleles;
+		vector<unsigned short> path_to_alleles;
 		assert(variant.nr_of_paths() < 65535);
 		for (unsigned short p = 0; p < variant.nr_of_paths(); ++p) {
-			unsigned char a = variant.get_allele_on_path(p);
+			unsigned short a = variant.get_allele_on_path(p);
 			path_to_alleles.push_back(a);
 		}
 
@@ -191,7 +191,7 @@ void StepwiseUniqueKmerComputer::compute_unique_kmers_fasta(vector<shared_ptr<Un
 		u->set_coverage(0);
 		size_t nr_alleles = variant.nr_of_alleles();
 
-		for (unsigned char a = 0; a < nr_alleles; ++a) {
+		for (unsigned short a = 0; a < nr_alleles; ++a) {
 			// consider all alleles not undefined
 			if (variant.is_undefined_allele(a)) {
 				// skip kmers of alleles that are undefined
@@ -269,10 +269,10 @@ void StepwiseUniqueKmerComputer::compute_empty(vector<shared_ptr<UniqueKmers>>* 
 	size_t nr_variants = this->variants->size();
 	for (size_t v = 0; v < nr_variants; ++v) {
 		const Variant& variant = this->variants->get_variant(v);
-		vector<unsigned char> path_to_alleles;
+		vector<unsigned short> path_to_alleles;
 		assert(variant.nr_of_paths() < 65535);
 		for (unsigned short p = 0; p < variant.nr_of_paths(); ++p) {
-			unsigned char a = variant.get_allele_on_path(p);
+			unsigned short a = variant.get_allele_on_path(p);
 			path_to_alleles.push_back(a);
 		}
 		shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers>(new UniqueKmers(variant.get_start_position(), path_to_alleles));
@@ -289,7 +289,7 @@ void StepwiseUniqueKmerComputer::determine_unique_flanking_kmers(size_t var_inde
 	this->variants->get_right_overhang(var_index, length, right_overhang);
 
 	size_t kmer_size = this->variants->get_kmer_size();
-	map <jellyfish::mer_dna, vector<unsigned char>> occurences;
+	map <jellyfish::mer_dna, vector<unsigned short>> occurences;
 	stepwise_unique_kmers(left_overhang, 0, kmer_size, occurences);
 	stepwise_unique_kmers(right_overhang, 1, kmer_size, occurences);
 

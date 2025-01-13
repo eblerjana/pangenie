@@ -8,10 +8,10 @@
 using namespace std;
 
 TEST_CASE("ColumnIndexer testcase 1", "[ColumnIndexer testcase 1]"){
-	vector<unsigned char> path_to_allele = {0, 1, 0, 0, 0};
+	vector<unsigned short> path_to_allele = {0, 1, 0, 0, 0};
 	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
-	vector<unsigned char> a1 = {0};
-	vector<unsigned char> a2 = {1};
+	vector<unsigned short> a1 = {0};
+	vector<unsigned short> a2 = {1};
 	u1->insert_kmer(10, a1);
 	u1->insert_kmer(10, a2);
 	u1->set_coverage(5);

@@ -208,9 +208,9 @@ void GraphBuilder::construct_graph(std::string filename, FastaReader* fasta_read
 		}
 
 		// construct paths
-		vector<unsigned char> paths = {};
-		if (add_reference) paths.push_back((unsigned char) 0);
-		unsigned char undefined_index = alleles.size();
+		vector<unsigned short> paths = {};
+		if (add_reference) paths.push_back((unsigned short) 0);
+		unsigned short undefined_index = alleles.size();
 		string undefined_allele = "N";
 
 		for (size_t i = 9; i < tokens.size(); ++i) {
@@ -237,7 +237,7 @@ void GraphBuilder::construct_graph(std::string filename, FastaReader* fasta_read
 						throw runtime_error("GraphBuilder::GraphBuilder: invalid genotype in VCF.");
 					}
 					assert(p_index < 255);
-					paths.push_back( (unsigned char) p_index);
+					paths.push_back( (unsigned short) p_index);
 				}
 			}
 		}

@@ -285,7 +285,7 @@ TEST_CASE("VariantReader construct_index", "[VariantReader construct_index]") {
 	for (auto s : sequences) {
 		alleles.push_back(DnaSequence(s));
 	}
-	vector<unsigned char> expected = {1,0,2,3};
+	vector<unsigned short> expected = {1,0,2,3};
 	REQUIRE(construct_index(alleles, true) == expected);
 }
 

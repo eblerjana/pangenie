@@ -10,10 +10,10 @@ using namespace std;
 
 TEST_CASE("SamplingEmissions get_emission_cost1", "[SamplingEmissions get_emission_cost1]")
 {
-	vector<unsigned char> path_to_allele = {0, 0};
+	vector<unsigned short> path_to_allele = {0, 0};
 	shared_ptr<UniqueKmers> u1 =  shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
-	vector<unsigned char> a1 = {0};
-	vector<unsigned char> a2 = {1};
+	vector<unsigned short> a1 = {0};
+	vector<unsigned short> a2 = {1};
 
 	path_to_allele = {1, 0};
 	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
@@ -23,7 +23,7 @@ TEST_CASE("SamplingEmissions get_emission_cost1", "[SamplingEmissions get_emissi
 	u2->insert_kmer(1, a2);
 
 	// check fractions computed by UniqueKmers object
-	map<unsigned char, float> fractions;
+	map<unsigned short, float> fractions;
 	fractions[0] = u1->fraction_present_kmers_on_allele(0);
 	REQUIRE(fractions.size() == 1);
 	REQUIRE(doubles_equal(fractions[0], 1.0));
@@ -45,10 +45,10 @@ TEST_CASE("SamplingEmissions get_emission_cost1", "[SamplingEmissions get_emissi
 
 TEST_CASE("SamplingEmissions get_emission_cost2", "[SamplingEmissions get_emission_cost2]")
 {
-	vector<unsigned char> path_to_allele = {0, 1};
+	vector<unsigned short> path_to_allele = {0, 1};
 	shared_ptr<UniqueKmers> u1 =  shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
-	vector<unsigned char> a1 = {0};
-	vector<unsigned char> a2 = {1};
+	vector<unsigned short> a1 = {0};
+	vector<unsigned short> a2 = {1};
 	u1->insert_kmer(20, a1);
 	u1->insert_kmer(10, a1);
 	u1->insert_kmer(1, a1);
@@ -65,7 +65,7 @@ TEST_CASE("SamplingEmissions get_emission_cost2", "[SamplingEmissions get_emissi
 	u2->insert_kmer(0, a2);
 
 	// check fractions computed by UniqueKmers object
-	map<unsigned char, float> fractions;
+	map<unsigned short, float> fractions;
 	fractions[0] = u1->fraction_present_kmers_on_allele(0);
 	fractions[1] = u1->fraction_present_kmers_on_allele(1);
 
@@ -92,16 +92,16 @@ TEST_CASE("SamplingEmissions get_emission_cost2", "[SamplingEmissions get_emissi
 
 TEST_CASE("SamplingEmissions get_emission_cost3", "[SamplingEmissions get_emission_cost3]")
 {
-	vector<unsigned char> path_to_allele = {0, 1};
+	vector<unsigned short> path_to_allele = {0, 1};
 	shared_ptr<UniqueKmers> u1 =  shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
-	vector<unsigned char> a1 = {0};
-	vector<unsigned char> a2 = {1};
+	vector<unsigned short> a1 = {0};
+	vector<unsigned short> a2 = {1};
 	u1->insert_kmer(20, a1);
 	u1->insert_kmer(1, a2);
 
 
 	// check fractions computed by UniqueKmers object
-	map<unsigned char, float> fractions;
+	map<unsigned short, float> fractions;
 	fractions[0] = u1->fraction_present_kmers_on_allele(0);
 	fractions[1] = u1->fraction_present_kmers_on_allele(1);
 
@@ -114,17 +114,17 @@ TEST_CASE("SamplingEmissions get_emission_cost3", "[SamplingEmissions get_emissi
 }
 
 TEST_CASE("SamplingEmissions undefined_allele", "[SamplingEmissions undefined_allele]") {
-	vector<unsigned char> path_to_allele = {0,1,2};
+	vector<unsigned short> path_to_allele = {0,1,2};
 	shared_ptr<UniqueKmers> u =  shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
-	vector<unsigned char> a1 = {0};
-	vector<unsigned char> a2 = {1};
-	vector<unsigned char> a3 = {2};
+	vector<unsigned short> a1 = {0};
+	vector<unsigned short> a2 = {1};
+	vector<unsigned short> a3 = {2};
 	u->set_undefined_allele(1);
 	u->insert_kmer(20, a1);
 	u->insert_kmer(2, a3);
 
 	// check fractions computed by UniqueKmers object
-	map<unsigned char, float> fractions;
+	map<unsigned short, float> fractions;
 	fractions[0] = u->fraction_present_kmers_on_allele(0);
 	fractions[1] = u->fraction_present_kmers_on_allele(1);
 	fractions[2] = u->fraction_present_kmers_on_allele(2);

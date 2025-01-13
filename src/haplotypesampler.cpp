@@ -82,11 +82,11 @@ HaplotypeSampler::HaplotypeSampler(vector<shared_ptr<UniqueKmers>>* unique_kmers
 				trans_cost = SamplingTransitions(from_variant, to_variant, this->recombrate, nr_paths, this->effective_N).compute_transition_cost(true);
 			}
 
-			std::map<unsigned char, int> kmers_on_alleles = this->unique_kmers->at(column_index)->kmers_on_alleles();
+			std::map<unsigned short, int> kmers_on_alleles = this->unique_kmers->at(column_index)->kmers_on_alleles();
 			bool first = true;
 			debug_outfile << "variant_" << this->unique_kmers->at(column_index)->get_variant_position() << ", trans_cost: " << trans_cost << " ";
 			for (auto a : kmers_on_alleles) {
-				unsigned char cost = this->emission_costs.at(column_index).get_emission_cost(a.first);
+				unsigned short cost = this->emission_costs.at(column_index).get_emission_cost(a.first);
 				if (!first) debug_outfile << ",";
 				debug_outfile << "cost:" <<  (unsigned int) cost << "(allele: " << (unsigned int) a.first  << ", #kmers:" << a.second << ")";
 				first = false;
@@ -193,7 +193,7 @@ void HaplotypeSampler::compute_viterbi_path(vector<unsigned int>* best_scores) {
 		path[column_index] = best_index;
 
 		// penalize allele covered by selected path
-		unsigned char best_allele = this->unique_kmers->at(column_index)->get_allele(best_index);
+		unsigned short best_allele = this->unique_kmers->at(column_index)->get_allele(best_index);
 		emission_costs.at(column_index).penalize(best_allele);
 
 		if (column_index == 0) break;

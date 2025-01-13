@@ -6,7 +6,7 @@
 
 using namespace std;
 
-void unique_kmers(DnaSequence& allele, unsigned char index, size_t kmer_size, map<jellyfish::mer_dna, vector<unsigned char>>& occurences) {
+void unique_kmers(DnaSequence& allele, unsigned short index, size_t kmer_size, map<jellyfish::mer_dna, vector<unsigned short>>& occurences) {
 	//enumerate kmers
 	map<jellyfish::mer_dna, size_t> counts;
 	size_t extra_shifts = kmer_size;
@@ -50,13 +50,13 @@ void UniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKmers>>* r
 		size_t kmer_size = this->variants->get_kmer_size();
 		double kmer_coverage = compute_local_coverage(v, 2*kmer_size);
 		
-		map <jellyfish::mer_dna, vector<unsigned char>> occurences;
+		map <jellyfish::mer_dna, vector<unsigned short>> occurences;
 		const Variant& variant = this->variants->get_variant(v);
 	
-		vector<unsigned char> path_to_alleles;
+		vector<unsigned short> path_to_alleles;
 		assert(variant.nr_of_paths() < 65535);
 		for (unsigned short p = 0; p < variant.nr_of_paths(); ++p) {
-			unsigned char a = variant.get_allele_on_path(p);
+			unsigned short a = variant.get_allele_on_path(p);
 			path_to_alleles.push_back(a);
 		}
 
@@ -64,7 +64,7 @@ void UniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKmers>>* r
 		u->set_coverage(kmer_coverage);
 		size_t nr_alleles = variant.nr_of_alleles();
 
-		for (unsigned char a = 0; a < nr_alleles; ++a) {
+		for (unsigned short a = 0; a < nr_alleles; ++a) {
 			// consider all alleles not undefined
 			if (variant.is_undefined_allele(a)) {
 				// skip kmers of alleles that are undefined
@@ -143,10 +143,10 @@ void UniqueKmerComputer::compute_empty(vector<UniqueKmers*>* result) const {
 	size_t nr_variants = this->variants->size();
 	for (size_t v = 0; v < nr_variants; ++v) {
 		const Variant& variant = this->variants->get_variant(v);
-		vector<unsigned char> path_to_alleles;
+		vector<unsigned short> path_to_alleles;
 		assert(variant.nr_of_paths() < 65535);
 		for (unsigned short p = 0; p < variant.nr_of_paths(); ++p) {
-			unsigned char a = variant.get_allele_on_path(p);
+			unsigned short a = variant.get_allele_on_path(p);
 			path_to_alleles.push_back(a);
 		}
 		UniqueKmers* u = new UniqueKmers(variant.get_start_position(), path_to_alleles);
@@ -164,7 +164,7 @@ unsigned short UniqueKmerComputer::compute_local_coverage(size_t var_index, size
 	this->variants->get_right_overhang(var_index, length, right_overhang);
 
 	size_t kmer_size = this->variants->get_kmer_size();
-	map <jellyfish::mer_dna, vector<unsigned char>> occurences;
+	map <jellyfish::mer_dna, vector<unsigned short>> occurences;
 	unique_kmers(left_overhang, 0, kmer_size, occurences);
 	unique_kmers(right_overhang, 1, kmer_size, occurences);
 
