@@ -99,7 +99,7 @@ TEST_CASE("Commands run_genotype_command1", "[Commands run_genotype_command1]") 
 TEST_CASE("Commands run_genotype_command2", "[Commands run_genotype_command2]") {
 	string precomputed_prefix = "../tests/data/index";
 	string readfile = "../tests/data/region-reads.fa";
-	string outname = "../tests/data/testfull";
+	string outname = "../tests/data/testsampled";
 	string sample_name = "sample";
 	size_t nr_jellyfish_threads = 1;
 	size_t nr_core_threads = 1;

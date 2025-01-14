@@ -353,7 +353,7 @@ TEST_CASE("VariantReader non_existing_path", "[VariantReader non_existing_path]"
 TEST_CASE("VariantReader too_large_panel", "[VariantReader too_large_panel]") {
 	string vcf = "../tests/data/large-panel.vcf";
 	string fasta = "../tests/data/small1.fa";
-	// there are more than 256 paths in the VCF, the implementation cannot handle this and should throw an error
+	// there are more than 65536 paths in the VCF, the implementation cannot handle this and should throw an error
 	CHECK_THROWS(VariantReader (vcf, fasta, 10, false));
 	CHECK_THROWS(VariantReader (vcf, fasta, 10, true));
 }
@@ -362,7 +362,7 @@ TEST_CASE("VariantReader too_large_panel", "[VariantReader too_large_panel]") {
 TEST_CASE("VariantReader too_many_alleles", "[VariantReader too_many_alleles]") {
 	string vcf = "../tests/data/many-alleles.vcf";
 	string fasta = "../tests/data/small1.fa";
-	// there are more than 256 alleles in the VCF, the implementation cannot handle this and should throw an error
+	// there are more than 65536 alleles in the VCF, the implementation cannot handle this and should throw an error
 	CHECK_THROWS(VariantReader (vcf, fasta, 10, false));
 }
 
