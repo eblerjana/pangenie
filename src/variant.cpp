@@ -60,11 +60,11 @@ Variant::Variant(string left_flank, string right_flank, string chromosome, size_
 
 {
 	if (alleles.size() > 65535) {
-		throw runtime_error("Variant::Variant: number of alleles per variant exceeds 256. Current implementation does not support higher numbers.");
+		throw runtime_error("Variant::Variant: number of alleles per variant exceeds 65536. Current implementation does not support higher numbers.");
 	}
 
 	if (paths.size() > 65535) {
-		throw runtime_error("Variant::Variant: number of paths exceeds 256. Current implementation does not support higher numbers.");
+		throw runtime_error("Variant::Variant: number of paths exceeds 65536. Current implementation does not support higher numbers.");
 	}
 
 	this->allele_sequences.push_back(vector<DnaSequence>());
@@ -86,11 +86,11 @@ Variant::Variant(DnaSequence& left_flank, DnaSequence& right_flank, string chrom
 	 flanks_added(false)
 {
 	if (alleles.size() > 65535) {
-		throw runtime_error("Variant::Variant: number of alleles per variant exceeds 256. Current implementation does not support higher numbers.");
+		throw runtime_error("Variant::Variant: number of alleles per variant exceeds 65536. Current implementation does not support higher numbers.");
 	}
 
 	if (paths.size() > 65535) {
-		throw runtime_error("Variant::Variant: number of paths exceeds 256. Current implementation does not support higher numbers.");
+		throw runtime_error("Variant::Variant: number of paths exceeds 65536. Current implementation does not support higher numbers.");
 	}
 
 	this->allele_sequences.push_back(vector<DnaSequence>());
@@ -105,7 +105,7 @@ Variant::Variant(DnaSequence& left_flank, DnaSequence& right_flank, string chrom
 void Variant::set_values(size_t end_position) {
 	// find out which alleles are not covered by any paths
 	vector<unsigned short> uncovered;
-	assert(allele_sequences.size() < 256);
+	assert(allele_sequences.size() < 65536);
 	for (unsigned short i = 0; i < this->allele_sequences[0].size(); ++i) {
 		if (find(this->paths.begin(), this->paths.end(), i) == this->paths.end()) {
 			// allele not covered
@@ -276,7 +276,7 @@ void Variant::combine_variants (Variant const &v2){
 	vector<vector<unsigned short>> new_alleles;
 	unsigned short allele_index = 0;
 	
-	assert (path_to_index.size() < 256);
+	assert (path_to_index.size() < 65536);
 	
 	// construct new allele sequences
 	for (auto it = path_to_index.begin(); it != path_to_index.end(); ++it) {	

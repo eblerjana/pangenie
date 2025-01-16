@@ -19,7 +19,7 @@ string graph_get_date() {
 
 void Graph::insert_ids(vector<DnaSequence>& alleles, vector<string>& variant_ids, bool reference_added) {
 	vector<unsigned short> index = graph_construct_index(alleles, reference_added);
-	assert(index.size() < 256);
+	assert(index.size() < 65536);
 	// insert IDs in the lex. order of their corresponding alleles
 	vector<string> sorted_ids;
 	for (auto id : index) {
@@ -30,7 +30,7 @@ void Graph::insert_ids(vector<DnaSequence>& alleles, vector<string>& variant_ids
 
 string Graph::get_ids(vector<string>& alleles, size_t variant_index, bool reference_added) {
 	vector<unsigned short> index = graph_construct_index(alleles, reference_added);
-	assert(index.size() < 256);
+	assert(index.size() < 65536);
 	vector<string> sorted_ids(index.size());
 	for (unsigned short i = 0; i < index.size(); ++i) {
 		sorted_ids[index[i]] = this->variant_ids.at(variant_index)[i];

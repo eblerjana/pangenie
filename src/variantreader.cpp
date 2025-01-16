@@ -25,7 +25,7 @@ void parse_line(vector<string>& result, string line, char sep) {
 
 void VariantReader::insert_ids(string& chromosome, vector<DnaSequence>& alleles, vector<string>& variant_ids, bool reference_added) {
 	vector<unsigned short> index = construct_index(alleles, reference_added);
-	assert(index.size() < 256);
+	assert(index.size() < 65536);
 	// insert IDs in the lex. order of their corresponding alleles
 	vector<string> sorted_ids;
 	for (auto id : index) {
@@ -36,7 +36,7 @@ void VariantReader::insert_ids(string& chromosome, vector<DnaSequence>& alleles,
 
 string VariantReader::get_ids(string chromosome, vector<string>& alleles, size_t variant_index, bool reference_added) {
 	vector<unsigned short> index = construct_index(alleles, reference_added);
-	assert(index.size() < 256);
+	assert(index.size() < 65536);
 	vector<string> sorted_ids(index.size());
 	for (unsigned short i = 0; i < index.size(); ++i) {
 		sorted_ids[index[i]] = this->variant_ids.at(chromosome).at(variant_index)[i];
@@ -171,7 +171,7 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 
 		// currently, number of alleles is limited to 65535
 		if (alleles.size() > 65535) {
-			throw runtime_error("VariantReader: number of alternative alleles is limited to 254 in current implementation. Make sure the VCF contains only alternative alleles covered by at least one of the haplotypes.");
+			throw runtime_error("VariantReader: number of alternative alleles is limited to 65534 in current implementation. Make sure the VCF contains only alternative alleles covered by at least one of the haplotypes.");
 		}
 
 		// TODO: handle cases where variant is less than kmersize from start or end of the chromosome
@@ -191,7 +191,7 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 
 		// make sure that there are at most 65535 paths (including reference path in case it is requested)
 		if (this->nr_paths > 65535) {
-			throw runtime_error("VariantReader: number of paths is limited to 254 in current implementation.");
+			throw runtime_error("VariantReader: number of paths is limited to 65534 in current implementation.");
 		}
 
 

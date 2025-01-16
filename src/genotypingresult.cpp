@@ -47,7 +47,7 @@ long double GenotypingResult::get_genotype_likelihood (unsigned short allele1, u
 }
 
 vector<long double> GenotypingResult::get_all_likelihoods (size_t nr_alleles) const {
-	assert (nr_alleles < 256);
+	assert (nr_alleles < 65536);
 
 	// determine number of possible genotypes
 	size_t nr_genotypes = (nr_alleles * (nr_alleles + 1)) / 2;
