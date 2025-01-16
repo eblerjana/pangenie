@@ -128,5 +128,6 @@ private:
 	friend class EmissionProbabilityComputer;
 	friend class HaplotypeSampler;
 	friend cereal::access;
+	friend class UKAnalyzer;
 };
 # endif // UNIQUEKMERS_HPP
