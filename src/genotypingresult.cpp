@@ -70,7 +70,7 @@ vector<long double> GenotypingResult::get_all_likelihoods (size_t nr_alleles) co
 GenotypingResult GenotypingResult::get_specific_likelihoods (vector<unsigned short>& alleles) const {
 	GenotypingResult result;
 	size_t nr_alleles = alleles.size();
-	assert (nr_alleles < 256);
+	assert (nr_alleles < 65536);
 	long double sum = 0.0L;
 	for (unsigned short i = 0; i < nr_alleles; ++i) {
 		for (unsigned short j = i; j < nr_alleles; ++j) {
