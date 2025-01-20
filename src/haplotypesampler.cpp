@@ -17,10 +17,11 @@ void print_dpcolumn(DPColumn* column) {
 	cout << "--------" << endl;
 }
 
-HaplotypeSampler::HaplotypeSampler(vector<shared_ptr<UniqueKmers>>* unique_kmers, size_t size, double recombrate, long double effective_N, vector<unsigned int>* best_scores, bool add_reference, string path_output, string chromosome)
+HaplotypeSampler::HaplotypeSampler(vector<shared_ptr<UniqueKmers>>* unique_kmers, size_t size, double recombrate, long double effective_N, vector<unsigned int>* best_scores, bool add_reference, string path_output, string chromosome, unsigned short allele_penalty)
 	:unique_kmers(unique_kmers),
 	 recombrate(recombrate),
-	 effective_N(effective_N)
+	 effective_N(effective_N),
+	 allele_penalty(allele_penalty)
 {
 	Timer timer;
 
@@ -194,7 +195,7 @@ void HaplotypeSampler::compute_viterbi_path(vector<unsigned int>* best_scores) {
 
 		// penalize allele covered by selected path
 		unsigned short best_allele = this->unique_kmers->at(column_index)->get_allele(best_index);
-		emission_costs.at(column_index).penalize(best_allele);
+		emission_costs.at(column_index).penalize(best_allele, allele_penalty);
 
 		if (column_index == 0) break;
 

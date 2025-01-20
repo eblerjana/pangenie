@@ -31,6 +31,7 @@ int main(int argc, char* argv[]) {
 	double recombrate = 1.26;
 	// TOD0: for testing purposes
 	long double sampling_effective_N = 0.00001L;
+	unsigned short allele_penalty = 10;
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
@@ -68,13 +69,13 @@ int main(int argc, char* argv[]) {
 	panel_size = stoi(argument_parser.get_argument('x'));
 	istringstream iss(argument_parser.get_argument('e'));
 	iss >> hash_size;
-	sampling_effective_N = stof(argument_parser.get_argument('y'));
+	allele_penalty = stoi(argument_parser.get_argument('y'));
 
 
 	precomputed_prefix = argument_parser.get_argument('f');
 
 	// run sampling
-	int exit_code = run_sampling(precomputed_prefix, readfile, outname, nr_jellyfish_threads, nr_core_threads, effective_N, regularization, count_only_graph, hash_size, panel_size, recombrate, sampling_effective_N);
+	int exit_code = run_sampling(precomputed_prefix, readfile, outname, nr_jellyfish_threads, nr_core_threads, effective_N, regularization, count_only_graph, hash_size, panel_size, recombrate, sampling_effective_N, allele_penalty);
 
 	getrusage(RUSAGE_SELF, &rss_total);
 

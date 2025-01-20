@@ -41,6 +41,7 @@ int main(int argc, char* argv[]) {
 	size_t panel_size = 0;
 	double recombrate = 1.26;
 	bool output_panel = false;
+	unsigned short allele_penalty = 10;
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
@@ -62,7 +63,7 @@ int main(int argc, char* argv[]) {
 	argument_parser.add_optional_argument('e', "3000000000", "size of hash used by jellyfish");
 	argument_parser.add_optional_argument('x', "0", "to which size the input panel shall be reduced.");
 	argument_parser.add_flag_argument('d', "write sampled panel to additional output VCF.");
-	argument_parser.add_optional_argument('y', "0.00001", "effective population size for sampling step.");
+	argument_parser.add_optional_argument('y', "10", "Penality used for already selected alleles in sampling step."); //"0.00001", "effective population size for sampling step.");
 
 	argument_parser.exactly_one('f', 'v');
 	argument_parser.exactly_one('f', 'r');
@@ -87,7 +88,7 @@ int main(int argc, char* argv[]) {
 	sample_name = argument_parser.get_argument('s');
 	nr_jellyfish_threads = stoi(argument_parser.get_argument('j'));
 	nr_core_threads = stoi(argument_parser.get_argument('t'));
-	sampling_effective_N = stof(argument_parser.get_argument('y'));
+	allele_penalty = stoi(argument_parser.get_argument('y'));
 
 	bool genotyping_flag = argument_parser.get_flag('g');
 	bool phasing_flag = argument_parser.get_flag('p');
@@ -113,7 +114,7 @@ int main(int argc, char* argv[]) {
 		precomputed_prefix = argument_parser.get_argument('f');
 
 		// run genotyping
-		int exit_code = run_genotype_command(precomputed_prefix, readfile, outname, sample_name, nr_jellyfish_threads, nr_core_threads, only_genotyping, only_phasing, effective_N, regularization, count_only_graph, ignore_imputed, sampling_size, hash_size, panel_size, recombrate, output_panel, sampling_effective_N);
+		int exit_code = run_genotype_command(precomputed_prefix, readfile, outname, sample_name, nr_jellyfish_threads, nr_core_threads, only_genotyping, only_phasing, effective_N, regularization, count_only_graph, ignore_imputed, sampling_size, hash_size, panel_size, recombrate, output_panel, sampling_effective_N, allele_penalty);
 
 		getrusage(RUSAGE_SELF, &rss_total);
 
@@ -132,7 +133,7 @@ int main(int argc, char* argv[]) {
 
 		cerr << endl << "NOTE: by running PanGenie-index first to pre-process data, you can reduce memory usage and speed up PanGenie. This is helpful especially when genotyping the same variants across multiple samples." << endl << endl;
 
-		int exit_code = run_single_command(outname, readfile, reffile, vcffile, kmersize, outname, sample_name, nr_jellyfish_threads, nr_core_threads, only_genotyping, only_phasing, effective_N, regularization, count_only_graph, ignore_imputed, add_reference, sampling_size, hash_size, panel_size, recombrate, output_panel, sampling_effective_N);
+		int exit_code = run_single_command(outname, readfile, reffile, vcffile, kmersize, outname, sample_name, nr_jellyfish_threads, nr_core_threads, only_genotyping, only_phasing, effective_N, regularization, count_only_graph, ignore_imputed, add_reference, sampling_size, hash_size, panel_size, recombrate, output_panel, sampling_effective_N, allele_penalty);
 
 		getrusage(RUSAGE_SELF, &rss_total);
 

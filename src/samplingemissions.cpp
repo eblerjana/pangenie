@@ -36,10 +36,10 @@ unsigned int SamplingEmissions::get_emission_cost(unsigned short allele_id) cons
 	return this->allele_penalties[allele_id];
 }
 
-void SamplingEmissions::penalize(unsigned short allele_id) {
-	this->allele_penalties[allele_id] += 10;
+void SamplingEmissions::penalize(unsigned short allele_id, unsigned short penalty) {
+	this->allele_penalties[allele_id] += penalty;
 	if (this->allele_penalties[allele_id] > this->default_penalty) {
-		// make sure max penality value is at most default + 10
-		this->allele_penalties[allele_id] = this->default_penalty + 10;
+		// make sure max penality value is at most default penalty
+		this->allele_penalties[allele_id] = this->default_penalty; // + penalty;
 	}
 }

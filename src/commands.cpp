@@ -73,7 +73,7 @@ struct Results {
 };
 
 
-void fill_read_kmercounts(string chromosome, UniqueKmersMap* unique_kmers_map, shared_ptr<KmerCounter> read_kmer_counts, ProbabilityTable* probabilities, string outname, size_t kmer_coverage, size_t panel_size, double recombrate, long double effective_N, bool add_reference, string output_paths) {
+void fill_read_kmercounts(string chromosome, UniqueKmersMap* unique_kmers_map, shared_ptr<KmerCounter> read_kmer_counts, ProbabilityTable* probabilities, string outname, size_t kmer_coverage, size_t panel_size, double recombrate, long double effective_N, bool add_reference, string output_paths, unsigned short allele_penalty) {
 	Timer timer;
 	string filename = outname + "_" + chromosome + "_kmers.tsv.gz";
 	gzFile file = gzopen(filename.c_str(), "rb");
@@ -140,7 +140,7 @@ void fill_read_kmercounts(string chromosome, UniqueKmersMap* unique_kmers_map, s
 	gzclose(file);
 
 	// Haplotype sampling
-	HaplotypeSampler sampler(&unique_kmers_map->unique_kmers[chromosome], panel_size, recombrate, effective_N, nullptr, add_reference, output_paths, chromosome); //, "debug_" + chromosome + ".txt");
+	HaplotypeSampler sampler(&unique_kmers_map->unique_kmers[chromosome], panel_size, recombrate, effective_N, nullptr, add_reference, output_paths, chromosome, allele_penalty); //, "debug_" + chromosome + ".txt");
 	// store runtime
 //	lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
 	unique_kmers_map->runtimes[chromosome] = timer.get_total_time();
@@ -198,7 +198,7 @@ void prepare_unique_kmers_stepwise(string chromosome, KmerCounter* genomic_kmer_
 
 
 // TODO: implement after adapting UniqueKmerComputer
-void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, shared_ptr<KmerCounter> read_kmer_counts, shared_ptr<Graph> graph, ProbabilityTable* probs, UniqueKmersMap* unique_kmers_map, size_t kmer_coverage, size_t panel_size, double recombrate, long double effective_N, bool reference_added, string output_paths) {
+void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, shared_ptr<KmerCounter> read_kmer_counts, shared_ptr<Graph> graph, ProbabilityTable* probs, UniqueKmersMap* unique_kmers_map, size_t kmer_coverage, size_t panel_size, double recombrate, long double effective_N, bool reference_added, string output_paths, unsigned short allele_penalty) {
 	Timer timer;
 	UniqueKmerComputer kmer_computer(genomic_kmer_counts, read_kmer_counts, graph, kmer_coverage);
 	std::vector<shared_ptr<UniqueKmers>> unique_kmers;
@@ -209,13 +209,13 @@ void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, s
 		unique_kmers_map->unique_kmers.insert(pair<string, vector<shared_ptr<UniqueKmers>>> (chromosome, move(unique_kmers)));
 	}
 	// store runtime
-	HaplotypeSampler sampler(&unique_kmers_map->unique_kmers[chromosome], panel_size, recombrate, effective_N, nullptr, reference_added, output_paths, chromosome); //, "debug_" + chromosome + ".txt");
+	HaplotypeSampler sampler(&unique_kmers_map->unique_kmers[chromosome], panel_size, recombrate, effective_N, nullptr, reference_added, output_paths, chromosome, allele_penalty); //, "debug_" + chromosome + ".txt");
 	unique_kmers_map->runtimes.insert(pair<string, double>(chromosome, timer.get_total_time()));
 }
 
 
 
-int run_single_command(string precomputed_prefix, string readfile, string reffile, string vcffile, size_t kmersize, string outname, string sample_name, size_t nr_jellyfish_threads, size_t nr_core_threads, bool only_genotyping, bool only_phasing, long double effective_N, long double regularization, bool count_only_graph, bool ignore_imputed, bool add_reference, size_t sampling_size, uint64_t hash_size, size_t panel_size, double recombrate, bool output_panel,  long double sampling_effective_N)
+int run_single_command(string precomputed_prefix, string readfile, string reffile, string vcffile, size_t kmersize, string outname, string sample_name, size_t nr_jellyfish_threads, size_t nr_core_threads, bool only_genotyping, bool only_phasing, long double effective_N, long double regularization, bool count_only_graph, bool ignore_imputed, bool add_reference, size_t sampling_size, uint64_t hash_size, size_t panel_size, double recombrate, bool output_panel,  long double sampling_effective_N, unsigned short allele_penalty)
 {
 
 	Timer timer;
@@ -357,7 +357,7 @@ int run_single_command(string precomputed_prefix, string readfile, string reffil
 					ProbabilityTable* probs = &probabilities;
 					string output_paths = "";
 					if (output_panel) output_paths = outname + "_paths_" + chromosome + ".tsv";
-					function<void()> f_unique_kmers = bind(prepare_unique_kmers, chromosome, genomic_counts, read_kmer_counts, graph_segment, probs, result, kmer_abundance_peak, panel_size, recombrate, sampling_effective_N, add_reference, output_paths);
+					function<void()> f_unique_kmers = bind(prepare_unique_kmers, chromosome, genomic_counts, read_kmer_counts, graph_segment, probs, result, kmer_abundance_peak, panel_size, recombrate, sampling_effective_N, add_reference, output_paths, allele_penalty);
 					threadPool.submit(f_unique_kmers);
 				}
 			}
@@ -701,7 +701,7 @@ int run_index_command(string reffile, string vcffile, size_t kmersize, string ou
 
 }
 
-int run_genotype_command(string precomputed_prefix, string readfile, string outname, string sample_name, size_t nr_jellyfish_threads, size_t nr_core_threads, bool only_genotyping, bool only_phasing, long double effective_N, long double regularization, bool count_only_graph, bool ignore_imputed, size_t sampling_size, uint64_t hash_size, size_t panel_size, double recombrate, bool output_panel,  long double sampling_effective_N)
+int run_genotype_command(string precomputed_prefix, string readfile, string outname, string sample_name, size_t nr_jellyfish_threads, size_t nr_core_threads, bool only_genotyping, bool only_phasing, long double effective_N, long double regularization, bool count_only_graph, bool ignore_imputed, size_t sampling_size, uint64_t hash_size, size_t panel_size, double recombrate, bool output_panel,  long double sampling_effective_N, unsigned short allele_penalty)
 {
 
 	Timer timer;
@@ -833,7 +833,7 @@ int run_genotype_command(string precomputed_prefix, string readfile, string outn
 					ProbabilityTable* probs = &probabilities;
 					string output_paths = "";
 					if (output_panel) output_paths = outname + "_paths_" + chromosome + ".tsv";
-					function<void()> f_fill_readkmers = bind(fill_read_kmercounts, chromosome, unique_kmers, read_kmer_counts, probs, precomputed_prefix, kmer_abundance_peak, panel_size, recombrate, sampling_effective_N, unique_kmers_list.add_reference, output_paths);
+					function<void()> f_fill_readkmers = bind(fill_read_kmercounts, chromosome, unique_kmers, read_kmer_counts, probs, precomputed_prefix, kmer_abundance_peak, panel_size, recombrate, sampling_effective_N, unique_kmers_list.add_reference, output_paths, allele_penalty);
 					threadPool.submit(f_fill_readkmers);
 				}
 			}
@@ -1030,7 +1030,7 @@ int run_genotype_command(string precomputed_prefix, string readfile, string outn
 }
 
 
-int run_sampling(string precomputed_prefix, string readfile, string outname, size_t nr_jellyfish_threads, size_t nr_core_threads, long double effective_N, long double regularization, bool count_only_graph, uint64_t hash_size, size_t panel_size, double recombrate, long double sampling_effective_N)
+int run_sampling(string precomputed_prefix, string readfile, string outname, size_t nr_jellyfish_threads, size_t nr_core_threads, long double effective_N, long double regularization, bool count_only_graph, uint64_t hash_size, size_t panel_size, double recombrate, long double sampling_effective_N, unsigned short allele_penalty)
 {
 
 	Timer timer;
@@ -1159,7 +1159,7 @@ int run_sampling(string precomputed_prefix, string readfile, string outname, siz
 					ProbabilityTable* probs = &probabilities;
 					string output_paths = outname + "_paths_" + chromosome + ".tsv";
 
-					function<void()> f_fill_readkmers = bind(fill_read_kmercounts, chromosome, unique_kmers, read_kmer_counts, probs, precomputed_prefix, kmer_abundance_peak, panel_size, recombrate, sampling_effective_N, unique_kmers_list.add_reference, output_paths);
+					function<void()> f_fill_readkmers = bind(fill_read_kmercounts, chromosome, unique_kmers, read_kmer_counts, probs, precomputed_prefix, kmer_abundance_peak, panel_size, recombrate, sampling_effective_N, unique_kmers_list.add_reference, output_paths, allele_penalty);
 					threadPool.submit(f_fill_readkmers);
 				}
 			}
