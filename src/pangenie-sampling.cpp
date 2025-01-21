@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
 	size_t panel_size = 0;
 	double recombrate = 1.26;
 	// TOD0: for testing purposes
-	long double sampling_effective_N = 10000.0L;;
+	long double sampling_effective_N = 1.0L;;
 	unsigned short allele_penalty = 10;
 
 	// parse the command line arguments
@@ -45,7 +45,8 @@ int main(int argc, char* argv[]) {
 	argument_parser.add_flag_argument('c', "count all read kmers instead of only those located in graph");
 	argument_parser.add_optional_argument('e', "3000000000", "size of hash used by jellyfish");
 	argument_parser.add_optional_argument('x', "0", "to which size the input panel shall be reduced.");
-	argument_parser.add_optional_argument('y', "0.00001", "effective population size for sampling step.");
+	argument_parser.add_optional_argument('y', "10", "Penality used for already selected alleles in sampling step.");
+	argument_parser.add_optional_argument('b', "1", "effective population size for sampling step.");
 
 	try {
 		argument_parser.parse(argc, argv);
@@ -70,12 +71,13 @@ int main(int argc, char* argv[]) {
 	istringstream iss(argument_parser.get_argument('e'));
 	iss >> hash_size;
 	allele_penalty = stoi(argument_parser.get_argument('y'));
+	sampling_effective_N = stof(argument_parser.get_argument('b'));
 
 
 	precomputed_prefix = argument_parser.get_argument('f');
 
 	// run sampling
-	int exit_code = run_sampling(precomputed_prefix, readfile, outname, nr_jellyfish_threads, nr_core_threads, effective_N, regularization, count_only_graph, hash_size, panel_size, recombrate, sampling_effective_N, allele_penalty);
+	int exit_code = run_sampling(precomputed_prefix, readfile, outname, nr_jellyfish_threads, nr_core_threads, regularization, count_only_graph, hash_size, panel_size, recombrate, sampling_effective_N, allele_penalty);
 
 	getrusage(RUSAGE_SELF, &rss_total);
 
