@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
 	size_t panel_size = 0;
 	double recombrate = 1.26;
 	// TOD0: for testing purposes
-	long double sampling_effective_N = 0.00001L;
+	long double sampling_effective_N = 10000.0L;;
 	unsigned short allele_penalty = 10;
 
 	// parse the command line arguments

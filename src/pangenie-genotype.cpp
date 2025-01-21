@@ -32,7 +32,7 @@ int main(int argc, char* argv[]) {
 	bool only_phasing = false;
 	long double effective_N = 0.00001L;
 	// TOD0: for testing purposes
-	long double sampling_effective_N = 0.00001L;
+	long double sampling_effective_N = 10000.0L;
 	long double regularization = 0.01L;
 	bool count_only_graph = true;
 	bool ignore_imputed = false;
