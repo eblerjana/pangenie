@@ -13,6 +13,7 @@
 class KmerPath {
 public:
 	KmerPath();
+	void set_offset();
 	/** indicate presence of kmer at index **/
 	void set_position(size_t index);
 	/** check given position **/
@@ -29,7 +30,8 @@ public:
 
 private:
 	/** use one unsigned int to store the assignments of 32 kmers **/
-	std::vector<uint32_t> kmers;
+	unsigned short offset;
+	uint32_t kmers;
 	friend cereal::access;
 };
 

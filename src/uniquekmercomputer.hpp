@@ -6,8 +6,10 @@
 #include <memory>
 #include "kmercounter.hpp"
 #include "graph.hpp"
+#include "variant.hpp"
 #include "uniquekmers.hpp"
 #include "probabilitytable.hpp"
+#include <jellyfish/mer_dna.hpp>
 
 class UniqueKmerComputer {
 public:
@@ -41,6 +43,12 @@ private:
 	* @returns computed coverage
 	**/
 	unsigned short compute_local_coverage(size_t var_index, size_t length);
+
+	/**
+	* @param occurances maps unique kmers to a list of alleles they occur on
+	* @returns map of alleles to a list of selected unique kmers
+	**/
+	std::map<unsigned short, std::vector<jellyfish::mer_dna>> select_kmers(const Variant* variant, std::map <jellyfish::mer_dna, std::vector<unsigned short>>& occurences);
 };
 
 #endif // UNIQUEKMERCOMPUTER_HPP

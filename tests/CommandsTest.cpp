@@ -69,17 +69,16 @@ TEST_CASE("Commands run_genotype_command1", "[Commands run_genotype_command1]") 
 	REQUIRE(genotypes.size() == 2);
 	genotypes[0].normalize();
 	genotypes[1].normalize();
-	vector<unsigned short> defined1 = {0,1};
-	vector<unsigned short> defined2 = {0,1,2};
 	vector<vector<unsigned short>> defined = {{0,1}, {0,1,2}};
 	vector<string> expected_likelihoods = {};
 
 	for(size_t i = 0; i < 2; ++i) {
 		vector<long double> likelihoods = genotypes[i].get_specific_likelihoods(defined[i]).get_all_likelihoods(defined[i].size());
 		ostringstream all;
-		pair<int,int> genotype = genotypes[i].get_likeliest_genotype();
+		pair<int,int> genotype = genotypes[i].get_specific_likelihoods(defined[i]).get_likeliest_genotype();
+		cout << genotypes[i] << endl;
 		all << genotype.first << "/" << genotype.second << ":";
-		all << genotypes[i].get_genotype_quality(genotype.first, genotype.second) << ":";
+		all << genotypes[i].get_specific_likelihoods(defined[i]).get_genotype_quality(genotype.first, genotype.second) << ":";
 		all << setprecision(4) << log10(likelihoods[0]);
 		for (size_t j = 1; j < likelihoods.size(); ++j) {
 			all << "," << setprecision(4) << log10(likelihoods[j]);
@@ -149,8 +148,6 @@ TEST_CASE("Commands run_genotype_command2", "[Commands run_genotype_command2]") 
 	REQUIRE(genotypes.size() == 2);
 	genotypes[0].normalize();
 	genotypes[1].normalize();
-	vector<unsigned short> defined1 = {0,1};
-	vector<unsigned short> defined2 = {0,1,2};
 	vector<vector<unsigned short>> defined = {{0,1}, {0,1,2}};
 	vector<string> expected_likelihoods = {};
 
@@ -160,10 +157,10 @@ TEST_CASE("Commands run_genotype_command2", "[Commands run_genotype_command2]") 
 		}
 		vector<long double> likelihoods = genotypes[i].get_specific_likelihoods(defined[i]).get_all_likelihoods(defined[i].size());
 		ostringstream all;
-		pair<int,int> genotype = genotypes[i].get_likeliest_genotype();
+		pair<int,int> genotype = genotypes[i].get_specific_likelihoods(defined[i]).get_likeliest_genotype();
 		if ((genotype.first != -1) && (genotype.second != -1)) {
 			all << genotype.first << "/" << genotype.second << ":";
-			all << genotypes[i].get_genotype_quality(genotype.first, genotype.second) << ":";
+			all << genotypes[i].get_specific_likelihoods(defined[i]).get_genotype_quality(genotype.first, genotype.second) << ":";
 		} else {
 			all << ".:.:";
 		}

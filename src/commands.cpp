@@ -197,7 +197,6 @@ void prepare_unique_kmers_stepwise(string chromosome, KmerCounter* genomic_kmer_
 }
 
 
-// TODO: implement after adapting UniqueKmerComputer
 void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, shared_ptr<KmerCounter> read_kmer_counts, shared_ptr<Graph> graph, ProbabilityTable* probs, UniqueKmersMap* unique_kmers_map, size_t kmer_coverage, size_t panel_size, double recombrate, long double effective_N, bool reference_added, string output_paths, unsigned short allele_penalty) {
 	Timer timer;
 	UniqueKmerComputer kmer_computer(genomic_kmer_counts, read_kmer_counts, graph, kmer_coverage);
@@ -847,6 +846,18 @@ int run_genotype_command(string precomputed_prefix, string readfile, string outn
 			timer.get_interval_time();
 
 		}
+
+
+
+	// serialization of UniqueKmersMap object
+	cerr << "Storing unique kmer information ..." << endl;
+	{
+  		ofstream os("BLA_UniqueKmersList.cereal", std::ios::binary);
+  		cereal::BinaryOutputArchive archive( os );
+		archive(unique_kmers_list);
+	}
+
+
 
 
 		/**

@@ -1,8 +1,8 @@
 #include "uniquekmercomputer.hpp"
-#include <jellyfish/mer_dna.hpp>
 #include <iostream>
 #include <cassert>
 #include <map>
+#include <queue>
 
 using namespace std;
 
@@ -42,6 +42,50 @@ UniqueKmerComputer::UniqueKmerComputer (KmerCounter* genomic_kmers, shared_ptr<K
 }
 
 
+map<unsigned short, vector<jellyfish::mer_dna>> UniqueKmerComputer::select_kmers(const Variant* variant, std::map <jellyfish::mer_dna, vector<unsigned short>>& occurences) {
+
+	size_t nr_selected = 0;
+	map<unsigned short, vector<jellyfish::mer_dna>> result;
+	map<unsigned short, queue<jellyfish::mer_dna>> allele_to_kmers;
+	for (auto kmer : occurences){
+
+		size_t genomic_count = this->genomic_kmers->getKmerAbundance(kmer.first);
+		size_t local_count = kmer.second.size();
+
+		// if kmer is not unique to the region, skip it
+		if ( (genomic_count - local_count) != 0 ) continue;
+
+		// if kmer occurs on more than one allele, skip it
+		if (local_count > 1) continue;
+
+
+		// skip alleles not covered by any paths
+		assert(local_count == 1);
+		vector<size_t> paths;
+		variant->get_paths_of_allele(kmer.second[0], paths);
+		if (paths.size() == 0) continue;
+
+		allele_to_kmers[kmer.second[0]].push(kmer.first);
+	}
+
+	bool keep_adding = true;
+	while ( (nr_selected < 301) && (keep_adding) ) {
+		bool kmer_added = false;
+		for (auto a : allele_to_kmers) {
+			// pick at most 32 kmers per allele
+			if ( (a.second.size() > 0) && (result[a.first].size() < 32)) {
+				result[a.first].push_back(a.second.front());
+				a.second.pop();
+				kmer_added = true;
+				nr_selected += 1;
+			}
+		}
+		keep_adding = kmer_added;
+	}
+	return result;
+}
+
+
 void UniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKmers>>* result, ProbabilityTable* probabilities, bool delete_processed_variants) {
 	size_t nr_variants = this->variants->size();
 	for (size_t v = 0; v < nr_variants; ++v) {
@@ -75,42 +119,13 @@ void UniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKmers>>* r
 			unique_kmers(allele, a, kmer_size, occurences);
 		}
 
-		// check if kmers occur elsewhere in the genome
-		size_t nr_kmers_used = 0;
-		for (auto& kmer : occurences) {
-			if (nr_kmers_used > 300) break;
+		// select unique kmers to be used
+		map<unsigned short, vector<jellyfish::mer_dna>> allele_to_kmers = select_kmers(&variant, occurences);
 
-			size_t genomic_count = this->genomic_kmers->getKmerAbundance(kmer.first);
-			size_t local_count = kmer.second.size();
-
-			if ( (genomic_count - local_count) == 0 ) {
-				// kmer unique to this region
-				// determine read kmercount for this kmer
-				size_t read_kmercount = this->read_kmers->getKmerAbundance(kmer.first);
-
-				// determine on which paths kmer occurs
-				vector<size_t> paths;
-				for (auto& allele : kmer.second) {
-					variant.get_paths_of_allele(allele, paths);
-				}
-
-				// skip kmer that does not occur on any path (uncovered allele)
-				if (paths.size() == 0) {
-					continue;
-				}
-
-				// skip kmer that occurs on all paths (they do not give any information about a genotype)
-				if (paths.size() == variant.nr_of_paths()) {
-					continue;
-				}
-
-				// skip kmers with "too extreme" counts
-				// TODO: value ok?
-//				if (read_kmercount > (2*this->kmer_coverage)) {
-//					continue;
-//				}
-
-				// determine probabilities
+		// construct UniqueKmers object
+		for (auto& a : allele_to_kmers) {
+			for (auto& kmer : a.second) {
+				size_t read_kmercount = this->read_kmers->getKmerAbundance(kmer);
 				CopyNumber cn = probabilities->get_probability(kmer_coverage, read_kmercount);
 				long double p_cn0 = cn.get_probability_of(0);
 				long double p_cn1 = cn.get_probability_of(1);
@@ -118,11 +133,13 @@ void UniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKmers>>* r
 
 				// skip kmers with only 0 probabilities
 				if ( (p_cn0 > 0) || (p_cn1 > 0) || (p_cn2 > 0) ) {
-					nr_kmers_used += 1;
-					u->insert_kmer(read_kmercount, kmer.second);
+					// insert the kmer
+					vector<unsigned short> alleles = {a.first};
+					u->insert_kmer(read_kmercount, alleles);
 				}
 			}
 		}
+
 		result->push_back(u);
 
 		if (delete_processed_variants) {
@@ -135,7 +152,6 @@ void UniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKmers>>* r
 				this->variants->delete_variant(v);
 			}
 		}
-
 	}
 }
 
