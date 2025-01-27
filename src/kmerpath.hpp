@@ -13,11 +13,10 @@
 class KmerPath {
 public:
 	KmerPath();
-	void set_offset();
 	/** indicate presence of kmer at index **/
-	void set_position(size_t index);
+	void set_position(unsigned short index);
 	/** check given position **/
-	unsigned int get_position(size_t index) const;
+	unsigned int get_position(unsigned short index) const;
 	/** compute number of kmers on this path **/
 	size_t nr_kmers() const;
 	friend std::ostream& operator<< (std::ostream& stream, const KmerPath& cna);
@@ -25,7 +24,7 @@ public:
 
 	template<class Archive>
 	void serialize(Archive& archive) {
-		archive(kmers);
+		archive(offset, kmers);
 	}
 
 private:

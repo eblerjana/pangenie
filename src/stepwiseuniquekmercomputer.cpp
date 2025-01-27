@@ -72,7 +72,7 @@ map<unsigned short, vector<jellyfish::mer_dna>> StepwiseUniqueKmerComputer::sele
 	bool keep_adding = true;
 	while ( (nr_selected < 301) && (keep_adding) ) {
 		bool kmer_added = false;
-		for (auto a : allele_to_kmers) {
+		for (auto& a : allele_to_kmers) {
 			// pick at most 32 kmers per allele
 			if ( (a.second.size() > 0) && (result[a.first].size() < 32)) {
 				result[a.first].push_back(a.second.front());

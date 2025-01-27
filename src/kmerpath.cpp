@@ -10,15 +10,15 @@ KmerPath::KmerPath()
 	 offset(0)
 {}
 
-void KmerPath::set_position(size_t index){
+void KmerPath::set_position(unsigned short index){
 	if (this->kmers == 0) {
 		// no kmers inserted yet. Determine offset.
-		this->offset = index / 32;
+		this->offset = index;
 	}
 
 	// check if index is valid, i.e. lies within allowed range represented by this KmerPath object.
-	unsigned short upper_limit = this->offset * 32 + 32;
-	unsigned short lower_limit = this->offset * 32;
+	unsigned short upper_limit = this->offset + 32;
+	unsigned short lower_limit = this->offset;
 
 	if ((index < lower_limit) || (index >= upper_limit)) {
 		assert(this->kmers > 0);
@@ -26,19 +26,19 @@ void KmerPath::set_position(size_t index){
 	}
 
 	// set position
-	size_t position = index - (this->offset * 32);
+	unsigned short position = index - this->offset;
 	this->kmers |= (1 << position);
 }
 
-unsigned int KmerPath::get_position(size_t index) const {
-	unsigned short upper_limit = this->offset * 32 + 32;
-	unsigned short lower_limit = this->offset * 32;
+unsigned int KmerPath::get_position(unsigned short index) const {
+	unsigned short upper_limit = this->offset + 32;
+	unsigned short lower_limit = this->offset;
 
 	if ((index < lower_limit) || (index >= upper_limit)) {
 		// outside the limits, so assume absence of kmer.
 		return 0;
 	} else {
-		size_t position = index - (this->offset * 32);
+		unsigned short position = index - this->offset;
 		if (this->kmers & (1 << position)) {
 			return 1;
 		} else {
@@ -56,7 +56,7 @@ size_t KmerPath::nr_kmers() const {
 
 string KmerPath::convert_to_string() const {
 	string result = "";
-	unsigned short upper_limit = this->offset * 32 + 32;
+	unsigned short upper_limit = this->offset + 32;
 	for (size_t i = 0; i < upper_limit; ++i) {
 		result += to_string(this->get_position(i));
 	}

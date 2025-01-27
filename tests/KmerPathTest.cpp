@@ -26,7 +26,7 @@ TEST_CASE("KmerPath getter/setter2", "[KmerPath getter/setter2]"){
 	REQUIRE(p1.get_position(21) == 1);
 	p2.set_position(0);
 	REQUIRE(p2.get_position(0) == 1);
-	REQUIRE(p1.convert_to_string() == "00000000000000000000010000000000");
+	REQUIRE(p1.convert_to_string() == "00000000000000000000010000000000000000000000000000000");
 	REQUIRE(p2.convert_to_string() == "10000000000000000000000000000000");
 }
 
@@ -56,6 +56,17 @@ TEST_CASE("KmerPath set_position_offset", "[KmerPath set_position_offset]") {
 	REQUIRE(p.convert_to_string() == "0000000000000000000000000000000010100000000000000000000000000000");
 	CHECK_THROWS(p.set_position(31));
 	REQUIRE(p.get_position(31) == 0);
+	CHECK_THROWS(p.set_position(64));
+	REQUIRE(p.get_position(64) == 0);
+}
+
+TEST_CASE("KmerPath set_position_offset2", "[KmerPath set_position_offset2]") {
+	KmerPath p;
+	p.set_position(31);
+	p.set_position(32);
+	REQUIRE(p.get_position(31) == 1);
+	REQUIRE(p.get_position(32) == 1);
+	REQUIRE(p.convert_to_string() == "000000000000000000000000000000011000000000000000000000000000000");
 	CHECK_THROWS(p.set_position(64));
 	REQUIRE(p.get_position(64) == 0);
 }

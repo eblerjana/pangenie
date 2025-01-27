@@ -76,7 +76,6 @@ TEST_CASE("Commands run_genotype_command1", "[Commands run_genotype_command1]") 
 		vector<long double> likelihoods = genotypes[i].get_specific_likelihoods(defined[i]).get_all_likelihoods(defined[i].size());
 		ostringstream all;
 		pair<int,int> genotype = genotypes[i].get_specific_likelihoods(defined[i]).get_likeliest_genotype();
-		cout << genotypes[i] << endl;
 		all << genotype.first << "/" << genotype.second << ":";
 		all << genotypes[i].get_specific_likelihoods(defined[i]).get_genotype_quality(genotype.first, genotype.second) << ":";
 		all << setprecision(4) << log10(likelihoods[0]);

@@ -858,8 +858,6 @@ int run_genotype_command(string precomputed_prefix, string readfile, string outn
 	}
 
 
-
-
 		/**
 		* 3) Genotyping. Construct a HMM and run the Forward-Backward algorithm to compute genotype likelihoods.
 		*/
