@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
 	cerr << endl;
 	cerr << "program: PanGenie - genotyping based on kmer-counting and known haplotype sequences." << endl;
 	cerr << "author: Jana Ebler" << endl << endl;
-	cerr << "version: v3.0.1" << endl;
+	cerr << "version: v4.0.0" << endl;
 
 	string precomputed_prefix = "";
 	string readfile = "";
