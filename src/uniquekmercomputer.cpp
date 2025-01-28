@@ -79,6 +79,7 @@ map<unsigned short, vector<jellyfish::mer_dna>> UniqueKmerComputer::select_kmers
 				kmer_added = true;
 				nr_selected += 1;
 			}
+			if (nr_selected > 300) break;
 		}
 		keep_adding = kmer_added;
 	}
