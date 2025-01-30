@@ -1,7 +1,8 @@
 #include "catch.hpp"
 #include "utils.hpp"
 #include "../src/samplingemissions.hpp"
-#include "../src/uniquekmers.hpp"
+#include "../src/multiallelicuniquekmers.hpp"
+#include "../src/biallelicuniquekmers.hpp"
 #include <vector>
 #include <string>
 #include <memory>
@@ -11,12 +12,12 @@ using namespace std;
 TEST_CASE("SamplingEmissions get_emission_cost1", "[SamplingEmissions get_emission_cost1]")
 {
 	vector<unsigned short> path_to_allele = {0, 0};
-	shared_ptr<UniqueKmers> u1 =  shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
+	shared_ptr<UniqueKmers> u1 =  shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (2000, path_to_allele));
 	vector<unsigned short> a1 = {0};
 	vector<unsigned short> a2 = {1};
 
 	path_to_allele = {1, 0};
-	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (3000, path_to_allele));
 	u2->set_undefined_allele(0);
 	REQUIRE (u2->is_undefined_allele(0));
 	u2->insert_kmer(20, a2);
@@ -46,7 +47,7 @@ TEST_CASE("SamplingEmissions get_emission_cost1", "[SamplingEmissions get_emissi
 TEST_CASE("SamplingEmissions get_emission_cost2", "[SamplingEmissions get_emission_cost2]")
 {
 	vector<unsigned short> path_to_allele = {0, 1};
-	shared_ptr<UniqueKmers> u1 =  shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
+	shared_ptr<UniqueKmers> u1 =  shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (2000, path_to_allele));
 	vector<unsigned short> a1 = {0};
 	vector<unsigned short> a2 = {1};
 	u1->insert_kmer(20, a1);
@@ -55,7 +56,7 @@ TEST_CASE("SamplingEmissions get_emission_cost2", "[SamplingEmissions get_emissi
 	u1->insert_kmer(3, a2);
 
 	path_to_allele = {0, 1};
-	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (3000, path_to_allele));
 	u2->set_undefined_allele(0);
 	REQUIRE (u2->is_undefined_allele(0));
 	u2->insert_kmer(1, a1);
@@ -93,7 +94,7 @@ TEST_CASE("SamplingEmissions get_emission_cost2", "[SamplingEmissions get_emissi
 TEST_CASE("SamplingEmissions get_emission_cost3", "[SamplingEmissions get_emission_cost3]")
 {
 	vector<unsigned short> path_to_allele = {0, 1};
-	shared_ptr<UniqueKmers> u1 =  shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
+	shared_ptr<UniqueKmers> u1 =  shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (2000, path_to_allele));
 	vector<unsigned short> a1 = {0};
 	vector<unsigned short> a2 = {1};
 	u1->insert_kmer(20, a1);
@@ -115,7 +116,7 @@ TEST_CASE("SamplingEmissions get_emission_cost3", "[SamplingEmissions get_emissi
 
 TEST_CASE("SamplingEmissions undefined_allele", "[SamplingEmissions undefined_allele]") {
 	vector<unsigned short> path_to_allele = {0,1,2};
-	shared_ptr<UniqueKmers> u =  shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
+	shared_ptr<UniqueKmers> u =  shared_ptr<UniqueKmers>(new MultiallelicUniqueKmers (2000, path_to_allele));
 	vector<unsigned short> a1 = {0};
 	vector<unsigned short> a2 = {1};
 	vector<unsigned short> a3 = {2};

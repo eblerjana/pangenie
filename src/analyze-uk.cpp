@@ -9,6 +9,8 @@
 #include <zlib.h>
 #include <cereal/archives/binary.hpp>
 #include "uniquekmers.hpp"
+#include "multiallelicuniquekmers.hpp"
+#include "biallelicuniquekmers.hpp"
 #include "commandlineparser.hpp"
 
 
@@ -34,12 +36,9 @@ struct UniqueKmersMap {
 	}
 };
 
-
 struct UKAnalyzer {
 	UKAnalyzer(string chromosome, shared_ptr<UniqueKmers> uk) {
-		for (auto a : uk->alleles) {
-			cout << chromosome << "\t" << uk->variant_pos << "\t" << a.second.kmer_path << endl;
-		}
+		uk->print_kmer_matrix(chromosome);
 	}
 };
 

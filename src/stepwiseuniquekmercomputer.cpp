@@ -113,13 +113,21 @@ void StepwiseUniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKm
 		outline << variant.get_chromosome() << "\t" << variant.get_start_position() << "\t" << variant.get_end_position() << "\t";
 	
 		vector<unsigned short> path_to_alleles;
+		bool is_biallelic = true;
 		assert(variant.nr_of_paths() < 65535);
 		for (unsigned short p = 0; p < variant.nr_of_paths(); ++p) {
 			unsigned short a = variant.get_allele_on_path(p);
+			if ((a != 0) && (a != 1)) is_biallelic = false;
 			path_to_alleles.push_back(a);
 		}
 
-		shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers>(new UniqueKmers(variant.get_start_position(), path_to_alleles));
+		shared_ptr<UniqueKmers> u;
+		if (is_biallelic) {
+			u = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers(variant.get_start_position(), path_to_alleles));
+		} else {
+			u = shared_ptr<UniqueKmers>(new MultiallelicUniqueKmers(variant.get_start_position(), path_to_alleles));
+		}
+
 		// set for 0 for now, since we do not know the kmer coverage yet
 		u->set_coverage(0);
 		size_t nr_alleles = variant.nr_of_alleles();
@@ -192,12 +200,20 @@ void StepwiseUniqueKmerComputer::compute_empty(vector<shared_ptr<UniqueKmers>>* 
 	for (size_t v = 0; v < nr_variants; ++v) {
 		const Variant& variant = this->variants->get_variant(v);
 		vector<unsigned short> path_to_alleles;
+		bool is_biallelic = true;
 		assert(variant.nr_of_paths() < 65535);
 		for (unsigned short p = 0; p < variant.nr_of_paths(); ++p) {
 			unsigned short a = variant.get_allele_on_path(p);
+			if ((a != 0) && (a != 1)) is_biallelic = false;
 			path_to_alleles.push_back(a);
 		}
-		shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers>(new UniqueKmers(variant.get_start_position(), path_to_alleles));
+
+		shared_ptr<UniqueKmers> u;
+		if (is_biallelic) {
+			u = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers(variant.get_start_position(), path_to_alleles));
+		} else {
+			u = shared_ptr<UniqueKmers>(new MultiallelicUniqueKmers(variant.get_start_position(), path_to_alleles));
+		}
 		result->push_back(u);
 	}
 }

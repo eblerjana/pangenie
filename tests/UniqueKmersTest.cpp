@@ -1,5 +1,5 @@
 #include "catch.hpp"
-#include "../src/uniquekmers.hpp"
+#include "../src/multiallelicuniquekmers.hpp"
 #include "../src/copynumber.hpp"
 #include <vector>
 #include <string>
@@ -7,11 +7,11 @@
 
 using namespace std;
 
-TEST_CASE("UniqueKmers testcase 1", "[UniqueKmers testcase 1]"){
+TEST_CASE("MultiallelicUniqueKmers testcase 1", "[MultiallelicUniqueKmers testcase 1]"){
 	vector<unsigned short> counts = {5,6,7};
 	vector<vector<size_t>> paths = {{0,1,2}, {0,1}, {2}};
 	vector<unsigned short> path_to_allele = {0,0,1};
-	UniqueKmers u(1000, path_to_allele);
+	MultiallelicUniqueKmers u(1000, path_to_allele);
 
 	vector< vector<unsigned short> > alleles = { {0,1}, {0}, {1} };
 	for (size_t i = 0; i < 3; ++i){
@@ -33,9 +33,9 @@ TEST_CASE("UniqueKmers testcase 1", "[UniqueKmers testcase 1]"){
 	CHECK_THROWS(u.update_readcount(4, 10));
 }
 
-TEST_CASE("UniqueKmers get_copynumber_of", "[UniqueKmers get_copynumber_of]"){
+TEST_CASE("MultiallelicUniqueKmers get_copynumber_of", "[MultiallelicUniqueKmers get_copynumber_of]"){
 	vector<unsigned short> path_to_allele;
-	UniqueKmers u(2000, path_to_allele);
+	MultiallelicUniqueKmers u(2000, path_to_allele);
 	for (size_t i = 0; i < 3; ++i){
 		CHECK_THROWS(u.get_readcount_of(i));
 	}
@@ -44,9 +44,9 @@ TEST_CASE("UniqueKmers get_copynumber_of", "[UniqueKmers get_copynumber_of]"){
 	REQUIRE(u.get_readcount_of(0) == 5);
 }
 
-TEST_CASE("UniqueKmers insert_kmers", "[UniqueKmers insert_kmers]") {
+TEST_CASE("MultiallelicUniqueKmers insert_kmers", "[MultiallelicUniqueKmers insert_kmers]") {
 	vector<unsigned short> path_to_allele = {0,1};
-	UniqueKmers u(1000, path_to_allele);
+	MultiallelicUniqueKmers u(1000, path_to_allele);
 	vector<unsigned short> counts = {5, 0, 10};
 	vector<vector<size_t>> paths = { {0}, {0}, {1} };
 	vector<vector<unsigned short>> alleles = {{0}, {0}, {1}};
@@ -73,9 +73,9 @@ TEST_CASE("UniqueKmers insert_kmers", "[UniqueKmers insert_kmers]") {
 	REQUIRE(allele_ids[1] == 1);
 }
 
-TEST_CASE("UniqueKmers insert_kmers2", "[UniqueKmers insert_kmers2]") {
+TEST_CASE("MultiallelicUniqueKmers insert_kmers2", "[MultiallelicUniqueKmers insert_kmers2]") {
 	vector<unsigned short> path_to_allele = {1};
-	UniqueKmers u(1000, path_to_allele);
+	MultiallelicUniqueKmers u(1000, path_to_allele);
 	vector<unsigned short> allele = {1};
 	u.insert_kmer(10, allele);
 
@@ -91,10 +91,10 @@ TEST_CASE("UniqueKmers insert_kmers2", "[UniqueKmers insert_kmers2]") {
 	REQUIRE(allele_ids[0] == 1);
 }
 
-TEST_CASE("UniqueKmers kmers_on_alleles1", "[UniqueKmers kmers_on_alleles1]"){
+TEST_CASE("MultiallelicUniqueKmers kmers_on_alleles1", "[MultiallelicUniqueKmers kmers_on_alleles1]"){
 	vector<unsigned short> read_counts = {5, 1, 9};
 	vector<unsigned short> path_to_allele = {0, 0, 1};
-	UniqueKmers u(1000, path_to_allele);
+	MultiallelicUniqueKmers u(1000, path_to_allele);
 
 	vector< vector<unsigned short> > alleles = { {0,1}, {0}, {1} };
 	for (size_t i = 0; i < 3; ++i){
@@ -108,9 +108,9 @@ TEST_CASE("UniqueKmers kmers_on_alleles1", "[UniqueKmers kmers_on_alleles1]"){
 }
 
 
-TEST_CASE("UniqueKmers kmers_on_alleles2", "[UniqueKmers kmers_on_alleles2]") {
+TEST_CASE("MultiallelicUniqueKmers kmers_on_alleles2", "[MultiallelicUniqueKmers kmers_on_alleles2]") {
 	vector<unsigned short> path_to_allele = {0,0};
-	UniqueKmers u (1000, path_to_allele);
+	MultiallelicUniqueKmers u (1000, path_to_allele);
 
 	map<unsigned short, int> counts = u.kmers_on_alleles();
 	REQUIRE(counts.size() == 1);
@@ -136,9 +136,9 @@ TEST_CASE("UniqueKmers kmers_on_alleles2", "[UniqueKmers kmers_on_alleles2]") {
 	REQUIRE(u.kmer_on_path(1,1));
 }
 
-TEST_CASE("UniqueKmers kmers_on_alleles3", "[UniqueKmers kmers_on_alleles3]") {
+TEST_CASE("MultiallelicUniqueKmers kmers_on_alleles3", "[MultiallelicUniqueKmers kmers_on_alleles3]") {
 	vector<unsigned short> path_to_allele = {1};
-	UniqueKmers u(1000, path_to_allele);
+	MultiallelicUniqueKmers u(1000, path_to_allele);
 	vector<unsigned short> allele = {1};
 	u.insert_kmer(10, allele);
 
@@ -152,9 +152,9 @@ TEST_CASE("UniqueKmers kmers_on_alleles3", "[UniqueKmers kmers_on_alleles3]") {
 
 /**
 
-TEST_CASE("UniqueKmers covered_kmers_on_alleles1", "[UniqueKmers covered_kmers_on_alleles]") {
+TEST_CASE("MultiallelicUniqueKmers covered_kmers_on_alleles1", "[MultiallelicUniqueKmers covered_kmers_on_alleles]") {
 	vector<unsigned short> path_to_allele = {0,0};
-	UniqueKmers u (1000, path_to_allele);
+	MultiallelicUniqueKmers u (1000, path_to_allele);
 
 	vector<unsigned short> read_counts = {5, 3};
 	vector<vector<unsigned short>> alleles = { {2}, {0} };
@@ -169,9 +169,9 @@ TEST_CASE("UniqueKmers covered_kmers_on_alleles1", "[UniqueKmers covered_kmers_o
 
 
 
-TEST_CASE("UniqueKmers covered_kmers_on_alleles2", "[UniqueKmers covered_kmers_on_alleles]") {
+TEST_CASE("MultiallelicUniqueKmers covered_kmers_on_alleles2", "[MultiallelicUniqueKmers covered_kmers_on_alleles]") {
 	vector<unsigned short> path_to_allele = {2,1,0};
-	UniqueKmers u (1000, path_to_allele);
+	MultiallelicUniqueKmers u (1000, path_to_allele);
 
 	vector<unsigned short> read_counts = {4,5,0,3,0,5};
 	vector<vector<unsigned short>> alleles = { {0}, {1}, {2} };
@@ -190,9 +190,9 @@ TEST_CASE("UniqueKmers covered_kmers_on_alleles2", "[UniqueKmers covered_kmers_o
 }
 
 
-TEST_CASE("UniqueKmers covered_kmers_on_alleles3", "[UniqueKmers covered_kmers_on_alleles]") {
+TEST_CASE("MultiallelicUniqueKmers covered_kmers_on_alleles3", "[MultiallelicUniqueKmers covered_kmers_on_alleles]") {
 	vector<unsigned short> path_to_allele = {2,1,0};
-	UniqueKmers u (1000, path_to_allele);
+	MultiallelicUniqueKmers u (1000, path_to_allele);
 
 	vector<unsigned short> read_counts = {10,0};
 	vector<vector<unsigned short>> alleles = { {0}, {1}, {2} };
@@ -209,9 +209,9 @@ TEST_CASE("UniqueKmers covered_kmers_on_alleles3", "[UniqueKmers covered_kmers_o
 **/
 
 
-TEST_CASE("UniqueKmers get_path_ids", "[UniqueKmers get_path_ids]") {
+TEST_CASE("MultiallelicUniqueKmers get_path_ids", "[MultiallelicUniqueKmers get_path_ids]") {
 	vector<unsigned short> path_to_allele = {0,0,2,1};
-	UniqueKmers u (1000, path_to_allele);
+	MultiallelicUniqueKmers u (1000, path_to_allele);
 
 	vector<unsigned short> path_ids;
 	vector<unsigned short> allele_ids;
@@ -232,7 +232,7 @@ TEST_CASE("UniqueKmers get_path_ids", "[UniqueKmers get_path_ids]") {
 	REQUIRE(path_ids == expected_path_ids);
 	REQUIRE(allele_ids == expected_allele_ids);
 
-	// no overlap between requested ids and the ones in UniqueKmers
+	// no overlap between requested ids and the ones in MultiallelicUniqueKmers
 	path_ids.clear();
 	allele_ids.clear();
 	specific_ids = {20,30,40};
@@ -253,11 +253,11 @@ TEST_CASE("UniqueKmers get_path_ids", "[UniqueKmers get_path_ids]") {
 	REQUIRE(allele_ids == expected_allele_ids);	
 }
 
-TEST_CASE("UniqueKmers undefined_allele", "[UniqueKmers undefined_allele]"){
+TEST_CASE("MultiallelicUniqueKmers undefined_allele", "[MultiallelicUniqueKmers undefined_allele]"){
 	vector<unsigned short> read_counts = {10, 1, 20};
 	vector<vector<size_t>> paths = {{0,1,2}, {0,1}, {2}};
 	vector<unsigned short> path_to_alleles = {0,0,1};
-	UniqueKmers u(1000, path_to_alleles);
+	MultiallelicUniqueKmers u(1000, path_to_alleles);
 
 	// set allele to undefined
 	u.set_undefined_allele(0);
@@ -299,11 +299,11 @@ TEST_CASE("UniqueKmers undefined_allele", "[UniqueKmers undefined_allele]"){
 	REQUIRE_THROWS(u.set_undefined_allele(2));
 }
 
-TEST_CASE("UniqueKmers update_paths", "[UniqueKmers update_paths]"){
+TEST_CASE("MultiallelicUniqueKmers update_paths", "[MultiallelicUniqueKmers update_paths]"){
 	vector<unsigned short> counts = {5,6,7};
 	vector<vector<size_t>> paths = {{0,1,2}, {0,1}, {2}};
 	vector<unsigned short> path_to_allele = {0,0,1};
-	UniqueKmers u(1000, path_to_allele);
+	MultiallelicUniqueKmers u(1000, path_to_allele);
 
 	vector< vector<unsigned short> > alleles = { {0,1}, {0}, {1} };
 	for (size_t i = 0; i < 3; ++i){
@@ -335,11 +335,11 @@ TEST_CASE("UniqueKmers update_paths", "[UniqueKmers update_paths]"){
 	REQUIRE(u.get_readcount_of(1) == 6);
 }
 
-TEST_CASE("UniqueKmers update_paths2", "[UniqueKmers update_paths2]") {
+TEST_CASE("MultiallelicUniqueKmers update_paths2", "[MultiallelicUniqueKmers update_paths2]") {
 	vector<unsigned short> counts = {10, 20, 30};
 	vector<unsigned short> path_to_allele = {0,1,0};
 	vector<vector<size_t>> paths = {{0,2}, {1}, {0,2}};
-	UniqueKmers u(100, path_to_allele);
+	MultiallelicUniqueKmers u(100, path_to_allele);
 
 	vector<vector<unsigned short>> alleles = { {0}, {1}, {0} };
 	for (size_t i = 0; i < 3; ++i) {
@@ -363,11 +363,11 @@ TEST_CASE("UniqueKmers update_paths2", "[UniqueKmers update_paths2]") {
 	REQUIRE(u.get_readcount_of(0) == 20);
 }
 
-TEST_CASE("UniqueKmers update_paths3", "[UniqueKmers update_paths3]") {
+TEST_CASE("MultiallelicUniqueKmers update_paths3", "[MultiallelicUniqueKmers update_paths3]") {
 	vector<unsigned short> counts = {10, 20};
 	vector<unsigned short> path_to_allele = {0,0,1};
 	vector<vector<size_t>> paths = {{0,1}, {2}};
-	UniqueKmers u(100, path_to_allele);
+	MultiallelicUniqueKmers u(100, path_to_allele);
 
 	vector<vector<unsigned short>> alleles = { {0}, {1} };
 	for (size_t i = 0; i < 2; ++i) {
@@ -394,10 +394,10 @@ TEST_CASE("UniqueKmers update_paths3", "[UniqueKmers update_paths3]") {
 	REQUIRE(u.get_readcount_of(1) == 20);
 }
 
-TEST_CASE("UniqueKmers update_paths4", "[UniqueKmers update_paths4]") {
+TEST_CASE("MultiallelicUniqueKmers update_paths4", "[MultiallelicUniqueKmers update_paths4]") {
 	vector<unsigned short> counts = {10,20};
 	vector<unsigned short> path_to_allele = {0,1};
-	UniqueKmers u (100, path_to_allele);
+	MultiallelicUniqueKmers u (100, path_to_allele);
 	u.set_undefined_allele(0);
 
 	// no kmers on allele 0

@@ -28,7 +28,8 @@ add_library(PanGenieLib SHARED
 	transitionprobabilitycomputer.cpp
 	threadpool.cpp
 	uniquekmercomputer.cpp
-	uniquekmers.cpp
+	multiallelicuniquekmers.cpp
+	biallelicuniquekmers.cpp
 	variant.cpp
 	variantreader.cpp)
 

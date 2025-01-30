@@ -1,6 +1,7 @@
 #include "catch.hpp"
 #include "../src/haplotypesampler.hpp"
-#include "../src/uniquekmers.hpp"
+#include "../src/multiallelicuniquekmers.hpp"
+#include "../src/biallelicuniquekmers.hpp"
 #include "../src/probabilitytable.hpp"
 #include "../src/probabilitycomputer.hpp"
 #include "utils.hpp"
@@ -13,12 +14,12 @@ using namespace std;
 TEST_CASE("HaplotypeSampler", "[HaplotypeSampler]"){
 
 	vector<unsigned short> path_to_allele = {0, 0};
-	shared_ptr<UniqueKmers> u1 =  shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
+	shared_ptr<UniqueKmers> u1 =  shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (2000, path_to_allele));
 	vector<unsigned short> a1 = {0};
 	vector<unsigned short> a2 = {1};
 
 	path_to_allele = {1, 0};
-	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (3000, path_to_allele));
 	u2->set_undefined_allele(0);
 	REQUIRE (u2->is_undefined_allele(0));
 	u2->insert_kmer(20, a2);
@@ -157,7 +158,7 @@ TEST_CASE("HaplotypeSampler get_column_minima5", "[HaplotypeSampler get_column_m
 
 TEST_CASE("HaplotypeSampler Viterbi", "[HaplotypeSampler Viterbi]") {
 	vector<unsigned short> path_to_allele = {0, 1};
-	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers(1000000, path_to_allele));
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers(1000000, path_to_allele));
 	vector<unsigned short> a1 = {0};
 	vector<unsigned short> a2 = {1};
 	u1->insert_kmer(10, a1);
@@ -165,7 +166,7 @@ TEST_CASE("HaplotypeSampler Viterbi", "[HaplotypeSampler Viterbi]") {
 	u1->set_coverage(5);
 
 	path_to_allele = {1,0};
-	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers(2000000, path_to_allele));
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers(2000000, path_to_allele));
 	u2->insert_kmer(10, a1);
 	u2->insert_kmer(1, a1);
 	u2->insert_kmer(2, a2);
@@ -187,7 +188,7 @@ TEST_CASE("HaplotypeSampler Viterbi", "[HaplotypeSampler Viterbi]") {
 
 TEST_CASE("HaplotypeSampler Viterbi2", "[HaplotypeSampler Viterbi2]") {
 	vector<unsigned short> path_to_allele = {0, 1, 2};
-	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers(1000000, path_to_allele));
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new MultiallelicUniqueKmers(1000000, path_to_allele));
 	vector<unsigned short> a1 = {0};
 	vector<unsigned short> a2 = {1};
 	vector<unsigned short> a3 = {2};
@@ -203,7 +204,7 @@ TEST_CASE("HaplotypeSampler Viterbi2", "[HaplotypeSampler Viterbi2]") {
 	u1->set_coverage(5);
 
 	path_to_allele = {0, 1, 1};
-	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers(1000010, path_to_allele));
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers(1000010, path_to_allele));
 	u2->insert_kmer(1, a1);
 	u2->insert_kmer(1, a1);
 	u2->insert_kmer(20, a2);
@@ -229,7 +230,7 @@ TEST_CASE("HaplotypeSampler Viterbi2", "[HaplotypeSampler Viterbi2]") {
 
 TEST_CASE("HaplotypeSampler Viterbi3", "[HaplotypeSampler Viterbi3]") {
 	vector<unsigned short> path_to_allele = {0, 1, 2};
-	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers(1000000, path_to_allele));
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new MultiallelicUniqueKmers(1000000, path_to_allele));
 	vector<unsigned short> a1 = {0};
 	vector<unsigned short> a2 = {1};
 	vector<unsigned short> a3 = {2};
@@ -246,7 +247,7 @@ TEST_CASE("HaplotypeSampler Viterbi3", "[HaplotypeSampler Viterbi3]") {
 	u1->set_coverage(5);
 
 	path_to_allele = {0, 1, 1};
-	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers(2000000, path_to_allele));
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers(2000000, path_to_allele));
 	u2->insert_kmer(1, a1);
 	u2->insert_kmer(1, a1);
 	u2->insert_kmer(20, a2);
@@ -272,7 +273,7 @@ TEST_CASE("HaplotypeSampler Viterbi3", "[HaplotypeSampler Viterbi3]") {
 
 TEST_CASE("HaplotypeSampler update_unique_kmers", "[HaplotypeSampler update_unique_kmers]") {
 	vector<unsigned short> path_to_allele = {0, 1, 2};
-	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers(1000000, path_to_allele));
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new MultiallelicUniqueKmers(1000000, path_to_allele));
 	vector<unsigned short> a1 = {0};
 	vector<unsigned short> a2 = {1};
 	vector<unsigned short> a3 = {2};
@@ -289,7 +290,7 @@ TEST_CASE("HaplotypeSampler update_unique_kmers", "[HaplotypeSampler update_uniq
 	u1->set_coverage(5);
 
 	path_to_allele = {0, 1, 1};
-	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers(2000000, path_to_allele));
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers(2000000, path_to_allele));
 	u2->insert_kmer(1, a1);
 	u2->insert_kmer(1, a1);
 	u2->insert_kmer(20, a2);
@@ -334,7 +335,7 @@ TEST_CASE("HaplotypeSampler update_unique_kmers", "[HaplotypeSampler update_uniq
 
 TEST_CASE("HaplotypeSampler update_unique_kmers_reference", "[HaplotypeSampler update_unique_kmers_reference]") {
 	vector<unsigned short> path_to_allele = {0, 1, 2};
-	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers(1000000, path_to_allele));
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new MultiallelicUniqueKmers(1000000, path_to_allele));
 	vector<unsigned short> a1 = {0};
 	vector<unsigned short> a2 = {1};
 	vector<unsigned short> a3 = {2};
@@ -351,7 +352,7 @@ TEST_CASE("HaplotypeSampler update_unique_kmers_reference", "[HaplotypeSampler u
 	u1->set_coverage(5);
 
 	path_to_allele = {0, 1, 1};
-	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers(2000000, path_to_allele));
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers(2000000, path_to_allele));
 	u2->insert_kmer(1, a1);
 	u2->insert_kmer(1, a1);
 	u2->insert_kmer(20, a2);

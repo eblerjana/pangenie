@@ -6,8 +6,8 @@
 using namespace std;
 
 KmerPath::KmerPath()
-	:kmers(0),
-	 offset(0)
+	:offset(0),
+	kmers(0)
 {}
 
 void KmerPath::set_position(unsigned short index){

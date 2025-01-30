@@ -1,5 +1,7 @@
 #include "catch.hpp"
 #include "../src/variant.hpp"
+#include "../src/multiallelicuniquekmers.hpp"
+#include "../src/biallelicuniquekmers.hpp"
 #include <vector>
 #include <string>
 #include "utils.hpp"
@@ -182,7 +184,7 @@ TEST_CASE("Variant separate_variants_likelihoods", "Variant separate_variants_li
 	g.add_second_haplotype_allele(2);
 
 	vector<unsigned short> path_to_allele = {0, 0, 2, 1};
-	shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers> (new UniqueKmers(0, path_to_allele));
+	shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers> (new MultiallelicUniqueKmers(0, path_to_allele));
 	vector<unsigned short> alleles1 = {0};
 	vector<unsigned short> alleles2 = {1};
 	vector<unsigned short> alleles3 = {2};
@@ -246,7 +248,7 @@ TEST_CASE("Variant separate_variants_single", "[Variants separate_variants_singl
 	g.add_to_likelihood(1,1,0.2);
 
 	vector<unsigned short> allele_paths = {0, 0, 1, 1};
-	shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers> (new UniqueKmers(0, allele_paths));
+	shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers> (new BiallelicUniqueKmers(0, allele_paths));
 	vector<unsigned short> alleles1 = {0,1};
 	vector<unsigned short> alleles2 = {1};
 	for (size_t i = 0; i < 10; ++i) {
@@ -298,7 +300,7 @@ TEST_CASE("Variant separate_variants_single2", "[Variants separate_variants_sing
 	g.add_to_likelihood(1,1,0.2);
 
 	vector<unsigned short> path_to_allele = {1, 1};
-	shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers> (new UniqueKmers (0, path_to_allele));
+	shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers> (new MultiallelicUniqueKmers (0, path_to_allele));
 	vector<unsigned short> alleles1 = {0};
 	vector<unsigned short> alleles2 = {1};
 	u->insert_kmer(20, alleles1);
@@ -444,7 +446,7 @@ TEST_CASE("Variant combine_combined2", "[Variant combine_combined]") {
 	g.add_second_haplotype_allele(2);
 
 	vector<unsigned short> path_to_allele = {0, 0, 0, 0, 0, 0, 2, 1, 0};
-	shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers>( new UniqueKmers(0, path_to_allele));
+	shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers>( new MultiallelicUniqueKmers(0, path_to_allele));
 	vector<unsigned short> alleles1 = {0};
 	vector<unsigned short> alleles2 = {1};
 	vector<unsigned short> alleles3 = {2};	
@@ -543,7 +545,7 @@ TEST_CASE("Variant separate_variants_likelihoods_uncovered", "Variant separate_v
 	g.add_second_haplotype_allele(0);
 
 	vector<unsigned short> path_to_allele = {0, 1};
-	shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers> (new UniqueKmers (0, path_to_allele));
+	shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers> (new BiallelicUniqueKmers (0, path_to_allele));
 	vector<unsigned short> alleles1 = {0};
 	vector<unsigned short> alleles2 = {1};
 	for (size_t i = 0; i < 3; ++i) {
@@ -608,7 +610,7 @@ TEST_CASE("Variant separate_variants_likelihoods_single_uncovered", "[Variant se
 	g.add_second_haplotype_allele(1);
 	
 	vector<unsigned short> path_to_allele = {1, 1};
-	shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers> (new UniqueKmers(0, path_to_allele));
+	shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers> (new MultiallelicUniqueKmers(0, path_to_allele));
 	vector<unsigned short> alleles1 = {0};
 	vector<unsigned short> alleles2 = {1};
 	u->insert_kmer(20, alleles1);

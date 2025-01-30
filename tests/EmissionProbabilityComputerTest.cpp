@@ -1,5 +1,7 @@
 #include "catch.hpp"
 #include "utils.hpp"
+#include "../src/multiallelicuniquekmers.hpp"
+#include "../src/biallelicuniquekmers.hpp"
 #include "../src/emissionprobabilitycomputer.hpp"
 #include "../src/copynumber.hpp"
 #include "../src/probabilitytable.hpp"
@@ -17,7 +19,7 @@ TEST_CASE("EmissionProbabilityComputer get_emission_probability", "EmissionProba
 	vector<CopyNumber> cns = { CopyNumber(0.01, 0.2, 0.0), CopyNumber(0.001,0.5,0.001), CopyNumber(0.0,0.3,0.02), CopyNumber(0.05,0.6,0.0), CopyNumber(0.01,0.2,0.01)};
 	ProbabilityTable probs (0,10,10,0.0);
 	vector<unsigned short> path_to_allele = {0, 1, 1};
-	shared_ptr<UniqueKmers> unique_kmers = shared_ptr<UniqueKmers> (new UniqueKmers(1000, path_to_allele));
+	shared_ptr<UniqueKmers> unique_kmers = shared_ptr<UniqueKmers> (new BiallelicUniqueKmers(1000, path_to_allele));
 	for (unsigned int i = 0; i < kmers.size(); ++i) {
 		unique_kmers->insert_kmer(counts[i],  alleles[i]);
 		probs.modify_probability(0, counts[i], cns[i]);
@@ -42,7 +44,7 @@ TEST_CASE("EmissionProbabilityComputer get_emission_probability_undefined1", "Em
 	vector<CopyNumber> cns = { CopyNumber(0.01, 0.2, 0.0), CopyNumber(0.001,0.5,0.001), CopyNumber(0.0,0.3,0.02), CopyNumber(0.05,0.6,0.0), CopyNumber(0.01,0.2,0.01)};
 	ProbabilityTable probs (0,10,10,0.0);
 	vector<unsigned short> path_to_allele = {0, 1, 2};
-	shared_ptr<UniqueKmers> unique_kmers = shared_ptr<UniqueKmers> (new UniqueKmers(1000, path_to_allele));
+	shared_ptr<UniqueKmers> unique_kmers = shared_ptr<UniqueKmers> (new MultiallelicUniqueKmers(1000, path_to_allele));
 	unique_kmers->set_undefined_allele(2);
 	for (unsigned int i = 0; i < kmers.size(); ++i) {
 		unique_kmers->insert_kmer(counts[i],  alleles[i]);

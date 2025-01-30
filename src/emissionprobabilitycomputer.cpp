@@ -36,17 +36,17 @@ long double EmissionProbabilityComputer::get_emission_probability(unsigned short
 long double EmissionProbabilityComputer::compute_emission_probability(unsigned short allele_id1, unsigned short allele_id2, bool a1_undefined, bool a2_undefined){
 	long double result = 1.0L;
 	for (size_t i = 0; i < this->uniquekmers->size(); ++i){
-		unsigned int expected_kmer_count = this->uniquekmers->alleles.at(allele_id1).kmer_path.get_position(i) + this->uniquekmers->alleles.at(allele_id2).kmer_path.get_position(i);
+		unsigned int expected_kmer_count = this->uniquekmers->kmer_on_allele(i, allele_id1) + this->uniquekmers->kmer_on_allele(i, allele_id2);
 		if (a1_undefined && a2_undefined) {
 			// all kmers can have copy numbers 0-2
-			result *= (1.0L / 3.0L) * (this->probabilities->get_probability(this->uniquekmers->local_coverage, this->uniquekmers->kmer_to_count[i]).get_probability_of(0) + this->probabilities->get_probability(this->uniquekmers->local_coverage, this->uniquekmers->kmer_to_count[i]).get_probability_of(1) + this->probabilities->get_probability(this->uniquekmers->local_coverage, this->uniquekmers->kmer_to_count[i]).get_probability_of(2));
+			result *= (1.0L / 3.0L) * (this->probabilities->get_probability(this->uniquekmers->get_coverage(), this->uniquekmers->get_readcount_of(i)).get_probability_of(0) + this->probabilities->get_probability(this->uniquekmers->local_coverage, this->uniquekmers->get_readcount_of(i)).get_probability_of(1) + this->probabilities->get_probability(this->uniquekmers->local_coverage, this->uniquekmers->get_readcount_of(i)).get_probability_of(2));
 		} else if (a1_undefined || a2_undefined) {
 			// two possible copy numbers
 			assert (expected_kmer_count < 2);
-			result *= 0.5L * (this->probabilities->get_probability(this->uniquekmers->local_coverage, this->uniquekmers->kmer_to_count[i]).get_probability_of(expected_kmer_count) + this->probabilities->get_probability(this->uniquekmers->local_coverage, this->uniquekmers->kmer_to_count[i]).get_probability_of(expected_kmer_count + 1));
+			result *= 0.5L * (this->probabilities->get_probability(this->uniquekmers->get_coverage(), this->uniquekmers->get_readcount_of(i)).get_probability_of(expected_kmer_count) + this->probabilities->get_probability(this->uniquekmers->local_coverage, this->uniquekmers->get_readcount_of(i)).get_probability_of(expected_kmer_count + 1));
 		} else {
 			// expected kmer count is known
-			result *= this->probabilities->get_probability(this->uniquekmers->local_coverage, this->uniquekmers->kmer_to_count[i]).get_probability_of(expected_kmer_count);
+			result *= this->probabilities->get_probability(this->uniquekmers->get_coverage(), this->uniquekmers->get_readcount_of(i)).get_probability_of(expected_kmer_count);
 		}
 	}
 	return result;

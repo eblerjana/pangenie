@@ -99,13 +99,21 @@ void UniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKmers>>* r
 		const Variant& variant = this->variants->get_variant(v);
 	
 		vector<unsigned short> path_to_alleles;
+		bool is_biallelic = true;
 		assert(variant.nr_of_paths() < 65535);
 		for (unsigned short p = 0; p < variant.nr_of_paths(); ++p) {
 			unsigned short a = variant.get_allele_on_path(p);
+			if ((a != 0) && (a != 1)) is_biallelic = false;
 			path_to_alleles.push_back(a);
 		}
 
-		shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers>(new UniqueKmers(variant.get_start_position(), path_to_alleles));
+		shared_ptr<UniqueKmers> u;
+		if (is_biallelic) {
+			u = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers(variant.get_start_position(), path_to_alleles));
+		} else {
+			u = shared_ptr<UniqueKmers>(new MultiallelicUniqueKmers(variant.get_start_position(), path_to_alleles));
+		}
+
 		u->set_coverage(kmer_coverage);
 		size_t nr_alleles = variant.nr_of_alleles();
 
@@ -161,12 +169,20 @@ void UniqueKmerComputer::compute_empty(vector<UniqueKmers*>* result) const {
 	for (size_t v = 0; v < nr_variants; ++v) {
 		const Variant& variant = this->variants->get_variant(v);
 		vector<unsigned short> path_to_alleles;
+		bool is_biallelic = true;
 		assert(variant.nr_of_paths() < 65535);
 		for (unsigned short p = 0; p < variant.nr_of_paths(); ++p) {
 			unsigned short a = variant.get_allele_on_path(p);
+			if ((a != 0) && (a != 1)) is_biallelic = false;
 			path_to_alleles.push_back(a);
 		}
-		UniqueKmers* u = new UniqueKmers(variant.get_start_position(), path_to_alleles);
+
+		UniqueKmers* u;
+		if (is_biallelic) {
+			u = new BiallelicUniqueKmers(variant.get_start_position(), path_to_alleles);
+		} else {
+			u = new MultiallelicUniqueKmers(variant.get_start_position(), path_to_alleles);
+		}
 		result->push_back(u);
 	}
 }

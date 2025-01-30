@@ -7,7 +7,8 @@
 #include "kmercounter.hpp"
 #include "graph.hpp"
 #include "variant.hpp"
-#include "uniquekmers.hpp"
+#include "multiallelicuniquekmers.hpp"
+#include "biallelicuniquekmers.hpp"
 #include "probabilitytable.hpp"
 #include <jellyfish/mer_dna.hpp>
 

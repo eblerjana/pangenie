@@ -7,7 +7,8 @@
 #include <zlib.h>
 #include "kmercounter.hpp"
 #include "graph.hpp"
-#include "uniquekmers.hpp"
+#include "multiallelicuniquekmers.hpp"
+#include "biallelicuniquekmers.hpp"
 #include "probabilitytable.hpp"
 
 class StepwiseUniqueKmerComputer {

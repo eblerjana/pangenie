@@ -1,5 +1,6 @@
 #include "catch.hpp"
-#include "../src/uniquekmers.hpp"
+#include "../src/multiallelicuniquekmers.hpp"
+#include "../src/biallelicuniquekmers.hpp"
 #include "../src/copynumber.hpp"
 #include "../src/hmm.hpp"
 #include "../src/probabilitycomputer.hpp"
@@ -12,14 +13,14 @@ using namespace std;
 
 TEST_CASE("HMM get_genotyping_result", "[HMM get_genotyping_result]") {
 	vector<unsigned short> path_to_allele = {0, 1};
-	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers(2000, path_to_allele));
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers(2000, path_to_allele));
 	vector<unsigned short> a1 = {0};
 	vector<unsigned short> a2 = {1};
 	u1->insert_kmer(10, a1);
 	u1->insert_kmer(10, a2);
 	u1->set_coverage(5);
 
-	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers(3000, path_to_allele));
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers(3000, path_to_allele));
 	u2->insert_kmer(20, a1);
 	u2->insert_kmer(5, a2);
 	u2->set_coverage(5);
@@ -46,7 +47,7 @@ TEST_CASE("HMM get_genotyping_result", "[HMM get_genotyping_result]") {
 
 TEST_CASE("HMM skip_reference_position", "[HMM skip_reference_position]") {
 	vector<unsigned short> path_to_allele = {0, 1};
-	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (2000, path_to_allele));
 	vector<unsigned short> a1 = {0};
 	vector<unsigned short> a2 = {1};
 	u1->insert_kmer(10, a1);
@@ -55,13 +56,13 @@ TEST_CASE("HMM skip_reference_position", "[HMM skip_reference_position]") {
 
 	// position only covered by reference alleles and should be skipped
 	path_to_allele = {0, 0};
-	shared_ptr<UniqueKmers> u2 =  shared_ptr<UniqueKmers> ( new UniqueKmers (2500, path_to_allele));
+	shared_ptr<UniqueKmers> u2 =  shared_ptr<UniqueKmers> ( new BiallelicUniqueKmers (2500, path_to_allele));
 	u2->insert_kmer(10, a1);
 	u2->insert_kmer(20, a2);
 	u2->set_coverage(22);
 
 	path_to_allele = {0, 1};
-	shared_ptr<UniqueKmers> u3 = shared_ptr<UniqueKmers> (new UniqueKmers (3000, path_to_allele));
+	shared_ptr<UniqueKmers> u3 = shared_ptr<UniqueKmers> (new BiallelicUniqueKmers (3000, path_to_allele));
 	u3->insert_kmer(20, a1);
 	u3->insert_kmer(5, a2);
 	u3->set_coverage(5);
@@ -99,13 +100,13 @@ TEST_CASE("HMM skip_reference_position", "[HMM skip_reference_position]") {
 
 TEST_CASE("HMM get_genotyping_result_normalized", "[HMM get_genotyping_result_normalized]") {
 	vector<unsigned short> path_to_allele = {0, 1};
-	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers> (new UniqueKmers (2000, path_to_allele));
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers> (new BiallelicUniqueKmers (2000, path_to_allele));
 	vector<unsigned short> a1 = {0};
 	vector<unsigned short> a2 = {1};
 	u1->insert_kmer(10, a1);
 	u1->insert_kmer(10, a2);
 
-	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (3000, path_to_allele));
 	u2->insert_kmer(20, a1);
 	u2->insert_kmer(1, a2);
 	
@@ -132,7 +133,7 @@ TEST_CASE("HMM get_genotyping_result_normalized", "[HMM get_genotyping_result_no
 
 TEST_CASE("HMM undefined_alleles1", "[HMM get_undefined_alleles1]") {
 	vector<unsigned short> path_to_allele = {0, 1};
-	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers> (new UniqueKmers (2000, path_to_allele));
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers> (new BiallelicUniqueKmers (2000, path_to_allele));
 	vector<unsigned short> a1 = {0};
 	vector<unsigned short> a2 = {1};
 	u1->set_undefined_allele(0);
@@ -140,7 +141,7 @@ TEST_CASE("HMM undefined_alleles1", "[HMM get_undefined_alleles1]") {
 	u1->insert_kmer(10, a1);
 
 	path_to_allele = {1, 0};
-	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers> (new UniqueKmers (3000, path_to_allele));
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers> (new BiallelicUniqueKmers (3000, path_to_allele));
 	u2->insert_kmer(20, a1);
 	u2->insert_kmer(1, a2);
 
@@ -182,12 +183,12 @@ TEST_CASE("HMM undefined_alleles1", "[HMM get_undefined_alleles1]") {
 
 TEST_CASE("HMM undefined_alleles2", "[HMM get_undefined_alleles1]") {
 	vector<unsigned short> path_to_allele = {0, 0};
-	shared_ptr<UniqueKmers> u1 =  shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
+	shared_ptr<UniqueKmers> u1 =  shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (2000, path_to_allele));
 	vector<unsigned short> a1 = {0};
 	vector<unsigned short> a2 = {1};
 
 	path_to_allele = {1, 0};
-	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (3000, path_to_allele));
 	u2->set_undefined_allele(0);
 	REQUIRE (u2->is_undefined_allele(0));
 	u2->insert_kmer(20, a2);
@@ -231,7 +232,7 @@ TEST_CASE("HMM undefined_alleles2", "[HMM get_undefined_alleles1]") {
 
 TEST_CASE("HMM only_undefined_alleles", "[HMM only_undefined_alleles]") {
 	vector<unsigned short> path_to_allele = {0, 1};
-	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (2000, path_to_allele));
 	vector<unsigned short> a1 = {0};
 	vector<unsigned short> a2 = {1};
 	// set both alleles to undefined
@@ -241,7 +242,7 @@ TEST_CASE("HMM only_undefined_alleles", "[HMM only_undefined_alleles]") {
 	u1->insert_kmer(10, a2);
 
 	path_to_allele = {1, 0};
-	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (3000, path_to_allele));
 	// set both alleles to undefined
 	u2->set_undefined_allele(0);
 	u2->set_undefined_allele(1);
@@ -287,7 +288,7 @@ TEST_CASE("HMM only_undefined_alleles", "[HMM only_undefined_alleles]") {
 
 TEST_CASE("HMM no_alt_allele", "[HMM no_alt_allele]") {
 	vector<unsigned short> path_to_allele = {0, 0, 0};
-	shared_ptr<UniqueKmers> u =  shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
+	shared_ptr<UniqueKmers> u =  shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (2000, path_to_allele));
 	vector<unsigned short> a1 = {0,1};
 	vector<unsigned short> a2 = {};
 
@@ -313,7 +314,7 @@ TEST_CASE("HMM no_alt_allele", "[HMM no_alt_allele]") {
 
 TEST_CASE("HMM no_ref_allele", "[HMM no_ref_allele]") {
 	vector<unsigned short> path_to_allele = {1, 1, 1};
-	shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
+	shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (2000, path_to_allele));
 	vector<unsigned short> a1 = {0,1};
 	vector<unsigned short> a2 = {};
 	u->insert_kmer (20, a1);
@@ -336,8 +337,8 @@ TEST_CASE("HMM no_ref_allele", "[HMM no_ref_allele]") {
 
 TEST_CASE("HMM no_unique_kmers", "[HMM no_unique_kmers]") {
 	vector<unsigned short> path_to_allele = {0, 1};
-	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
-	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (2000, path_to_allele));
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (3000, path_to_allele));
 
 	ProbabilityTable probs;
 
@@ -363,9 +364,9 @@ TEST_CASE("HMM no_unique_kmers", "[HMM no_unique_kmers]") {
 
 TEST_CASE("HMM no_unique_kmers2", "[HMM no_unique_kmers2]") {
 	vector<unsigned short> path_to_allele = {0, 0, 1};
-	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (2000, path_to_allele));
 	path_to_allele = {0, 1, 1};
-	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (3000, path_to_allele));
 
 	ProbabilityTable probs;
 
@@ -391,15 +392,15 @@ TEST_CASE("HMM no_unique_kmers2", "[HMM no_unique_kmers2]") {
 
 TEST_CASE("HMM no_unique_kmers3", "[HMM no_unique_kmers3]") {
 	vector<unsigned short> path_to_allele = {0, 1};
-	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (2000, path_to_allele));
 	vector<unsigned short> a1 = {0};
 	vector<unsigned short> a2 = {1};
 	u1->insert_kmer(10, a1);
 	u1->insert_kmer(10, a2);
 
 	// no unique kmers for second variant
-	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
-	shared_ptr<UniqueKmers> u3 = shared_ptr<UniqueKmers>(new UniqueKmers (4000, path_to_allele));
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (3000, path_to_allele));
+	shared_ptr<UniqueKmers> u3 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (4000, path_to_allele));
 	u3->insert_kmer(10, a1);
 	u3->insert_kmer(9, a2);
 
@@ -440,9 +441,9 @@ TEST_CASE("HMM no_unique_kmers3", "[HMM no_unique_kmers3]") {
 
 TEST_CASE("HMM no_unique_kmers_uniform", "[HMM no_unique_kmers_uniorm]") {
 	vector<unsigned short> path_to_allele = {0, 1, 1};
-	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (2000, path_to_allele));
 	path_to_allele = {0, 0, 1};
-	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (3000, path_to_allele));
 
 	ProbabilityTable probs;
 
@@ -467,17 +468,17 @@ TEST_CASE("HMM no_unique_kmers_uniform", "[HMM no_unique_kmers_uniorm]") {
 TEST_CASE("HMM only_kmers", "[HMM only_kmers]") {
 	// PGGTyper-kmers: insert one ref and one alt path and allow uniform transitions between paths
 	vector<unsigned short> path_to_allele = {0, 1};
-	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>( new UniqueKmers (2000, path_to_allele));
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>( new BiallelicUniqueKmers (2000, path_to_allele));
 	vector<unsigned short> a1 = {0};
 	vector<unsigned short> a2 = {1};
 	u1->insert_kmer(10, a1);
 	u1->insert_kmer(12, a2);
 
-	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (3000, path_to_allele));
 	u2->insert_kmer(1, a1);
 	u2->insert_kmer(20, a2);
 
-	shared_ptr<UniqueKmers> u3 = shared_ptr<UniqueKmers>(new UniqueKmers (4000, path_to_allele));
+	shared_ptr<UniqueKmers> u3 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (4000, path_to_allele));
 	u3->insert_kmer(5, a1);
 	u3->insert_kmer(7, a2);
 
@@ -509,19 +510,19 @@ TEST_CASE("HMM only_kmers", "[HMM only_kmers]") {
 
 TEST_CASE("HMM emissions_zero", "[HMM emissions_zero]") {
 	vector<unsigned short> path_to_allele = {0, 1};
-	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (1000, path_to_allele));
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (1000, path_to_allele));
 	vector<unsigned short> a1 = {0};
 	vector<unsigned short> a2 = {1};
 	u1->insert_kmer(10, a1);
 	u1->insert_kmer(10, a2);
 
 	path_to_allele = {1, 1};
-	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (2000, path_to_allele));
 	u2->insert_kmer(0, a2);
 	u2->insert_kmer(0, a2);
 
 	path_to_allele = {0, 1};
-	shared_ptr<UniqueKmers> u3 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
+	shared_ptr<UniqueKmers> u3 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (3000, path_to_allele));
 	u3->insert_kmer(10, a1);
 	u3->insert_kmer(10, a2);
 
@@ -552,17 +553,17 @@ TEST_CASE("HMM emissions_zero", "[HMM emissions_zero]") {
 
 TEST_CASE("HMM underflow", "[HMM underflow]") {
 	vector<unsigned short> path_to_allele = {0, 1};
-	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (1000, path_to_allele));
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (1000, path_to_allele));
 	vector<unsigned short> a1 = {0};
 	vector<unsigned short> a2 = {1};
 	u1->insert_kmer(10, a1);
 	u1->insert_kmer(10, a2);
 
-	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (2000, path_to_allele));
 	u2->insert_kmer(20, a1);
 	u2->insert_kmer(0, a2);
 
-	shared_ptr<UniqueKmers> u3 =  shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
+	shared_ptr<UniqueKmers> u3 =  shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (3000, path_to_allele));
 	u3->insert_kmer(10, a1);
 	u3->insert_kmer(10, a2);
 
@@ -589,7 +590,7 @@ TEST_CASE("HMM underflow", "[HMM underflow]") {
 
 TEST_CASE("HMM get_genotyping_result_neutral_kmers", "[HMM get_genotyping_result_with_kmer]") {
 	vector<unsigned short> path_to_allele = {0, 1};
-	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (2000, path_to_allele));
 	vector<unsigned short> a1 = {0};
 	vector<unsigned short> a2 = {1};
 	vector<unsigned short> a3 = {0,1};
@@ -598,7 +599,7 @@ TEST_CASE("HMM get_genotyping_result_neutral_kmers", "[HMM get_genotyping_result
 	u1->insert_kmer(12, a3);
 	u1->insert_kmer(5, a3);
 
-	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (3000, path_to_allele));
 	u2->insert_kmer(20, a1);
 	u2->insert_kmer(1, a2);
 	u2->insert_kmer(15, a3);
@@ -636,7 +637,7 @@ TEST_CASE("HMM only_paths", "[HMM only_paths]") {
 	// want to only consider the following paths. All others should be ignored.
 	vector<unsigned short> path_to_allele = {0, 2, 1, 1};
 	vector<unsigned short> only_paths = {0,3};
-	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new MultiallelicUniqueKmers (2000, path_to_allele));
 	vector<unsigned short> a1 = {0};
 	vector<unsigned short> a2 = {1};
 	vector<unsigned short> a3 = {2};
@@ -644,7 +645,7 @@ TEST_CASE("HMM only_paths", "[HMM only_paths]") {
 	u1->insert_kmer(10, a2);
 
 	path_to_allele = {0, 0, 2, 1};
-	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new MultiallelicUniqueKmers (3000, path_to_allele));
 	u2->insert_kmer(20, a1);
 	u2->insert_kmer(1, a2);
 
@@ -673,10 +674,10 @@ TEST_CASE("HMM only_paths", "[HMM only_paths]") {
 TEST_CASE("HMM no_only_paths2", "[HMM only_paths2]") {
 	vector<unsigned short> path_to_allele = {0, 1, 2};
 	vector<unsigned short> a2 = {2};
-	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new MultiallelicUniqueKmers (2000, path_to_allele));
 	u1->insert_kmer(12, a2);
 
-	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new MultiallelicUniqueKmers (3000, path_to_allele));
 	u2->insert_kmer(12,a2);
 
 	ProbabilityTable probs (0,1,13,0.0L);
@@ -705,14 +706,14 @@ TEST_CASE("HMM combine_results", "[HMM combine_results]") {
 
 	// construct first HMM
 	vector<unsigned short> path_to_allele = {0, 1};
-	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers(2000, path_to_allele));
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers(2000, path_to_allele));
 	vector<unsigned short> a1 = {0};
 	vector<unsigned short> a2 = {1};
 	u1->insert_kmer(10, a1);
 	u1->insert_kmer(10, a2);
 	u1->set_coverage(5);
 
-	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers(3000, path_to_allele));
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers(3000, path_to_allele));
 	u2->insert_kmer(20, a1);
 	u2->insert_kmer(5, a2);
 	u2->set_coverage(5);
@@ -737,10 +738,10 @@ TEST_CASE("HMM combine_results", "[HMM combine_results]") {
 	// construct second HMM
 	path_to_allele = {0, 1, 2};
 	a2 = {2};
-	u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
+	u1 = shared_ptr<UniqueKmers>(new MultiallelicUniqueKmers (2000, path_to_allele));
 	u1->insert_kmer(12, a2);
 
-	u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
+	u2 = shared_ptr<UniqueKmers>(new MultiallelicUniqueKmers (3000, path_to_allele));
 	u2->insert_kmer(12,a2);
 
 	probs = ProbabilityTable(0,1,13,0.0L);
@@ -778,10 +779,10 @@ TEST_CASE("HMM combine_results", "[HMM combine_results]") {
 TEST_CASE("HMM normalize", "[HMM normalize]") {
 	vector<unsigned short> path_to_allele = {0, 1, 2};
 	vector<unsigned short> a2 = {2};
-	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new MultiallelicUniqueKmers (2000, path_to_allele));
 	u1->insert_kmer(12, a2);
 
-	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new UniqueKmers (3000, path_to_allele));
+	shared_ptr<UniqueKmers> u2 = shared_ptr<UniqueKmers>(new MultiallelicUniqueKmers (3000, path_to_allele));
 	u2->insert_kmer(12,a2);
 
 	ProbabilityTable probs (0,1,13,0.0L);
