@@ -39,11 +39,11 @@ long double EmissionProbabilityComputer::compute_emission_probability(unsigned s
 		unsigned int expected_kmer_count = this->uniquekmers->kmer_on_allele(i, allele_id1) + this->uniquekmers->kmer_on_allele(i, allele_id2);
 		if (a1_undefined && a2_undefined) {
 			// all kmers can have copy numbers 0-2
-			result *= (1.0L / 3.0L) * (this->probabilities->get_probability(this->uniquekmers->get_coverage(), this->uniquekmers->get_readcount_of(i)).get_probability_of(0) + this->probabilities->get_probability(this->uniquekmers->local_coverage, this->uniquekmers->get_readcount_of(i)).get_probability_of(1) + this->probabilities->get_probability(this->uniquekmers->local_coverage, this->uniquekmers->get_readcount_of(i)).get_probability_of(2));
+			result *= (1.0L / 3.0L) * (this->probabilities->get_probability(this->uniquekmers->get_coverage(), this->uniquekmers->get_readcount_of(i)).get_probability_of(0) + this->probabilities->get_probability(this->uniquekmers->get_coverage(), this->uniquekmers->get_readcount_of(i)).get_probability_of(1) + this->probabilities->get_probability(this->uniquekmers->get_coverage(), this->uniquekmers->get_readcount_of(i)).get_probability_of(2));
 		} else if (a1_undefined || a2_undefined) {
 			// two possible copy numbers
 			assert (expected_kmer_count < 2);
-			result *= 0.5L * (this->probabilities->get_probability(this->uniquekmers->get_coverage(), this->uniquekmers->get_readcount_of(i)).get_probability_of(expected_kmer_count) + this->probabilities->get_probability(this->uniquekmers->local_coverage, this->uniquekmers->get_readcount_of(i)).get_probability_of(expected_kmer_count + 1));
+			result *= 0.5L * (this->probabilities->get_probability(this->uniquekmers->get_coverage(), this->uniquekmers->get_readcount_of(i)).get_probability_of(expected_kmer_count) + this->probabilities->get_probability(this->uniquekmers->get_coverage(), this->uniquekmers->get_readcount_of(i)).get_probability_of(expected_kmer_count + 1));
 		} else {
 			// expected kmer count is known
 			result *= this->probabilities->get_probability(this->uniquekmers->get_coverage(), this->uniquekmers->get_readcount_of(i)).get_probability_of(expected_kmer_count);

@@ -7,7 +7,7 @@
 #include <utility>
 #include "copynumber.hpp"
 #include "kmerpath.hpp"
-#include <cereal/types/base_class.hpp>
+#include <cereal/types/polymorphic.hpp>
 #include <cereal/access.hpp>
 #include <cereal/types/map.hpp>
 #include <cereal/types/memory.hpp>
@@ -42,15 +42,7 @@ struct AlleleInfo {
 
 class UniqueKmers {
 public:
-	UniqueKmers() = default;
-	UniqueKmers(size_t variant_pos, float local_coverage) 
-		:variant_pos(variant_pos),
-		 local_coverage(local_coverage) 
-	{}
-
-	virtual size_t get_variant_position() {
-		return this->variant_pos;
-	}
+	virtual size_t get_variant_position() const = 0;
 	/** insert a kmer
 	* @param cn copy number probabilities of kmer
 	* @param allele_ids on which alleles this kmer occurs
@@ -74,13 +66,9 @@ public:
 	/** get only those unique alleles which are not undefined **/
 	virtual void get_defined_allele_ids(std::vector<unsigned short>& a) = 0;
 	/** set the local kmer coverage computed for this position **/
-	virtual void set_coverage(unsigned short local_coverage) {
-		this->local_coverage = local_coverage;
-	}
+	virtual void set_coverage(unsigned short local_coverage) = 0;
 	/** returns the local kmer coverage **/
-	virtual unsigned short get_coverage() const {
-		return this->local_coverage;
-	};
+	virtual unsigned short get_coverage() const = 0;
 	/** returns a map which contains the number of unique kmers covering each allele **/
 	virtual std::map<unsigned short, int> kmers_on_alleles () const = 0;
 	/** returns the number of unique kmers on given allele */
@@ -99,19 +87,7 @@ public:
 	virtual void update_paths(std::vector<unsigned short>& path_ids) = 0;
 	/** print kmer matrix (mainly for debugging) */
 	virtual void print_kmer_matrix(std::string chromosome) const = 0;
-
-protected:
-	size_t variant_pos;
-	float local_coverage;
-	friend class EmissionProbabilityComputer;
-	friend class HaplotypeSampler;
-	friend cereal::access;
-	friend class UKAnalyzer;
 };
 
-template<class Archive>
-void serialize(Archive& archive, UniqueKmers& u) {
-	archive(u.variant_pos, u.local_coverage);
-}
 
 # endif // UNIQUEKMERS_HPP

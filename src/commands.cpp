@@ -848,7 +848,7 @@ int run_genotype_command(string precomputed_prefix, string readfile, string outn
 		}
 
 
-/** Used to generate test data **/
+/** Used to generate test data 
 	// serialization of UniqueKmersMap object
 	cerr << "Storing unique kmer information ..." << endl;
 	{
@@ -856,7 +856,7 @@ int run_genotype_command(string precomputed_prefix, string readfile, string outn
   		cereal::BinaryOutputArchive archive( os );
 		archive(unique_kmers_list);
 	}
-
+**/
 
 		/**
 		* 3) Genotyping. Construct a HMM and run the Forward-Backward algorithm to compute genotype likelihoods.

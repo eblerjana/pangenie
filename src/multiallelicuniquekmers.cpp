@@ -5,7 +5,8 @@
 using namespace std;
 
 MultiallelicUniqueKmers::MultiallelicUniqueKmers(size_t variant_position, vector<unsigned short>& alleles)
-	:UniqueKmers(variant_position, 0),
+	:variant_pos(variant_position),
+	 local_coverage(0),
 	 current_index(0),
 	 path_to_allele(alleles.size())
 {
@@ -16,6 +17,17 @@ MultiallelicUniqueKmers::MultiallelicUniqueKmers(size_t variant_position, vector
 	}
 }
 
+size_t MultiallelicUniqueKmers::get_variant_position() const {
+	return this->variant_pos;
+}
+
+void MultiallelicUniqueKmers::set_coverage(unsigned short local_coverage) {
+	this->local_coverage = local_coverage;
+}
+
+unsigned short MultiallelicUniqueKmers::get_coverage() const {
+	return this->local_coverage;
+}
 
 void MultiallelicUniqueKmers::insert_kmer(unsigned short readcount,  vector<unsigned short>& alleles){
 	size_t index = this->current_index;

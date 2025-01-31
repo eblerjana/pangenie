@@ -6,7 +6,8 @@
 using namespace std;
 
 BiallelicUniqueKmers::BiallelicUniqueKmers(size_t variant_position, vector<unsigned short>& alleles)
-	:UniqueKmers(variant_position, 0),
+	:variant_pos(variant_position),
+	 local_coverage(0),
 	 current_index(0),
 	 path_to_allele(alleles.size())
 {
@@ -22,13 +23,23 @@ BiallelicUniqueKmers::BiallelicUniqueKmers(size_t variant_position, vector<unsig
 	}
 }
 
+size_t BiallelicUniqueKmers::get_variant_position() const {
+	return this->variant_pos;
+}
+
+void BiallelicUniqueKmers::set_coverage(unsigned short local_coverage) {
+	this->local_coverage = local_coverage;
+}
+
+unsigned short BiallelicUniqueKmers::get_coverage() const {
+	return this->local_coverage;
+}
 
 void BiallelicUniqueKmers::insert_kmer(unsigned short readcount,  vector<unsigned short>& alleles){
 	size_t index = this->current_index;
 	this->kmer_to_count.push_back(readcount);
 	for (auto const& a: alleles){
 		if ((a != 1) && (a != 0)) {
-			cout << "A IS THIS: " << a << endl;
 			throw runtime_error("BiallelicUniqueKmers::insert_kmer: provided alleles need to be either 0 or 1 (biallelic)");
 		}
 		this->alleles[a].kmer_path.set_position(index);

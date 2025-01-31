@@ -8,6 +8,7 @@
 #include "copynumber.hpp"
 #include "kmerpath.hpp"
 #include "uniquekmers.hpp"
+#include <cereal/types/polymorphic.hpp>
 #include <cereal/access.hpp>
 #include <cereal/types/map.hpp>
 #include <cereal/types/memory.hpp>
@@ -27,6 +28,11 @@ public:
 	**/
 	BiallelicUniqueKmers() = default;
 	BiallelicUniqueKmers(size_t variant_position, std::vector<unsigned short>& alleles);
+
+	size_t get_variant_position() const;
+	void set_coverage(unsigned short local_coverage); 
+	unsigned short get_coverage() const;
+
 	/** insert a kmer
 	* @param cn copy number probabilities of kmer
 	* @param allele_ids on which alleles this kmer occurs
@@ -73,21 +79,27 @@ public:
 
 	template<class Archive>
 	void serialize(Archive& archive) {
-		archive(cereal::virtual_base_class<UniqueKmers>(this), current_index, kmer_to_count, alleles, path_to_allele);
+		archive(variant_pos, local_coverage, current_index, kmer_to_count, alleles, path_to_allele);
 	}
 
 private:
+	size_t variant_pos;
+	float local_coverage;
 	size_t current_index;
 	std::vector<unsigned short> kmer_to_count;
 	// stores kmers of each allele and whether the allele is undefined
 	std::map<bool, AlleleInfo> alleles;
 	// defines which alleles are carried by each path (=index)
 	std::vector<bool> path_to_allele;
-	friend class EmissionProbabilityComputer;
 	friend class HaplotypeSampler;
 	friend cereal::access;
-	friend class UKAnalyzer;
 };
 
+#include <cereal/archives/binary.hpp>
+#include <cereal/archives/xml.hpp>
+#include <cereal/archives/json.hpp>
+#include <cereal/details/static_object.hpp>
+CEREAL_REGISTER_TYPE(BiallelicUniqueKmers);
+CEREAL_REGISTER_POLYMORPHIC_RELATION(UniqueKmers, BiallelicUniqueKmers)
 
 # endif // BIALLELICUNIQUEKMERS_HPP
