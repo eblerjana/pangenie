@@ -1,15 +1,16 @@
 #include "catch.hpp"
-#define private public
-#include "../src/graphbuilder.hpp"
-#include "../src/graph.hpp"
-#include "../src/uniquekmers.hpp"
-#include "../src/variant.hpp"
 #include <vector>
 #include <memory>
 #include <map>
 #include <string>
 #include <algorithm> 
 #include <random>
+#include <sstream>
+#define private public
+#include "../src/graphbuilder.hpp"
+#include "../src/graph.hpp"
+#include "../src/uniquekmers.hpp"
+#include "../src/variant.hpp"
 
 
 using namespace std;
@@ -179,7 +180,6 @@ TEST_CASE("GraphBuilder write_path_segments_no_variants", "[GraphBuilder write_p
 	expected.push_back(sequence);
 
 	// read computed reference segments from file
-	bool read_next = false;
 	ifstream computed_sequences("../tests/data/empty-segments.fa");
 	while (getline(computed_sequences, line)) {
 		if (line.size() == 0) continue;
