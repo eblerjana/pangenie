@@ -32,7 +32,7 @@ int main(int argc, char* argv[]) {
 	bool only_phasing = false;
 	long double effective_N = 0.00001L;
 	// TOD0: for testing purposes
-	long double sampling_effective_N = 1.0L;
+	long double sampling_effective_N = 0.01L;
 	long double regularization = 0.01L;
 	bool count_only_graph = true;
 	bool ignore_imputed = false;
@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
 	size_t panel_size = 0;
 	double recombrate = 1.26;
 	bool output_panel = false;
-	unsigned short allele_penalty = 10;
+	unsigned short allele_penalty = 5;
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
 	argument_parser.add_optional_argument('x', "0", "to which size the input panel shall be reduced.");
 	argument_parser.add_flag_argument('d', "write sampled panel to additional output VCF.");
 	argument_parser.add_optional_argument('y', "10", "Penality used for already selected alleles in sampling step.");
-	argument_parser.add_optional_argument('b', "1", "effective population size for sampling step.");
+	argument_parser.add_optional_argument('b', "0.01", "effective population size for sampling step.");
 
 	argument_parser.exactly_one('f', 'v');
 	argument_parser.exactly_one('f', 'r');

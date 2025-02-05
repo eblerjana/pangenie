@@ -23,15 +23,14 @@ int main(int argc, char* argv[]) {
 	string outname = "result";
 	size_t nr_jellyfish_threads = 1;
 	size_t nr_core_threads = 1;
-	long double effective_N = 0.00001L;
 	long double regularization = 0.01L;
 	bool count_only_graph = true;
 	uint64_t hash_size = 3000000000;
 	size_t panel_size = 0;
 	double recombrate = 1.26;
 	// TOD0: for testing purposes
-	long double sampling_effective_N = 1.0L;;
-	unsigned short allele_penalty = 10;
+	long double sampling_effective_N = 0.01L;
+	unsigned short allele_penalty = 5;
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
@@ -46,7 +45,7 @@ int main(int argc, char* argv[]) {
 	argument_parser.add_optional_argument('e', "3000000000", "size of hash used by jellyfish");
 	argument_parser.add_optional_argument('x', "0", "to which size the input panel shall be reduced.");
 	argument_parser.add_optional_argument('y', "10", "Penality used for already selected alleles in sampling step.");
-	argument_parser.add_optional_argument('b', "1", "effective population size for sampling step.");
+	argument_parser.add_optional_argument('b', "0.01", "effective population size for sampling step.");
 
 	try {
 		argument_parser.parse(argc, argv);
