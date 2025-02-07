@@ -161,7 +161,14 @@ void Graph::write_genotypes(string filename, const vector<GenotypingResult>& gen
 		// separate (possibly combined) variant into single variants and print a line for each
 		vector<Variant> singleton_variants;
 		vector<GenotypingResult> singleton_likelihoods;
-		variant->separate_variants(&singleton_variants, &genotyping_result.at(i), &singleton_likelihoods);
+
+		if (variant->is_combined()) {
+			variant->separate_variants(&singleton_variants, &genotyping_result.at(i), &singleton_likelihoods);
+		} else {
+			singleton_variants = {*variant};
+			singleton_likelihoods = {genotyping_result.at(i)};
+		}
+
 
 		for (size_t j = 0; j < singleton_variants.size(); ++j) {
 			Variant v = singleton_variants[j];
@@ -313,7 +320,14 @@ void Graph::write_phasing(string filename, const vector<GenotypingResult>& genot
 		// separate (possibly combined) variant into single variants and print a line for each
 		vector<Variant> singleton_variants;
 		vector<GenotypingResult> singleton_likelihoods;
-		variant->separate_variants(&singleton_variants, &genotyping_result.at(i), &singleton_likelihoods);
+
+		if (variant->is_combined()) {
+			variant->separate_variants(&singleton_variants, &genotyping_result.at(i), &singleton_likelihoods);
+		} else {
+			singleton_variants = {*variant};
+			singleton_likelihoods = {genotyping_result.at(i)};
+		}
+
 
 		for (size_t j = 0; j < singleton_variants.size(); ++j) {
 			Variant v = singleton_variants[j];
@@ -451,7 +465,13 @@ void Graph::write_sampled_panel(string filename, const vector<SampledPanel>& sam
 		// separate (possibly combined) variant into single variants and print a line for each
 		vector<Variant> singleton_variants;
 		vector<SampledPanel> singleton_sampled;
-		variant->separate_variants_panel(&singleton_variants, &sampled_paths.at(i), &singleton_sampled);
+
+		if (variant->is_combined()) {
+			variant->separate_variants_panel(&singleton_variants, &sampled_paths.at(i), &singleton_sampled);
+		} else {
+			singleton_variants = {*variant};
+			singleton_sampled = {sampled_paths.at(i)};
+		}
 
 		for (size_t j = 0; j < singleton_sampled.size(); ++j) {
 			Variant v = singleton_variants[j];

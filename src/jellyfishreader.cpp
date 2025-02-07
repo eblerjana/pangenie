@@ -55,9 +55,9 @@ size_t JellyfishReader::computeKmerCoverage(size_t genome_kmers) {
 	binary_reader reader (this->ifs, this->header.get());
 
 	long double result = 0.0L;
+	long double genome = 1.0L * genome_kmers;
 	while (reader.next()){
 		long double count = 1.0L * reader.val();
-		long double genome = 1.0L * genome_kmers;
 		result += (count/genome);
 	}
 

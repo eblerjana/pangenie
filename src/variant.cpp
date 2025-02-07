@@ -313,11 +313,10 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 	vector<vector<unsigned short>> paths_per_variant (nr_variants);
 	for (size_t i = 0; i < this->paths.size(); ++i) {
 		unsigned short a = this->get_allele_on_path(i);
-		vector<unsigned short> allele = this->allele_combinations.at(a);
-		assert (allele.size() == nr_variants);
+		assert (this->allele_combinations.at(a).size() == nr_variants);
 		for (size_t v = 0; v < nr_variants; v++) {
 			// get allele at this position
-			unsigned short allele_id = allele.at(v);
+			unsigned short allele_id = this->allele_combinations.at(a).at(v);
 			paths_per_variant.at(v).push_back(allele_id);
 		}
 	}

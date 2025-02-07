@@ -190,27 +190,55 @@ void UniqueKmerComputer::compute_empty(vector<UniqueKmers*>* result) const {
 unsigned short UniqueKmerComputer::compute_local_coverage(size_t var_index, size_t length) {
 	DnaSequence left_overhang;
 	DnaSequence right_overhang;
+	size_t min_cov = this->kmer_coverage / 4;
+	size_t max_cov = this->kmer_coverage * 4;
 	size_t total_coverage = 0;
 	size_t total_kmers = 0;
+	size_t max_number = 12;
 
 	this->variants->get_left_overhang(var_index, length, left_overhang);
 	this->variants->get_right_overhang(var_index, length, right_overhang);
 
 	size_t kmer_size = this->variants->get_kmer_size();
-	map <jellyfish::mer_dna, vector<unsigned short>> occurences;
-	unique_kmers(left_overhang, 0, kmer_size, occurences);
-	unique_kmers(right_overhang, 1, kmer_size, occurences);
+	size_t selected = 0;
 
-	for (auto& kmer : occurences) {
+	// select at most max_number of kmers on left side
+	map <jellyfish::mer_dna, vector<unsigned short>> occurences_left;
+	unique_kmers(left_overhang, 0, kmer_size, occurences_left);
+
+	for (auto& kmer : occurences_left) {
+		if (selected >= max_number) break;
 		size_t genomic_count = this->genomic_kmers->getKmerAbundance(kmer.first);
 		if (genomic_count == 1) {
 			size_t read_count = this->read_kmers->getKmerAbundance(kmer.first);
+			// keep this counter before count check to make it consistent with StepwiseUniqueKmerComputer
+			selected += 1;
 			// ignore too extreme counts
-			if ( (read_count < (this->kmer_coverage/4)) || (read_count > (this->kmer_coverage*4)) ) continue;
+			if ( (read_count < min_cov) || (read_count > max_cov) ) continue;
 			total_coverage += read_count;
 			total_kmers += 1;
 		}
 	}
+
+	selected = 0;
+	// select at most max_number of kmers on right side
+	map <jellyfish::mer_dna, vector<unsigned short>> occurences_right;
+	unique_kmers(right_overhang, 0, kmer_size, occurences_right);
+
+	for (auto& kmer : occurences_right) {
+		if (selected >= max_number) break;
+		size_t genomic_count = this->genomic_kmers->getKmerAbundance(kmer.first);
+		if (genomic_count == 1) {
+			size_t read_count = this->read_kmers->getKmerAbundance(kmer.first);
+			// keep this counter before count check to make it consistent with StepwiseUniqueKmerComputer
+			selected += 1;
+			// ignore too extreme counts
+			if ( (read_count < min_cov) || (read_count > max_cov) ) continue;
+			total_coverage += read_count;
+			total_kmers += 1;
+		}
+	}
+
 	// in case no unique kmers were found, use constant kmer coverage
 	if ((total_kmers > 0) && (total_coverage > 0)){
 		return total_coverage / total_kmers;
