@@ -102,7 +102,7 @@ HaplotypeSampler::HaplotypeSampler(vector<shared_ptr<UniqueKmers>>* unique_kmers
 	// Update unique_kmers
 	update_unique_kmers();
 
-	cerr << "HaplotypeSampler update_unique_kmers " << unique_kmers->at(0)->get_variant_position() << ": " << timer.get_interval_time() << " sec" << endl;
+	cerr << "HaplotypeSampler update_unique_kmers " << unique_kmers->at(0)->get_variant_position() << ": " << timer.get_total_time() << " sec" << endl;
 
 	// clean up
 	init(this->viterbi_columns, 0);

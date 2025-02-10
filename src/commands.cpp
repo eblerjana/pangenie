@@ -222,10 +222,12 @@ int run_single_command(string precomputed_prefix, string readfile, string reffil
 	double time_kmer_counting_graph = 0.0;
 	double time_serialize_graph = 0.0;
 	double time_unique_kmers = 0.0;
+	double time_unique_kmers_wallclock = 0.0;
 	double time_kmer_counting_reads = 0.0;
 	double time_probabilities = 0.0;
 	double time_path_sampling = 0.0;
 	double time_hmm = 0.0;
+	double time_hmm_wallclock = 0.0;
 	double time_writing = 0.0;
 	double time_total = 0.0;
 
@@ -368,7 +370,7 @@ int run_single_command(string precomputed_prefix, string readfile, string reffil
 			}
 
 			getrusage(RUSAGE_SELF, &rss_unique_kmers);
-			timer.get_interval_time();	
+			time_unique_kmers_wallclock = timer.get_interval_time();
 		}
 
 
@@ -487,7 +489,7 @@ int run_single_command(string precomputed_prefix, string readfile, string reffil
 		}
 
 		getrusage(RUSAGE_SELF, &rss_hmm);
-		timer.get_interval_time();
+		time_hmm_wallclock = timer.get_interval_time();
 
 	}
 
@@ -533,19 +535,19 @@ int run_single_command(string precomputed_prefix, string readfile, string reffil
 
 	cerr << endl << "############### Summary ###############" << endl;
 	// output times
-	cerr << "time spent reading input files:\t" << time_preprocessing << " sec" << endl;
-	cerr << "time spent counting kmers in genome (wallclock): \t" << time_kmer_counting_graph << " sec" << endl;
-	cerr << "time spent counting kmers in reads (wallclock): \t" << time_kmer_counting_reads << " sec" << endl;
-	cerr << "time spent pre-computing probabilities: \t" << time_probabilities << " sec" << endl;
-	cerr << "time spent writing Graph objects to disk: \t" << time_serialize_graph << " sec" << endl;
-	cerr << "time spent determining unique kmers: \t" << time_unique_kmers << " sec" << endl;
-	cerr << "time spent selecting paths: \t" << time_path_sampling << " sec" << endl;
+	cerr << "time spent reading input files (single thread):\t" << time_preprocessing << " sec" << endl;
+	cerr << "time spent counting kmers in genome (" << nr_jellyfish_threads << " thread(s)): \t" << time_kmer_counting_graph << " sec" << endl;
+	cerr << "time spent counting kmers in reads (" << nr_jellyfish_threads << " thread(s)): \t" << time_kmer_counting_reads << " sec" << endl;
+	cerr << "time spent pre-computing probabilities (single thread): \t" << time_probabilities << " sec" << endl;
+	cerr << "time spent writing Graph objects to disk (single thread): \t" << time_serialize_graph << " sec" << endl;
+	cerr << "time spent determining unique kmers (" << nr_core_threads << " thread(s) / single thread): \t" << time_unique_kmers_wallclock << "/" << time_unique_kmers << " sec" << endl;
+	cerr << "time spent selecting paths (single thread): \t" << time_path_sampling << " sec" << endl;
 	// output per chromosome time
 	for (auto chromosome : chromosomes) {
-		cerr << "time spent genotyping chromosome " << chromosome << ":\t" << results.runtimes[chromosome] << endl;
+		cerr << "time spent genotyping chromosome (single thread) " << chromosome << ":\t" << results.runtimes[chromosome] << endl;
 	}
-	cerr << "time spent genotyping (total): \t" << time_hmm << " sec" << endl;
-	cerr << "time spent writing output VCF: \t" << time_writing << " sec" << endl;
+	cerr << "time spent genotyping total (" << nr_core_threads << " thread(s) / single thread): \t" << time_hmm_wallclock << "/" << time_hmm << " sec" << endl;
+	cerr << "time spent writing output VCF (single thread): \t" << time_writing << " sec" << endl;
 	cerr << "total wallclock time PanGenie: " << time_total  << " sec" << endl;
 
 	cerr << endl;
@@ -571,6 +573,7 @@ int run_index_command(string reffile, string vcffile, size_t kmersize, string ou
 	double time_kmer_counting = 0.0;
 	double time_serialize_graph = 0.0;
 	double time_unique_kmers = 0.0;
+	double time_unique_kmers_wallclock = 0.0;
 	double time_serialize = 0.0;
 	double time_total = 0.0;
 
@@ -666,7 +669,7 @@ int run_index_command(string reffile, string vcffile, size_t kmersize, string ou
 		}
 
 		getrusage(RUSAGE_SELF, &rss_unique_kmers);
-		timer.get_interval_time();	
+		time_unique_kmers_wallclock = timer.get_interval_time();
 	}
 
 	// serialization of UniqueKmersMap object
@@ -683,11 +686,11 @@ int run_index_command(string reffile, string vcffile, size_t kmersize, string ou
 
 	cerr << endl << "###### Summary PanGenie-index ######" << endl;
 	// output times
-	cerr << "time spent reading input files:\t" << time_preprocessing << " sec" << endl;
-	cerr << "time spent counting kmers in genome (wallclock): \t" << time_kmer_counting << " sec" << endl;
-	cerr << "time spent writing Graph objects to disk: \t" << time_serialize_graph << " sec" << endl;
-	cerr << "time spent determining unique kmers: \t" << time_unique_kmers << " sec" << endl;
-	cerr << "time spent writing UniqueKmersMap to disk: \t" << time_serialize << " sec" << endl;
+	cerr << "time spent reading input files (single thread):\t" << time_preprocessing << " sec" << endl;
+	cerr << "time spent counting kmers in reads (" << nr_jellyfish_threads << " thread(s)): \t" << time_kmer_counting << " sec" << endl;
+	cerr << "time spent writing Graph objects to disk (single thread): \t" << time_serialize_graph << " sec" << endl;
+	cerr << "time spent determining unique kmers: (" << nr_jellyfish_threads << " thread(s) / single thread): \t" << time_unique_kmers_wallclock << "/" << time_unique_kmers << " sec" << endl;
+	cerr << "time spent writing UniqueKmersMap to disk (single thread): \t" << time_serialize << " sec" << endl;
 	cerr << "total wallclock time PanGenie-index: " << time_total  << " sec" << endl;
 
 	cerr << endl;
@@ -706,10 +709,12 @@ int run_genotype_command(string precomputed_prefix, string readfile, string outn
 	Timer timer;
 	double time_read_serialized = 0.0;
 	double time_unique_kmers = 0.0;
+	double time_unique_kmers_wallclock = 0.0;
 	double time_kmer_counting = 0.0;
 	double time_probabilities = 0.0;
 	double time_path_sampling = 0.0;
 	double time_hmm = 0.0;
+	double time_hmm_wallclock = 0.0;
 	double time_writing = 0.0;
 	double time_total = 0.0;
 
@@ -843,7 +848,7 @@ int run_genotype_command(string precomputed_prefix, string readfile, string outn
 			}
 
 			getrusage(RUSAGE_SELF, &rss_unique_kmers);
-			timer.get_interval_time();
+			time_unique_kmers_wallclock = timer.get_interval_time();
 
 		}
 
@@ -970,7 +975,7 @@ int run_genotype_command(string precomputed_prefix, string readfile, string outn
 			}
 		} 
 		getrusage(RUSAGE_SELF, &rss_hmm);
-		timer.get_interval_time();
+		time_hmm_wallclock = timer.get_interval_time();
 	}
 
 	// write the output VCF
@@ -1011,18 +1016,18 @@ int run_genotype_command(string precomputed_prefix, string readfile, string outn
 
 	cerr << endl << "###### Summary PanGenie-genotype ######" << endl;
 	// output times
-	cerr << "time spent reading UniqueKmersMap from disk: \t" << time_read_serialized << " sec" << endl;
-	cerr << "time spent counting kmers in reads (wallclock): \t" << time_kmer_counting << " sec" << endl;
-	cerr << "time spent pre-computing probabilities: \t" << time_probabilities << " sec" << endl;
-	cerr << "time spent updating unique kmers: \t" << time_unique_kmers << " sec" << endl;
-	cerr << "time spent selecting paths: \t" << time_path_sampling << " sec" << endl;
+	cerr << "time spent reading UniqueKmersMap from disk (single thread): \t" << time_read_serialized << " sec" << endl;
+	cerr << "time spent counting kmers in reads (" << nr_jellyfish_threads << " thread(s)): \t" << time_kmer_counting << " sec" << endl;
+	cerr << "time spent pre-computing probabilities (single thread): \t" << time_probabilities << " sec" << endl;
+	cerr << "time spent updating unique kmers (" << nr_core_threads << " thread(s) / single thread): \t" << time_unique_kmers_wallclock << "/" << time_unique_kmers << " sec" << endl;
+	cerr << "time spent selecting paths (single thread): \t" << time_path_sampling << " sec" << endl;
 	// output per chromosome time
 	for (auto chromosome : chromosomes) {
-		cerr << "time spent genotyping chromosome " << chromosome << ":\t" << results.runtimes[chromosome] << endl;
+		cerr << "time spent genotyping chromosome (single thread) " << chromosome << ":\t" << results.runtimes[chromosome] << endl;
 	}
-	cerr << "time spent genotyping (total): \t" << time_hmm << " sec" << endl;
+	cerr << "time spent genotyping total (" << nr_core_threads << " thread(s) / single thread): \t" << time_hmm_wallclock << "/" << time_hmm << " sec" << endl;
 
-	cerr << "time spent writing output VCF: \t" << time_writing << " sec" << endl;
+	cerr << "time spent writing output VCF (single thread): \t" << time_writing << " sec" << endl;
 	cerr << "total wallclock time PanGenie-genotype: " << time_total  << " sec" << endl;
 
 	cerr << endl;
@@ -1045,6 +1050,7 @@ int run_sampling(string precomputed_prefix, string readfile, string outname, siz
 	Timer timer;
 	double time_read_serialized = 0.0;
 	double time_unique_kmers = 0.0;
+	double time_unique_kmers_wallclock = 0.0;
 	double time_kmer_counting = 0.0;
 	double time_probabilities = 0.0;
 	double time_writing = 0.0;
@@ -1178,8 +1184,6 @@ int run_sampling(string precomputed_prefix, string readfile, string outname, siz
 				time_unique_kmers += it->second;
 			}
 
-			timer.get_interval_time();
-
 			// convert the UniqueKmers information into SampledPanels
 			for (auto chromosome : chromosomes) {
 				for (size_t i = 0; i < unique_kmers_list.unique_kmers[chromosome].size(); ++i) {
@@ -1192,7 +1196,7 @@ int run_sampling(string precomputed_prefix, string readfile, string outname, siz
 			}
 
 			getrusage(RUSAGE_SELF, &rss_unique_kmers);
-
+			time_unique_kmers_wallclock = timer.get_interval_time();
 		}
 	}
 
@@ -1226,11 +1230,11 @@ int run_sampling(string precomputed_prefix, string readfile, string outname, siz
 
 	cerr << endl << "###### Summary PanGenie-sampling ######" << endl;
 	// output times
-	cerr << "time spent reading UniqueKmersMap from disk: \t" << time_read_serialized << " sec" << endl;
-	cerr << "time spent counting kmers in reads (wallclock): \t" << time_kmer_counting << " sec" << endl;
-	cerr << "time spent pre-computing probabilities: \t" << time_probabilities << " sec" << endl;
-	cerr << "time spent updating unique kmers and sampling: \t" << time_unique_kmers << " sec" << endl;
-	cerr << "time spent writing output VCF: \t" << time_writing << " sec" << endl;
+	cerr << "time spent reading UniqueKmersMap from disk (single thread): \t" << time_read_serialized << " sec" << endl;
+	cerr << "time spent counting kmers in reads (" << nr_jellyfish_threads << " thread(s)): \t" << time_kmer_counting << " sec" << endl;
+	cerr << "time spent pre-computing probabilities (single thread): \t" << time_probabilities << " sec" << endl;
+	cerr << "time spent updating unique kmers (" << nr_core_threads << " thread(s) / single thread): \t" << time_unique_kmers_wallclock << "/" << time_unique_kmers << " sec" << endl;
+	cerr << "time spent writing output VCF (single thread): \t" << time_writing << " sec" << endl;
 	cerr << "total wallclock time sampling: " << time_total  << " sec" << endl;
 
 	cerr << endl;
@@ -1242,5 +1246,4 @@ int run_sampling(string precomputed_prefix, string readfile, string outname, siz
 	cerr << "Max RSS: \t" << (rss_total.ru_maxrss / 1E6) << " GB" << endl;
     cerr << "#######################################" << endl << endl;
 	return 0;
-
 }
