@@ -187,12 +187,12 @@ void Graph::write_genotypes(string filename, const vector<GenotypingResult>& gen
 			}
 
 			vector<string> alt_alleles;
+			alt_alleles.reserve(nr_alleles);
 			vector<unsigned short> defined_alleles = {0};
 			for (size_t i = 1; i < nr_alleles; ++i) {
-				DnaSequence allele = v.get_allele_sequence(i);
 				// skip alleles that are undefined
 				if (!v.is_undefined_allele(i)) {
-					alt_alleles.push_back(allele.to_string());
+					alt_alleles.push_back(v.get_allele_string(i));
 					defined_alleles.push_back(i);
 				}
 			}
@@ -346,12 +346,12 @@ void Graph::write_phasing(string filename, const vector<GenotypingResult>& genot
 			}
 
 			vector<string> alt_alleles;
+			alt_alleles.reserve(nr_alleles);
 			vector<unsigned short> defined_alleles = {0};
 			for (size_t i = 1; i < nr_alleles; ++i) {
-				DnaSequence allele = v.get_allele_sequence(i);
 				// skip alleles that are undefined
 				if (! v.is_undefined_allele(i)) {
-					alt_alleles.push_back(allele.to_string());
+					alt_alleles.push_back( v.get_allele_string(i));
 					defined_alleles.push_back(i);
 				}
 			}
@@ -492,10 +492,9 @@ void Graph::write_sampled_panel(string filename, const vector<SampledPanel>& sam
 			vector<string> alt_alleles;
 			vector<unsigned short> defined_alleles = {0};
 			for (size_t i = 1; i < nr_alleles; ++i) {
-				DnaSequence allele = v.get_allele_sequence(i);
 				// skip alleles that are undefined
 				if (! v.is_undefined_allele(i)) {
-					alt_alleles.push_back(allele.to_string());
+					alt_alleles.push_back(v.get_allele_string(i));
 					defined_alleles.push_back(i);
 				}
 			}

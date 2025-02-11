@@ -14,13 +14,11 @@ GenotypingResult::GenotypingResult()
 
 pair<unsigned short, unsigned short> genotype_from_alleles (unsigned short allele1, unsigned short allele2) {
 	// always put allele with smaller index first
-	pair<unsigned short,unsigned short> genotype;
 	if (allele1 < allele2) {
-		genotype = make_pair(allele1, allele2);
+		return pair<unsigned short, unsigned short>(allele1, allele2);
 	} else {
-		genotype = make_pair(allele2, allele1);
+		return pair<unsigned short, unsigned short>(allele2, allele1);
 	}
-	return genotype;
 }
 
 void GenotypingResult::add_to_likelihood(unsigned short allele1, unsigned short allele2, long double value) {
@@ -119,11 +117,11 @@ void GenotypingResult::divide_likelihoods_by(long double value) {
 pair<int, int> GenotypingResult::get_likeliest_genotype() const {
 	// if empty, set genotype to unknown
 	if (this->genotype_to_likelihood.size() == 0) {
-		return make_pair(-1,-1);
+		return pair<int,int>(-1,-1);
 	}
 
 	long double best_value = 0.0L;
-	pair<unsigned short, unsigned short> best_genotype = make_pair(0,0); 
+	pair<unsigned short, unsigned short> best_genotype(0,0); 
 	for (auto const& l : this->genotype_to_likelihood) {
 		if (l.second >= best_value) {
 			best_value = l.second;
@@ -136,7 +134,7 @@ pair<int, int> GenotypingResult::get_likeliest_genotype() const {
 		if (best_genotype != l.first) {
 			if (abs(l.second-best_value) < 0.0000000001) {
 				// not unique
-				return make_pair(-1,-1);
+				return pair<int,int>(-1,-1);
 			}
 		}
 	}
@@ -145,7 +143,7 @@ pair<int, int> GenotypingResult::get_likeliest_genotype() const {
 	if (best_value > 0.0L) {
 		return best_genotype;
 	} else {
-		return make_pair(-1,-1);
+		return pair<int,int>(-1,-1);
 	}
 }
 
