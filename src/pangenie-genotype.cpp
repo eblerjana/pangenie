@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
 	argument_parser.add_optional_argument('e', "3000000000", "size of hash used by jellyfish");
 	argument_parser.add_optional_argument('x', "0", "to which size the input panel shall be reduced.");
 	argument_parser.add_flag_argument('d', "write sampled panel to additional output VCF.");
-	argument_parser.add_optional_argument('y', "10", "Penality used for already selected alleles in sampling step.");
+	argument_parser.add_optional_argument('y', "5", "Penality used for already selected alleles in sampling step.");
 	argument_parser.add_optional_argument('b', "0.01", "effective population size for sampling step.");
 
 	argument_parser.exactly_one('f', 'v');
