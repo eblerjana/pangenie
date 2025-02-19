@@ -69,17 +69,19 @@ map<unsigned short, vector<jellyfish::mer_dna>> UniqueKmerComputer::select_kmers
 	}
 
 	bool keep_adding = true;
-	while ( (nr_selected < 301) && (keep_adding) ) {
+	unsigned short max_alleles = variant->nr_of_paths();
+	if (max_alleles < 301) max_alleles = 301;
+	while ( (nr_selected < max_alleles) && (keep_adding) ) {
 		bool kmer_added = false;
 		for (auto& a : allele_to_kmers) {
-			// pick at most 32 kmers per allele
-			if ( (a.second.size() > 0) && (result[a.first].size() < 32)) {
+			// pick at most 16 kmers per allele
+			if ( (a.second.size() > 0) && (result[a.first].size() < 16)) {
 				result[a.first].push_back(a.second.front());
 				a.second.pop();
 				kmer_added = true;
 				nr_selected += 1;
 			}
-			if (nr_selected > 300) break;
+			if (nr_selected >= max_alleles) break;
 		}
 		keep_adding = kmer_added;
 	}

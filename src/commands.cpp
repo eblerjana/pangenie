@@ -106,12 +106,14 @@ void fill_read_kmercounts(string chromosome, UniqueKmersMap* unique_kmers_map, s
 			if (is_header) continue; // header line
 			assert(chrom == chromosome);
 			assert(start == unique_kmers_map->unique_kmers[chromosome][var_index]->get_variant_position());
+			unsigned short max_alleles = unique_kmers_map->unique_kmers[chromosome][var_index]->get_nr_paths();
+			if (max_alleles < 301) max_alleles = 301;
 
 			{
 				size_t kmers_used = 0;
 				// add counts to UniqueKmers object
 				for (size_t i = 0; i < kmers.size(); ++i) {
-					assert (kmers_used <= 300);
+					assert (kmers_used < max_alleles);
 
 					size_t count = read_kmer_counts->getKmerAbundance(kmers[i]);
 
