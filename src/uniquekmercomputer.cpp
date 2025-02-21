@@ -42,7 +42,7 @@ UniqueKmerComputer::UniqueKmerComputer (KmerCounter* genomic_kmers, shared_ptr<K
 }
 
 
-map<unsigned short, vector<jellyfish::mer_dna>> UniqueKmerComputer::select_kmers(const Variant* variant, std::map <jellyfish::mer_dna, vector<unsigned short>>& occurences) {
+map<unsigned short, vector<jellyfish::mer_dna>> UniqueKmerComputer::select_kmers(const Variant* variant, std::map <jellyfish::mer_dna, vector<unsigned short>>& occurences, bool is_biallelic) {
 
 	size_t nr_selected = 0;
 	map<unsigned short, vector<jellyfish::mer_dna>> result;
@@ -71,11 +71,14 @@ map<unsigned short, vector<jellyfish::mer_dna>> UniqueKmerComputer::select_kmers
 	bool keep_adding = true;
 	unsigned short max_alleles = variant->nr_of_paths();
 	if (max_alleles < 301) max_alleles = 301;
+	size_t max_kmers = 32;
+	if (is_biallelic) max_kmers = 16;
+
 	while ( (nr_selected < max_alleles) && (keep_adding) ) {
 		bool kmer_added = false;
 		for (auto& a : allele_to_kmers) {
-			// pick at most 16 kmers per allele
-			if ( (a.second.size() > 0) && (result[a.first].size() < 16)) {
+			// pick at most max_kmers kmers per allele
+			if ( (a.second.size() > 0) && (result[a.first].size() < max_kmers)) {
 				result[a.first].push_back(a.second.front());
 				a.second.pop();
 				kmer_added = true;
@@ -131,7 +134,7 @@ void UniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKmers>>* r
 		}
 
 		// select unique kmers to be used
-		map<unsigned short, vector<jellyfish::mer_dna>> allele_to_kmers = select_kmers(&variant, occurences);
+		map<unsigned short, vector<jellyfish::mer_dna>> allele_to_kmers = select_kmers(&variant, occurences, is_biallelic);
 
 		// construct UniqueKmers object
 		for (auto& a : allele_to_kmers) {

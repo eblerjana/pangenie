@@ -49,7 +49,7 @@ private:
 	* @param occurances maps unique kmers to a list of alleles they occur on
 	* @returns map of alleles to a list of selected unique kmers
 	**/
-	std::map<unsigned short, std::vector<jellyfish::mer_dna>> select_kmers(const Variant* variant, std::map <jellyfish::mer_dna, std::vector<unsigned short>>& occurences);
+	std::map<unsigned short, std::vector<jellyfish::mer_dna>> select_kmers(const Variant* variant, std::map <jellyfish::mer_dna, std::vector<unsigned short>>& occurences, bool is_biallelic);
 };
 
 #endif // UNIQUEKMERCOMPUTER_HPP
