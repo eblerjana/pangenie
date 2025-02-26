@@ -163,7 +163,7 @@ void Graph::write_genotypes(string filename, const vector<GenotypingResult>& gen
 		vector<GenotypingResult> singleton_likelihoods;
 
 		if (variant->is_combined()) {
-			variant->separate_variants(&singleton_variants, &genotyping_result.at(i), &singleton_likelihoods);
+			variant->separate_variants(&singleton_variants, &genotyping_result.at(i), &singleton_likelihoods, true);
 		} else {
 			singleton_variants = {*variant};
 			singleton_likelihoods = {genotyping_result.at(i)};
@@ -322,7 +322,7 @@ void Graph::write_phasing(string filename, const vector<GenotypingResult>& genot
 		vector<GenotypingResult> singleton_likelihoods;
 
 		if (variant->is_combined()) {
-			variant->separate_variants(&singleton_variants, &genotyping_result.at(i), &singleton_likelihoods);
+			variant->separate_variants(&singleton_variants, &genotyping_result.at(i), &singleton_likelihoods, true);
 		} else {
 			singleton_variants = {*variant};
 			singleton_likelihoods = {genotyping_result.at(i)};
@@ -467,7 +467,7 @@ void Graph::write_sampled_panel(string filename, const vector<SampledPanel>& sam
 		vector<SampledPanel> singleton_sampled;
 
 		if (variant->is_combined()) {
-			variant->separate_variants_panel(&singleton_variants, &sampled_paths.at(i), &singleton_sampled);
+			variant->separate_variants_panel(&singleton_variants, &sampled_paths.at(i), &singleton_sampled, true);
 		} else {
 			singleton_variants = {*variant};
 			singleton_sampled = {sampled_paths.at(i)};

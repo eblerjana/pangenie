@@ -305,7 +305,7 @@ void Variant::combine_variants (Variant const &v2){
 //	this->variant_ids.insert(this->variant_ids.end(), v2.variant_ids.begin(), v2.variant_ids.end());
 }
 
-void Variant::separate_variants (vector<Variant>* resulting_variants, const GenotypingResult* input_genotyping, vector<GenotypingResult>* resulting_genotyping) const {
+void Variant::separate_variants (vector<Variant>* resulting_variants, const GenotypingResult* input_genotyping, vector<GenotypingResult>* resulting_genotyping, bool skip_flanks) const {
 	size_t nr_variants = this->allele_sequences.size();
 	assert (this->uncovered_alleles.size() == nr_variants);
 
@@ -323,22 +323,30 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 
 	// use reference allele to construct flanking sequences for each variant
 	vector<DnaSequence> reference_allele;
-	for (size_t i = 0; i < nr_variants; ++i) {
-		unsigned short allele_id = this->allele_combinations.at(0).at(i);
-		reference_allele.push_back(this->allele_sequences.at(i).at(allele_id));
-		if (i < (nr_variants - 1)) {
-			reference_allele.push_back(this->inner_flanks[i]);
+	if (!skip_flanks) {
+		for (size_t i = 0; i < nr_variants; ++i) {
+			unsigned short allele_id = this->allele_combinations.at(0).at(i);
+			reference_allele.push_back(this->allele_sequences.at(i).at(allele_id));
+			if (i < (nr_variants - 1)) {
+				reference_allele.push_back(this->inner_flanks[i]);
+			}
 		}
-	}
 
-	reference_allele.insert(reference_allele.begin(), this->left_flank);
-	reference_allele.push_back(this->right_flank);
+		reference_allele.insert(reference_allele.begin(), this->left_flank);
+		reference_allele.push_back(this->right_flank);
+	}
 
 	size_t current_start = this->start_position;
 
 	for (size_t i = 0; i < nr_variants; ++i) {
-		DnaSequence left = construct_left_flank(reference_allele, i*2 + 1, this->left_flank.size());
-		DnaSequence right = construct_right_flank(reference_allele, i*2 + 1, this->right_flank.size());
+		DnaSequence left;
+		DnaSequence right;
+
+		if (!skip_flanks) {
+			left = construct_left_flank(reference_allele, i*2 + 1, this->left_flank.size());
+			right = construct_right_flank(reference_allele, i*2 + 1, this->right_flank.size());
+		}
+
 		vector<DnaSequence> alleles = this->allele_sequences.at(i);
 		size_t current_end = current_start + alleles[0].size();
 
@@ -358,16 +366,10 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 
 			if (!input_genotyping->contains_no_likelihoods()) {
 				// iterate through all genotypes and determine the genotype likelihoods for single variant
-				for (size_t a0 = 0; a0 < this->nr_of_alleles(); ++a0) {
-					// determine allele a0 genotype corresponds to
-					unsigned short single_allele0 = precomputed_ids[a0];
-					for (size_t a1 = a0; a1 < this->nr_of_alleles(); ++a1) {
-						// determine allele a1 genotype corresponds to
-						unsigned short single_allele1 = precomputed_ids[a1];
-						// update genotype likelihood
-						long double combined_likelihood = input_genotyping->get_genotype_likelihood(a0, a1);
-						g.add_to_likelihood(single_allele0, single_allele1, combined_likelihood);
-					}
+				for (const auto& genotype : input_genotyping->get_stored_likelihoods()) {
+					unsigned short single_allele0 = precomputed_ids[genotype.first.first];
+					unsigned short single_allele1 = precomputed_ids[genotype.first.second];
+					g.add_to_likelihood(single_allele0, single_allele1, genotype.second);
 				}
 			}
 			// get the haplotype alleles of the combined variant
@@ -389,7 +391,7 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 }
 
 
-void Variant::separate_variants_panel (vector<Variant>* resulting_variants, const SampledPanel* input_sampling, vector<SampledPanel>* resulting_sampling) const {
+void Variant::separate_variants_panel (vector<Variant>* resulting_variants, const SampledPanel* input_sampling, vector<SampledPanel>* resulting_sampling, bool skip_flanks) const {
 	size_t nr_variants = this->allele_sequences.size();
 	assert (this->uncovered_alleles.size() == nr_variants);
 
@@ -408,22 +410,31 @@ void Variant::separate_variants_panel (vector<Variant>* resulting_variants, cons
 
 	// use reference allele to construct flanking sequences for each variant
 	vector<DnaSequence> reference_allele;
-	for (size_t i = 0; i < nr_variants; ++i) {
-		unsigned short allele_id = this->allele_combinations.at(0).at(i);
-		reference_allele.push_back(this->allele_sequences.at(i).at(allele_id));
-		if (i < (nr_variants - 1)) {
-			reference_allele.push_back(this->inner_flanks[i]);
-		}
-	}
 
-	reference_allele.insert(reference_allele.begin(), this->left_flank);
-	reference_allele.push_back(this->right_flank);
+	if (!skip_flanks) {
+		for (size_t i = 0; i < nr_variants; ++i) {
+			unsigned short allele_id = this->allele_combinations.at(0).at(i);
+			reference_allele.push_back(this->allele_sequences.at(i).at(allele_id));
+			if (i < (nr_variants - 1)) {
+				reference_allele.push_back(this->inner_flanks[i]);
+			}
+		}
+
+		reference_allele.insert(reference_allele.begin(), this->left_flank);
+		reference_allele.push_back(this->right_flank);
+	}
 
 	size_t current_start = this->start_position;
 
 	for (size_t i = 0; i < nr_variants; ++i) {
-		DnaSequence left = construct_left_flank(reference_allele, i*2 + 1, this->left_flank.size());
-		DnaSequence right = construct_right_flank(reference_allele, i*2 + 1, this->right_flank.size());
+		DnaSequence left;
+		DnaSequence right;
+
+		if (!skip_flanks) {
+			left = construct_left_flank(reference_allele, i*2 + 1, this->left_flank.size());
+			right = construct_right_flank(reference_allele, i*2 + 1, this->right_flank.size());
+		}
+
 		vector<DnaSequence> alleles = this->allele_sequences.at(i);
 		size_t current_end = current_start + alleles[0].size();
 

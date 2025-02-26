@@ -53,6 +53,9 @@ public:
 	/** returns true if there are no likelihoods stored **/
 	bool contains_no_likelihoods() const;
 
+	/** provide access to stored likelihoods **/
+	const std::map < std::pair<unsigned short,unsigned short>, long double >& get_stored_likelihoods() const;
+
 	template<class Archive>
 	void serialize(Archive& archive) {
 		archive(genotype_to_likelihood, haplotype_1, haplotype_2, local_coverage, unique_kmers);

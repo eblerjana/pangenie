@@ -48,9 +48,9 @@ public:
 	/** combine variants into a multi-allelic variant **/
 	void combine_variants (Variant const &v2);
 	/** separate variants that have been combined and construct GenotypingResult objects accordingly **/
-	void separate_variants (std::vector<Variant>* resulting_variants, const GenotypingResult* input_genotyping = nullptr, std::vector<GenotypingResult>* resulting_genotyping = nullptr) const;
+	void separate_variants (std::vector<Variant>* resulting_variants, const GenotypingResult* input_genotyping = nullptr, std::vector<GenotypingResult>* resulting_genotyping = nullptr, bool skip_flanks = false) const;
 	/** separate variants that have been combined and construct SampledPanel objects accordingly **/
-	void separate_variants_panel (std::vector<Variant>* resulting_variants, const SampledPanel* input_sampling = nullptr, std::vector<SampledPanel>* resulting_sampling = nullptr) const;
+	void separate_variants_panel (std::vector<Variant>* resulting_variants, const SampledPanel* input_sampling = nullptr, std::vector<SampledPanel>* resulting_sampling = nullptr, bool skip_flanks = false) const;
 	/** total number of alleles of the variant **/
 	size_t nr_of_alleles() const;
 	/** total number of paths covering the variant **/

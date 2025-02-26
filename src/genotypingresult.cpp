@@ -198,3 +198,7 @@ unsigned short GenotypingResult::coverage() const {
 bool GenotypingResult::contains_no_likelihoods() const {
 	return this->genotype_to_likelihood.empty();
 }
+
+const map < pair<unsigned short,unsigned short>, long double >& GenotypingResult::get_stored_likelihoods() const {
+	return this->genotype_to_likelihood;
+}
