@@ -6,7 +6,7 @@
 #include <map>
 #include <utility>
 #include "copynumber.hpp"
-#include "kmerpath.hpp"
+#include "kmerpath16.hpp"
 #include "uniquekmers.hpp"
 #include <cereal/types/polymorphic.hpp>
 #include <cereal/access.hpp>
@@ -18,6 +18,27 @@
 /*
 * Represents the set of unique kmers for a variant position.
 */
+
+
+struct AlleleInfo16 {
+	AlleleInfo16() {
+		kmer_path = KmerPath16();
+		is_undefined = false;
+	}
+
+	KmerPath16 kmer_path;
+	bool is_undefined;
+
+	template <class Archive>
+	void save(Archive& ar) const {
+		ar(kmer_path, is_undefined);
+	}
+
+	template <class Archive>
+	void load(Archive& ar) {
+		ar(kmer_path, is_undefined);
+	}
+};
 
 
 class BiallelicUniqueKmers : public UniqueKmers {
@@ -88,10 +109,10 @@ private:
 	size_t current_index;
 	std::vector<unsigned short> kmer_to_count;
 	// stores kmers of each allele and whether the allele is undefined
-	std::map<bool, AlleleInfo> alleles;
+	std::map<bool, AlleleInfo16> alleles;
 	// defines which alleles are carried by each path (=index)
 	std::vector<bool> path_to_allele;
-	friend class HaplotypeSampler;
+//	friend class HaplotypeSampler;
 	friend cereal::access;
 };
 

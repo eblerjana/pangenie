@@ -607,9 +607,9 @@ bool Variant::is_undefined_allele(size_t allele_id) const {
 	DnaSequence allele_without_flanks;
 	for (size_t i = 0; i < this->allele_combinations.at(allele_id).size(); ++i) {
 		unsigned short allele = this->allele_combinations.at(allele_id).at(i);
-		allele_without_flanks.append(this->allele_sequences.at(i).at(allele));
+		if (this->allele_sequences.at(i).at(allele).contains_undefined()) return true;
 	}
-	return allele_without_flanks.contains_undefined();
+	return false;
 }
 
 size_t Variant::nr_missing_alleles() const {

@@ -141,11 +141,14 @@ void fill_read_kmercounts(string chromosome, UniqueKmersMap* unique_kmers_map, s
     }
 	gzclose(file);
 
-	// Haplotype sampling
-	HaplotypeSampler sampler(&unique_kmers_map->unique_kmers[chromosome], panel_size, recombrate, effective_N, nullptr, add_reference, output_paths, chromosome, allele_penalty); //, "debug_" + chromosome + ".txt");
 	// store runtime
-//	lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
+	//	lock_guard<mutex> lock_kmers (unique_kmers_map->kmers_mutex);
 	unique_kmers_map->runtimes[chromosome] = timer.get_total_time();
+
+	// Haplotype sampling
+	double sampling_time = 0.0;
+	HaplotypeSampler sampler(&unique_kmers_map->unique_kmers[chromosome], panel_size, recombrate, effective_N, nullptr, add_reference, output_paths, chromosome, allele_penalty, &sampling_time); //, "debug_" + chromosome + ".txt");
+	unique_kmers_map->sampling_runtimes[chromosome] = sampling_time;
 }
 
 
@@ -210,8 +213,10 @@ void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, s
 		unique_kmers_map->unique_kmers.insert(pair<string, vector<shared_ptr<UniqueKmers>>> (chromosome, move(unique_kmers)));
 	}
 	// store runtime
-	HaplotypeSampler sampler(&unique_kmers_map->unique_kmers[chromosome], panel_size, recombrate, effective_N, nullptr, reference_added, output_paths, chromosome, allele_penalty); //, "debug_" + chromosome + ".txt");
 	unique_kmers_map->runtimes.insert(pair<string, double>(chromosome, timer.get_total_time()));
+	double sampling_time = 0.0;
+	HaplotypeSampler sampler(&unique_kmers_map->unique_kmers[chromosome], panel_size, recombrate, effective_N, nullptr, reference_added, output_paths, chromosome, allele_penalty, &sampling_time); //, "debug_" + chromosome + ".txt");
+	unique_kmers_map->sampling_runtimes.insert(pair<string, double>(chromosome, sampling_time));
 }
 
 
@@ -224,6 +229,7 @@ int run_single_command(string precomputed_prefix, string readfile, string reffil
 	double time_kmer_counting_graph = 0.0;
 	double time_serialize_graph = 0.0;
 	double time_unique_kmers = 0.0;
+	double time_haplotype_sampling = 0.0;
 	double time_unique_kmers_wallclock = 0.0;
 	double time_kmer_counting_reads = 0.0;
 	double time_probabilities = 0.0;
@@ -369,6 +375,11 @@ int run_single_command(string precomputed_prefix, string readfile, string reffil
 			time_unique_kmers = 0.0;
 			for (auto it = unique_kmers_list.runtimes.begin(); it != unique_kmers_list.runtimes.end(); ++it) {
 				time_unique_kmers += it->second;
+			}
+
+			time_haplotype_sampling = 0.0;
+			for (auto it = unique_kmers_list.sampling_runtimes.begin(); it != unique_kmers_list.sampling_runtimes.end(); ++it) {
+				time_haplotype_sampling += it->second;
 			}
 
 			getrusage(RUSAGE_SELF, &rss_unique_kmers);
@@ -543,6 +554,7 @@ int run_single_command(string precomputed_prefix, string readfile, string reffil
 	cerr << "time spent pre-computing probabilities (single thread): \t" << time_probabilities << " sec" << endl;
 	cerr << "time spent writing Graph objects to disk (single thread): \t" << time_serialize_graph << " sec" << endl;
 	cerr << "time spent determining unique kmers (" << nr_core_threads << " thread(s) / single thread): \t" << time_unique_kmers_wallclock << "/" << time_unique_kmers << " sec" << endl;
+	cerr << "time spent sampling haplotypes (single thread): \t" << time_haplotype_sampling << " sec" << endl;
 	cerr << "time spent selecting paths (single thread): \t" << time_path_sampling << " sec" << endl;
 	// output per chromosome time
 	for (auto chromosome : chromosomes) {
@@ -711,6 +723,7 @@ int run_genotype_command(string precomputed_prefix, string readfile, string outn
 	Timer timer;
 	double time_read_serialized = 0.0;
 	double time_unique_kmers = 0.0;
+	double time_haplotype_sampling = 0.0;
 	double time_unique_kmers_wallclock = 0.0;
 	double time_kmer_counting = 0.0;
 	double time_probabilities = 0.0;
@@ -849,13 +862,18 @@ int run_genotype_command(string precomputed_prefix, string readfile, string outn
 				time_unique_kmers += it->second;
 			}
 
+			time_haplotype_sampling = 0.0;
+			for (auto it = unique_kmers_list.sampling_runtimes.begin(); it != unique_kmers_list.sampling_runtimes.end(); ++it) {
+				time_haplotype_sampling += it->second;
+			}
+		
 			getrusage(RUSAGE_SELF, &rss_unique_kmers);
 			time_unique_kmers_wallclock = timer.get_interval_time();
 
 		}
 
-
-/** Used to generate test data 
+/**
+	// Used to generate test data 
 	// serialization of UniqueKmersMap object
 	cerr << "Storing unique kmer information ..." << endl;
 	{
@@ -1022,6 +1040,7 @@ int run_genotype_command(string precomputed_prefix, string readfile, string outn
 	cerr << "time spent counting kmers in reads (" << nr_jellyfish_threads << " thread(s)): \t" << time_kmer_counting << " sec" << endl;
 	cerr << "time spent pre-computing probabilities (single thread): \t" << time_probabilities << " sec" << endl;
 	cerr << "time spent updating unique kmers (" << nr_core_threads << " thread(s) / single thread): \t" << time_unique_kmers_wallclock << "/" << time_unique_kmers << " sec" << endl;
+	cerr << "time spent sampling haplotypes (single thread): \t" << time_haplotype_sampling << " sec" << endl;
 	cerr << "time spent selecting paths (single thread): \t" << time_path_sampling << " sec" << endl;
 	// output per chromosome time
 	for (auto chromosome : chromosomes) {
@@ -1052,6 +1071,7 @@ int run_sampling(string precomputed_prefix, string readfile, string outname, siz
 	Timer timer;
 	double time_read_serialized = 0.0;
 	double time_unique_kmers = 0.0;
+	double time_haplotype_sampling = 0.0;
 	double time_unique_kmers_wallclock = 0.0;
 	double time_kmer_counting = 0.0;
 	double time_probabilities = 0.0;
@@ -1186,6 +1206,11 @@ int run_sampling(string precomputed_prefix, string readfile, string outname, siz
 				time_unique_kmers += it->second;
 			}
 
+			time_haplotype_sampling = 0.0;
+			for (auto it = unique_kmers_list.sampling_runtimes.begin(); it != unique_kmers_list.sampling_runtimes.end(); ++it) {
+				time_haplotype_sampling += it->second;
+			}
+
 			// convert the UniqueKmers information into SampledPanels
 			for (auto chromosome : chromosomes) {
 				for (size_t i = 0; i < unique_kmers_list.unique_kmers[chromosome].size(); ++i) {
@@ -1236,6 +1261,7 @@ int run_sampling(string precomputed_prefix, string readfile, string outname, siz
 	cerr << "time spent counting kmers in reads (" << nr_jellyfish_threads << " thread(s)): \t" << time_kmer_counting << " sec" << endl;
 	cerr << "time spent pre-computing probabilities (single thread): \t" << time_probabilities << " sec" << endl;
 	cerr << "time spent updating unique kmers (" << nr_core_threads << " thread(s) / single thread): \t" << time_unique_kmers_wallclock << "/" << time_unique_kmers << " sec" << endl;
+	cerr << "time spent sampling haplotypes (single thread): \t" << time_haplotype_sampling << " sec" << endl;
 	cerr << "time spent writing output VCF (single thread): \t" << time_writing << " sec" << endl;
 	cerr << "total wallclock time sampling: " << time_total  << " sec" << endl;
 

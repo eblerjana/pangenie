@@ -19,27 +19,6 @@
 */
 
 
-struct AlleleInfo {
-	AlleleInfo() {
-		kmer_path = KmerPath();
-		is_undefined = false;
-	}
-
-	KmerPath kmer_path;
-	bool is_undefined;
-
-	template <class Archive>
-	void save(Archive& ar) const {
-		ar(kmer_path, is_undefined);
-	}
-
-	template <class Archive>
-	void load(Archive& ar) {
-		ar(kmer_path, is_undefined);
-	}
-};
-
-
 class UniqueKmers {
 public:
 	virtual size_t get_variant_position() const = 0;

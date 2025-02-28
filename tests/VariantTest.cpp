@@ -229,7 +229,7 @@ TEST_CASE("Variant separate_variants_likelihoods", "Variant separate_variants_li
 		REQUIRE(single_stats[i].nr_unique_kmers == 14);
 	}
 
-	vector<vector<unsigned int>> expected_counts = { {3,11}, {3,11}, {12,2} };
+	vector<vector<int>> expected_counts = { {3,11}, {3,11}, {12,2} };
 	vector<vector<string>> expected_alleles = { {"A", "T"}, {"GAG", "ACC"}, {"G", "GTC"} };
 	for (size_t i = 0; i < 3; ++i) {
 		REQUIRE(single_stats[i].kmer_counts[0] == expected_counts[i][0]);
@@ -254,7 +254,7 @@ TEST_CASE("Variant separate_variants_single", "[Variants separate_variants_singl
 	for (size_t i = 0; i < 10; ++i) {
 		u->insert_kmer(20, alleles1);
 	}
-	for (size_t i = 0; i < 20; ++i) {
+	for (size_t i = 0; i < 6; ++i) {
 		u->insert_kmer(30, alleles2);
 	}
 
@@ -272,7 +272,7 @@ TEST_CASE("Variant separate_variants_single", "[Variants separate_variants_singl
 	REQUIRE(doubles_equal(single_genotypes[0].get_genotype_likelihood(1,1), 0.2));
 	REQUIRE(single_variants[0] == v);
 	REQUIRE(single_stats[0].kmer_counts[0] == 10);
-	REQUIRE(single_stats[0].kmer_counts[1] == 30);
+	REQUIRE(single_stats[0].kmer_counts[1] == 16);
 
 	// same with flanks added
 	v.add_flanking_sequence();
@@ -287,9 +287,9 @@ TEST_CASE("Variant separate_variants_single", "[Variants separate_variants_singl
 	REQUIRE(doubles_equal(single_genotypes[0].get_genotype_likelihood(1,1), 0.2));
 	v.remove_flanking_sequence();
 	REQUIRE(single_variants[0] == v);
-	REQUIRE(single_stats[0].nr_unique_kmers == 30);
+	REQUIRE(single_stats[0].nr_unique_kmers == 16);
 	REQUIRE(single_stats[0].kmer_counts[0] == 10);
-	REQUIRE(single_stats[0].kmer_counts[1] == 30);
+	REQUIRE(single_stats[0].kmer_counts[1] == 16);
 }
 
 TEST_CASE("Variant separate_variants_single2", "[Variants separate_variants_single]") {
@@ -480,7 +480,7 @@ TEST_CASE("Variant combine_combined2", "[Variant combine_combined]") {
 	REQUIRE(single_genotypes[1].get_haplotype() == pair<unsigned short,unsigned short>(0,1));
 	REQUIRE(single_genotypes[2].get_haplotype() == pair<unsigned short,unsigned short>(0,0));
 
-	vector<vector<unsigned int>> expected_counts = { {12,4}, {12,4}, {14,2} };
+	vector<vector<int>> expected_counts = { {12,4}, {12,4}, {14,2} };
 	for (size_t i = 0; i < 3; ++i) {
 		REQUIRE(single_stats[i].kmer_counts[0] == expected_counts[i][0]);
 		REQUIRE(single_stats[i].kmer_counts[1] == expected_counts[i][1]);

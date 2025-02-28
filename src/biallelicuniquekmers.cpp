@@ -19,7 +19,7 @@ BiallelicUniqueKmers::BiallelicUniqueKmers(size_t variant_position, vector<unsig
 		}
 		bool allele = (bool) a;
 		this->path_to_allele[i] = allele;
-		this->alleles[allele] = AlleleInfo();
+		this->alleles[allele] = AlleleInfo16();
 	}
 }
 
@@ -223,7 +223,7 @@ unsigned short BiallelicUniqueKmers::get_allele(unsigned short path_id) const {
 void BiallelicUniqueKmers::update_paths(vector<unsigned short>& path_ids) {
 	size_t nr_paths = path_ids.size();
 	vector<bool> updated_path_to_allele(nr_paths);
-	map<bool, AlleleInfo> updated_alleles;
+	map<bool, AlleleInfo16> updated_alleles;
 	vector<bool> undefined_alleles;
 
 	for (size_t i = 0; i < path_ids.size(); ++i) {
@@ -245,7 +245,7 @@ void BiallelicUniqueKmers::update_paths(vector<unsigned short>& path_ids) {
 	this->path_to_allele = updated_path_to_allele;
 	this->alleles.clear();
 	for (auto a : updated_path_to_allele) {
-		this->alleles[a] = AlleleInfo();
+		this->alleles[a] = AlleleInfo16();
 	}
 
 	vector<unsigned short> old_counts = this->kmer_to_count;

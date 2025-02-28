@@ -20,6 +20,27 @@
 */
 
 
+struct AlleleInfo {
+	AlleleInfo() {
+		kmer_path = KmerPath();
+		is_undefined = false;
+	}
+
+	KmerPath kmer_path;
+	bool is_undefined;
+
+	template <class Archive>
+	void save(Archive& ar) const {
+		ar(kmer_path, is_undefined);
+	}
+
+	template <class Archive>
+	void load(Archive& ar) {
+		ar(kmer_path, is_undefined);
+	}
+};
+
+
 class MultiallelicUniqueKmers : public UniqueKmers {
 public:
 	/**
@@ -90,7 +111,7 @@ private:
 	std::map<unsigned short, AlleleInfo> alleles;
 	// defines which alleles are carried by each path (=index)
 	std::vector<unsigned short> path_to_allele;
-	friend class HaplotypeSampler;
+//	friend class HaplotypeSampler;
 	friend cereal::access;
 };
 

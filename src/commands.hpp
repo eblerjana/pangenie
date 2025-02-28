@@ -13,16 +13,17 @@ struct UniqueKmersMap {
 	std::mutex kmers_mutex;
 	std::map<std::string, std::vector<std::shared_ptr<UniqueKmers>>> unique_kmers;
 	std::map<std::string, double> runtimes;
+	std::map<std::string, double> sampling_runtimes;
 	bool add_reference;
 
 	template <class Archive>
 	void save(Archive& ar) const {
-		ar(kmersize, unique_kmers, runtimes, add_reference);
+		ar(kmersize, unique_kmers, runtimes, sampling_runtimes, add_reference);
 	}
 
 	template <class Archive>
 	void load(Archive& ar) {
-		ar(kmersize, unique_kmers, runtimes, add_reference);
+		ar(kmersize, unique_kmers, runtimes, sampling_runtimes, add_reference);
 	}
 };
 

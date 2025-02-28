@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cassert>
 #include <math.h>
+#include <unordered_set>
 #include "genotypingresult.hpp"
 
 using namespace std;
@@ -65,6 +66,36 @@ vector<long double> GenotypingResult::get_all_likelihoods (size_t nr_alleles) co
 	return result;
 }
 
+
+GenotypingResult GenotypingResult::get_specific_likelihoods (vector<unsigned short>& alleles) const {
+	GenotypingResult result;
+	assert (alleles.size() < 65536);
+	long double sum = 0.0L;
+	// all given alleles
+	unordered_set<unsigned short> alleles_to_consider (alleles.begin(), alleles.end());
+
+	// create mapping between given allele and its index
+	map<unsigned short, unsigned short> index;
+	for (unsigned short i = 0; i < alleles.size(); ++i) {
+		index[alleles[i]] = i;
+	}
+
+	// iterate through all stored genotypes
+	for (auto g : this->genotype_to_likelihood) {
+		if ( alleles_to_consider.find(g.first.first) == alleles_to_consider.end() ) continue;
+		if ( alleles_to_consider.find(g.first.second) == alleles_to_consider.end() ) continue;
+		unsigned short i = index[g.first.first];
+		unsigned short j = index[g.first.second];
+		if (this->haplotype_1 == g.first.first) result.haplotype_1 = i;
+		if (this->haplotype_2 == g.first.second) result.haplotype_2 = j;
+		result.add_to_likelihood(i, j, g.second);
+		sum += g.second;
+	}
+	if (sum > 0) result.divide_likelihoods_by(sum);
+	return result;
+}
+
+/**
 GenotypingResult GenotypingResult::get_specific_likelihoods (vector<unsigned short>& alleles) const {
 	GenotypingResult result;
 	size_t nr_alleles = alleles.size();
@@ -82,6 +113,7 @@ GenotypingResult GenotypingResult::get_specific_likelihoods (vector<unsigned sho
 	if (sum > 0) result.divide_likelihoods_by(sum);
 	return result;
 }
+**/
 
 size_t GenotypingResult::get_genotype_quality (unsigned short allele1, unsigned short allele2) const {
 	// check if likelihoods are normalized
