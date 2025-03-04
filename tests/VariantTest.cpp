@@ -532,6 +532,30 @@ TEST_CASE("Variant allele_frequency", "Variant allele_frequency") {
 	REQUIRE ( doubles_equal(v3.allele_frequency(2, true), 1.0/9.0) );
 }
 
+TEST_CASE("Variant all_allele_frequencies", "Variant all_allele_frequencies") {
+
+	vector<Variant> v = {	Variant ("AAA", "TTA", "chr1", 10, 14, {"ATGC", "ATT", "TT"}, {0,1,2}),
+						Variant("AAA", "TGC", "chr1", 4, 5, {"A", "G"}, {0,0,0,0,0,0,1,0,0,0}),
+						Variant("AAA", "TGC", "chr1", 4, 5, {"A", "G", "C"}, {0,0,1,0,2,0,1,0,0,0})
+					};
+	vector<vector<double>> expected_all = { {1.0/3.0, 1.0/3.0, 1.0/3.0}, {0.9, 0.1}, {0.7, 0.2, 0.1} };
+	vector<vector<double>> expected_ignore_ref = { {0.0, 0.5, 0.5}, {8.0/9.0, 1.0/9.0}, {6.0/9.0, 2.0/9.0, 1.0/9.0} };
+
+	for (size_t i = 0; i < 3; ++i) {
+		vector<float> result = v[i].all_allele_frequencies();
+		REQUIRE(result.size() == expected_all[i].size());
+		for (size_t j = 0; j < result.size(); ++j) {
+			REQUIRE(doubles_equal(result[j], expected_all[i][j]));
+		}
+
+		result = v[i].all_allele_frequencies(true);
+		REQUIRE(result.size() == expected_ignore_ref[i].size());
+		for (size_t j = 0; j < result.size(); ++j) {
+			REQUIRE(doubles_equal(result[j], expected_ignore_ref[i][j]));
+		}
+	}
+}
+
 TEST_CASE("Variant separate_variants_likelihoods_uncovered", "Variant separate_variants_likelihoods_uncovered") {
 	Variant v1 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,1}); //, "VAR1");
 	// second allele is not covered by any path

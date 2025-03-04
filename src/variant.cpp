@@ -593,6 +593,25 @@ float Variant::allele_frequency(unsigned short allele_index, bool ignore_ref_pat
 	return freq / size;
 }
 
+vector<float> Variant::all_allele_frequencies(bool ignore_ref_path) const {
+	vector<float> result(this->nr_of_alleles(), 0.0);
+	for (auto a : this->paths) {
+		result[a] += 1.0;
+	}
+	unsigned int size = paths.size();
+	if (ignore_ref_path) {
+		size -= 1.0;
+		assert(result[0] >= 1.0);
+		result[0] -= 1.0;
+	}
+
+	for (size_t i = 0; i < result.size(); ++i) {
+		result[i] /= size;
+	}
+
+	return result;
+}
+
 string Variant::get_id() const {
 //	string result = "";
 //	for (size_t i = 0; i < this->variant_ids.size(); ++i) {

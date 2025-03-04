@@ -209,13 +209,14 @@ void Graph::write_genotypes(string filename, const vector<GenotypingResult>& gen
 			// output allele frequencies of all alleles
 			ostringstream info;
 			info << "AF="; // AF
+			vector<float> allele_freqs = v.all_allele_frequencies(this->add_reference);
 			for (unsigned int a = 1; a < defined_alleles.size(); ++a) {
 				if (a > 1) info << ",";
-				info << setprecision(6) << v.allele_frequency(defined_alleles[a], this->add_reference);				
+				info << setprecision(6) << allele_freqs[defined_alleles[a]];
 			}
 
 			// keep only likelihoods for genotypes with defined alleles
-			size_t nr_missing = v.nr_missing_alleles();
+			size_t nr_missing = nr_alleles - defined_alleles.size();
 			GenotypingResult genotype_likelihoods_tmp = singleton_likelihoods.at(j);
 			GenotypingResult genotype_likelihoods;
 
@@ -362,7 +363,7 @@ void Graph::write_phasing(string filename, const vector<GenotypingResult>& genot
 				alt_string += alt_alleles[a];
 			}
 
-			size_t nr_missing = v.nr_missing_alleles();
+			size_t nr_missing = nr_alleles - defined_alleles.size();
 			GenotypingResult genotype_likelihoods = singleton_likelihoods.at(j);
 			if (nr_missing > 0) genotype_likelihoods = singleton_likelihoods.at(j).get_specific_likelihoods(defined_alleles);
 
@@ -372,9 +373,10 @@ void Graph::write_phasing(string filename, const vector<GenotypingResult>& genot
 			// output allele frequencies of all alleles
 			ostringstream info;
 			info << "AF=";
+			vector<float> allele_freqs = v.all_allele_frequencies(this->add_reference);
 			for (unsigned int a = 1; a < defined_alleles.size(); ++a) {
 				if (a > 1) info << ",";
-				info << setprecision(6) << v.allele_frequency(defined_alleles[a], this->add_reference);				
+				info << setprecision(6) << allele_freqs[defined_alleles[a]];
 			}
 			info << ";UK=" << nr_unique_kmers; // UK
 			info << ";MA=" << nr_missing;
@@ -505,7 +507,7 @@ void Graph::write_sampled_panel(string filename, const vector<SampledPanel>& sam
 				alt_string += alt_alleles[a];
 			}
 
-			size_t nr_missing = v.nr_missing_alleles();
+			size_t nr_missing = nr_alleles - defined_alleles.size();
 			SampledPanel paths = singleton_sampled.at(j);
 			if (nr_missing > 0) paths = singleton_sampled.at(j).get_specific_alleles(defined_alleles);
 
@@ -515,9 +517,10 @@ void Graph::write_sampled_panel(string filename, const vector<SampledPanel>& sam
 			// output allele frequencies of all alleles
 			ostringstream info;
 			info << "AF=";
+			vector<float> allele_freqs = v.all_allele_frequencies(this->add_reference);
 			for (unsigned int a = 1; a < defined_alleles.size(); ++a) {
 				if (a > 1) info << ",";
-				info << setprecision(6) << v.allele_frequency(defined_alleles[a], this->add_reference);				
+				info << setprecision(6) << allele_freqs[defined_alleles[a]];
 			}
 
 			info << ";UK=" << nr_unique_kmers;

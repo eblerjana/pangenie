@@ -154,7 +154,6 @@ TEST_CASE("VariantReader write_path_segments_no_variants", "[VariantReader write
 	expected.push_back(sequence);
 
 	// read computed reference segments from file
-	bool read_next = false;
 	ifstream computed_sequences("../tests/data/empty-segments.fa");
 	while (getline(computed_sequences, line)) {
 		if (line.size() == 0) continue;

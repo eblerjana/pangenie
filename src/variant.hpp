@@ -78,6 +78,8 @@ public:
 	friend bool operator!=(const Variant& v1, const Variant& v2);
 	/** compute allele frequency of the given allele **/
 	float allele_frequency(unsigned short allele_index, bool ignore_ref_path = false) const;
+	/** compute all allele frequencies **/
+	std::vector<float> all_allele_frequencies(bool ignore_ref_path = false) const;
 	/** return variant ID **/
 	std::string get_id() const;
 	/** check whether the given allele is undefined **/
