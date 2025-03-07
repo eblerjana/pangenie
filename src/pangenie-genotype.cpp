@@ -68,6 +68,7 @@ int main(int argc, char* argv[]) {
 
 	argument_parser.exactly_one('f', 'v');
 	argument_parser.exactly_one('f', 'r');
+	argument_parser.not_both('x', 'a');
 	argument_parser.not_both('f', 'k');
 
 	try {

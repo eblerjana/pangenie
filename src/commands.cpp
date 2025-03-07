@@ -279,6 +279,13 @@ int run_single_command(string precomputed_prefix, string readfile, string reffil
 			map<string, shared_ptr<Graph>> graph;
 			GraphBuilder graph_builder (vcffile, reffile, graph, segment_file, kmersize, add_reference);
 
+			unsigned short nr_paths = graph_builder.nr_of_paths();
+			// if no subsampling or haplotype sampling is requested, but the number of paths is > 100, enable haplotype sampling
+			if ((panel_size == 0) && (sampling_size == 0) && (nr_paths > 100)) {
+				panel_size = 15;
+				cerr << "Number of haplotypes exceeds 100, enable haplotype sampling (15 haplotypes)" << endl;
+			}
+
 			// determine chromosomes present in VCF
 			graph_builder.get_chromosomes(&chromosomes);
 			cerr << "Found " << chromosomes.size() << " chromosome(s) in the VCF." << endl;
@@ -400,15 +407,10 @@ int run_single_command(string precomputed_prefix, string readfile, string reffil
 				}
 			}
 
-			// TODO: for too large panels, print warning
-			if (nr_paths > 500) cerr << "Warning: panel is large and PanGenie might take a long time genotyping. Try reducing the panel size prior to genotyping." << endl;
+
 			// handle case when sampling_size is not set
 			if (sampling_size == 0) {
-				if (nr_paths > 220) {
-					sampling_size = 110;
-				} else {
-					sampling_size = nr_paths;		
-				}
+				sampling_size = nr_paths;
 			} else if (sampling_size > nr_paths) {
 				// make sure that sampling size does not exceed nr_paths in panel
 				sampling_size = nr_paths;
@@ -786,6 +788,12 @@ int run_genotype_command(string precomputed_prefix, string readfile, string outn
 			throw runtime_error("PanGenie-index: no haplotype paths given.");
 		}
 
+		// if no subsampling or haplotype sampling is requested, but the number of paths is > 100, enable haplotype sampling
+		if ((panel_size == 0) && (sampling_size == 0) && (nr_paths > 100)) {
+			panel_size = 15;
+			cerr << "Number of haplotypes exceeds 100, enable haplotype sampling (15 haplotypes)" << endl;
+		}
+
 		getrusage(RUSAGE_SELF, &rss_read_serialized);
 		time_read_serialized = timer.get_interval_time();
 
@@ -895,15 +903,10 @@ int run_genotype_command(string precomputed_prefix, string readfile, string outn
 					break;
 				}
 			}
-			// TODO: for too large panels, print warning
-			if (nr_paths > 500) cerr << "Warning: panel is large and PanGenie might take a long time genotyping. Try reducing the panel size prior to genotyping." << endl;
+
 			// handle case when sampling_size is not set
 			if (sampling_size == 0) {
-				if (nr_paths > 220) {
-					sampling_size = 110;
-				} else {
-					sampling_size = nr_paths;		
-				}
+				sampling_size = nr_paths;
 			} else if (sampling_size > nr_paths) {
 				// make sure that sampling size does not exceed nr_paths in panel
 				sampling_size = nr_paths;

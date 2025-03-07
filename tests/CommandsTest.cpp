@@ -28,7 +28,7 @@ TEST_CASE("Commands run_genotype_command1", "[Commands run_genotype_command1]") 
 	long double regularization = 0.01L;
 	bool count_only_graph = true;
 	bool ignore_imputed = false;
-	size_t sampling_size = 0;
+	size_t sampling_size = 215;
 	uint64_t hash_size = 100000;
 	size_t panel_size = 0;
 	double recombrate = 1.26;
