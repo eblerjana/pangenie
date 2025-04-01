@@ -13,7 +13,6 @@ From: ubuntu:24.04
     cd /repos
     git clone https://github.com/eblerjana/pangenie.git
     cd pangenie
-	git checkout sampling-tests
     mkdir build
     cd build
     # cmake -DCOMPILATION_ARCH=OFF .. 
