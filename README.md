@@ -203,7 +203,7 @@ options:
         -t VAL  number of threads to use for core algorithm. Largest number of threads possible is the number of chromosomes given in the VCF (default: 1).
         -u      output genotype ./. for variants not covered by any unique kmers
         -v VAL  variants in VCF format. NOTE: INPUT VCF FILE MUST NOT BE COMPRESSED.
-        -x VAL  to which size the input panel shall be reduced. (default: 0).
+        -x VAL  to which size the input panel shall be reduced. (default: 15).
         -y VAL  Penality used for already selected alleles in sampling step. (default: 5).
 
 
@@ -286,6 +286,15 @@ We have already produced input reference panels for several datasets from high-q
 | Dataset | PanGenie input VCF        |  Callset VCF         | 1000G Genotypes (n=3,202)  |
 |-------------| :-------------: |:-------------:| -----:|
 | HPRC-CHM13 (88 haplotypes) | [graph-VCF](https://zenodo.org/record/7839719/files/chm13_cactus_filtered_ids.vcf.gz?download=1) | [callset-VCF](https://zenodo.org/record/7839719/files/chm13_cactus_filtered_ids_biallelic.vcf.gz?download=1)   |  [1000G-VCF](https://zenodo.org/record/7839719/files/chm13_all-samples_bi_all.vcf.gz?download=1) (PanGenie v2.1.1) |
+
+
+### PanGenie v3.1.0
+
+| Dataset | PanGenie input VCF        |  Callset VCF         | 1000G Genotypes (n=3,202)  |
+|-------------| :-------------: |:-------------:| -----:|
+| HGSVC3+HPRC-CHM13 (214 haplotypes) | [graph-VCF](https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/HGSVC3/release/Genotyping_1kGP/PanGenie-genotypes/1.0/MC_hgsvc3-hprc_chm13_filtered_bubbles.vcf.gz) | [callset-VCF](https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/HGSVC3/release/Genotyping_1kGP/PanGenie-genotypes/1.0/MC_hgsvc3-hprc_chm13_filtered_decomposed.vcf.gz)   |  [1000G-VCF](https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/HGSVC3/release/Genotyping_1kGP/PanGenie-genotypes/1.0/pangenie_chm13_all_decomposed_lenient.vcf.gz) (PanGenie v3.1.0) |
+
+
 
 
 In all cases, the graph-VCFs provided in the second column were given as input to PanGenie. The callset-VCFs (third column) were used to convert the genotyped VCFs into a biallelic, callset representation using the following command:
