@@ -1,12 +1,12 @@
 #include "uniquekmercomputer.hpp"
-#include <jellyfish/mer_dna.hpp>
 #include <iostream>
 #include <cassert>
 #include <map>
+#include <queue>
 
 using namespace std;
 
-void unique_kmers(DnaSequence& allele, unsigned char index, size_t kmer_size, map<jellyfish::mer_dna, vector<unsigned char>>& occurences) {
+void unique_kmers(DnaSequence& allele, unsigned short index, size_t kmer_size, map<jellyfish::mer_dna, vector<unsigned short>>& occurences) {
 	//enumerate kmers
 	map<jellyfish::mer_dna, size_t> counts;
 	size_t extra_shifts = kmer_size;
@@ -42,6 +42,56 @@ UniqueKmerComputer::UniqueKmerComputer (KmerCounter* genomic_kmers, shared_ptr<K
 }
 
 
+map<unsigned short, vector<jellyfish::mer_dna>> UniqueKmerComputer::select_kmers(const Variant* variant, std::map <jellyfish::mer_dna, vector<unsigned short>>& occurences, bool is_biallelic) {
+
+	size_t nr_selected = 0;
+	map<unsigned short, vector<jellyfish::mer_dna>> result;
+	map<unsigned short, queue<jellyfish::mer_dna>> allele_to_kmers;
+	for (auto kmer : occurences){
+
+		size_t genomic_count = this->genomic_kmers->getKmerAbundance(kmer.first);
+		size_t local_count = kmer.second.size();
+
+		// if kmer is not unique to the region, skip it
+		if ( (genomic_count - local_count) != 0 ) continue;
+
+		// if kmer occurs on more than one allele, skip it
+		if (local_count > 1) continue;
+
+
+		// skip alleles not covered by any paths
+		assert(local_count == 1);
+		vector<size_t> paths;
+		variant->get_paths_of_allele(kmer.second[0], paths);
+		if (paths.size() == 0) continue;
+
+		allele_to_kmers[kmer.second[0]].push(kmer.first);
+	}
+
+	bool keep_adding = true;
+	unsigned short max_alleles = variant->nr_of_paths();
+	if (max_alleles < 301) max_alleles = 301;
+	size_t max_kmers = 32;
+	if (is_biallelic) max_kmers = 16;
+
+	while ( (nr_selected < max_alleles) && (keep_adding) ) {
+		bool kmer_added = false;
+		for (auto& a : allele_to_kmers) {
+			// pick at most max_kmers kmers per allele
+			if ( (a.second.size() > 0) && (result[a.first].size() < max_kmers)) {
+				result[a.first].push_back(a.second.front());
+				a.second.pop();
+				kmer_added = true;
+				nr_selected += 1;
+			}
+			if (nr_selected >= max_alleles) break;
+		}
+		keep_adding = kmer_added;
+	}
+	return result;
+}
+
+
 void UniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKmers>>* result, ProbabilityTable* probabilities, bool delete_processed_variants) {
 	size_t nr_variants = this->variants->size();
 	for (size_t v = 0; v < nr_variants; ++v) {
@@ -50,21 +100,29 @@ void UniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKmers>>* r
 		size_t kmer_size = this->variants->get_kmer_size();
 		double kmer_coverage = compute_local_coverage(v, 2*kmer_size);
 		
-		map <jellyfish::mer_dna, vector<unsigned char>> occurences;
+		map <jellyfish::mer_dna, vector<unsigned short>> occurences;
 		const Variant& variant = this->variants->get_variant(v);
 	
-		vector<unsigned char> path_to_alleles;
+		vector<unsigned short> path_to_alleles;
+		bool is_biallelic = true;
 		assert(variant.nr_of_paths() < 65535);
 		for (unsigned short p = 0; p < variant.nr_of_paths(); ++p) {
-			unsigned char a = variant.get_allele_on_path(p);
+			unsigned short a = variant.get_allele_on_path(p);
+			if ((a != 0) && (a != 1)) is_biallelic = false;
 			path_to_alleles.push_back(a);
 		}
 
-		shared_ptr<UniqueKmers> u = shared_ptr<UniqueKmers>(new UniqueKmers(variant.get_start_position(), path_to_alleles));
+		shared_ptr<UniqueKmers> u;
+		if (is_biallelic) {
+			u = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers(variant.get_start_position(), path_to_alleles));
+		} else {
+			u = shared_ptr<UniqueKmers>(new MultiallelicUniqueKmers(variant.get_start_position(), path_to_alleles));
+		}
+
 		u->set_coverage(kmer_coverage);
 		size_t nr_alleles = variant.nr_of_alleles();
 
-		for (unsigned char a = 0; a < nr_alleles; ++a) {
+		for (unsigned short a = 0; a < nr_alleles; ++a) {
 			// consider all alleles not undefined
 			if (variant.is_undefined_allele(a)) {
 				// skip kmers of alleles that are undefined
@@ -75,42 +133,13 @@ void UniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKmers>>* r
 			unique_kmers(allele, a, kmer_size, occurences);
 		}
 
-		// check if kmers occur elsewhere in the genome
-		size_t nr_kmers_used = 0;
-		for (auto& kmer : occurences) {
-			if (nr_kmers_used > 300) break;
+		// select unique kmers to be used
+		map<unsigned short, vector<jellyfish::mer_dna>> allele_to_kmers = select_kmers(&variant, occurences, is_biallelic);
 
-			size_t genomic_count = this->genomic_kmers->getKmerAbundance(kmer.first);
-			size_t local_count = kmer.second.size();
-
-			if ( (genomic_count - local_count) == 0 ) {
-				// kmer unique to this region
-				// determine read kmercount for this kmer
-				size_t read_kmercount = this->read_kmers->getKmerAbundance(kmer.first);
-
-				// determine on which paths kmer occurs
-				vector<size_t> paths;
-				for (auto& allele : kmer.second) {
-					variant.get_paths_of_allele(allele, paths);
-				}
-
-				// skip kmer that does not occur on any path (uncovered allele)
-				if (paths.size() == 0) {
-					continue;
-				}
-
-				// skip kmer that occurs on all paths (they do not give any information about a genotype)
-				if (paths.size() == variant.nr_of_paths()) {
-					continue;
-				}
-
-				// skip kmers with "too extreme" counts
-				// TODO: value ok?
-//				if (read_kmercount > (2*this->kmer_coverage)) {
-//					continue;
-//				}
-
-				// determine probabilities
+		// construct UniqueKmers object
+		for (auto& a : allele_to_kmers) {
+			for (auto& kmer : a.second) {
+				size_t read_kmercount = this->read_kmers->getKmerAbundance(kmer);
 				CopyNumber cn = probabilities->get_probability(kmer_coverage, read_kmercount);
 				long double p_cn0 = cn.get_probability_of(0);
 				long double p_cn1 = cn.get_probability_of(1);
@@ -118,11 +147,13 @@ void UniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKmers>>* r
 
 				// skip kmers with only 0 probabilities
 				if ( (p_cn0 > 0) || (p_cn1 > 0) || (p_cn2 > 0) ) {
-					nr_kmers_used += 1;
-					u->insert_kmer(read_kmercount, kmer.second);
+					// insert the kmer
+					vector<unsigned short> alleles = {a.first};
+					u->insert_kmer(read_kmercount, alleles);
 				}
 			}
 		}
+
 		result->push_back(u);
 
 		if (delete_processed_variants) {
@@ -135,7 +166,6 @@ void UniqueKmerComputer::compute_unique_kmers(vector<shared_ptr<UniqueKmers>>* r
 				this->variants->delete_variant(v);
 			}
 		}
-
 	}
 }
 
@@ -143,13 +173,21 @@ void UniqueKmerComputer::compute_empty(vector<UniqueKmers*>* result) const {
 	size_t nr_variants = this->variants->size();
 	for (size_t v = 0; v < nr_variants; ++v) {
 		const Variant& variant = this->variants->get_variant(v);
-		vector<unsigned char> path_to_alleles;
+		vector<unsigned short> path_to_alleles;
+		bool is_biallelic = true;
 		assert(variant.nr_of_paths() < 65535);
 		for (unsigned short p = 0; p < variant.nr_of_paths(); ++p) {
-			unsigned char a = variant.get_allele_on_path(p);
+			unsigned short a = variant.get_allele_on_path(p);
+			if ((a != 0) && (a != 1)) is_biallelic = false;
 			path_to_alleles.push_back(a);
 		}
-		UniqueKmers* u = new UniqueKmers(variant.get_start_position(), path_to_alleles);
+
+		UniqueKmers* u;
+		if (is_biallelic) {
+			u = new BiallelicUniqueKmers(variant.get_start_position(), path_to_alleles);
+		} else {
+			u = new MultiallelicUniqueKmers(variant.get_start_position(), path_to_alleles);
+		}
 		result->push_back(u);
 	}
 }
@@ -157,27 +195,55 @@ void UniqueKmerComputer::compute_empty(vector<UniqueKmers*>* result) const {
 unsigned short UniqueKmerComputer::compute_local_coverage(size_t var_index, size_t length) {
 	DnaSequence left_overhang;
 	DnaSequence right_overhang;
+	size_t min_cov = this->kmer_coverage / 4;
+	size_t max_cov = this->kmer_coverage * 4;
 	size_t total_coverage = 0;
 	size_t total_kmers = 0;
+	size_t max_number = 12;
 
 	this->variants->get_left_overhang(var_index, length, left_overhang);
 	this->variants->get_right_overhang(var_index, length, right_overhang);
 
 	size_t kmer_size = this->variants->get_kmer_size();
-	map <jellyfish::mer_dna, vector<unsigned char>> occurences;
-	unique_kmers(left_overhang, 0, kmer_size, occurences);
-	unique_kmers(right_overhang, 1, kmer_size, occurences);
+	size_t selected = 0;
 
-	for (auto& kmer : occurences) {
+	// select at most max_number of kmers on left side
+	map <jellyfish::mer_dna, vector<unsigned short>> occurences_left;
+	unique_kmers(left_overhang, 0, kmer_size, occurences_left);
+
+	for (auto& kmer : occurences_left) {
+		if (selected >= max_number) break;
 		size_t genomic_count = this->genomic_kmers->getKmerAbundance(kmer.first);
 		if (genomic_count == 1) {
 			size_t read_count = this->read_kmers->getKmerAbundance(kmer.first);
+			// keep this counter before count check to make it consistent with StepwiseUniqueKmerComputer
+			selected += 1;
 			// ignore too extreme counts
-			if ( (read_count < (this->kmer_coverage/4)) || (read_count > (this->kmer_coverage*4)) ) continue;
+			if ( (read_count < min_cov) || (read_count > max_cov) ) continue;
 			total_coverage += read_count;
 			total_kmers += 1;
 		}
 	}
+
+	selected = 0;
+	// select at most max_number of kmers on right side
+	map <jellyfish::mer_dna, vector<unsigned short>> occurences_right;
+	unique_kmers(right_overhang, 0, kmer_size, occurences_right);
+
+	for (auto& kmer : occurences_right) {
+		if (selected >= max_number) break;
+		size_t genomic_count = this->genomic_kmers->getKmerAbundance(kmer.first);
+		if (genomic_count == 1) {
+			size_t read_count = this->read_kmers->getKmerAbundance(kmer.first);
+			// keep this counter before count check to make it consistent with StepwiseUniqueKmerComputer
+			selected += 1;
+			// ignore too extreme counts
+			if ( (read_count < min_cov) || (read_count > max_cov) ) continue;
+			total_coverage += read_count;
+			total_kmers += 1;
+		}
+	}
+
 	// in case no unique kmers were found, use constant kmer coverage
 	if ((total_kmers > 0) && (total_coverage > 0)){
 		return total_coverage / total_kmers;

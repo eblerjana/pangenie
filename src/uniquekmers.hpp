@@ -7,6 +7,7 @@
 #include <utility>
 #include "copynumber.hpp"
 #include "kmerpath.hpp"
+#include <cereal/types/polymorphic.hpp>
 #include <cereal/access.hpp>
 #include <cereal/types/map.hpp>
 #include <cereal/types/memory.hpp>
@@ -17,85 +18,55 @@
 * Represents the set of unique kmers for a variant position.
 */
 
-// serialization of std::pair, code taken from: https://github.com/USCiLab/cereal/issues/547
-namespace cereal
-{
-    template<class Archive, class F, class S>
-    void save(Archive& ar, const std::pair<F, S>& pair)
-    {
-        ar(pair.first, pair.second);
-    }
-
-    template<class Archive, class F, class S>
-    void load(Archive& ar, std::pair<F, S>& pair)
-    {
-        ar(pair.first, pair.second);
-    }
-
-    template <class Archive, class F, class S> 
-    struct specialize<Archive, std::pair<F, S>, cereal::specialization::non_member_load_save> {};
-}
-
 
 class UniqueKmers {
 public:
-	/**
-	* @param variant_position genomic variant position
-	* @param alleles defines which path (= index) covers each allele (= alleles[index])
-	**/
-	UniqueKmers() = default;
-	UniqueKmers(size_t variant_position, std::vector<unsigned char>& alleles);
-	/** returns the variant position **/
-	size_t get_variant_position();
+	virtual size_t get_variant_position() const = 0;
 	/** insert a kmer
 	* @param cn copy number probabilities of kmer
 	* @param allele_ids on which alleles this kmer occurs
 	**/
-	void insert_kmer(unsigned short readcount, std::vector<unsigned char>& allele_ids);
+	virtual void insert_kmer(unsigned short readcount, std::vector<unsigned short>& allele_ids) = 0;
 	/** checks if kmer at index kmer_index is on path path_id **/
-	bool kmer_on_path(size_t kmer_index, size_t path_id) const;
-	unsigned short get_readcount_of(size_t kmer_index);
+	virtual bool kmer_on_path(size_t kmer_index, size_t path_id) const = 0;
+	/**  checks if kmer at index kmer_index is on allele allele_id **/
+	virtual bool kmer_on_allele(size_t kmer_index, size_t allele_id) const = 0;
+	virtual unsigned short get_readcount_of(size_t kmer_index) = 0;
 	/** modify kmer count of an already inserted kmer **/
-	void update_readcount(size_t kmer_index, unsigned short new_count);
+	virtual void update_readcount(size_t kmer_index, unsigned short new_count) = 0;
 	/** number of unique kmers **/
-	size_t size() const;
+	virtual size_t size() const = 0;
 	/** return number of paths **/
-	unsigned short get_nr_paths() const;
+	virtual unsigned short get_nr_paths() const = 0;
 	/** get all paths and alleles covering this position. If only_include, make sure to only output path_ids that are contained in only_include. **/
-	void get_path_ids(std::vector<unsigned short>& paths, std::vector<unsigned char>& alleles, std::vector<unsigned short>* only_include = nullptr);
+	virtual void get_path_ids(std::vector<unsigned short>& paths, std::vector<unsigned short>& alleles, std::vector<unsigned short>* only_include = nullptr) = 0;
 	/** get all unique alleles covered at this position **/
-	void get_allele_ids(std::vector<unsigned char>& a);
+	virtual void get_allele_ids(std::vector<unsigned short>& a) = 0;
 	/** get only those unique alleles which are not undefined **/
-	void get_defined_allele_ids(std::vector<unsigned char>& a);
-	friend std::ostream& operator<< (std::ostream& stream, const UniqueKmers& uk);
+	virtual void get_defined_allele_ids(std::vector<unsigned short>& a) = 0;
 	/** set the local kmer coverage computed for this position **/
-	void set_coverage(unsigned short local_coverage);
+	virtual void set_coverage(unsigned short local_coverage) = 0;
 	/** returns the local kmer coverage **/
-	unsigned short get_coverage() const;
+	virtual unsigned short get_coverage() const = 0;
 	/** returns a map which contains the number of unique kmers covering each allele **/
-	std::map<unsigned char, int> kmers_on_alleles () const;
+	virtual std::map<unsigned short, int> kmers_on_alleles () const = 0;
+	/** returns the number of unique kmers on given allele */
+	virtual unsigned short kmers_on_allele(unsigned short allele_id) const = 0;
+	/** returns the number of read-supported kmers on given allele **/
+	virtual unsigned short present_kmers_on_allele(unsigned short allele_id) const = 0;
+	/** returns the fraction of read-supported kmers on given allele **/
+	virtual float fraction_present_kmers_on_allele(unsigned short allele_id) const = 0;
 	/** check whether allele is undefined **/
-	bool is_undefined_allele (unsigned char allele_id) const;
+	virtual bool is_undefined_allele (unsigned short allele_id) const = 0;
 	/** set allele to undefined **/
-	void set_undefined_allele (unsigned char allele_id);
+	virtual void set_undefined_allele (unsigned short allele_id) = 0;
 	/** look up allele covered by a path **/
-	unsigned char get_allele(unsigned short path_id) const;
-
-	template<class Archive>
-	void serialize(Archive& archive) {
-		archive(variant_pos, current_index, kmer_to_count, alleles, path_to_allele, local_coverage);
-	}
-
-private:
-	size_t variant_pos;
-	size_t current_index;
-	std::vector<unsigned short> kmer_to_count;
-	// stores kmers of each allele and whether the allele is undefined
-	std::map<unsigned char, std::pair<KmerPath, bool>> alleles;
-	// defines which alleles are carried by each path (=index)
-	std::vector<unsigned char> path_to_allele;
-	unsigned short local_coverage;
-	friend class EmissionProbabilityComputer;
-	friend cereal::access;
+	virtual unsigned short get_allele(unsigned short path_id) const = 0;
+	/** update UniqueKmers object by keeping only the paths provided **/
+	virtual void update_paths(std::vector<unsigned short>& path_ids) = 0;
+	/** print kmer matrix (mainly for debugging) */
+	virtual void print_kmer_matrix(std::string chromosome) const = 0;
 };
+
+
 # endif // UNIQUEKMERS_HPP

@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
 	cerr << endl;
 	cerr << "program: PanGenie - genotyping based on kmer-counting and known haplotype sequences." << endl;
 	cerr << "author: Jana Ebler" << endl << endl;
-	cerr << "version: v3.0.1" << endl;
+	cerr << "version: v4.0.0" << endl;
 
 	string reffile = "";
 	string vcffile = "";
@@ -31,11 +31,17 @@ int main(int argc, char* argv[]) {
 	bool only_genotyping = true;
 	bool only_phasing = false;
 	long double effective_N = 0.00001L;
+	// TOD0: for testing purposes
+	long double sampling_effective_N = 0.01L;
 	long double regularization = 0.01L;
 	bool count_only_graph = true;
 	bool ignore_imputed = false;
 	size_t sampling_size = 0;
 	uint64_t hash_size = 3000000000;
+	size_t panel_size = 0;
+	double recombrate = 1.26;
+	bool output_panel = false;
+	unsigned short allele_penalty = 5;
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
@@ -55,9 +61,14 @@ int main(int argc, char* argv[]) {
 	argument_parser.add_flag_argument('u', "output genotype ./. for variants not covered by any unique kmers");
 	argument_parser.add_optional_argument('a', "0", "sample subsets of paths of this size");
 	argument_parser.add_optional_argument('e', "3000000000", "size of hash used by jellyfish");
+	argument_parser.add_optional_argument('x', "0", "to which size the input panel shall be reduced.");
+	argument_parser.add_flag_argument('d', "write sampled panel to additional output VCF.");
+	argument_parser.add_optional_argument('y', "5", "Penality used for already selected alleles in sampling step.");
+	argument_parser.add_optional_argument('b', "0.01", "effective population size for sampling step.");
 
 	argument_parser.exactly_one('f', 'v');
 	argument_parser.exactly_one('f', 'r');
+	argument_parser.not_both('x', 'a');
 	argument_parser.not_both('f', 'k');
 
 	try {
@@ -79,6 +90,8 @@ int main(int argc, char* argv[]) {
 	sample_name = argument_parser.get_argument('s');
 	nr_jellyfish_threads = stoi(argument_parser.get_argument('j'));
 	nr_core_threads = stoi(argument_parser.get_argument('t'));
+	allele_penalty = stoi(argument_parser.get_argument('y'));
+	sampling_effective_N = stof(argument_parser.get_argument('b'));
 
 	bool genotyping_flag = argument_parser.get_flag('g');
 	bool phasing_flag = argument_parser.get_flag('p');
@@ -95,14 +108,16 @@ int main(int argc, char* argv[]) {
 	count_only_graph = !argument_parser.get_flag('c');
 	ignore_imputed = argument_parser.get_flag('u');
 	sampling_size = stoi(argument_parser.get_argument('a'));
+	panel_size = stoi(argument_parser.get_argument('x'));
 	istringstream iss(argument_parser.get_argument('e'));
 	iss >> hash_size;
+	output_panel = argument_parser.get_flag('d');
 
 	if (argument_parser.exists('f')) {
 		precomputed_prefix = argument_parser.get_argument('f');
 
 		// run genotyping
-		int exit_code = run_genotype_command(precomputed_prefix, readfile, outname, sample_name, nr_jellyfish_threads, nr_core_threads, only_genotyping, only_phasing, effective_N, regularization, count_only_graph, ignore_imputed, sampling_size, hash_size);
+		int exit_code = run_genotype_command(precomputed_prefix, readfile, outname, sample_name, nr_jellyfish_threads, nr_core_threads, only_genotyping, only_phasing, effective_N, regularization, count_only_graph, ignore_imputed, sampling_size, hash_size, panel_size, recombrate, output_panel, sampling_effective_N, allele_penalty);
 
 		getrusage(RUSAGE_SELF, &rss_total);
 
@@ -121,7 +136,7 @@ int main(int argc, char* argv[]) {
 
 		cerr << endl << "NOTE: by running PanGenie-index first to pre-process data, you can reduce memory usage and speed up PanGenie. This is helpful especially when genotyping the same variants across multiple samples." << endl << endl;
 
-		int exit_code = run_single_command(outname, readfile, reffile, vcffile, kmersize, outname, sample_name, nr_jellyfish_threads, nr_core_threads, only_genotyping, only_phasing, effective_N, regularization, count_only_graph, ignore_imputed, add_reference, sampling_size, hash_size);
+		int exit_code = run_single_command(outname, readfile, reffile, vcffile, kmersize, outname, sample_name, nr_jellyfish_threads, nr_core_threads, only_genotyping, only_phasing, effective_N, regularization, count_only_graph, ignore_imputed, add_reference, sampling_size, hash_size, panel_size, recombrate, output_panel, sampling_effective_N, allele_penalty);
 
 		getrusage(RUSAGE_SELF, &rss_total);
 

@@ -1,15 +1,16 @@
 #include "catch.hpp"
-#define private public
-#include "../src/graphbuilder.hpp"
-#include "../src/graph.hpp"
-#include "../src/uniquekmers.hpp"
-#include "../src/variant.hpp"
 #include <vector>
 #include <memory>
 #include <map>
 #include <string>
 #include <algorithm> 
 #include <random>
+#include <sstream>
+#define private public
+#include "../src/graphbuilder.hpp"
+#include "../src/graph.hpp"
+#include "../src/uniquekmers.hpp"
+#include "../src/variant.hpp"
 
 
 using namespace std;
@@ -179,7 +180,6 @@ TEST_CASE("GraphBuilder write_path_segments_no_variants", "[GraphBuilder write_p
 	expected.push_back(sequence);
 
 	// read computed reference segments from file
-	bool read_next = false;
 	ifstream computed_sequences("../tests/data/empty-segments.fa");
 	while (getline(computed_sequences, line)) {
 		if (line.size() == 0) continue;
@@ -313,7 +313,7 @@ TEST_CASE("GraphBuilder construct_index", "[GraphBuilder construct_index]") {
 	for (auto s : sequences) {
 		alleles.push_back(DnaSequence(s));
 	}
-	vector<unsigned char> expected = {1,0,2,3};
+	vector<unsigned short> expected = {1,0,2,3};
 	REQUIRE(graph_construct_index(alleles, true) == expected);
 }
 
@@ -417,4 +417,59 @@ TEST_CASE("GraphBuilder unknown_alleles2", "[GraphBuilder unknown_alleles2]") {
 	string computed_ids = g.get_ids(alleles, 0, true);
 	string expected_ids = "var3,var2,var1";
 	REQUIRE(expected_ids == computed_ids);
+}
+
+TEST_CASE("GraphBuilder write_sampled_panel", "[GraphBuilder write_sampled_panel]") {
+	string vcf = "../tests/data/small4.vcf";
+	string fasta = "../tests/data/small1.fa";
+
+	// read variants from VCF file
+	map<string, shared_ptr<Graph>> graph;
+	GraphBuilder v(vcf, fasta, graph, "../tests/data/empty-segments.fa", 10, false);
+
+	vector<string> chromosomes;
+	vector<string> expected_chromosomes = {"chrA"};
+	v.get_chromosomes(&chromosomes);
+
+	REQUIRE(chromosomes.size() == expected_chromosomes.size());
+	REQUIRE(chromosomes[0] == expected_chromosomes[0]);
+	REQUIRE(graph["chrA"]->size() == 1);
+
+	// create SampledPanel object
+	vector<unsigned short> path_to_allele(graph["chrA"]->get_variant(0).nr_of_paths());
+	for (size_t i = 0; i < graph["chrA"]->get_variant(0).nr_of_paths(); i++) {
+		path_to_allele[i] = graph["chrA"]->get_variant(0).get_allele_on_path(i);
+	}
+
+	SampledPanel sampled_panel(path_to_allele, 14);
+	vector<SampledPanel> s = {sampled_panel};
+	graph.at("chrA")->write_sampled_panel("../tests/data/small4-sampled-panel.vcf", s, true);
+
+	string line;
+	vector<vector<string>> computed_lines;
+
+	// read the file produced to make sure paths were correctly written
+	ifstream output_vcf("../tests/data/small4-sampled-panel.vcf");
+	while (getline(output_vcf, line)) {
+		vector<string> tokens;
+		if (line.size() == 0) continue;
+		if (line[0] == '#') {
+			// skip VCF header lines
+			continue;
+		}
+	
+		// split line by tabs
+		istringstream iss(line);
+		string token;
+		while(getline(iss, token, '\t'))
+			tokens.push_back(token);
+
+		computed_lines.push_back(tokens);
+	}
+
+	REQUIRE(computed_lines.size() == 2);
+	vector<string> expected_line1 = {"chrA", "161", ".", "G", "TA,TAAA", ".", "PASS", "AF=0.375,0.416667;UK=14;MA=2", "GT", "0", "1", "1", "1", "2", "1", "2", "2", "2", "1", "1", "0", "2", "2", ".", ".", "1", "2", "2", "1", "2", "2", "1", "0"};
+	vector<string> expected_line2 = {"chrA", "166", ".", "G", "T", ".", "PASS", "AF=0.666667;UK=14;MA=6", "GT", ".", "1", ".", ".", ".", "1", "1", "1", "1", "1", "1", "0", "1", "1", ".", ".", "1", "1", "1", "1",	"1", "1", "1", "0"};
+	REQUIRE(computed_lines[0] == expected_line1);
+	REQUIRE(computed_lines[1] == expected_line2);
 }

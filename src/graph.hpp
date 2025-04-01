@@ -19,20 +19,21 @@
 #include "variant.hpp"
 #include "genotypingresult.hpp"
 #include "uniquekmers.hpp"
+#include "sampledpanel.hpp"
 
 
 template<class T>
-std::vector<unsigned char> graph_construct_index(std::vector<T>& alleles, bool reference_added) {
+std::vector<unsigned short> graph_construct_index(std::vector<T>& alleles, bool reference_added) {
 	size_t length = alleles.size();
-	unsigned char offset = 0;
+	unsigned short offset = 0;
 	if (reference_added) {
 		assert(length > 0);
 		length -= 1;
 		offset += 1;
 	}
-	std::vector<unsigned char> index(length);
+	std::vector<unsigned short> index(length);
 	std::iota(index.begin(), index.end(), 0);
-	std::sort(index.begin(), index.end(), [&](unsigned char a, unsigned char b) { return alleles[a+offset] < alleles[b+offset]; });
+	std::sort(index.begin(), index.end(), [&](unsigned short a, unsigned short b) { return alleles[a+offset] < alleles[b+offset]; });
 	return index;
 }
 
@@ -63,6 +64,8 @@ public:
 	void write_genotypes(std::string filename, const std::vector<GenotypingResult>& genotyping_result, bool write_header, std::string sample, bool ignore_imputed = false);
 	/** write phasing results into a VCF file **/
 	void write_phasing(std::string filename, const std::vector<GenotypingResult>& genotyping_result, bool write_header, std::string sample, bool ignore_imputed = false);
+	/**  write phased panel into a VCF file **/
+	void write_sampled_panel(std::string filename, const std::vector<SampledPanel>& sampled_paths, bool write_header);
 	/** construct reference sequence left of variant bubble at index **/
 	void get_left_overhang(size_t index, size_t length, DnaSequence& result) const;
 	/** construct reference sequence right of variant bubble **/

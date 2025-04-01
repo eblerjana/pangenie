@@ -30,11 +30,13 @@ void parse_kmer_line(string line, string& chrom, size_t& start, vector<string>& 
 unsigned short compute_local_coverage(vector<string>& kmers, shared_ptr<KmerCounter> read_counts, size_t kmer_coverage) {
 	size_t total_coverage = 0;
 	size_t total_kmers = 0;
+	size_t min_cov = kmer_coverage / 4;
+	size_t max_cov = kmer_coverage * 4;
 
 	for (auto& kmer : kmers) {
 		size_t read_count = read_counts->getKmerAbundance(kmer);
 		// ignore too extreme counts
-		if ( (read_count < (kmer_coverage/4)) || (read_count > (kmer_coverage*4)) ) continue;
+		if ( (read_count < min_cov) || (read_count > max_cov) ) continue;
 		total_coverage += read_count;
 		total_kmers += 1;		
 	}

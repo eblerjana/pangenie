@@ -22,7 +22,7 @@ public:
 	/** get path_id at a given index **/
 	unsigned short get_path (unsigned short path_index) const;
 	/** get the allele covered by a path in a column **/
-	unsigned char get_allele (unsigned short path_index, size_t column_index) const;
+	unsigned short get_allele (unsigned short path_index, size_t column_index) const;
 	/** get path ids corresponding to an index inside of a column **/
 	std::pair<unsigned short,unsigned short> get_path_ids_at (size_t position) const;
 

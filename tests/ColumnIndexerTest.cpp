@@ -1,6 +1,6 @@
 #include "catch.hpp"
 #include "../src/columnindexer.hpp"
-#include "../src/uniquekmers.hpp"
+#include "../src/biallelicuniquekmers.hpp"
 #include <vector>
 #include <string>
 #include <memory>
@@ -8,22 +8,22 @@
 using namespace std;
 
 TEST_CASE("ColumnIndexer testcase 1", "[ColumnIndexer testcase 1]"){
-	vector<unsigned char> path_to_allele = {0, 1, 0, 0, 0};
-	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new UniqueKmers (2000, path_to_allele));
-	vector<unsigned char> a1 = {0};
-	vector<unsigned char> a2 = {1};
+	vector<unsigned short> path_to_allele = {0, 1, 0, 0, 0};
+	shared_ptr<UniqueKmers> u1 = shared_ptr<UniqueKmers>(new BiallelicUniqueKmers (2000, path_to_allele));
+	vector<unsigned short> a1 = {0};
+	vector<unsigned short> a2 = {1};
 	u1->insert_kmer(10, a1);
 	u1->insert_kmer(10, a2);
 	u1->set_coverage(5);
 
 	// position only covered by reference alleles and should be skipped
 	path_to_allele = {0, 0, 1, 1, 1};
-	shared_ptr<UniqueKmers> u2 =  shared_ptr<UniqueKmers> ( new UniqueKmers (2500, path_to_allele));
+	shared_ptr<UniqueKmers> u2 =  shared_ptr<UniqueKmers> ( new BiallelicUniqueKmers (2500, path_to_allele));
 	u2->insert_kmer(10, a1);
 	u2->insert_kmer(20, a2);
 
 	path_to_allele = {0, 0, 1, 1, 1};
-	shared_ptr<UniqueKmers> u3 = shared_ptr<UniqueKmers> (new UniqueKmers (3000, path_to_allele));
+	shared_ptr<UniqueKmers> u3 = shared_ptr<UniqueKmers> (new BiallelicUniqueKmers (3000, path_to_allele));
 	u3->insert_kmer(20, a1);
 	u3->insert_kmer(5, a2);
 	u3->set_coverage(5);

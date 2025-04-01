@@ -141,18 +141,17 @@ The full list of options is previded below:
 program: PanGenie - genotyping based on kmer-counting and known haplotype sequences.
 author: Jana Ebler
 
-version: v3.0.0
+version: v4.0.0
 usage: 
 PanGenie-index [options] -r <reference.fa> -v <variants.vcf> -o <index-prefix>
 
 options:
-	-e VAL	size of hash used by jellyfish (default: 3000000000).
-	-k VAL	kmer size (default: 31).
-	-o VAL	prefix of the output files. NOTE: the given path must not include non-existent folders.
-	-r VAL	reference genome in FASTA format. NOTE: INPUT FASTA FILE MUST NOT BE COMPRESSED.
-	-t VAL	number of threads to use for kmer-counting (default: 1).
-	-v VAL	variants in VCF format. NOTE: INPUT VCF FILE MUST NOT BE COMPRESSED.
-
+        -e VAL  size of hash used by jellyfish (default: 3000000000).
+        -k VAL  kmer size (default: 31).
+        -o VAL  prefix of the output files. NOTE: the given path must not include non-existent folders.
+        -r VAL  reference genome in FASTA format. NOTE: INPUT FASTA FILE MUST NOT BE COMPRESSED.
+        -t VAL  number of threads to use for kmer-counting (default: 1).
+        -v VAL  variants in VCF format. NOTE: INPUT VCF FILE MUST NOT BE COMPRESSED.
 
 ```
 
@@ -181,27 +180,31 @@ The full list of options is provided below:
 program: PanGenie - genotyping based on kmer-counting and known haplotype sequences.
 author: Jana Ebler
 
-version: v3.0.0
+version: v4.0.0
 usage: 
 PanGenie [options] -f <index-prefix> -i <reads.fa/fq> -o <outfile-prefix>
 PanGenie [options] -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf> -o <outfile-prefix>
 
 options:
-	-a VAL	sample subsets of paths of this size (default: 0).
-	-c	count all read kmers instead of only those located in graph
-	-e VAL	size of hash used by jellyfish (default: 3000000000).
-	-f VAL	Filename prefix of files computed by PanGenie-index (i.e. option -o used with PanGenie-index).
-	-g	run genotyping (Forward backward algorithm, default behaviour)
-	-i VAL	sequencing reads in FASTA/FASTQ format or Jellyfish database in jf format. NOTE: INPUT FASTA/Q FILE MUST NOT BE COMPRESSED.
-	-j VAL	number of threads to use for kmer-counting (default: 1).
-	-k VAL	kmer size (default: 31).
-	-o VAL	prefix of the output files. NOTE: the given path must not include non-existent folders (default: result).
-	-p	run phasing (Viterbi algorithm). Experimental feature
-	-r VAL	reference genome in FASTA format. NOTE: INPUT FASTA FILE MUST NOT BE COMPRESSED.
-	-s VAL	name of the sample (will be used in the output VCFs) (default: sample).
-	-t VAL	number of threads to use for core algorithm. Largest number of threads possible is the number of chromosomes given in the VCF (default: 1).
-	-u	output genotype ./. for variants not covered by any unique kmers
-	-v VAL	variants in VCF format. NOTE: INPUT VCF FILE MUST NOT BE COMPRESSED.
+        -a VAL  sample subsets of paths of this size (default: 0).
+        -b VAL  effective population size for sampling step. (default: 0.01).
+        -c      count all read kmers instead of only those located in graph
+        -d      write sampled panel to additional output VCF.
+        -e VAL  size of hash used by jellyfish (default: 3000000000).
+        -f VAL  Filename prefix of files computed by PanGenie-index (i.e. option -o used with PanGenie-index).
+        -g      run genotyping (Forward backward algorithm, default behaviour)
+        -i VAL  sequencing reads in FASTA/FASTQ format or Jellyfish database in jf format. NOTE: INPUT FASTA/Q FILE MUST NOT BE COMPRESSED.
+        -j VAL  number of threads to use for kmer-counting (default: 1).
+        -k VAL  kmer size (default: 31).
+        -o VAL  prefix of the output files. NOTE: the given path must not include non-existent folders (default: result).
+        -p      run phasing (Viterbi algorithm). Experimental feature
+        -r VAL  reference genome in FASTA format. NOTE: INPUT FASTA FILE MUST NOT BE COMPRESSED.
+        -s VAL  name of the sample (will be used in the output VCFs) (default: sample).
+        -t VAL  number of threads to use for core algorithm. Largest number of threads possible is the number of chromosomes given in the VCF (default: 1).
+        -u      output genotype ./. for variants not covered by any unique kmers
+        -v VAL  variants in VCF format. NOTE: INPUT VCF FILE MUST NOT BE COMPRESSED.
+        -x VAL  to which size the input panel shall be reduced. (default: 15).
+        -y VAL  Penality used for already selected alleles in sampling step. (default: 5).
 
 
 ```
@@ -236,14 +239,13 @@ PanGenie -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf> -s <sample-name> -
 
 Runtime and memory usage depend on the number of variants genotyped and the number of haplotypes present in the graph. PanGenie is fastest when it is installed using Singularity (see above).
 
-The largest dataset that we have tested (HPRC: https://doi.org/10.1101/2022.07.09.499321) contained around 27 million variants, 88 haplotypes and around 30x read coverage. With 24 cores, `` PanGenie-index `` ran in 34 minutes (around 3 CPU hours) using 60 GB of RAM. `` PanGenie `` with option ``-f`` ran in 1 hour and 40 minutes using 24 cores (around 14 CPU hours) and used 37 GB of RAM.
-Running PanGenie without preprocessing, ``PanGenie`` needs 2 hours and 35 minutes using 24 cores (around 18 CPU hours) and 84 GB of RAM.
+The largest dataset that we have tested contained around 36 million variants, 394 haplotypes and around 30x read coverage. With 24 cores, `` PanGenie-index `` ran in 1:50 hours using 97 GB of RAM. `` PanGenie `` with option ``-f`` ran in 55 minutes using 24 cores (around 14 CPU hours) and used 49 GB of RAM.
 
 
 
 ## Limitations
 
-* The runtime of PanGenie gets slow as the number of haplotype paths increases. Due to technical reasons, the current implementation of PanGenie cannot handle more than 254 input haplotypes (127 diploid samples).
+* The runtime of PanGenie gets slow as the number of haplotype paths increases. Due to technical reasons, the current implementation of PanGenie cannot handle more than 65534 input haplotypes (32767 diploid samples).
 * PanGenie can only genotype diploid genomes. It cannot be used for polyploid samples.
 
 ## Demo
@@ -284,6 +286,15 @@ We have already produced input reference panels for several datasets from high-q
 | Dataset | PanGenie input VCF        |  Callset VCF         | 1000G Genotypes (n=3,202)  |
 |-------------| :-------------: |:-------------:| -----:|
 | HPRC-CHM13 (88 haplotypes) | [graph-VCF](https://zenodo.org/record/7839719/files/chm13_cactus_filtered_ids.vcf.gz?download=1) | [callset-VCF](https://zenodo.org/record/7839719/files/chm13_cactus_filtered_ids_biallelic.vcf.gz?download=1)   |  [1000G-VCF](https://zenodo.org/record/7839719/files/chm13_all-samples_bi_all.vcf.gz?download=1) (PanGenie v2.1.1) |
+
+
+### PanGenie v3.1.0
+
+| Dataset | PanGenie input VCF        |  Callset VCF         | 1000G Genotypes (n=3,202)  |
+|-------------| :-------------: |:-------------:| -----:|
+| HGSVC3+HPRC-CHM13 (214 haplotypes) | [graph-VCF](https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/HGSVC3/release/Genotyping_1kGP/PanGenie-genotypes/1.0/MC_hgsvc3-hprc_chm13_filtered_bubbles.vcf.gz) | [callset-VCF](https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/HGSVC3/release/Genotyping_1kGP/PanGenie-genotypes/1.0/MC_hgsvc3-hprc_chm13_filtered_decomposed.vcf.gz)   |  [1000G-VCF](https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/HGSVC3/release/Genotyping_1kGP/PanGenie-genotypes/1.0/pangenie_chm13_all_decomposed_lenient.vcf.gz) (PanGenie v3.1.0) |
+
+
 
 
 In all cases, the graph-VCFs provided in the second column were given as input to PanGenie. The callset-VCFs (third column) were used to convert the genotyped VCFs into a biallelic, callset representation using the following command:

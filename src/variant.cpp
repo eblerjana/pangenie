@@ -49,7 +49,7 @@ DnaSequence construct_right_flank(vector<DnaSequence>& alleles, size_t position,
 	return flank;
 }
 
-Variant::Variant(string left_flank, string right_flank, string chromosome, size_t start_position, size_t end_position, vector<string> alleles, vector<unsigned char> paths) //, string variant_id)
+Variant::Variant(string left_flank, string right_flank, string chromosome, size_t start_position, size_t end_position, vector<string> alleles, vector<unsigned short> paths) //, string variant_id)
 	:left_flank(left_flank),
 	 right_flank(right_flank),
 	 chromosome(chromosome),
@@ -59,16 +59,16 @@ Variant::Variant(string left_flank, string right_flank, string chromosome, size_
 	 flanks_added(false)
 
 {
-	if (alleles.size() > 255) {
-		throw runtime_error("Variant::Variant: number of alleles per variant exceeds 256. Current implementation does not support higher numbers.");
+	if (alleles.size() > 65535) {
+		throw runtime_error("Variant::Variant: number of alleles per variant exceeds 65536. Current implementation does not support higher numbers.");
 	}
 
-	if (paths.size() > 255) {
-		throw runtime_error("Variant::Variant: number of paths exceeds 256. Current implementation does not support higher numbers.");
+	if (paths.size() > 65535) {
+		throw runtime_error("Variant::Variant: number of paths exceeds 65536. Current implementation does not support higher numbers.");
 	}
 
 	this->allele_sequences.push_back(vector<DnaSequence>());
-	for (unsigned char i = 0; i < alleles.size(); ++i) {
+	for (unsigned short i = 0; i < alleles.size(); ++i) {
 		this->allele_sequences[0].push_back(DnaSequence(alleles[i]));
 		this->allele_combinations.push_back({i});
 	}
@@ -76,7 +76,7 @@ Variant::Variant(string left_flank, string right_flank, string chromosome, size_
 	this->set_values(end_position);
 }
 
-Variant::Variant(DnaSequence& left_flank, DnaSequence& right_flank, string chromosome, size_t start_position, size_t end_position, vector<DnaSequence>& alleles, vector<unsigned char>& paths) //, string variant_id)
+Variant::Variant(DnaSequence& left_flank, DnaSequence& right_flank, string chromosome, size_t start_position, size_t end_position, vector<DnaSequence>& alleles, vector<unsigned short>& paths) //, string variant_id)
 	:left_flank(left_flank),
 	 right_flank(right_flank),
 	 chromosome(chromosome),
@@ -85,16 +85,16 @@ Variant::Variant(DnaSequence& left_flank, DnaSequence& right_flank, string chrom
 	 paths(paths),
 	 flanks_added(false)
 {
-	if (alleles.size() > 255) {
-		throw runtime_error("Variant::Variant: number of alleles per variant exceeds 256. Current implementation does not support higher numbers.");
+	if (alleles.size() > 65535) {
+		throw runtime_error("Variant::Variant: number of alleles per variant exceeds 65536. Current implementation does not support higher numbers.");
 	}
 
-	if (paths.size() > 255) {
-		throw runtime_error("Variant::Variant: number of paths exceeds 256. Current implementation does not support higher numbers.");
+	if (paths.size() > 65535) {
+		throw runtime_error("Variant::Variant: number of paths exceeds 65536. Current implementation does not support higher numbers.");
 	}
 
 	this->allele_sequences.push_back(vector<DnaSequence>());
-	for (unsigned char i = 0; i < alleles.size(); ++i) {
+	for (unsigned short i = 0; i < alleles.size(); ++i) {
 		this->allele_sequences[0].push_back(alleles[i]);
 		this->allele_combinations.push_back({i});
 	}
@@ -104,9 +104,9 @@ Variant::Variant(DnaSequence& left_flank, DnaSequence& right_flank, string chrom
 
 void Variant::set_values(size_t end_position) {
 	// find out which alleles are not covered by any paths
-	vector<unsigned char> uncovered;
-	assert(allele_sequences.size() < 256);
-	for (unsigned char i = 0; i < this->allele_sequences[0].size(); ++i) {
+	vector<unsigned short> uncovered;
+	assert(allele_sequences.size() < 65536);
+	for (unsigned short i = 0; i < this->allele_sequences[0].size(); ++i) {
 		if (find(this->paths.begin(), this->paths.end(), i) == this->paths.end()) {
 			// allele not covered
 			uncovered.push_back(i);
@@ -219,15 +219,15 @@ string Variant::get_chromosome() const {
 	return this->chromosome;
 }
 
-bool Variant::allele_on_path(unsigned char allele_index, size_t path_index) const {
+bool Variant::allele_on_path(unsigned short allele_index, size_t path_index) const {
 	return (this->paths[path_index] == allele_index);
 }
 
-unsigned char Variant::get_allele_on_path(size_t path_index) const {
+unsigned short Variant::get_allele_on_path(size_t path_index) const {
 	return (this->paths[path_index]);
 }
 
-void Variant::get_paths_of_allele(unsigned char allele_index, std::vector<size_t>& result) const {
+void Variant::get_paths_of_allele(unsigned short allele_index, std::vector<size_t>& result) const {
 	for (size_t i = 0; i < this->paths.size(); ++i) {
 		if (allele_on_path(allele_index, i)) {
 			result.push_back(i);
@@ -257,34 +257,34 @@ void Variant::combine_variants (Variant const &v2){
 	}
 
 	// consider all combinations of alleles defined by paths (=new alleles)
-	map<size_t, pair<unsigned char,unsigned char>> index_to_path;
-	map<pair<unsigned char,unsigned char>, vector<size_t>> path_to_index;
+	map<size_t, pair<unsigned short,unsigned short>> index_to_path;
+	map<pair<unsigned short,unsigned short>, vector<size_t>> path_to_index;
 
 	for (size_t p = 0; p < this->paths.size(); ++p) {
-		unsigned char left_allele = this->paths.at(p);
-		unsigned char right_allele = v2.paths.at(p);
+		unsigned short left_allele = this->paths.at(p);
+		unsigned short right_allele = v2.paths.at(p);
 		index_to_path[p] = make_pair(left_allele, right_allele);
 		path_to_index[make_pair(left_allele,right_allele)].push_back(p);
 	}
 
 	// add REF-REF allele
-	pair<unsigned char,unsigned char> ref_path = make_pair(0,0);
+	pair<unsigned short,unsigned short> ref_path = make_pair(0,0);
 	if (path_to_index.find(ref_path) == path_to_index.end()) {
 		path_to_index[ref_path] = {};
 	}
-	vector<unsigned char> new_paths(this->paths.size());
-	vector<vector<unsigned char>> new_alleles;
-	unsigned char allele_index = 0;
+	vector<unsigned short> new_paths(this->paths.size());
+	vector<vector<unsigned short>> new_alleles;
+	unsigned short allele_index = 0;
 	
-	assert (path_to_index.size() < 256);
+	assert (path_to_index.size() < 65536);
 	
 	// construct new allele sequences
 	for (auto it = path_to_index.begin(); it != path_to_index.end(); ++it) {	
 		for (auto e : it->second) {
 			new_paths[e] = allele_index;
 		}
-		vector<unsigned char> left_allele = this->allele_combinations.at(it->first.first);
-		vector<unsigned char> right_allele = v2.allele_combinations.at(it->first.second);
+		vector<unsigned short> left_allele = this->allele_combinations.at(it->first.first);
+		vector<unsigned short> right_allele = v2.allele_combinations.at(it->first.second);
 		left_allele.insert(left_allele.end(), right_allele.begin(), right_allele.end());
 		new_alleles.push_back(left_allele);
 		allele_index += 1;
@@ -305,41 +305,48 @@ void Variant::combine_variants (Variant const &v2){
 //	this->variant_ids.insert(this->variant_ids.end(), v2.variant_ids.begin(), v2.variant_ids.end());
 }
 
-void Variant::separate_variants (vector<Variant>* resulting_variants, const GenotypingResult* input_genotyping, vector<GenotypingResult>* resulting_genotyping) const {
+void Variant::separate_variants (vector<Variant>* resulting_variants, const GenotypingResult* input_genotyping, vector<GenotypingResult>* resulting_genotyping, bool skip_flanks) const {
 	size_t nr_variants = this->allele_sequences.size();
 	assert (this->uncovered_alleles.size() == nr_variants);
 
 	// construct paths
-	vector<vector<unsigned char>> paths_per_variant (nr_variants);
+	vector<vector<unsigned short>> paths_per_variant (nr_variants);
 	for (size_t i = 0; i < this->paths.size(); ++i) {
-		unsigned char a = this->get_allele_on_path(i);
-		vector<unsigned char> allele = this->allele_combinations.at(a);
-		assert (allele.size() == nr_variants);
+		unsigned short a = this->get_allele_on_path(i);
+		assert (this->allele_combinations.at(a).size() == nr_variants);
 		for (size_t v = 0; v < nr_variants; v++) {
 			// get allele at this position
-			unsigned char allele_id = allele.at(v);
+			unsigned short allele_id = this->allele_combinations.at(a).at(v);
 			paths_per_variant.at(v).push_back(allele_id);
 		}
 	}
 
 	// use reference allele to construct flanking sequences for each variant
 	vector<DnaSequence> reference_allele;
-	for (size_t i = 0; i < nr_variants; ++i) {
-		unsigned char allele_id = this->allele_combinations.at(0).at(i);
-		reference_allele.push_back(this->allele_sequences.at(i).at(allele_id));
-		if (i < (nr_variants - 1)) {
-			reference_allele.push_back(this->inner_flanks[i]);
+	if (!skip_flanks) {
+		for (size_t i = 0; i < nr_variants; ++i) {
+			unsigned short allele_id = this->allele_combinations.at(0).at(i);
+			reference_allele.push_back(this->allele_sequences.at(i).at(allele_id));
+			if (i < (nr_variants - 1)) {
+				reference_allele.push_back(this->inner_flanks[i]);
+			}
 		}
-	}
 
-	reference_allele.insert(reference_allele.begin(), this->left_flank);
-	reference_allele.push_back(this->right_flank);
+		reference_allele.insert(reference_allele.begin(), this->left_flank);
+		reference_allele.push_back(this->right_flank);
+	}
 
 	size_t current_start = this->start_position;
 
 	for (size_t i = 0; i < nr_variants; ++i) {
-		DnaSequence left = construct_left_flank(reference_allele, i*2 + 1, this->left_flank.size());
-		DnaSequence right = construct_right_flank(reference_allele, i*2 + 1, this->right_flank.size());
+		DnaSequence left;
+		DnaSequence right;
+
+		if (!skip_flanks) {
+			left = construct_left_flank(reference_allele, i*2 + 1, this->left_flank.size());
+			right = construct_right_flank(reference_allele, i*2 + 1, this->right_flank.size());
+		}
+
 		vector<DnaSequence> alleles = this->allele_sequences.at(i);
 		size_t current_end = current_start + alleles[0].size();
 
@@ -351,32 +358,109 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 			// construct GenotypingResult
 			GenotypingResult g;
 			// precompute alleles
-			vector<unsigned char> precomputed_ids (this->nr_of_alleles());
+			vector<unsigned short> precomputed_ids (this->nr_of_alleles());
 			for (size_t a0 = 0; a0 < this->nr_of_alleles(); ++a0) {
-				unsigned char single_allele0 = this->allele_combinations[a0][i];
+				unsigned short single_allele0 = this->allele_combinations[a0][i];
 				precomputed_ids[a0] = single_allele0;
 			}
-			// iterate through all genotypes and determine the genotype likelihoods for single variant
-			for (size_t a0 = 0; a0 < this->nr_of_alleles(); ++a0) {
-				// determine allele a0 genotype corresponds to
-				unsigned char single_allele0 = precomputed_ids[a0];
-				for (size_t a1 = a0; a1 < this->nr_of_alleles(); ++a1) {
-					// determine allele a1 genotype corresponds to
-					unsigned char single_allele1 = precomputed_ids[a1];
-					// update genotype likelihood
-					long double combined_likelihood = input_genotyping->get_genotype_likelihood(a0, a1);
-					g.add_to_likelihood(single_allele0, single_allele1, combined_likelihood);
+
+			if (!input_genotyping->contains_no_likelihoods()) {
+				// iterate through all genotypes and determine the genotype likelihoods for single variant
+				for (const auto& genotype : input_genotyping->get_stored_likelihoods()) {
+					unsigned short single_allele0 = precomputed_ids[genotype.first.first];
+					unsigned short single_allele1 = precomputed_ids[genotype.first.second];
+					g.add_to_likelihood(single_allele0, single_allele1, genotype.second);
 				}
 			}
 			// get the haplotype alleles of the combined variant
-			pair<unsigned char,unsigned char> haplotype = input_genotyping->get_haplotype();
+			pair<unsigned short,unsigned short> haplotype = input_genotyping->get_haplotype();
 			// get corresponding alleles for current variant
-			unsigned char single_haplotype0 = precomputed_ids[haplotype.first];
-			unsigned char single_haplotype1 = precomputed_ids[haplotype.second];
+			unsigned short single_haplotype0 = precomputed_ids[haplotype.first];
+			unsigned short single_haplotype1 = precomputed_ids[haplotype.second];
 			// update result
 			g.add_first_haplotype_allele(single_haplotype0);
 			g.add_second_haplotype_allele(single_haplotype1);
 			resulting_genotyping->push_back(g);
+		}
+		// update start position
+		current_start = current_end;
+		if (i < (nr_variants-1)) {
+			current_start += this->inner_flanks[i].size();
+		}
+	}
+}
+
+
+void Variant::separate_variants_panel (vector<Variant>* resulting_variants, const SampledPanel* input_sampling, vector<SampledPanel>* resulting_sampling, bool skip_flanks) const {
+	size_t nr_variants = this->allele_sequences.size();
+	assert (this->uncovered_alleles.size() == nr_variants);
+
+	// construct paths
+	vector<vector<unsigned short>> paths_per_variant (nr_variants);
+	for (size_t i = 0; i < this->paths.size(); ++i) {
+		unsigned short a = this->get_allele_on_path(i);
+		vector<unsigned short> allele = this->allele_combinations.at(a);
+		assert (allele.size() == nr_variants);
+		for (size_t v = 0; v < nr_variants; v++) {
+			// get allele at this position
+			unsigned short allele_id = allele.at(v);
+			paths_per_variant.at(v).push_back(allele_id);
+		}
+	}
+
+	// use reference allele to construct flanking sequences for each variant
+	vector<DnaSequence> reference_allele;
+
+	if (!skip_flanks) {
+		for (size_t i = 0; i < nr_variants; ++i) {
+			unsigned short allele_id = this->allele_combinations.at(0).at(i);
+			reference_allele.push_back(this->allele_sequences.at(i).at(allele_id));
+			if (i < (nr_variants - 1)) {
+				reference_allele.push_back(this->inner_flanks[i]);
+			}
+		}
+
+		reference_allele.insert(reference_allele.begin(), this->left_flank);
+		reference_allele.push_back(this->right_flank);
+	}
+
+	size_t current_start = this->start_position;
+
+	for (size_t i = 0; i < nr_variants; ++i) {
+		DnaSequence left;
+		DnaSequence right;
+
+		if (!skip_flanks) {
+			left = construct_left_flank(reference_allele, i*2 + 1, this->left_flank.size());
+			right = construct_right_flank(reference_allele, i*2 + 1, this->right_flank.size());
+		}
+
+		vector<DnaSequence> alleles = this->allele_sequences.at(i);
+		size_t current_end = current_start + alleles[0].size();
+
+		// construct new variant object
+		Variant v(left, right, this->chromosome, current_start, current_end, alleles, paths_per_variant.at(i));
+
+		resulting_variants->push_back(v);
+		if (input_sampling != nullptr) {
+			// precompute alleles
+			vector<unsigned short> precomputed_ids (this->nr_of_alleles());
+			for (size_t a0 = 0; a0 < this->nr_of_alleles(); ++a0) {
+				unsigned short single_allele0 = this->allele_combinations[a0][i];
+				precomputed_ids[a0] = single_allele0;
+			}
+			// Iterate through all paths and determine single alleles
+			size_t nr_paths = input_sampling->get_nr_paths();
+			size_t nr_unique_kmers = input_sampling->get_unique_kmers();
+			vector<unsigned short> single_alleles(nr_paths);
+			for (size_t p = 0; p < nr_paths; ++p) {
+				unsigned short combined_allele = input_sampling->get_allele_on_path(p);
+				single_alleles[p] = precomputed_ids[combined_allele];
+			}
+
+			// create SampledPanel object for this variant
+			SampledPanel p(single_alleles, nr_unique_kmers);
+			resulting_sampling->push_back(p);
 		}
 		// update start position
 		current_start = current_end;
@@ -394,15 +478,15 @@ void Variant::variant_statistics (shared_ptr<UniqueKmers> unique_kmers, vector<V
 	for (size_t i = 0; i < nr_variants; ++i) {
 		VariantStats v;
 		// new allele -> unique kmer counts map
-		map<unsigned char, int> new_kmer_counts;
-		vector<unsigned char> precomputed_ids (this->nr_of_alleles());
+		map<unsigned short, int> new_kmer_counts;
+		vector<unsigned short> precomputed_ids (this->nr_of_alleles());
 		for (size_t a0 = 0; a0 < this->nr_of_alleles(); ++a0) {
-			unsigned char single_allele0 = this->allele_combinations[a0][i];
+			unsigned short single_allele0 = this->allele_combinations[a0][i];
 			precomputed_ids[a0] = single_allele0;
 		}
 		// iterate through all alleles and determine number of unique kmers
 		for (size_t a0 = 0; a0 < this->nr_of_alleles(); ++a0) {
-			unsigned char single_allele0 = precomputed_ids[a0];
+			unsigned short single_allele0 = precomputed_ids[a0];
 			// update unique kmer counts
 			new_kmer_counts[single_allele0] += unique_kmers->kmers_on_alleles()[a0];
 		}
@@ -411,7 +495,7 @@ void Variant::variant_statistics (shared_ptr<UniqueKmers> unique_kmers, vector<V
 		v.coverage = unique_kmers->get_coverage();
 
 		// determine ids of uncovered paths
-		vector<unsigned char> uncovered_ids = this->uncovered_alleles[i];
+		vector<unsigned short> uncovered_ids = this->uncovered_alleles[i];
 		// set kmer counts of uncovered alleles to -1
 		for (auto u: uncovered_ids) {
 			new_kmer_counts[u] = -1;
@@ -442,7 +526,7 @@ ostream& operator<<(ostream& os, const Variant& var) {
 		os << "{";
 		for (size_t j = 0; j < var.uncovered_alleles[i].size(); ++j) {
 			if (j > 0) os << ",";
-			unsigned char id = var.uncovered_alleles[i][j];
+			unsigned short id = var.uncovered_alleles[i][j];
 			os << var.allele_sequences[i][id].to_string();
 		}
 		os << "}" << endl;
@@ -492,7 +576,7 @@ bool operator!=(const Variant& v1, const Variant& v2) {
 	return !(v1 == v2);
 }
 
-float Variant::allele_frequency(unsigned char allele_index, bool ignore_ref_path) const {
+float Variant::allele_frequency(unsigned short allele_index, bool ignore_ref_path) const {
 	if (this->paths.size() == 0) {
 		return 0.0;
 	}
@@ -509,6 +593,25 @@ float Variant::allele_frequency(unsigned char allele_index, bool ignore_ref_path
 	return freq / size;
 }
 
+vector<float> Variant::all_allele_frequencies(bool ignore_ref_path) const {
+	vector<float> result(this->nr_of_alleles(), 0.0);
+	for (auto a : this->paths) {
+		result[a] += 1.0;
+	}
+	unsigned int size = paths.size();
+	if (ignore_ref_path) {
+		size -= 1.0;
+		assert(result[0] >= 1.0);
+		result[0] -= 1.0;
+	}
+
+	for (size_t i = 0; i < result.size(); ++i) {
+		result[i] /= size;
+	}
+
+	return result;
+}
+
 string Variant::get_id() const {
 //	string result = "";
 //	for (size_t i = 0; i < this->variant_ids.size(); ++i) {
@@ -522,10 +625,10 @@ string Variant::get_id() const {
 bool Variant::is_undefined_allele(size_t allele_id) const {
 	DnaSequence allele_without_flanks;
 	for (size_t i = 0; i < this->allele_combinations.at(allele_id).size(); ++i) {
-		unsigned char allele = this->allele_combinations.at(allele_id).at(i);
-		allele_without_flanks.append(this->allele_sequences.at(i).at(allele));
+		unsigned short allele = this->allele_combinations.at(allele_id).at(i);
+		if (this->allele_sequences.at(i).at(allele).contains_undefined()) return true;
 	}
-	return allele_without_flanks.contains_undefined();
+	return false;
 }
 
 size_t Variant::nr_missing_alleles() const {

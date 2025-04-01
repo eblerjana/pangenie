@@ -24,8 +24,8 @@ void parse_line(vector<string>& result, string line, char sep) {
 }
 
 void VariantReader::insert_ids(string& chromosome, vector<DnaSequence>& alleles, vector<string>& variant_ids, bool reference_added) {
-	vector<unsigned char> index = construct_index(alleles, reference_added);
-	assert(index.size() < 256);
+	vector<unsigned short> index = construct_index(alleles, reference_added);
+	assert(index.size() < 65536);
 	// insert IDs in the lex. order of their corresponding alleles
 	vector<string> sorted_ids;
 	for (auto id : index) {
@@ -35,15 +35,15 @@ void VariantReader::insert_ids(string& chromosome, vector<DnaSequence>& alleles,
 }
 
 string VariantReader::get_ids(string chromosome, vector<string>& alleles, size_t variant_index, bool reference_added) {
-	vector<unsigned char> index = construct_index(alleles, reference_added);
-	assert(index.size() < 256);
+	vector<unsigned short> index = construct_index(alleles, reference_added);
+	assert(index.size() < 65536);
 	vector<string> sorted_ids(index.size());
-	for (unsigned char i = 0; i < index.size(); ++i) {
+	for (unsigned short i = 0; i < index.size(); ++i) {
 		sorted_ids[index[i]] = this->variant_ids.at(chromosome).at(variant_index)[i];
 	}
 
 	string result = "";
-	for (unsigned char i = 0; i < sorted_ids.size(); ++i) {
+	for (unsigned short i = 0; i < sorted_ids.size(); ++i) {
 		if (i > 0) result += ',';
 		result += sorted_ids[i];
 	}
@@ -169,9 +169,9 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 		}
 		parse_line(alleles, tokens[4], ',');
 
-		// currently, number of alleles is limited to 256
-		if (alleles.size() > 255) {
-			throw runtime_error("VariantReader: number of alternative alleles is limited to 254 in current implementation. Make sure the VCF contains only alternative alleles covered by at least one of the haplotypes.");
+		// currently, number of alleles is limited to 65535
+		if (alleles.size() > 65535) {
+			throw runtime_error("VariantReader: number of alternative alleles is limited to 65534 in current implementation. Make sure the VCF contains only alternative alleles covered by at least one of the haplotypes.");
 		}
 
 		// TODO: handle cases where variant is less than kmersize from start or end of the chromosome
@@ -189,16 +189,16 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 			this->variant_ids[current_chrom].push_back(vector<string>());
 		}
 
-		// make sure that there are at most 255 paths (including reference path in case it is requested)
-		if (this->nr_paths > 255) {
-			throw runtime_error("VariantReader: number of paths is limited to 254 in current implementation.");
+		// make sure that there are at most 65535 paths (including reference path in case it is requested)
+		if (this->nr_paths > 65535) {
+			throw runtime_error("VariantReader: number of paths is limited to 65534 in current implementation.");
 		}
 
 
 		// construct paths
-		vector<unsigned char> paths = {};
-		if (add_reference) paths.push_back((unsigned char) 0);
-		unsigned char undefined_index = alleles.size();
+		vector<unsigned short> paths = {};
+		if (add_reference) paths.push_back((unsigned short) 0);
+		unsigned short undefined_index = alleles.size();
 		string undefined_allele = "N";
 
 		for (size_t i = 9; i < tokens.size(); ++i) {
@@ -217,15 +217,15 @@ VariantReader::VariantReader(string filename, string reference_filename, size_t 
 					// add "N" allele to the list of alleles
 					parse_line(alleles, undefined_allele, ',');
 					paths.push_back(undefined_index);
-					assert(undefined_index < 255);
+					assert(undefined_index < 65535);
 					undefined_index += 1;
 				} else {
 					unsigned int p_index = atoi(s.c_str());
 					if (p_index >= alleles.size()) {
 						throw runtime_error("VariantReader::VariantReader: invalid genotype in VCF.");
 					}
-					assert(p_index < 255);
-					paths.push_back( (unsigned char) p_index);
+					assert(p_index < 65535);
+					paths.push_back( (unsigned short) p_index);
 				}
 			}
 		}
@@ -456,7 +456,7 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 			}
 
 			vector<string> alt_alleles;
-			vector<unsigned char> defined_alleles = {0};
+			vector<unsigned short> defined_alleles = {0};
 			for (size_t i = 1; i < nr_alleles; ++i) {
 				DnaSequence allele = v.get_allele_sequence(i);
 				// skip alleles that are undefined
@@ -467,7 +467,7 @@ void VariantReader::write_genotypes_of(string chromosome, const vector<Genotypin
 			}
 
 			string alt_string = "";
-			for (unsigned char a = 0; a < alt_alleles.size(); ++a) {
+			for (unsigned short a = 0; a < alt_alleles.size(); ++a) {
 				if (a > 0) alt_string += ',';
 				alt_string += alt_alleles[a];
 			}
@@ -572,7 +572,7 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 			}
 
 			vector<string> alt_alleles;
-			vector<unsigned char> defined_alleles = {0};
+			vector<unsigned short> defined_alleles = {0};
 			for (size_t i = 1; i < nr_alleles; ++i) {
 				DnaSequence allele = v.get_allele_sequence(i);
 				// skip alleles that are undefined
@@ -583,7 +583,7 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 			}
 
 			string alt_string = "";
-			for (unsigned char a = 0; a < alt_alleles.size(); ++a) {
+			for (unsigned short a = 0; a < alt_alleles.size(); ++a) {
 				if (a > 0) alt_string += ',';
 				alt_string += alt_alleles[a];
 			}
@@ -615,7 +615,7 @@ void VariantReader::write_phasing_of(string chromosome, const vector<GenotypingR
 			if (ignore_imputed && (nr_unique_kmers == 0)){
 				this->phasing_outfile << "./."; // GT (phased)
 			} else {
-				pair<unsigned char,unsigned char> haplotype = singleton_likelihoods.at(j).get_haplotype();
+				pair<unsigned short,unsigned short> haplotype = singleton_likelihoods.at(j).get_haplotype();
 				// check if the haplotype allele is undefined
 				bool hap1_undefined = v.is_undefined_allele(haplotype.first);
 				bool hap2_undefined = v.is_undefined_allele(haplotype.second);

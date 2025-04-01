@@ -145,8 +145,8 @@ void HMM::compute_viterbi_path() {
 	size_t column_index = column_count - 1;
 	while (true) {
 		pair<unsigned short, unsigned short> path_ids = this->column_indexer->get_path_ids_at(best_index);
-		unsigned char allele1 = this->column_indexer->get_allele (path_ids.first, column_index);
-		unsigned char allele2 = this->column_indexer->get_allele (path_ids.second, column_index);
+		unsigned short allele1 = this->column_indexer->get_allele (path_ids.first, column_index);
+		unsigned short allele2 = this->column_indexer->get_allele (path_ids.second, column_index);
 
 		// columns might have to be re-computed
 		if (this->viterbi_backtrace_columns[column_index] == nullptr) {
@@ -237,8 +237,8 @@ void HMM::compute_forward_column(size_t column_index) {
 			}
 
 			// determine alleles current paths (ids) correspond to
-			unsigned char allele1 = this->column_indexer->get_allele(path_id1, column_index);
-			unsigned char allele2 = this->column_indexer->get_allele(path_id2, column_index);
+			unsigned short allele1 = this->column_indexer->get_allele(path_id1, column_index);
+			unsigned short allele2 = this->column_indexer->get_allele(path_id2, column_index);
 			// determine emission probability
 			long double emission_prob = emission_probability_computer.get_emission_probability(allele1,allele2);
 
@@ -315,9 +315,9 @@ void HMM::compute_backward_column(size_t column_index) {
 	if (column_index < column_count - 1) {
 		size_t i = 0;
 		for (unsigned short path_id1 = 0; path_id1 < nr_paths; ++path_id1) {
-			unsigned char prev_allele1 = this->column_indexer->get_allele(path_id1, column_index + 1);
+			unsigned short prev_allele1 = this->column_indexer->get_allele(path_id1, column_index + 1);
 			for (unsigned short path_id2 = 0; path_id2 < nr_paths; ++path_id2) {
-				unsigned char prev_allele2 =  this->column_indexer->get_allele(path_id2, column_index + 1);
+				unsigned short prev_allele2 =  this->column_indexer->get_allele(path_id2, column_index + 1);
 				helper_i[path_id1] += this->previous_backward_column->column.at(i) * emission_probability_computer->get_emission_probability(prev_allele1, prev_allele2);
 				helper_j[path_id2] += this->previous_backward_column->column.at(i) * emission_probability_computer->get_emission_probability(prev_allele1, prev_allele2);
 				helper_ij += this->previous_backward_column->column.at(i) * emission_probability_computer->get_emission_probability(prev_allele1, prev_allele2);
@@ -341,13 +341,13 @@ void HMM::compute_backward_column(size_t column_index) {
 	for (unsigned short path_id1 = 0; path_id1 < nr_paths; ++path_id1) {
 		for (unsigned short path_id2 = 0; path_id2 < nr_paths; ++path_id2) {
 			// get alleles on current paths
-			unsigned char allele1 = this->column_indexer->get_allele(path_id1, column_index);
-			unsigned char allele2 = this->column_indexer->get_allele(path_id2, column_index);
+			unsigned short allele1 = this->column_indexer->get_allele(path_id1, column_index);
+			unsigned short allele2 = this->column_indexer->get_allele(path_id2, column_index);
 			long double current_cell = 0.0L;
 			if (column_index < column_count - 1) {
 				// get alleles on previous paths, assuming indexes are same as current column
-				unsigned char prev_allele1 = this->column_indexer->get_allele(path_id1, column_index + 1);
-				unsigned char prev_allele2 = this->column_indexer->get_allele(path_id2, column_index + 1);
+				unsigned short prev_allele1 = this->column_indexer->get_allele(path_id1, column_index + 1);
+				unsigned short prev_allele2 = this->column_indexer->get_allele(path_id2, column_index + 1);
 				long double helper_cell = this->previous_backward_column->column.at(i) * emission_probability_computer->get_emission_probability(prev_allele1, prev_allele2);
 				// iterate over previous column (ahead of this)
 				current_cell =	transition_probability_computer->compute_transition_prob(0) * helper_cell +
@@ -479,8 +479,8 @@ void HMM::compute_viterbi_column(size_t column_index) {
 			}
 
 			// determine alleles current paths (ids) correspond to
-			unsigned char allele1 = this->column_indexer->get_allele(path_id1, column_index);
-			unsigned char allele2 = this->column_indexer->get_allele(path_id2, column_index);
+			unsigned short allele1 = this->column_indexer->get_allele(path_id1, column_index);
+			unsigned short allele2 = this->column_indexer->get_allele(path_id2, column_index);
 			// determine emission probability
 			long double emission_prob = emission_probability_computer.get_emission_probability(allele1,allele2);
 			// set entry of current column

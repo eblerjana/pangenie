@@ -161,9 +161,9 @@ void GraphBuilder::construct_graph(std::string filename, FastaReader* fasta_read
 		}
 		builder_parse_line(alleles, tokens[4], ',');
 
-		// currently, number of alleles is limited to 256
-		if (alleles.size() > 255) {
-			throw runtime_error("GraphBuilder: number of alternative alleles is limited to 254 in current implementation. Make sure the VCF contains only alternative alleles covered by at least one of the haplotypes.");
+		// currently, number of alleles is limited to 65536
+		if (alleles.size() > 65535) {
+			throw runtime_error("GraphBuilder: number of alternative alleles is limited to 65534 in current implementation. Make sure the VCF contains only alternative alleles covered by at least one of the haplotypes.");
 		}
 
 		// determine size of current chromosome. If Graph object was created already, FastaReader no longer contains
@@ -202,15 +202,15 @@ void GraphBuilder::construct_graph(std::string filename, FastaReader* fasta_read
 		vector<string> var_ids;
 		builder_parse_info_fields(var_ids, tokens[7]);
 
-		// make sure that there are at most 255 paths (including reference path in case it is requested)
-		if (this->nr_paths > 255) {
-			throw runtime_error("GraphBuilder: number of paths is limited to 254 in current implementation.");
+		// make sure that there are at most 65535 paths (including reference path in case it is requested)
+		if (this->nr_paths > 65535) {
+			throw runtime_error("GraphBuilder: number of paths is limited to 65534 in current implementation.");
 		}
 
 		// construct paths
-		vector<unsigned char> paths = {};
-		if (add_reference) paths.push_back((unsigned char) 0);
-		unsigned char undefined_index = alleles.size();
+		vector<unsigned short> paths = {};
+		if (add_reference) paths.push_back((unsigned short) 0);
+		unsigned short undefined_index = alleles.size();
 		string undefined_allele = "N";
 
 		for (size_t i = 9; i < tokens.size(); ++i) {
@@ -229,15 +229,15 @@ void GraphBuilder::construct_graph(std::string filename, FastaReader* fasta_read
 					// add "N" allele to the list of alleles
 					builder_parse_line(alleles, undefined_allele, ',');
 					paths.push_back(undefined_index);
-					assert(undefined_index < 255);
+					assert(undefined_index < 65535);
 					undefined_index += 1;
 				} else {
 					unsigned int p_index = atoi(s.c_str());
 					if (p_index >= alleles.size()) {
 						throw runtime_error("GraphBuilder::GraphBuilder: invalid genotype in VCF.");
 					}
-					assert(p_index < 255);
-					paths.push_back( (unsigned char) p_index);
+					assert(p_index < 65535);
+					paths.push_back( (unsigned short) p_index);
 				}
 			}
 		}

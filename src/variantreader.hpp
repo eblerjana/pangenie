@@ -20,17 +20,17 @@
 
 
 template<class T>
-std::vector<unsigned char> construct_index(std::vector<T>& alleles, bool reference_added) {
+std::vector<unsigned short> construct_index(std::vector<T>& alleles, bool reference_added) {
 	size_t length = alleles.size();
-	unsigned char offset = 0;
+	unsigned short offset = 0;
 	if (reference_added) {
 		assert(length > 0);
 		length -= 1;
 		offset += 1;
 	}
-	std::vector<unsigned char> index(length);
+	std::vector<unsigned short> index(length);
 	std::iota(index.begin(), index.end(), 0);
-	std::sort(index.begin(), index.end(), [&](unsigned char a, unsigned char b) { return alleles[a+offset] < alleles[b+offset]; });
+	std::sort(index.begin(), index.end(), [&](unsigned short a, unsigned short b) { return alleles[a+offset] < alleles[b+offset]; });
 	return index;
 }
 
