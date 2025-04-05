@@ -352,6 +352,42 @@ TEST_CASE("GraphBuilder variant_ids1", "[GraphBuilder variant_ids1]") {
 	}
 }
 
+
+
+TEST_CASE("GraphBuilder variant_ids3", "[GraphBuilder variant_ids3]") {
+
+	Graph graph;
+
+	vector<string> sequences_ref = {"CA","CAAAAA","CAAAA","C","CAA"};
+	vector<string> sequences = {"CAAAAA","CAAAA","C","CAA"};
+	map<string,string> sequence_to_id = {{"CAAAAA", "var1"}, {"CAAAA", "var2"}, {"C", "var3"}, {"CAA", "var4"}};
+
+	vector<DnaSequence> alleles;
+	for (auto s : sequences_ref) {
+		alleles.push_back(DnaSequence(s));
+	}
+	vector<string> variant_ids = {"var1", "var2", "var3", "var4"};
+	graph.insert_ids(alleles, variant_ids, true);
+
+	for (size_t i = 0; i < 10; ++i) {
+		// shuffle alleles
+		auto rng = std::default_random_engine {};
+		std::shuffle(std::begin(sequences), std::end(sequences), rng);
+		string expected = "";
+		size_t index = 0;
+		for (auto s : sequences) {
+			if (index > 0) expected += ',';
+			expected += sequence_to_id[s];
+			index += 1;
+		}
+		string result = graph.get_ids(sequences, 0 , false);
+		REQUIRE(result == expected);
+	}
+}
+
+
+
+
 TEST_CASE("GraphBuilder variant_ids2", "[GraphBuilder variant_ids2]") {
 	string vcf = "../tests/data/small1-ids.vcf";
 	string fasta = "../tests/data/small1.fa";

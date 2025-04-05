@@ -193,7 +193,8 @@ void DnaSequence::clear() {
 }
 
 bool DnaSequence::operator<(const DnaSequence& dna) const {
-	return (this->sequence < dna.sequence);
+	return this->to_string() < dna.to_string();
+//	return (this->sequence < dna.sequence);
 }
 
 bool operator==(const DnaSequence& dna1, const DnaSequence& dna2) {
