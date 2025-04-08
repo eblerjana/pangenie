@@ -200,7 +200,14 @@ TEST_CASE("DnaSequence operators3", "[DnaSequence operators]") {
 	DnaSequence s1(seq);
 	DnaSequence s2(seq2);
 	REQUIRE(s2 < s1);
+	REQUIRE(!(s1 < s2));
 
+	seq = "GA";
+	seq2 = "G";
+	REQUIRE(seq2 < seq);
+	s1 = DnaSequence(seq);
+	s2 = DnaSequence(seq2);
+	REQUIRE(s2 < s1);
 }
 
 TEST_CASE("DnaSequence base_at", "[DnaSequence base_at]") {

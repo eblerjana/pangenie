@@ -352,7 +352,16 @@ TEST_CASE("GraphBuilder variant_ids1", "[GraphBuilder variant_ids1]") {
 	}
 }
 
+TEST_CASE("GraphBuilder variant_ids2", "[GraphBuilder variant_ids2]") {
+	string vcf = "../tests/data/small1-ids.vcf";
+	string fasta = "../tests/data/small1.fa";
 
+	map<string, shared_ptr<Graph>> graph;
+	GraphBuilder v(vcf, fasta, graph, "../tests/data/empty-segments.fa", 10, true);
+	vector<GenotypingResult> genotypes(2);
+	REQUIRE(graph.size() == 1);
+	graph.at("chrA")->write_genotypes("../tests/data/small1-ids-genotypes.vcf", genotypes, true, "sample");
+}
 
 TEST_CASE("GraphBuilder variant_ids3", "[GraphBuilder variant_ids3]") {
 
@@ -383,20 +392,6 @@ TEST_CASE("GraphBuilder variant_ids3", "[GraphBuilder variant_ids3]") {
 		string result = graph.get_ids(sequences, 0 , false);
 		REQUIRE(result == expected);
 	}
-}
-
-
-
-
-TEST_CASE("GraphBuilder variant_ids2", "[GraphBuilder variant_ids2]") {
-	string vcf = "../tests/data/small1-ids.vcf";
-	string fasta = "../tests/data/small1.fa";
-
-	map<string, shared_ptr<Graph>> graph;
-	GraphBuilder v(vcf, fasta, graph, "../tests/data/empty-segments.fa", 10, true);
-	vector<GenotypingResult> genotypes(2);
-	REQUIRE(graph.size() == 1);
-	graph.at("chrA")->write_genotypes("../tests/data/small1-ids-genotypes.vcf", genotypes, true, "sample");
 }
 
 TEST_CASE("GraphBuilder close_to_start", "[GraphBuilder close_to_start]") {
