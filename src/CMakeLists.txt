@@ -44,6 +44,12 @@ add_executable(PanGenie pangenie-genotype.cpp)
 target_link_libraries(PanGenie PanGenieLib ${JELLYFISH_LDFLAGS_OTHER} ${ZLIB_LDFLAGS_OTHER} ${CEREAL_LDFLAGS_OTHER})
 target_link_libraries(PanGenie PanGenieLib ${JELLYFISH_LIBRARIES} ${ZLIB_LIBRARIES} ${CEREAL_LIBRARIES})
 
+
+add_executable(PanGenie-vcf pangenie-vcf.cpp)
+target_link_libraries(PanGenie-vcf PanGenieLib ${JELLYFISH_LDFLAGS_OTHER} ${ZLIB_LDFLAGS_OTHER} ${CEREAL_LDFLAGS_OTHER})
+target_link_libraries(PanGenie-vcf PanGenieLib ${JELLYFISH_LIBRARIES} ${ZLIB_LIBRARIES} ${CEREAL_LIBRARIES})
+
+
 add_executable(PanGenie-sampling pangenie-sampling.cpp)
 target_link_libraries(PanGenie-sampling PanGenieLib ${JELLYFISH_LDFLAGS_OTHER} ${ZLIB_LDFLAGS_OTHER} ${CEREAL_LDFLAGS_OTHER})
 target_link_libraries(PanGenie-sampling PanGenieLib ${JELLYFISH_LIBRARIES} ${ZLIB_LIBRARIES} ${CEREAL_LIBRARIES})

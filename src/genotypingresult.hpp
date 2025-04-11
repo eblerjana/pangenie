@@ -10,6 +10,24 @@
 #include <cereal/types/vector.hpp>
 #include <cereal/types/map.hpp>
 
+namespace cereal
+{
+	template<class Archive, class F, class S>
+	void save(Archive& ar, const std::pair<F, S>& pair)
+	{
+		ar(pair.first, pair.second);
+	}
+
+	template<class Archive, class F, class S>
+	void load(Archive& ar, std::pair<F, S>& pair)
+	{
+		ar(pair.first, pair.second);
+	}
+
+	template <class Archive, class F, class S> 
+	struct specialize<Archive, std::pair<F, S>, cereal::specialization::non_member_load_save> {};
+}
+
 /** Represents the genotyping/phasing result of a position. **/
 
 class GenotypingResult {

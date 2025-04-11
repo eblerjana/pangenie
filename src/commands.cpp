@@ -221,7 +221,7 @@ void prepare_unique_kmers(string chromosome, KmerCounter* genomic_kmer_counts, s
 
 
 
-int run_single_command(string precomputed_prefix, string readfile, string reffile, string vcffile, size_t kmersize, string outname, string sample_name, size_t nr_jellyfish_threads, size_t nr_core_threads, bool only_genotyping, bool only_phasing, long double effective_N, long double regularization, bool count_only_graph, bool ignore_imputed, bool add_reference, size_t sampling_size, uint64_t hash_size, size_t panel_size, double recombrate, bool output_panel,  long double sampling_effective_N, unsigned short allele_penalty)
+int run_single_command(string precomputed_prefix, string readfile, string reffile, string vcffile, size_t kmersize, string outname, string sample_name, size_t nr_jellyfish_threads, size_t nr_core_threads, bool only_genotyping, bool only_phasing, long double effective_N, long double regularization, bool count_only_graph, bool ignore_imputed, bool add_reference, size_t sampling_size, uint64_t hash_size, size_t panel_size, double recombrate, bool output_panel,  long double sampling_effective_N, unsigned short allele_penalty, bool serialize_output)
 {
 
 	Timer timer;
@@ -343,7 +343,7 @@ int run_single_command(string precomputed_prefix, string readfile, string reffil
 			for (auto chromosome : chromosomes) {
 				ofstream os(outname + "_" + chromosome + "_Graph.cereal", std::ios::binary);
 				cereal::BinaryOutputArchive archive( os );
-				archive(*graph.at(chromosome));;
+				archive(*graph.at(chromosome));
 			}
 
 			getrusage(RUSAGE_SELF, &rss_serialize_graph);
@@ -508,39 +508,47 @@ int run_single_command(string precomputed_prefix, string readfile, string reffil
 
 	}
 
-	// write the output VCF
-	cerr << "Write results to VCF ..." << endl;
-	if (!(only_genotyping && only_phasing)) assert (results.result.size() == chromosomes.size());
-	bool write_header = true;
-	for (auto chromosome : chromosomes) {
-		// read serialized Graph object corresponding to current chromosome
-		Graph graph;
-        string graph_filename = precomputed_prefix + "_" + chromosome + "_Graph.cereal";
-		cerr << "Reading precomputed Graph for chromosome " << chromosome << " ..." <<  " from " << graph_filename << endl;
-		ifstream os(graph_filename, std::ios::binary);
-		cereal::BinaryInputArchive archive( os );
-		archive(graph);
+	// write the output VCF or serialize Results object
+	if (serialize_output) {
+		cerr << "Serialize results ... " << endl;
+		ofstream os(outname + "_genotyping.cereal", std::ios::binary);
+		cereal::BinaryOutputArchive archive_out(os);
+		archive_out(results);
+	
+	} else {
+		cerr << "Write results to VCF ..." << endl;
+		if (!(only_genotyping && only_phasing)) assert (results.result.size() == chromosomes.size());
+		bool write_header = true;
+		for (auto chromosome : chromosomes) {
+			// read serialized Graph object corresponding to current chromosome
+			Graph graph;
+			string graph_filename = precomputed_prefix + "_" + chromosome + "_Graph.cereal";
+			cerr << "Reading precomputed Graph for chromosome " << chromosome << " ..." <<  " from " << graph_filename << endl;
+			ifstream os(graph_filename, std::ios::binary);
+			cereal::BinaryInputArchive archive( os );
+			archive(graph);
 
-		cerr << "Writing results for chromosome " << chromosome << " ..." << endl;
-		if (!only_phasing) {
-			// output genotyping results
-			graph.write_genotypes(outname + "_genotyping.vcf", results.result[chromosome], write_header, sample_name, ignore_imputed);
+			cerr << "Writing results for chromosome " << chromosome << " ..." << endl;
+			if (!only_phasing) {
+				// output genotyping results
+				graph.write_genotypes(outname + "_genotyping.vcf", results.result[chromosome], write_header, sample_name, ignore_imputed);
+			}
+			if (!only_genotyping) {
+				// output phasing results
+				graph.write_phasing(outname + "_phasing.vcf", results.result[chromosome], write_header, sample_name, ignore_imputed);
+			}
+
+			if (output_panel) {
+				// output the sampled panel
+				graph.write_sampled_panel(outname + "_panel.vcf", chrom_to_sampled[chromosome], write_header);
+			}
+
+			// write header only for first chromosome
+			write_header = false;
+
+			// remove file
+			remove(graph_filename.c_str());
 		}
-		if (!only_genotyping) {
-			// output phasing results
-			graph.write_phasing(outname + "_phasing.vcf", results.result[chromosome], write_header, sample_name, ignore_imputed);
-		}
-
-		if (output_panel) {
-			// output the sampled panel
-			graph.write_sampled_panel(outname + "_panel.vcf", chrom_to_sampled[chromosome], write_header);
-		}
-
-		// write header only for first chromosome
-		write_header = false;
-
-		// remove file
-		remove(graph_filename.c_str());
 	}
 
 	getrusage(RUSAGE_SELF, &rss_total);
@@ -563,7 +571,7 @@ int run_single_command(string precomputed_prefix, string readfile, string reffil
 		cerr << "time spent genotyping chromosome (single thread) " << chromosome << ":\t" << results.runtimes[chromosome] << endl;
 	}
 	cerr << "time spent genotyping total (" << nr_core_threads << " thread(s) / single thread): \t" << time_hmm_wallclock << "/" << time_hmm << " sec" << endl;
-	cerr << "time spent writing output VCF (single thread): \t" << time_writing << " sec" << endl;
+	cerr << "time spent writing output (single thread): \t" << time_writing << " sec" << endl;
 	cerr << "total wallclock time PanGenie: " << time_total  << " sec" << endl;
 
 	cerr << endl;
@@ -575,7 +583,7 @@ int run_single_command(string precomputed_prefix, string readfile, string reffil
 	cerr << "Max RSS after selecting paths: \t" << (rss_path_sampling.ru_maxrss / 1E6) << " GB" << endl;
 	cerr << "Max RSS after genotyping: \t" << (rss_hmm.ru_maxrss / 1E6) << " GB" << endl;
 	cerr << "Max RSS: \t" << (rss_total.ru_maxrss / 1E6) << " GB" << endl;
-    cerr << "#######################################" << endl << endl;
+	cerr << "#######################################" << endl << endl;
 
 	return 0;
 }
@@ -714,12 +722,12 @@ int run_index_command(string reffile, string vcffile, size_t kmersize, string ou
 	cerr << "Max RSS after counting kmers in genome: \t" << (rss_kmer_counting.ru_maxrss / 1E6) << " GB" << endl;
 	cerr << "Max RSS after determining unique kmers: \t" << (rss_unique_kmers.ru_maxrss / 1E6) << " GB" << endl;
 	cerr << "Max RSS: \t" << (rss_total.ru_maxrss / 1E6) << " GB" << endl;
-    cerr << "####################################" << endl << endl;
+	cerr << "####################################" << endl << endl;
 	return 0;
 
 }
 
-int run_genotype_command(string precomputed_prefix, string readfile, string outname, string sample_name, size_t nr_jellyfish_threads, size_t nr_core_threads, bool only_genotyping, bool only_phasing, long double effective_N, long double regularization, bool count_only_graph, bool ignore_imputed, size_t sampling_size, uint64_t hash_size, size_t panel_size, double recombrate, bool output_panel,  long double sampling_effective_N, unsigned short allele_penalty)
+int run_genotype_command(string precomputed_prefix, string readfile, string outname, string sample_name, size_t nr_jellyfish_threads, size_t nr_core_threads, bool only_genotyping, bool only_phasing, long double effective_N, long double regularization, bool count_only_graph, bool ignore_imputed, size_t sampling_size, uint64_t hash_size, size_t panel_size, double recombrate, bool output_panel,  long double sampling_effective_N, unsigned short allele_penalty, bool serialize_output)
 {
 
 	Timer timer;
@@ -754,7 +762,7 @@ int run_genotype_command(string precomputed_prefix, string readfile, string outn
 		UniqueKmersMap unique_kmers_list;
 		ProbabilityTable probabilities;
 		string segment_file = precomputed_prefix + "_path_segments.fasta";
-        check_input_file(segment_file);
+		check_input_file(segment_file);
 		size_t available_threads_uk;
 		size_t nr_cores_uk;
 		unsigned short nr_paths = 0;
@@ -762,7 +770,7 @@ int run_genotype_command(string precomputed_prefix, string readfile, string outn
 
 		// re-construct UniqueKmersMap + chromosomes from input file (-f)
 		string unique_kmers_archive = precomputed_prefix + "_UniqueKmersMap.cereal";
-        check_input_file(unique_kmers_archive);
+		check_input_file(unique_kmers_archive);
 		cerr << "Reading precomputed UniqueKmersMap from " << unique_kmers_archive << " ..." << endl;
 		ifstream is(unique_kmers_archive, std::ios::binary);
 		cereal::BinaryInputArchive archive_is( is );
@@ -1001,36 +1009,44 @@ int run_genotype_command(string precomputed_prefix, string readfile, string outn
 		time_hmm_wallclock = timer.get_interval_time();
 	}
 
-	// write the output VCF
-	cerr << "Write results to VCF ..." << endl;
-	if (!(only_genotyping && only_phasing)) assert (results.result.size() == chromosomes.size());
-	bool write_header = true;
-	for (auto chromosome : chromosomes) {
-		// read serialized Graph object corresponding to current chromosome
-		Graph graph;
-        string graph_filename = precomputed_prefix + "_" + chromosome + "_Graph.cereal";
-		cerr << "Reading precomputed Graph for chromosome " << chromosome << " ..." <<  " from " << graph_filename << endl;
-		ifstream os(graph_filename, std::ios::binary);
-		cereal::BinaryInputArchive archive( os );
-		archive(graph);
-
-		cerr << "Writing results for chromosome " << chromosome << " ..." << endl;
-		if (!only_phasing) {
-			// output genotyping results
-			graph.write_genotypes(outname + "_genotyping.vcf", results.result[chromosome], write_header, sample_name, ignore_imputed);
-		}
-		if (!only_genotyping) {
-			// output phasing results
-			graph.write_phasing(outname + "_phasing.vcf", results.result[chromosome], write_header, sample_name, ignore_imputed);
-		}
-
-		if (output_panel) {
-			// output the sampled panel
-			graph.write_sampled_panel(outname + "_panel.vcf", chrom_to_sampled[chromosome], write_header);
-		}
+	// write the output VCF or serialize Results object
+	if (serialize_output) {
+		cerr << "Serialize results ... " << endl;
+		ofstream os(outname + "_genotyping.cereal", std::ios::binary);
+		cereal::BinaryOutputArchive archive_out(os);
+		archive_out(results);
 	
-		// write header only for first chromosome
-		write_header = false;
+	} else {
+		cerr << "Write results to VCF ..." << endl;
+		if (!(only_genotyping && only_phasing)) assert (results.result.size() == chromosomes.size());
+		bool write_header = true;
+		for (auto chromosome : chromosomes) {
+			// read serialized Graph object corresponding to current chromosome
+			Graph graph;
+			string graph_filename = precomputed_prefix + "_" + chromosome + "_Graph.cereal";
+			cerr << "Reading precomputed Graph for chromosome " << chromosome << " ..." <<  " from " << graph_filename << endl;
+			ifstream os(graph_filename, std::ios::binary);
+			cereal::BinaryInputArchive archive( os );
+			archive(graph);
+
+			cerr << "Writing results for chromosome " << chromosome << " ..." << endl;
+			if (!only_phasing) {
+				// output genotyping results
+				graph.write_genotypes(outname + "_genotyping.vcf", results.result[chromosome], write_header, sample_name, ignore_imputed);
+			}
+			if (!only_genotyping) {
+				// output phasing results
+				graph.write_phasing(outname + "_phasing.vcf", results.result[chromosome], write_header, sample_name, ignore_imputed);
+			}
+
+			if (output_panel) {
+				// output the sampled panel
+				graph.write_sampled_panel(outname + "_panel.vcf", chrom_to_sampled[chromosome], write_header);
+			}
+	
+			// write header only for first chromosome
+			write_header = false;
+		}
 	}
 
 	getrusage(RUSAGE_SELF, &rss_total);
@@ -1051,7 +1067,7 @@ int run_genotype_command(string precomputed_prefix, string readfile, string outn
 	}
 	cerr << "time spent genotyping total (" << nr_core_threads << " thread(s) / single thread): \t" << time_hmm_wallclock << "/" << time_hmm << " sec" << endl;
 
-	cerr << "time spent writing output VCF (single thread): \t" << time_writing << " sec" << endl;
+	cerr << "time spent writing output (single thread): \t" << time_writing << " sec" << endl;
 	cerr << "total wallclock time PanGenie-genotype: " << time_total  << " sec" << endl;
 
 	cerr << endl;
@@ -1062,10 +1078,79 @@ int run_genotype_command(string precomputed_prefix, string readfile, string outn
 	cerr << "Max RSS after selecting paths: \t" << (rss_path_sampling.ru_maxrss / 1E6) << " GB" << endl;
 	cerr << "Max RSS after genotyping: \t" << (rss_hmm.ru_maxrss / 1E6) << " GB" << endl;
 	cerr << "Max RSS: \t" << (rss_total.ru_maxrss / 1E6) << " GB" << endl;
-    cerr << "#######################################" << endl << endl;
+	cerr << "#######################################" << endl << endl;
 	return 0;
 
 }
+
+
+
+int run_vcf_command(string precomputed_prefix, string results_name, string outname, string sample_name, bool only_genotyping, bool only_phasing, bool ignore_imputed)
+{
+
+	Timer timer;
+	double time_reading = 0.0;
+	double time_writing = 0.0;
+	double time_total = 0.0;
+
+	struct rusage rss_reading;
+	struct rusage rss_total;
+
+	// read serialized genotyping results
+	Results results;
+	cerr << "Reading serialized genotyping results from " << results_name << endl;
+	ifstream os(results_name, std::ios::binary);
+	cereal::BinaryInputArchive results_archive(os);
+	results_archive(results);
+
+	getrusage(RUSAGE_SELF, &rss_reading);
+	time_reading = timer.get_interval_time();
+
+
+	// write the output VCF
+	cerr << "Write results to VCF ..." << endl;
+	bool write_header = true;
+
+	for (auto it = results.result.begin(); it != results.result.end(); ++it) {
+		// read serialized Graph object corresponding to current chromosome
+		Graph graph;
+		string graph_filename = precomputed_prefix + "_" + it->first + "_Graph.cereal";
+		cerr << "Reading precomputed Graph for chromosome " << it->first << " ..." <<  " from " << graph_filename << endl;
+		ifstream os(graph_filename, std::ios::binary);
+		cereal::BinaryInputArchive archive( os );
+		archive(graph);
+
+		cerr << "Writing results for chromosome " << it->first << " ..." << endl;
+		if (!only_phasing) {
+			// output genotyping results
+			graph.write_genotypes(outname + "_genotyping.vcf", it->second, write_header, sample_name, ignore_imputed);
+		}
+		if (!only_genotyping) {
+			// output phasing results
+			graph.write_phasing(outname + "_phasing.vcf", it->second, write_header, sample_name, ignore_imputed);
+		}
+
+		// write header only for first chromosome
+		write_header = false;
+	}
+
+	getrusage(RUSAGE_SELF, &rss_total);
+	time_writing = timer.get_interval_time();
+	time_total = timer.get_total_time();
+
+	cerr << endl << "###### Summary PanGenie-vcf ######" << endl;
+	// output times
+	cerr << "time spent reading genotyping results from disk: \t" << time_reading << " sec" << endl;
+	cerr << "time spent writing output VCF: \t" << time_writing << " sec" << endl;
+	cerr << "total wallclock time PanGenie-genotype: " << time_total  << " sec" << endl;
+
+	cerr << "Max RSS after reading genotyping results from disk: \t" << (rss_reading.ru_maxrss / 1E6) << " GB" << endl;
+	cerr << "Max RSS: \t" << (rss_total.ru_maxrss / 1E6) << " GB" << endl;
+	cerr << "#######################################" << endl << endl;
+	return 0;
+}
+
+
 
 
 int run_sampling(string precomputed_prefix, string readfile, string outname, size_t nr_jellyfish_threads, size_t nr_core_threads, long double regularization, bool count_only_graph, uint64_t hash_size, size_t panel_size, double recombrate, long double sampling_effective_N, unsigned short allele_penalty)

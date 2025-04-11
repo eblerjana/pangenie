@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
 	cerr << endl;
 	cerr << "program: PanGenie - genotyping based on kmer-counting and known haplotype sequences." << endl;
 	cerr << "author: Jana Ebler" << endl << endl;
-	cerr << "version: v4.0.0" << endl;
+	cerr << "version: v4.1.1" << endl;
 
 	string reffile = "";
 	string vcffile = "";
@@ -42,6 +42,7 @@ int main(int argc, char* argv[]) {
 	double recombrate = 1.26;
 	bool output_panel = false;
 	unsigned short allele_penalty = 5;
+	bool serialize_output = false;
 
 	// parse the command line arguments
 	CommandLineParser argument_parser;
@@ -65,6 +66,7 @@ int main(int argc, char* argv[]) {
 	argument_parser.add_flag_argument('d', "write sampled panel to additional output VCF.");
 	argument_parser.add_optional_argument('y', "5", "Penality used for already selected alleles in sampling step.");
 	argument_parser.add_optional_argument('b', "0.01", "effective population size for sampling step.");
+	argument_parser.add_flag_argument('w', "instead of writing an output vcf, serialize genotyping results.");
 
 	argument_parser.exactly_one('f', 'v');
 	argument_parser.exactly_one('f', 'r');
@@ -112,12 +114,13 @@ int main(int argc, char* argv[]) {
 	istringstream iss(argument_parser.get_argument('e'));
 	iss >> hash_size;
 	output_panel = argument_parser.get_flag('d');
+	serialize_output = argument_parser.get_flag('w');
 
 	if (argument_parser.exists('f')) {
 		precomputed_prefix = argument_parser.get_argument('f');
 
 		// run genotyping
-		int exit_code = run_genotype_command(precomputed_prefix, readfile, outname, sample_name, nr_jellyfish_threads, nr_core_threads, only_genotyping, only_phasing, effective_N, regularization, count_only_graph, ignore_imputed, sampling_size, hash_size, panel_size, recombrate, output_panel, sampling_effective_N, allele_penalty);
+		int exit_code = run_genotype_command(precomputed_prefix, readfile, outname, sample_name, nr_jellyfish_threads, nr_core_threads, only_genotyping, only_phasing, effective_N, regularization, count_only_graph, ignore_imputed, sampling_size, hash_size, panel_size, recombrate, output_panel, sampling_effective_N, allele_penalty, serialize_output);
 
 		getrusage(RUSAGE_SELF, &rss_total);
 
@@ -136,7 +139,7 @@ int main(int argc, char* argv[]) {
 
 		cerr << endl << "NOTE: by running PanGenie-index first to pre-process data, you can reduce memory usage and speed up PanGenie. This is helpful especially when genotyping the same variants across multiple samples." << endl << endl;
 
-		int exit_code = run_single_command(outname, readfile, reffile, vcffile, kmersize, outname, sample_name, nr_jellyfish_threads, nr_core_threads, only_genotyping, only_phasing, effective_N, regularization, count_only_graph, ignore_imputed, add_reference, sampling_size, hash_size, panel_size, recombrate, output_panel, sampling_effective_N, allele_penalty);
+		int exit_code = run_single_command(outname, readfile, reffile, vcffile, kmersize, outname, sample_name, nr_jellyfish_threads, nr_core_threads, only_genotyping, only_phasing, effective_N, regularization, count_only_graph, ignore_imputed, add_reference, sampling_size, hash_size, panel_size, recombrate, output_panel, sampling_effective_N, allele_penalty, serialize_output);
 
 		getrusage(RUSAGE_SELF, &rss_total);
 

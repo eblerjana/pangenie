@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
 	cerr << endl;
 	cerr << "program: PanGenie - genotyping based on kmer-counting and known haplotype sequences." << endl;
 	cerr << "author: Jana Ebler" << endl << endl;
-	cerr << "version: v4.0.0" << endl;
+	cerr << "version: v4.1.1" << endl;
 
 	string precomputed_prefix = "";
 	string readfile = "";
@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
 	argument_parser.add_flag_argument('c', "count all read kmers instead of only those located in graph");
 	argument_parser.add_optional_argument('e', "3000000000", "size of hash used by jellyfish");
 	argument_parser.add_optional_argument('x', "0", "to which size the input panel shall be reduced.");
-	argument_parser.add_optional_argument('y', "10", "Penality used for already selected alleles in sampling step.");
+	argument_parser.add_optional_argument('y', "5", "Penality used for already selected alleles in sampling step.");
 	argument_parser.add_optional_argument('b', "0.01", "effective population size for sampling step.");
 
 	try {

@@ -20,8 +20,9 @@ From: ubuntu:24.04
     make -j 4
     cp src/PanGenie /usr/local/bin
     cp src/PanGenie-index /usr/local/bin
-	cp src/PanGenie-sampling /usr/local/bin
-	cp src/Analyze-UK /usr/local/bin
+    cp src/PanGenie-vcf /usr/local/bin
+    cp src/PanGenie-sampling /usr/local/bin
+    cp src/Analyze-UK /usr/local/bin
     cd ..
     echo `git rev-parse --short HEAD` > /metadata/pangenie.git.version
     apt-get remove --assume-yes git software-properties-common cmake make pkg-config build-essential
