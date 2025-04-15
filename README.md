@@ -214,6 +214,16 @@ The full list of options is provided below.
 
 If you want to genotype the same set of variants across more than one sample, run the command above separately on each sample. The preprocessing step only needs to be run once (as long as the VCF does not change).
 
+#### Optimize compute resources
+
+The genotyping command itself can also be run in two steps, separating the genotyping step from the step that writes the final VCF. Unlike genotyping, writing the output VCF is always done using only a single core (regardless of ``-j`` and ``-t`` parameters). Therefore, running the two steps separately can be useful to optimize resource usage. These are the commands to use:
+
+``` bat
+PanGenie -f <outfile-prefix> -i <reads.fa/fq> -s <sample-name> -j <nr threads kmer-counting> -t <nr threads genotyping> -w -o <result-prefix>
+PanGenie-vcf -f <outfile-prefix> -z <result-prefix>_genotyping.cereal -o <result-prefix>
+```
+Note that the only difference for the genotyping command is the additional flag ``-w``. This will make PanGenie produce a ``<result-prefix>_genotyping.cereal`` file (as before, output prefix can be set using option ``-o <result-prefix>``) instead of an output VCF. The second command then converts this file into a VCF. 
+
 
 ### Running PanGenie with a single command
 
