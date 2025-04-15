@@ -220,7 +220,7 @@ The genotyping command itself can also be run in two steps, separating the genot
 
 ``` bat
 PanGenie -f <outfile-prefix> -i <reads.fa/fq> -s <sample-name> -j <nr threads kmer-counting> -t <nr threads genotyping> -w -o <result-prefix>
-PanGenie-vcf -f <outfile-prefix> -z <result-prefix>_genotyping.cereal -o <result-prefix>
+PanGenie-vcf -f <outfile-prefix> -z <result-prefix>_genotyping.cereal -s <sample-name> -o <result-prefix>
 ```
 Note that the only difference for the genotyping command is the additional flag ``-w``. This will make PanGenie produce a ``<result-prefix>_genotyping.cereal`` file (as before, output prefix can be set using option ``-o <result-prefix>``) instead of an output VCF. The second command then converts this file into a VCF. 
 
