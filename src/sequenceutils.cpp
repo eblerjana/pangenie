@@ -42,7 +42,7 @@ char decode (unsigned char number) {
 size_t compute_kmer_coverage(vector<size_t>& peak_ids, vector<size_t>& peak_values, bool largest_peak) {
 	// identify the largest and second largest (if it exists)
 	if (peak_ids.size() == 0) {
-		throw runtime_error("JellyfishCounter::computeHistogram: no peak found in kmer-count histogram.");
+		throw runtime_error("sequenceutils::computeHistogram: no peak found in kmer-count histogram.");
 	}
 	size_t kmer_coverage_estimate = -1;
 	if (peak_ids.size() < 2) {
