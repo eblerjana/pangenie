@@ -1,4 +1,4 @@
-add_library(PanGenieLib SHARED 
+add_library(PanGenieLib STATIC 
 	emissionprobabilitycomputer.cpp
 	copynumber.cpp
 	commandlineparser.cpp
