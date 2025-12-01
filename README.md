@@ -7,6 +7,8 @@ A short-read genotyper for various types of genetic variants (such as SNPs, inde
 
 ## Installation
 
+We provide binaries for the latest version of PanGenie under [Releases](https://github.com/eblerjana/pangenie/releases/tag/v4.2.1). If you want to build PanGenie yourself, follow the instructions below.
+
 
 ### Building from source using Singularity (recommended)
 
