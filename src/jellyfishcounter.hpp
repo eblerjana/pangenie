@@ -11,6 +11,7 @@
 #include <jellyfish/mer_overlap_sequence_parser.hpp>
 #include <jellyfish/mer_iterator.hpp>
 #include "kmercounter.hpp"
+#include "sequenceutils.hpp"
 
 /**
 * Counts Kmers in DNA-sequences (given in FASTQ-format) using jellyfish.

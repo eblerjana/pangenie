@@ -15,6 +15,7 @@
 #include <jellyfish/jellyfish.hpp>
 #include <memory>
 #include "kmercounter.hpp"
+#include "sequenceutils.hpp"
 
 /**
 * Reads a kmer counts from the provided Jellyfish .jf file

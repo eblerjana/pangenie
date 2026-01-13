@@ -8,6 +8,21 @@ Histogram::Histogram(size_t max_value)
 	:histogram(max_value+1, 0)
 {}
 
+
+Histogram::Histogram(string filename, size_t max_value)
+	:histogram(max_value+1, 0)
+{
+	ifstream histfile;
+	histfile.open(filename);
+	size_t count, value;
+	while(histfile >> count >> value) {
+		if (count <= max_value) {
+			this->histogram[count] = value;
+		}
+	}
+}
+
+
 void Histogram::add_value(size_t value) {
 	if (value < this->histogram.size()) {
 		this->histogram[value] += 1;
