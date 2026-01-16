@@ -4,10 +4,11 @@
 
 This directory contains vignettes and tutorials for running PanGenie on paired WGS and RNA-seq cohorts.
 
-## GEUVADIS CHM13 Analysis
+## GEUVADIS 
 
+### CHM13 Analysis
 
-## GEUVADIS GRCh38 Analysis
+### GRCh38 Analysis
 
 Documentation and examples for genotyping GEUVADIS samples using PanGenie with the GRCh38 reference genome.
 
