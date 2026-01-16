@@ -13,8 +13,9 @@ A step-by-step guide for genotyping GEUVADIS samples using PanGenie with the GRC
 #### Download Reference Genome
 
 ```bash
-wget -O GRCh38_full_analysis_set_plus_decoy_hla.fa \
-  http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/GRCh38_reference_genome/GRCh38_full_analysis_set_plus_decoy_hla.fa
+rsync -avz \
+  rsync://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz \
+  .
 ```
 
 #### Get Pangenome VCF
@@ -29,11 +30,17 @@ wget hprc-v2.0-mc-grch38.pgin.vcf.gz
 ```bash
 singularity exec pangenie.sif PanGenie-index \
   -v hprc-v2.0-mc-grch38.pgin.vcf.gz \
-  -r GRCh38_full_analysis_set_plus_decoy_hla.fa \
+  -r hg38.fa.gz \
   -o pangenie_index/index
 ```
 
-### Running the Pipeline
+**Note:** You'll also need the IGSR reference for CRAM to FASTQ conversion:
+```bash
+wget -O GRCh38_full_analysis_set_plus_decoy_hla.fa \
+  http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/GRCh38_reference_genome/GRCh38_full_analysis_set_plus_decoy_hla.fa
+```
+
+### Running the Workflow
 
 #### Prepare Sample Manifest
 
