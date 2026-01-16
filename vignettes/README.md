@@ -2,7 +2,10 @@
 
 **Author:** Andrew Blair
 
-This directory contains vignettes and tutorials for running PanGenie on various datasets.
+This directory contains vignettes and tutorials for running PanGenie on paired WGS and RNA-seq cohorts.
+
+## GEUVADIS CHM13 Analysis
+
 
 ## GEUVADIS GRCh38 Analysis
 
