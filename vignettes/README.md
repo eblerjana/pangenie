@@ -1,6 +1,6 @@
 # PanGenie Vignettes
 
-**Author:** apblair
+**Author:** Andrew Blair
 
 This directory contains vignettes and tutorials for running PanGenie on various datasets.
 
@@ -8,6 +8,12 @@ This directory contains vignettes and tutorials for running PanGenie on various 
 
 Documentation and examples for genotyping GEUVADIS samples using PanGenie with the GRCh38 reference genome.
 
+
+```
+rsync -avz \
+  rsync://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz \
+  .
+```
 ### Contents
 
 (To be added)
