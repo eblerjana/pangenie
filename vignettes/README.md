@@ -40,6 +40,8 @@ wget -O GRCh38_full_analysis_set_plus_decoy_hla.fa \
   http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/GRCh38_reference_genome/GRCh38_full_analysis_set_plus_decoy_hla.fa
 ```
 
+
+
 ### Running the Workflow
 
 #### Prepare Sample Manifest
@@ -50,6 +52,30 @@ sample_id,cram_url
 NA12778,ftp://ftp.sra.ebi.ac.uk/vol1/run/ERR323/ERR3239484/NA12778.final.cram,b03ae320c1a3b13c750d23d28a8dbc13
 ```
 
+CRAM to FASTA
+```
+aria2c \
+  -x 8 -s 8 -k 1M \
+  --file-allocation=none \
+  --continue=true \
+  --summary-interval=30 \
+  --max-tries=20 \
+  --retry-wait=30 \
+  --timeout=60 \
+  --connect-timeout=30 \
+  -o "${SAMPLE_ID}.cram" \
+  "${CRAM_URL}"
+
+samtools fastq \
+  -@ "${THREADS}" \
+  --reference "${REFERENCE}" \
+  -1 "${SAMPLE_ID}_R1.fastq.gz" \
+  -2 "${SAMPLE_ID}_R2.fastq.gz" \
+  -s /dev/null \
+  -0 /dev/null \
+  -n \
+  "${SAMPLE_ID}.cram"
+```
 
 ---
 
