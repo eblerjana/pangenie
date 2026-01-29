@@ -52,7 +52,6 @@ sample_id,cram_url
 NA12778,ftp://ftp.sra.ebi.ac.uk/vol1/run/ERR323/ERR3239484/NA12778.final.cram,b03ae320c1a3b13c750d23d28a8dbc13
 ```
 
-CRAM to FASTA
 ```
 aria2c \
   -x 8 -s 8 -k 1M \
@@ -75,6 +74,18 @@ samtools fastq \
   -0 /dev/null \
   -n \
   "${SAMPLE_ID}.cram"
+
+singularity exec \
+  -B "${SCRATCH}:/mnt/work" \
+  -B "${INDEX_DIR}:/mnt/pangenie_index" \
+  "${SIF}" \
+  PanGenie \
+    -f /mnt/pangenie_index/index \
+    -i /mnt/work/"${MERGED_FASTQ}" \
+    -s "${SAMPLE_ID}" \
+    -j "${THREADS}" \
+    -t "${THREADS}" \
+    -o /mnt/work/"${SAMPLE_ID}"
 ```
 
 ---
