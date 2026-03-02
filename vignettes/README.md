@@ -16,11 +16,62 @@ We are genotyping **474 GEUVADIS samples** across **5 pangenome reference panels
 
 | Panel | Reference | Haplotypes | Status |
 |---|---|---|---|
-| hgsvc_nhap_64_hg38 | GRCh38 | 64 | Benchmark run in progress (Ebert et al. graph) |
-| hprc_r1_nhap_88_chm13 | chm13v2.0 (masked) | 88 | Indexing complete |
-| hgsvc3_hprc_r1_nhap_214_chm13 | chm13v2.0 (unmasked) | 214 | Indexing complete |
-| hprc_v2.0_mc_chm13 | chm13v2.0 (masked) | 464 | eQTL analysis available |
-| hprc_v2.0_mc_grch38 | GRCh38 | 464 | eQTL analysis available |
+| hgsvc_nhap_64_hg38 | GRCh38 | 64 | Genotyping complete (471/474); biallelic conversion in progress |
+| hprc_r1_nhap_88_chm13 | chm13v2.0 (masked) | 88 | Index built; genotyping pending |
+| hgsvc3_hprc_r1_nhap_214_chm13 | chm13v2.0 (unmasked) | 214 | Index built; genotyping pending |
+| hprc_v2.0_mc_chm13 | chm13v2.0 (masked) | 464 | Genotyping complete (474/474); biallelic conversion pending |
+| hprc_v2.0_mc_grch38 | GRCh38 | 464 | Genotyping complete (474/474); biallelic conversion in progress |
+
+**Last updated:** March 2, 2026
+
+> 3 samples (NA19117, NA12272, HG02018) missed during initial download are being reprocessed through a targeted job covering CRAM download, genotyping, and biallelic conversion for the hgsvc_nhap_64_hg38 panel.
+
+---
+
+## Data Model
+
+```mermaid
+flowchart LR
+    subgraph SOURCES["Input Sources"]
+        EBI([EBI FTP<br/>474 GEUVADIS CRAMs])
+        P64([Zenodo<br/>hgsvc 64-hap VCF])
+        P88([Zenodo<br/>hprc r1 88-hap VCF])
+        P214([EBI FTP<br/>hgsvc3+hprc 214-hap VCF])
+        P464G([CGL Cluster / S3<br/>hprc v2.0 464-hap GRCh38])
+        P464C([CGL Cluster / S3<br/>hprc v2.0 464-hap chm13])
+    end
+
+    subgraph READS["Sample Reads"]
+        FA([reads/sample.fa<br/>474 merged FASTAs])
+    end
+
+    subgraph PANELS["Pangenome Panels"]
+        IDX64([hgsvc_nhap_64_hg38<br/>kmer index])
+        IDX88([hprc_r1_nhap_88_chm13<br/>kmer index])
+        IDX214([hgsvc3_nhap_214_chm13<br/>kmer index])
+        IDX464G([hprc_v2.0_mc_grch38<br/>kmer index])
+        IDX464C([hprc_v2.0_mc_chm13<br/>kmer index])
+    end
+
+    subgraph GENO["Per-Sample Genotypes (x474)"]
+        VCF([sample.vcf.gz<br/>raw PanGenie output])
+        BIA([sample_genotypes-biallelic.vcf.gz<br/>converted biallelic])
+    end
+
+    subgraph COHORT["Cohort-Level Output"]
+        MERGE([merged cohort VCF<br/>474 samples x panel])
+        EQTL([eQTL analysis<br/>tensorQTL])
+    end
+
+    EBI --> FA
+    FA --> VCF
+    P64 --> IDX64 --> VCF
+    P88 --> IDX88 --> VCF
+    P214 --> IDX214 --> VCF
+    P464G --> IDX464G --> VCF
+    P464C --> IDX464C --> VCF
+    VCF --> BIA --> MERGE --> EQTL
+```
 
 ---
 
@@ -88,7 +139,7 @@ results/
 
 ## GEUVADIS GRCh38 Analysis
 
-A workshop guide for genotyping GEUVADIS samples using PanGenie v4.2.1 with the GRCh38 reference genome and the HPRC v2.0 pangenome panel.
+A step-by-step guide for genotyping GEUVADIS samples using PanGenie v4.2.1 with the GRCh38 reference genome and the HPRC v2.0 pangenome panel.
 
 ### Prerequisites
 
@@ -111,11 +162,66 @@ wget -O GRCh38_full_analysis_set_plus_decoy_hla.fa \
 
 ### Step 2: Pangenome VCF
 
+Download the input VCF for each panel. All files should be placed in `vcf/`.
+
+#### hgsvc_nhap_64_hg38 (64 haplotypes, GRCh38)
+Source: Zenodo ([Ebert et al. 2021](https://zenodo.org/record/7763717))
 ```bash
+wget -O vcf/hgsvc_nhap_64_hg38.vcf.gz \
+  "https://zenodo.org/record/7763717/files/pav-panel-freeze4.vcf.gz?download=1"
+```
+
+This VCF is missing `##contig` header lines required by bcftools. Add them using the reference `.fai`:
+```bash
+bcftools reheader \
+  --fai reference/GRCh38_full_analysis_set_plus_decoy_hla.fa.fai \
+  vcf/hgsvc_nhap_64_hg38.vcf.gz \
+  -o vcf/hgsvc_nhap_64_hg38.reheadered.vcf.gz
+tabix -p vcf vcf/hgsvc_nhap_64_hg38.reheadered.vcf.gz
+```
+
+**Note:** `bcftools reheader --fai` only adds `##contig` metadata lines to the header — no variant records are modified.
+
+Update `config_hgsvc_nhap_64_hg38.yaml` to point to the reheadered file:
+```yaml
+vcf: vcf/hgsvc_nhap_64_hg38.reheadered.vcf.gz
+```
+
+#### hprc_r1_nhap_88_chm13 (88 haplotypes, chm13v2.0 masked)
+Source: Zenodo
+```bash
+wget -O vcf/hprc_r1_nhap_88_chm13.vcf.gz \
+  "https://zenodo.org/record/7839719/files/chm13_cactus_filtered_ids.vcf.gz?download=1"
+```
+
+#### hgsvc3_hprc_r1_nhap_214_chm13 (214 haplotypes, chm13v2.0 unmasked)
+Source: HGSVC3 EBI FTP
+```bash
+wget -O vcf/hgsvc3_hprc_r1_nhap_214_chm13.vcf.gz \
+  https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/HGSVC3/release/Genotyping_1kGP/PanGenie-genotypes/1.0/MC_hgsvc3-hprc_chm13_filtered_bubbles.vcf.gz
+```
+
+**Important:** This panel requires `chm13v2.0.fa` (full unmasked). The masked reference hard-masks PAR2 on chrY (~62.4 Mb) to N's, causing REF allele mismatches in PanGenie.
+
+#### hprc_v2.0_mc_grch38 (464 haplotypes, GRCh38)
+Source: HPRC S3 (public) or CGL cluster
+```bash
+# From S3
 aws s3 cp --no-sign-request \
   s3://human-pangenomics/pangenomes/scratch/2025_02_28_minigraph_cactus/hprc-v2.0-mc-grch38/hprc-v2.0-mc-grch38.pgin.vcf.gz \
-  .
+  vcf/
+
+# From CGL cluster (internal)
+cp /private/groups/cgl/hprc-graphs/hprc-v2.0-feb28/hprc-v2.0-mc-grch38/hprc-v2.0-mc-grch38.pgin.vcf.gz vcf/
 ```
+
+#### hprc_v2.0_mc_chm13 (464 haplotypes, chm13v2.0 masked)
+Source: CGL cluster (see [Zenodo 15223961](https://zenodo.org/records/15223961) for public release)
+```bash
+cp /private/groups/cgl/hprc-graphs/hprc-v2.0-feb28/hprc-v2.0-mc-chm13/hprc-v2.0-mc-chm13.pgin.vcf.gz vcf/
+```
+
+The `.pgin.vcf.gz` files for the HPRC v2.0 panels were generated by Glenn Hickey using the [`prepare-vcf-MC`](https://github.com/eblerjana/genotyping-pipelines/tree/a7af349abd8fa4d2181b6698a1cf3161588a375f/prepare-vcf-MC) pipeline and already contain correct headers — no reheadering required.
 
 ---
 
