@@ -1,0 +1,13 @@
+name: calling
+channels:
+  - defaults
+dependencies:
+  - minimap2
+  - bedtools
+  - bcftools
+  - pyvcf
+  - rtg-tools
+  - pyfaidx
+  - matplotlib
+  - vcftools
+  - samtools

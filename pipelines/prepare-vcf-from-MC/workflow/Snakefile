@@ -1,0 +1,15 @@
+configfile: "config.yaml"
+
+CALLSETS = config['callsets']
+
+
+for callset in CALLSETS.keys():
+	CALLSETS[callset]['multi'] = "{results}/vcf/{caller}/{caller}_filtered_ids.vcf.gz".format(results = config['results'], caller = callset)
+	CALLSETS[callset]['bi'] = "{results}/vcf/{caller}/{caller}_filtered_ids_biallelic.vcf.gz".format(results = config['results'], caller = callset)
+
+include: 'rules/mc-vcf.smk'
+
+rule all:
+	input:
+		expand("{results}/vcf/{caller}/{caller}_filtered_ids.vcf.gz", results = config['results'], caller = CALLSETS.keys()),
+		expand("{results}/vcf/{caller}/{caller}_filtered_ids_biallelic.vcf.gz", results = config['results'], caller = CALLSETS.keys())

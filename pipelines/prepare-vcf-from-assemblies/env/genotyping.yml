@@ -1,0 +1,20 @@
+name: genotyping
+channels:
+  - conda-forge
+  - bioconda
+  - main
+dependencies:
+  - samtools
+  - bedtools
+  - gatk4=4.1.3.0
+  - seqtk
+  - pysam
+  - bwa
+  - picard
+  - bcftools
+  - pyvcf
+  - pyfaidx
+  - matplotlib
+  - intervaltree
+  - cython
+

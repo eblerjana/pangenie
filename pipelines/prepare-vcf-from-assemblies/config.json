@@ -1,0 +1,18 @@
+{
+	"reference": 
+		{
+			"filename": "path/to/reference.fasta",
+			"haploid_chromosomes": ["chrX", "chrY"]
+		},
+	"assemblies":
+		{
+			"sample1" : ["path/to/hap-1.fasta", "path/to/hap-2.fasta"]
+		},
+	"trios":
+		{
+			"child_sample" : ["father_sample", "mother_sample"]
+		},
+	"scripts": "scripts",
+	"outdir" : "results/"
+}
+
