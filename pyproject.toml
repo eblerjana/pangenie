@@ -1,0 +1,4 @@
+[project]
+name = "pangenie-workshop"
+authors = [{name = "Jana Ebler"}]
+dynamic = ["version", "description"]
