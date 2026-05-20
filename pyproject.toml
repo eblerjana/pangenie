@@ -1,4 +1,4 @@
 [project]
-name = "pangenie-workshop"
+name = "PanGenie"
 authors = [{name = "Jana Ebler"}]
 dynamic = ["version", "description"]

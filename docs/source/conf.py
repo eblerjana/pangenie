@@ -2,12 +2,12 @@
 
 # -- Project information
 
-project = 'PanGenie-Workshop'
+project = 'PanGenie'
 copyright = '2026, Jana Ebler'
 author = 'Jana Ebler'
 
-release = '0.1'
-version = '0.1.0'
+release = '4.2'
+version = '4.2.1'
 
 # -- General configuration
 

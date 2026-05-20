@@ -6,10 +6,27 @@ A short-read genotyper for various types of genetic variants (such as SNPs, inde
 Citation
 ---------
 
-| J. Ebler, P. Ebert, W. E. Clarke, T. Rausch, P. A. Audano, T. Houwaart, Y. Mao, J. Korbel, E. E. Eichler, M. C. Zody, A. T. Dilthey, and T. Marschall. 
+| J. Ebler, P. Ebert, W. E. Clarke, T. Rausch, P. A. Audano, T. Houwaart, Y. Mao, J. Korbel, E. E. Eichler, M. C. Zody, A. T. Dilthey, and T. Marschall.
 | *Pangenome-based genome inference*
 | Nature Genetics, 54(4):518–525, 2022
 | doi: `<https://doi.org/10.1038/s41588-022-01043-w>`_
+
+
+Remarks
+-------
+
+* PanGenie is designed for whole genome genotyping, i.e. using the full set of variants as input rather than restricting to certain regions and/or variant types. In case you want to genotype a certain genomic region only (which is not the ideal use case for PanGenie), make sure the provided reference genome as well as the provided reads only contain data for these respective regions.
+
+
+* PanGenie is a re-genotyping tool, **not a variant caller**. It re-genotypes the variants provided in the input VCF, meaning the output VCF will contain the same variant records as the input, just with genotypes added for the sample PanGenie is run on. It cannot detect new variant alleles.
+
+
+Limitations
+------------
+
+* The runtime of PanGenie gets slow as the number of haplotype paths increases. Due to technical reasons, the current implementation of PanGenie cannot handle more than 65534 input haplotypes (32767 diploid samples).
+* PanGenie can only genotype diploid genomes. It cannot be used for polyploid samples.
+
 
 
 Issue tracker
@@ -25,4 +42,6 @@ Contents
 
    installation
    input
-   pangenomes
+   usage
+   resources
+   data
