@@ -45,3 +45,4 @@ Contents
    usage
    resources
    data
+   nested

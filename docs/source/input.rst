@@ -17,7 +17,7 @@ This graph is represented in terms of a VCF file that needs to have certain prop
 - **sequence-resolved** - the REF and ALT sequences need to be given explicitly (i.e. symbolic records are not allowed)
 
 Note especially the third property listed above. See the figure below for an illustration of how overlapping variant alleles need to be represented in the input VCF provided to PanGenie.
-We provide details on how to generate such VCFs in XXX.
+We provide details on how to generate such VCFs below.
 
 .. image:: _static/input-representation.png
     :width: 600
@@ -37,11 +37,11 @@ PanGenie also needs a reference genome in FASTA format which can be provided usi
 
 
 
-===========================================
-How to generate PanGenie-compartible VCFs?
-===========================================
+===============================
+Generating PanGenie input VCFs
+===============================
 
-We provide PanGenie-ready VCFs for multiple datasets in XXXX. These VCFs can directly be given as input to PanGenie. If you want to generate a PanGenie-ready VCF from your own data, you can follow the instructions below.
+We provide PanGenie-ready VCFs for multiple datasets in `Data and genotypes <https://pangenie.readthedocs.io/en/latest/data.html>`_. These VCFs can directly be given as input to PanGenie. If you want to generate a PanGenie-ready VCF from your own data, you can follow the instructions below.
 
 -----------------------------------------------------
 Creating a PanGenie input VCF from a pangenome graph
