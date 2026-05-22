@@ -1,6 +1,6 @@
-======
-Usage
-======
+============
+Usage guide
+============
 
 The recommended way of running PanGenie is to first run a preprocessing step with ``PanGenie-index`` and then ``PanGenie`` with option ``-f``::
 

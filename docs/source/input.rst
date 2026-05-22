@@ -1,5 +1,5 @@
 =====================
-Required Input files
+Input files
 =====================
 
 PanGenie is a pangenome-based genotyper using short-read data. It computes genotypes for variants represented as bubbles in a pangenome graph by taking information of already known haplotypes (represented as paths through the graph) into account. It can only genotype diploid individuals. The required input files are described in detail below.
@@ -38,7 +38,7 @@ PanGenie also needs a reference genome in FASTA format which can be provided usi
 
 
 ===============================
-Generating PanGenie input VCFs
+How to generate input VCFs
 ===============================
 
 We provide PanGenie-ready VCFs for multiple datasets in `Data and genotypes <https://pangenie.readthedocs.io/en/latest/data.html>`_. These VCFs can directly be given as input to PanGenie. If you want to generate a PanGenie-ready VCF from your own data, you can follow the instructions below.
