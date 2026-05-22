@@ -43,13 +43,18 @@ We can genotype bubbles in the pangenome graph with PanGenie using the annotated
 Converting bubble genotypes to variant genotypes
 =================================================
 
-For input VCFs containing annotations as described above, PanGenie is run using the same commands shown above. However, we can add an additional step after genotyping which converts the genotypes PanGenie computes for all bubbles in the graph to genotypes of all nested variant alleles represented in the bubbles. Note that this step only works if the VCF has these specific annotations explained above.
+For input VCFs containing annotations as described above, PanGenie is run using the same commands as before::
+
+  PanGenie-index -v <bubbles.vcf> -r <reference.fa> -t <number of threads> -o <outfile-prefix>
+  PanGenie -f <outfile-prefix> -i <reads.fa/fq>  -s <sample-name> -j <nr threads kmer-counting> -t <nr threads genotyping> -o <outfile-prefix>
+
+However, we can add an additional step for each genotyped sample after genotyping which converts the genotypes PanGenie computes for all bubbles in the graph to genotypes of all nested variant alleles represented in the bubbles. Note that this step only works if the VCF has these specific annotations explained above.
 
 Postprocessing can be run as::
 
-
-    cat <prefix>_genotyping.vcf | python3 convert-to-biallelic.py <callset.vcf> > pangenie_genotyping_biallelic.vcf
+    cat <outfile-prefix>_genotyping.vcf | python3 convert-to-biallelic.py <callset.vcf> > pangenie_genotyping_biallelic.vcf
 
 The script ``convert-to-biallelic.py`` is provided `here <https://github.com/eblerjana/pangenie/blob/master/pipelines/run-from-callset/scripts/convert-to-biallelic.py>`_.
+
 
 The result is a bi-allelic VCF containing a separate record for each individual variant ID contained in the *callset VCF*, with a genotype assigned. These genotypes are derived from the genotypes PanGenie computed for the respective bubble in the graph.

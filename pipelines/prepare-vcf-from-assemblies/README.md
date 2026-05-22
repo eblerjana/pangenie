@@ -58,8 +58,24 @@ The pipeline first detects variants from the haplotype-resolved assemblies and t
 representation of the respective callset by inserting the variant calls into the reference genome and merging overlapping alleles into
 bubbles. The pangenome graph is represented in terms of a fully-phased, multi-sample VCF file containing one record per bubble.
 
-* a multisample VCF containing all detected variant alleles will be written to: `` <outdir>/multisample-vcfs/callset-filtered.vcf ``
-* a multisample VCF containing the pangenome graph representation will be written to: `` <outdir>/multisample-vcfs/graph-filtered.vcf ``
+* **Callset VCF:** a multisample VCF containing all detected variant alleles will be written to: `` <outdir>/multisample-vcfs/callset-filtered.vcf ``
+* **Bubble VCF**: a multisample VCF containing the pangenome graph representation will be written to: `` <outdir>/multisample-vcfs/graph-filtered.vcf ``
+
+## How to run PanGenie
+
+```bat
+
+  # indexing (run once)
+  PanGenie-index -v <outdir>/multisample-vcfs/graph-filtered.vcf -r <reference.fa> -t <number of threads> -o <outfile-prefix>
+  
+  # genotyping (run on each sample)
+  PanGenie -f <outfile-prefix> -i <reads.fa/fq>  -s <sample-name> -j <nr threads kmer-counting> -t <nr threads genotyping> -o <outfile-prefix>
+
+  # convert bubble genotypes to variant genotypes (run on each sample)
+  cat <outfile-prefix>_genotyping.vcf | python3 convert-to-biallelic.py  <outdir>/multisample-vcfs/callset-filtered.vcf.gz > pangenie_genotyping_biallelic.vcf
+```
+
+The ``convert-to-biallelic.py`` script is available here: [convert-to-biallelic.py](https://github.com/eblerjana/pangenie/blob/master/pipelines/run-from-callset/scripts/convert-to-biallelic.py)
 
 ## Notes
 

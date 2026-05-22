@@ -59,7 +59,7 @@ Creating a PanGenie input VCF from a pangenome graph
 Creating a PanGenie input VCF from haplotype-resolved assemblies
 -----------------------------------------------------------------
 
-PanGenie input VCFs can be generated from haplotype-resolved assemblies using `this pipeline <https://github.com/eblerjana/pangenie/tree/master/pipelines/prepare-vcf-from-assemblies>`_ (also see XXX).
+PanGenie input VCFs can be generated from haplotype-resolved assemblies using `this pipeline <https://github.com/eblerjana/pangenie/tree/master/pipelines/prepare-vcf-from-assemblies>`_.
 
 
 ---------------------------------------------------------

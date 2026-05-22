@@ -305,6 +305,7 @@ rule check_mendelian_consistency:
 		samples="{outdir}trio-samples.txt"
 	output:
 		vcf="{outdir}multisample-vcfs/callset-filtered.vcf",
+		gz = "{outdir}multisample-vcfs/callset-filtered.vcf.gz",
 		tsv="{outdir}multisample-vcfs/mendelian-consistency.tsv"
 	log:
 		"{outdir}multisample-vcfs/mendelian-consistency.log"
@@ -319,6 +320,8 @@ rule check_mendelian_consistency:
 	shell:
 		"""
 		python3 {scripts}/mendelian-consistency.py filter -vcf {input.vcf} -samples {input.samples} {params.haploid} -ped {input.ped} -o {output.tsv} 2> {log} 1> {output.vcf}
+		bgzip -c {output.vcf} > {output.gz}
+		tabix -p vcf {output.gz}
 		"""
 
 rule merge_haplotypes:
