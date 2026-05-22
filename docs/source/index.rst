@@ -24,7 +24,6 @@ Remarks
 Limitations
 ------------
 
-* The runtime of PanGenie gets slow as the number of haplotype paths increases. Due to technical reasons, the current implementation of PanGenie cannot handle more than 65,534 input haplotypes (32,767 diploid samples).
 * PanGenie can only genotype diploid genomes. It cannot be used for polyploid samples.
 
 

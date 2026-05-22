@@ -25,7 +25,7 @@ Preprocessing step
 During preprocessing, steps **unrelated to the genotyped sample(s)** are performed, like processing the input variants and determining unique k-mers in the graph. In a setting in which the same set of input variants are genotyped across multiple samples, the advantage is that this preprocessing step **needs to be run only once**. The preprocessing step can be run using the command ``PanGenie-index``::
 
 
- PanGenie-index -v <variants.vcf> -r <reference.fa> -t <number of threads> -o <outfile-prefix>
+ PanGenie-index -v <bubbles.vcf> -r <reference.fa> -t <number of threads> -o <outfile-prefix>
 
 
 The full list of options is previded below::
@@ -129,4 +129,4 @@ We also provide the option of running  ``PanGenie`` without running the preproce
 
 As mentioned before, especially when genotyping more than one sample, it is beneficial to run both steps separately, since the preprocessing needs to be run only once for all samples, while the genotyping step needs to be run separately on each sample. Running PanGenie with a single command works as follows::
 
- PanGenie -i <reads.fa/fq> -r <reference.fa> -v <variants.vcf> -s <sample-name> -j <nr threads kmer-counting> -t <nr threads genotyping>
+ PanGenie -i <reads.fa/fq> -r <reference.fa> -v <bubbles.vcf> -s <sample-name> -j <nr threads kmer-counting> -t <nr threads genotyping>

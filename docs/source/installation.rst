@@ -59,7 +59,7 @@ Building from source using Conda
 Building from source
 -----------------------------------------------------------
 
-This requires jellyfish and cereal to be installed.
+This requires `Jellyfish <https://github.com/gmarcais/jellyfish>`_ and `cereal <https://github.com/USCiLab/cereal>`_ to be installed.
 
 ::
 
