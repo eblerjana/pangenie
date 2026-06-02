@@ -86,7 +86,6 @@ PanGenie v4.2.1
   :align: center
 
   "HPRC2-CHM13 (462 haplotypes)", `bubble-VCF <https://s3-us-west-2.amazonaws.com/human-pangenomics/pangenomes/scratch/2026_03_30_pangenie/mc_filtered_ids.vcf.gz>`_, `callset-VCF <https://s3-us-west-2.amazonaws.com/human-pangenomics/pangenomes/scratch/2026_03_30_pangenie/mc_filtered_ids_biallelic.vcf.gz>`_ , `1000G-VCF <https://s3-us-west-2.amazonaws.com/human-pangenomics/pangenomes/scratch/2026_03_30_pangenie/pangenie_all-samples_filtered.vcf.gz>`_ (PanGenie v4.2.1)
-
   "HPRC2-GRCh38 (462 haplotypes)", `bubble-VCF <https://s3-us-west-2.amazonaws.com/human-pangenomics/pangenomes/scratch/2025_02_28_minigraph_cactus/hprc-v2.0-mc-grch38/hprc-v2.0-mc-grch38.pgin.vcf.gz>`_, `callset-VCF <https://s3-us-west-2.amazonaws.com/human-pangenomics/pangenomes/scratch/2025_02_28_minigraph_cactus/hprc-v2.0-mc-grch38/hprc-v2.0-mc-grch38.pgbi.vcf.gz>`_ , "not available"
 
 
