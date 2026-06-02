@@ -90,10 +90,10 @@ PanGenie v4.2.1
   "HPRC2-GRCh38 (462 haplotypes)", `bubble-VCF <https://s3-us-west-2.amazonaws.com/human-pangenomics/pangenomes/scratch/2025_02_28_minigraph_cactus/hprc-v2.0-mc-grch38/hprc-v2.0-mc-grch38.pgin.vcf.gz>`_, `callset-VCF <https://s3-us-west-2.amazonaws.com/human-pangenomics/pangenomes/scratch/2025_02_28_minigraph_cactus/hprc-v2.0-mc-grch38/hprc-v2.0-mc-grch38.pgbi.vcf.gz>`_ , "not available"
 
 
+In all cases, the graph-VCFs provided in the second column were given as input to PanGenie. The callset-VCFs (third column) were used to convert the genotyped VCFs into a biallelic, callset representation. We show the exact commands to be used below::
 
-
-In all cases, the graph-VCFs provided in the second column were given as input to PanGenie. The callset-VCFs (third column) were used to convert the genotyped VCFs into a biallelic, callset representation using the following command::
-
- cat <pangenie-output> | python3 convert-to-biallelic.py <callset-VCF>  > callset-genotypes.vcf
+ PanGenie-index -v <bubble-VCF> -r <reference.fa> -t <number of threads> -o <indexing-prefix>
+ PanGenie -f <indexing-prefix> -i <reads.fa/fq>  -s <sample-name> -j <nr threads kmer-counting> -t <nr threads genotyping> -o <genotyping-prefix>
+ cat <genotyping-prefix>_genotyping.vcf | python3 convert-to-biallelic.py <callset-VCF> > <genotyping-prefix>_genotyping_biallelic.vcf
 
 The script ``convert-to-biallelic.py`` can be found `here <https://github.com/eblerjana/pangenie/blob/master/pipelines/run-from-callset/scripts/convert-to-biallelic.py>`_.
