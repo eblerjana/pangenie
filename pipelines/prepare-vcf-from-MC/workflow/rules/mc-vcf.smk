@@ -40,7 +40,7 @@ rule filter_vcf:
 		mem_mb=20000,
 		walltime="01:59:00"
 	params:
-		exclude = ','.join(CALLSETS[wildcards.caller]['exclude'])
+		exclude = lambda wildcards: ','.join(CALLSETS[wildcards.caller]['exclude'])
 	shell:
 		"bcftools view --samples ^{params.exclude} --force-samples  {input} | bcftools view --min-ac 1 | python3 workflow/scripts/filter-vcf.py {min_frac} 2> {log} 1> {output}"
 
