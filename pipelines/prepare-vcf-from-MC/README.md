@@ -32,8 +32,6 @@ callsets:
   gfa: "/path/to/gfa.gfa"
   # TSV file specifying sex (1=male, 2=female) of each sample in input VCF. Format: <sample-name> <sex>. 
   sample_info: "/path/to/sample-info.tsv"
-  # prefix used for chromosome names in FASTA file. 
-  reference_prefix: "chr"
   # List samples to be excluded from graph
   exclude: 
     - GRCh38    
