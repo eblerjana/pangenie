@@ -39,8 +39,8 @@ public:
 	* high as the number of paths (if every path carries a different allele), therefore the limit on the number of paths is also 65536 to avoid overflows.
 	**/
 	Variant() = default;
-	Variant(std::string left_flank, std::string right_flank, std::string chromosome, size_t start_position, size_t end_position, std::vector<std::string> alleles, std::vector<unsigned short> paths); //, std::string variant_id = ".");
-	Variant(DnaSequence& left_flank, DnaSequence& right_flank, std::string chromosome, size_t start_position, size_t end_position, std::vector<DnaSequence>& alleles, std::vector<unsigned short>& paths); //, std::string variant_id = ".");
+	Variant(std::string left_flank, std::string right_flank, std::string chromosome, size_t start_position, size_t end_position, std::vector<std::string> alleles, std::vector<unsigned short> paths, std::string ref_id); //, std::string variant_id = ".");
+	Variant(DnaSequence& left_flank, DnaSequence& right_flank, std::string chromosome, size_t start_position, size_t end_position, std::vector<DnaSequence>& alleles, std::vector<unsigned short>& paths, std::string ref_id); //, std::string variant_id = ".");
 	/** add flanking sequences left and right of variant **/
 	void add_flanking_sequence();
 	/** remove flanking sequences left and right of variant **/
@@ -107,6 +107,8 @@ private:
 	size_t start_position;
 	// IDs of individual variants
 //	std::vector<std::string> variant_ids;
+	// ID of just the reference allele
+	std::string ref_id;
 	// allele sequences of individual variants
 	std::vector<std::vector<DnaSequence>> allele_sequences;
 	// combined alleles

@@ -439,7 +439,7 @@ TEST_CASE("GraphBuilder unknown_alleles", "[GraphBuilder unknown_alleles]") {
 
 TEST_CASE("GraphBuilder unknown_alleles2", "[GraphBuilder unknown_alleles2]") {
 	vector<string> alleles = {"G", "A", "C", "AAA"};
-	shared_ptr<Variant> v1 (new Variant ("AAAA", "TTTT", "chr1", 10, 11, {"G", "AAA", "CN", "C", "N", "A"}, {0,1,2}));
+	shared_ptr<Variant> v1 (new Variant ("AAAA", "TTTT", "chr1", 10, 11, {"G", "AAA", "CN", "C", "N", "A"}, {0,1,2}, "ref"));
 	Graph g;
 	vector<shared_ptr<Variant>> cluster = {v1};
 	vector<vector<string>> variant_ids = { {"var1", "var2", "var3"} };

@@ -51,6 +51,17 @@ void builder_parse_info_fields(vector<string>& result, string line) {
 		}
 	}
 }
+std::string builder_parse_ref_id(const string& line) {
+	vector<string> fields;
+	builder_parse_line(fields, line, ';');
+	for (auto s : fields) {
+		if (s.rfind("RD=", 0) == 0) {
+			// RD field present
+			return s.substr (3);
+		}
+	}
+	return ".";
+}
 
 GraphBuilder::GraphBuilder(string filename, string reference_filename, map<string, shared_ptr<Graph>>& result, string segments_file,  size_t kmer_size, bool add_reference)
 	: kmer_size(kmer_size),
@@ -198,6 +209,8 @@ void GraphBuilder::construct_graph(std::string filename, FastaReader* fasta_read
 			}
 		}
 
+		std::string ref_id = builder_parse_ref_id(tokens[7]);
+
 		// store mapping of alleles to variant ids
 		vector<string> var_ids;
 		builder_parse_info_fields(var_ids, tokens[7]);
@@ -250,7 +263,7 @@ void GraphBuilder::construct_graph(std::string filename, FastaReader* fasta_read
 		DnaSequence right_flank;
 		current_graph->get_fasta_reader().get_subsequence(current_chrom, current_end_pos, current_end_pos + kmer_size - 1, right_flank);
 		// add Variant to variant_cluster
-		shared_ptr<Variant> variant = shared_ptr<Variant>(new Variant(left_flank, right_flank, current_chrom, current_start_pos, current_end_pos, alleles, paths));
+		shared_ptr<Variant> variant = shared_ptr<Variant>(new Variant(left_flank, right_flank, current_chrom, current_start_pos, current_end_pos, alleles, paths, ref_id));
 		variant_cluster.push_back(variant);
 		variant_cluster_ids.push_back(var_ids);
 		previous_chrom = current_chrom;

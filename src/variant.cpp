@@ -4,6 +4,7 @@
 #include <set>
 #include <map>
 #include <cassert>
+#include <sstream>
 #include "variant.hpp"
 
 using namespace std;
@@ -49,14 +50,15 @@ DnaSequence construct_right_flank(vector<DnaSequence>& alleles, size_t position,
 	return flank;
 }
 
-Variant::Variant(string left_flank, string right_flank, string chromosome, size_t start_position, size_t end_position, vector<string> alleles, vector<unsigned short> paths) //, string variant_id)
+Variant::Variant(string left_flank, string right_flank, string chromosome, size_t start_position, size_t end_position, vector<string> alleles, vector<unsigned short> paths, std::string ref_id) //, string variant_id)
 	:left_flank(left_flank),
 	 right_flank(right_flank),
 	 chromosome(chromosome),
 	 start_position(start_position),
 //	 variant_ids({variant_id}),
 	 paths(paths),
-	 flanks_added(false)
+	 flanks_added(false),
+	 ref_id(ref_id)
 
 {
 	if (alleles.size() > 65535) {
@@ -76,14 +78,15 @@ Variant::Variant(string left_flank, string right_flank, string chromosome, size_
 	this->set_values(end_position);
 }
 
-Variant::Variant(DnaSequence& left_flank, DnaSequence& right_flank, string chromosome, size_t start_position, size_t end_position, vector<DnaSequence>& alleles, vector<unsigned short>& paths) //, string variant_id)
+Variant::Variant(DnaSequence& left_flank, DnaSequence& right_flank, string chromosome, size_t start_position, size_t end_position, vector<DnaSequence>& alleles, vector<unsigned short>& paths, std::string ref_id) //, string variant_id)
 	:left_flank(left_flank),
 	 right_flank(right_flank),
 	 chromosome(chromosome),
 	 start_position(start_position),
 //	 variant_ids({variant_id}),
 	 paths(paths),
-	 flanks_added(false)
+	 flanks_added(false),
+	 ref_id(ref_id)
 {
 	if (alleles.size() > 65535) {
 		throw runtime_error("Variant::Variant: number of alleles per variant exceeds 65536. Current implementation does not support higher numbers.");
@@ -302,6 +305,9 @@ void Variant::combine_variants (Variant const &v2){
 	this->allele_sequences.insert(this->allele_sequences.end(), v2.allele_sequences.begin(), v2.allele_sequences.end());
 	this->uncovered_alleles.insert(this->uncovered_alleles.end(), v2.uncovered_alleles.begin(), v2.uncovered_alleles.end());
 	this->paths = new_paths;
+	if (this->ref_id != ".") {
+		this->ref_id += std::string(":") + v2.ref_id;
+	}
 //	this->variant_ids.insert(this->variant_ids.end(), v2.variant_ids.begin(), v2.variant_ids.end());
 }
 
@@ -336,6 +342,19 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 		reference_allele.push_back(this->right_flank);
 	}
 
+	// Split up the reference ids
+	std::vector<std::string> ref_ids_per_variant;
+	std::stringstream ref_ids_ss (this->ref_id);
+	std::string next_ref_id = ".";
+	if (this->ref_id == ".") {
+        ref_ids_per_variant.assign(nr_variants, ".");
+    } else {
+		while (std::getline(ref_ids_ss, next_ref_id, ':')) {
+			ref_ids_per_variant.emplace_back(next_ref_id);
+		}
+		assert(ref_ids_per_variant.size() == nr_variants);
+	}
+
 	size_t current_start = this->start_position;
 
 	for (size_t i = 0; i < nr_variants; ++i) {
@@ -351,7 +370,7 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 		size_t current_end = current_start + alleles[0].size();
 
 		// construct new variant object
-		Variant v(left, right, this->chromosome, current_start, current_end, alleles, paths_per_variant.at(i)); //, this->variant_ids.at(i));
+		Variant v(left, right, this->chromosome, current_start, current_end, alleles, paths_per_variant.at(i), ref_ids_per_variant.at(i)); //, this->variant_ids.at(i));
 
 		resulting_variants->push_back(v);
 		if (input_genotyping != nullptr) {
@@ -408,6 +427,20 @@ void Variant::separate_variants_panel (vector<Variant>* resulting_variants, cons
 		}
 	}
 
+	// Split up the reference ids
+	std::vector<std::string> ref_ids_per_variant;
+	std::stringstream ref_ids_ss (this->ref_id);
+	std::string next_ref_id = ".";
+	if (this->ref_id == ".") {
+        ref_ids_per_variant.assign(nr_variants, ".");
+    } else {
+		while (std::getline(ref_ids_ss, next_ref_id, ':')) {
+			ref_ids_per_variant.emplace_back(next_ref_id);
+		}
+		assert(ref_ids_per_variant.size() == nr_variants);
+	}
+
+
 	// use reference allele to construct flanking sequences for each variant
 	vector<DnaSequence> reference_allele;
 
@@ -439,7 +472,7 @@ void Variant::separate_variants_panel (vector<Variant>* resulting_variants, cons
 		size_t current_end = current_start + alleles[0].size();
 
 		// construct new variant object
-		Variant v(left, right, this->chromosome, current_start, current_end, alleles, paths_per_variant.at(i));
+		Variant v(left, right, this->chromosome, current_start, current_end, alleles, paths_per_variant.at(i), ref_ids_per_variant.at(i));
 
 		resulting_variants->push_back(v);
 		if (input_sampling != nullptr) {
