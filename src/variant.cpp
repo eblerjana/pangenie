@@ -655,6 +655,10 @@ string Variant::get_id() const {
 	return ".";
 }
 
+string Variant::get_ref_id() const {
+	return this->ref_id;
+}
+
 bool Variant::is_undefined_allele(size_t allele_id) const {
 	DnaSequence allele_without_flanks;
 	for (size_t i = 0; i < this->allele_combinations.at(allele_id).size(); ++i) {

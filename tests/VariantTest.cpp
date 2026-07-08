@@ -167,6 +167,48 @@ TEST_CASE("Variant separate_variants", "[Variant separate_variants]") {
 	REQUIRE(single_variants[0] == v4);
 }
 
+TEST_CASE("Variant combine_ and separate_variants ref_id", "[Variant separate_variants_ref_id]") {
+	Variant v1("AAA", "TAC", "chr1", 10, 14, {"ATGC", "ATT"}, {0,0,1}, "ref1");
+	Variant v2("GCT", "CCC", "chr1", 15, 16, {"A", "G"}, {0,1,0}, "ref2");
+	Variant v3("ACC", "GGC", "chr1", 18, 19, {"C", "CTA"}, {0,1,1}, "ref3");
+	Variant v4("AAA", "TAC", "chr1", 10, 14, {"ATGC", "ATT"}, {0,0,1}, "ref1");
+
+
+	// combine and sepatate 2 variants
+	v1.combine_variants(v2);
+    REQUIRE(v1.get_ref_id() == "ref1:ref2");
+	vector<Variant> single_variants;
+	v1.separate_variants(&single_variants);
+	REQUIRE(single_variants.size() == 2);
+	REQUIRE(single_variants[0] == v4);
+	REQUIRE(single_variants[1] == v2);
+
+	// combine and separate 3 variants
+	v1.combine_variants(v3);
+    REQUIRE(v1.get_ref_id() == "ref1:ref2:ref3");
+	single_variants.clear();
+	v1.separate_variants(&single_variants);
+	REQUIRE(single_variants.size() == 3);
+	REQUIRE(single_variants[0] == v4);
+	REQUIRE(single_variants[1] == v2);
+	REQUIRE(single_variants[2] == v3);
+
+	// add flanking sequences and then separate
+	v1.add_flanking_sequence();
+	single_variants.clear();
+	v1.separate_variants(&single_variants);
+	REQUIRE(single_variants.size() == 3);
+	REQUIRE(single_variants[0] == v4);
+	REQUIRE(single_variants[1] == v2);
+	REQUIRE(single_variants[2] == v3);
+
+	// separate single variant
+	single_variants.clear();
+	v4.separate_variants(&single_variants);
+	REQUIRE(single_variants.size() == 1);
+	REQUIRE(single_variants[0] == v4);
+}
+
 TEST_CASE("Variant separate_variants_likelihoods", "Variant separate_variants_likelihoods") {
 	Variant v1 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,0,1,1}, "ref");
 	Variant v2 ("AACT", "ACTG", "chr2", 7, 10, {"GAG", "ACC"}, {0,0,1,1}, "ref");

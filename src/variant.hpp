@@ -82,6 +82,8 @@ public:
 	std::vector<float> all_allele_frequencies(bool ignore_ref_path = false) const;
 	/** return variant ID **/
 	std::string get_id() const;
+    /** return reference ID **/
+    std::string get_ref_id() const;
 	/** check whether the given allele is undefined **/
 	bool is_undefined_allele(size_t allele_id) const;
 	/** return number of paths with missing alleles **/
