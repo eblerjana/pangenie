@@ -93,7 +93,7 @@ public:
 
 	template<class Archive>
 	void serialize(Archive& archive) {
-		archive(left_flank, right_flank, inner_flanks, chromosome, start_position, allele_sequences, allele_combinations, uncovered_alleles, paths, flanks_added, ref_id);
+		archive(left_flank, right_flank, inner_flanks, chromosome, start_position, ref_id, allele_sequences, allele_combinations, uncovered_alleles, paths, flanks_added);
 	}
 
 private:

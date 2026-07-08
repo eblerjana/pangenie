@@ -55,10 +55,10 @@ Variant::Variant(string left_flank, string right_flank, string chromosome, size_
 	 right_flank(right_flank),
 	 chromosome(chromosome),
 	 start_position(start_position),
+	 ref_id(ref_id),
 //	 variant_ids({variant_id}),
 	 paths(paths),
-	 flanks_added(false),
-	 ref_id(ref_id)
+	 flanks_added(false)
 
 {
 	if (alleles.size() > 65535) {
@@ -83,10 +83,10 @@ Variant::Variant(DnaSequence& left_flank, DnaSequence& right_flank, string chrom
 	 right_flank(right_flank),
 	 chromosome(chromosome),
 	 start_position(start_position),
+	 ref_id(ref_id),
 //	 variant_ids({variant_id}),
 	 paths(paths),
-	 flanks_added(false),
-	 ref_id(ref_id)
+	 flanks_added(false)
 {
 	if (alleles.size() > 65535) {
 		throw runtime_error("Variant::Variant: number of alleles per variant exceeds 65536. Current implementation does not support higher numbers.");
