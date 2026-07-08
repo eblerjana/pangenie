@@ -123,10 +123,10 @@ def define_id(ref_allele, alt_allele, chrom, position, index):
 	return '-'.join([chrom, str(position), vartype, str(index), varlen])
 
 def define_ref_id(ref_allele, chrom, position, index):
-       """
-       Define an unique identifier for a variant allele.
-       """
-       return '-'.join([chrom, str(position), "REF", str(index), str(0)])
+	   """
+	   Define an unique identifier for a variant allele.
+	   """
+	   return '-'.join([chrom, str(position), "REF", str(index), str(0)])
 
 def detect_variants(ref_traversal, alt_traversal):
 	"""
@@ -322,7 +322,7 @@ def decompose(line, gfa):
 		# biallelic variant only assign ID
 		new_id = define_id(fields[3], fields[4], fields[0], fields[1], allele_traversals[1])
 		info_fields['ID'] = new_id
-        info_fields['RD'] = define_ref_id(fields[3], fields[0], fields[1], allele_traversals[0])
+		info_fields['RD'] = define_ref_id(fields[3], fields[0], fields[1], allele_traversals[0])
 		updated_info = info_to_string(info_fields)
 		fields[7] = updated_info
 		updated_line = '\t'.join(fields)
@@ -412,7 +412,7 @@ def decompose(line, gfa):
 		# generate multiallelic record that is annotated with IDs
 		# add ID field to INFO
 		info_fields['ID'] = ','.join([':'.join(allele_to_ids[i]) for i in range(1,nr_alleles)])
-        info_fields['RD'] = define_ref_id(fields[3], fields[0], fields[1], allele_traversals[0])
+		info_fields['RD'] = define_ref_id(fields[3], fields[0], fields[1], allele_traversals[0])
 		fields[7] = info_to_string(info_fields)
 		return '\t'.join(fields), biallelic_records
 
@@ -469,7 +469,7 @@ if __name__== "__main__":
 				out_bi.write(line)
 				continue
 			if line.startswith('#'):
-                header_id = '##INFO=<ID=RD,Number=1,Type=String,Description=\"Variant ID for the reference allele.\">\n'
+				header_id = '##INFO=<ID=RD,Number=1,Type=String,Description=\"Variant ID for the reference allele.\">\n'
 				header_id += '##INFO=<ID=ID,Number=A,Type=String,Description=\"Variant IDs per ALT allele.\">\n'
 
 				out_multi.write(header_id)

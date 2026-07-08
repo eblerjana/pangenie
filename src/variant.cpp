@@ -347,8 +347,8 @@ void Variant::separate_variants (vector<Variant>* resulting_variants, const Geno
 	std::stringstream ref_ids_ss (this->ref_id);
 	std::string next_ref_id = ".";
 	if (this->ref_id == ".") {
-        ref_ids_per_variant.assign(nr_variants, ".");
-    } else {
+		ref_ids_per_variant.assign(nr_variants, ".");
+	} else {
 		while (std::getline(ref_ids_ss, next_ref_id, ':')) {
 			ref_ids_per_variant.emplace_back(next_ref_id);
 		}
@@ -432,8 +432,8 @@ void Variant::separate_variants_panel (vector<Variant>* resulting_variants, cons
 	std::stringstream ref_ids_ss (this->ref_id);
 	std::string next_ref_id = ".";
 	if (this->ref_id == ".") {
-        ref_ids_per_variant.assign(nr_variants, ".");
-    } else {
+		ref_ids_per_variant.assign(nr_variants, ".");
+	} else {
 		while (std::getline(ref_ids_ss, next_ref_id, ':')) {
 			ref_ids_per_variant.emplace_back(next_ref_id);
 		}
