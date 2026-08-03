@@ -6,6 +6,32 @@
 
 using namespace std;
 
+size_t attempt_int_conversion(string s, string option) {
+	size_t arg = 0;
+	try {
+		arg = stoi(s);
+	} catch (const exception& e) {
+		ostringstream oss;
+		oss << "Error: invalid argument for option -" << option << ": " << s << ". Must be integer." << endl;
+		throw runtime_error(oss.str());
+	}
+	return arg;
+}
+
+
+long double attempt_float_conversion(string s, string option) {
+	long double arg = 0.0;
+	try {
+		arg = stof(s);
+	} catch (const exception& e) {
+		ostringstream oss;
+		oss << "Error: invalid argument for option -" << option << ": " << s << ". Must be float." << endl;
+		throw runtime_error(oss.str());
+	}
+	return arg;
+}
+
+
 CommandLineParser::CommandLineParser ()
 	:command(""),
 	 parser_string(":h")
@@ -54,22 +80,19 @@ void CommandLineParser::parse(int argc, char* argv[]) {
 				this->flag_to_parameter[c] = true;
 			} else {
 				this->arg_to_parameter[c] = string(optarg);
-			}
+			}	
+		} else if (c == 'h') {
+			usage();
+			throw exception();
+		} else if (c == ':') {
+			ostringstream oss;
+			oss << "Error: no argument given for option -" << (char) optopt << "."  << endl;
+			throw runtime_error(oss.str());
 		} else {
-			if (c == 'h') {
-				usage();
-				throw exception();
-			}
-			if (c == ':') {
-				ostringstream oss;
-				oss << "Error: no argument given for option -" << (char) optopt << "."  << endl;
-				throw runtime_error(oss.str());
-			}
-			if (c == '?') {
-				ostringstream oss;
-				oss << "Error: unknown option -" << (char) optopt << "." << endl;
-			}
-		}
+			ostringstream oss;
+			oss << "Error: unknown option -" << (char) optopt << "." << endl;
+			throw runtime_error(oss.str());
+		} 
 	}
 
 	// make sure argument combinations are valid

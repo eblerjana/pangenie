@@ -44,9 +44,9 @@ bool CopyNumber::operator==(const CopyNumber &other) const{
 	vector<long double> p1 = this->probabilities;
 	if (p1.size() < 3) p1.push_back(1.0L - p1[0] - p1[1]);
 	vector<long double> p2 = other.probabilities;
-	if (p2.size() < 3) p1.push_back(1.0L - p2[0] - p2[1]);
+	if (p2.size() < 3) p2.push_back(1.0L - p2[0] - p2[1]);
 	for (size_t i = 0; i < 3; ++i){
-		if (p1 != p2){
+		if (p1[i] != p2[i]){
 			return false;
 		}
 	}

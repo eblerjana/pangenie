@@ -36,6 +36,7 @@ int main(int argc, char* argv[]) {
 	argument_parser.add_optional_argument('e', "3000000000", "size of hash used by jellyfish");
 //	argument_parser.add_flag_argument('d', "do not add reference as additional path.");
 
+	// try parsing the command line
 	try {
 		argument_parser.parse(argc, argv);
 	} catch (const runtime_error& e) {
@@ -46,14 +47,22 @@ int main(int argc, char* argv[]) {
 		return 0;
 	}
 
-	reffile = argument_parser.get_argument('r');
-	vcffile = argument_parser.get_argument('v');
-	kmersize = stoi(argument_parser.get_argument('k'));
-	outname = argument_parser.get_argument('o');
-	nr_jellyfish_threads = stoi(argument_parser.get_argument('t'));
-	istringstream iss(argument_parser.get_argument('e'));
-	iss >> hash_size;
-//	add_reference = !argument_parser.get_flag('d');
+	// try reading in all the parameters provided
+	try {	
+		reffile = argument_parser.get_argument('r');
+		vcffile = argument_parser.get_argument('v');
+		kmersize = attempt_int_conversion(argument_parser.get_argument('k'), "k");
+		outname = argument_parser.get_argument('o');
+		nr_jellyfish_threads = attempt_int_conversion(argument_parser.get_argument('t'), "t");
+		istringstream iss(argument_parser.get_argument('e'));
+		iss >> hash_size;
+	//	add_reference = !argument_parser.get_flag('d');
+	} catch (const runtime_error& e) {
+		argument_parser.usage();
+		cerr << e.what() << endl;
+		return 1;
+	}
+
 
 	// print info
 	cerr << "Files and parameters used:" << endl;

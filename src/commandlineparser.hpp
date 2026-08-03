@@ -1,10 +1,16 @@
 #ifndef COMMANDLINEPARSER_HPP
 #define COMMANDLINEPARSER_HPP
 
+#include <iostream>
 #include <string>
 #include <map>
 #include <vector>
 #include <utility>
+
+
+size_t attempt_int_conversion(std::string s, std::string option);
+long double attempt_float_conversion(std::string s, std::string option);
+
 
 class CommandLineParser {
 public:

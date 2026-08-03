@@ -56,8 +56,8 @@ int main(int argc, char* argv[]) {
 	argument_parser.add_optional_argument('s', "sample", "name of the sample (will be used in the output VCFs)");
 	argument_parser.add_optional_argument('j', "1", "number of threads to use for kmer-counting");
 	argument_parser.add_optional_argument('t', "1", "number of threads to use for core algorithm. Largest number of threads possible is the number of chromosomes given in the VCF");
-	argument_parser.add_flag_argument('g', "run genotyping (Forward backward algorithm, default behaviour)");
-	argument_parser.add_flag_argument('p', "run phasing (Viterbi algorithm). Experimental feature");
+//	argument_parser.add_flag_argument('g', "run genotyping (Forward backward algorithm, default behaviour)");
+//	argument_parser.add_flag_argument('p', "run phasing (Viterbi algorithm). Experimental feature");
 	argument_parser.add_flag_argument('c', "count all read kmers instead of only those located in graph");
 	argument_parser.add_flag_argument('u', "output genotype ./. for variants not covered by any unique kmers");
 	argument_parser.add_optional_argument('a', "0", "sample subsets of paths of this size");
@@ -87,34 +87,43 @@ int main(int argc, char* argv[]) {
 	cerr << "Files and parameters used:" << endl;
 	argument_parser.info();
 
-	readfile = argument_parser.get_argument('i');
-	outname = argument_parser.get_argument('o');
-	sample_name = argument_parser.get_argument('s');
-	nr_jellyfish_threads = stoi(argument_parser.get_argument('j'));
-	nr_core_threads = stoi(argument_parser.get_argument('t'));
-	allele_penalty = stoi(argument_parser.get_argument('y'));
-	sampling_effective_N = stof(argument_parser.get_argument('b'));
+	// try reading the provided argument values
+	try {
+		readfile = argument_parser.get_argument('i');
+		outname = argument_parser.get_argument('o');
+		sample_name = argument_parser.get_argument('s');
 
-	bool genotyping_flag = argument_parser.get_flag('g');
-	bool phasing_flag = argument_parser.get_flag('p');
-	
-	if (genotyping_flag && phasing_flag) {
-		only_genotyping = false;
-		only_genotyping = false;
-	}
-	if (!genotyping_flag && phasing_flag) {
-		only_genotyping = false;
-		only_phasing = true;
-	}
+		nr_jellyfish_threads = attempt_int_conversion(argument_parser.get_argument('j'), "j");
+		nr_core_threads = attempt_int_conversion(argument_parser.get_argument('t'), "t");
+		allele_penalty = attempt_int_conversion(argument_parser.get_argument('y'), "y");
+		sampling_effective_N = attempt_float_conversion(argument_parser.get_argument('b'), "b");
 
-	count_only_graph = !argument_parser.get_flag('c');
-	ignore_imputed = argument_parser.get_flag('u');
-	sampling_size = stoi(argument_parser.get_argument('a'));
-	panel_size = stoi(argument_parser.get_argument('x'));
-	istringstream iss(argument_parser.get_argument('e'));
-	iss >> hash_size;
-	output_panel = argument_parser.get_flag('d');
-	serialize_output = argument_parser.get_flag('w');
+
+	//	bool genotyping_flag = argument_parser.get_flag('g');
+	//	bool phasing_flag = argument_parser.get_flag('p');
+		
+	//	if (genotyping_flag && phasing_flag) {
+	//		only_genotyping = false;
+	//		only_genotyping = false;
+	//	}
+	//	if (!genotyping_flag && phasing_flag) {
+	//		only_genotyping = false;
+	//		only_phasing = true;
+	//	}
+
+		count_only_graph = !argument_parser.get_flag('c');
+		ignore_imputed = argument_parser.get_flag('u');
+		sampling_size = attempt_int_conversion(argument_parser.get_argument('a'), "a");
+		panel_size = attempt_int_conversion(argument_parser.get_argument('x'), "x");
+		istringstream iss(argument_parser.get_argument('e'));
+		iss >> hash_size;
+		output_panel = argument_parser.get_flag('d');
+		serialize_output = argument_parser.get_flag('w');
+	} catch (const runtime_error& e) {
+		argument_parser.usage();
+		cerr << e.what() << endl;
+		return 1;
+	}
 
 	if (argument_parser.exists('f')) {
 		precomputed_prefix = argument_parser.get_argument('f');
@@ -134,7 +143,14 @@ int main(int argc, char* argv[]) {
 
 		reffile = argument_parser.get_argument('r');
 		vcffile = argument_parser.get_argument('v');
-		kmersize = stoi(argument_parser.get_argument('k'));
+
+		try {
+			kmersize = attempt_int_conversion(argument_parser.get_argument('k'), "k");
+		} catch (const runtime_error& e) {
+			argument_parser.usage();
+			cerr << e.what() << endl;
+			return 1;
+		}
 		bool add_reference = true;
 
 		cerr << endl << "NOTE: by running PanGenie-index first to pre-process data, you can reduce memory usage and speed up PanGenie. This is helpful especially when genotyping the same variants across multiple samples." << endl << endl;
