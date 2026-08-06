@@ -70,7 +70,7 @@ int main (int argc, char* argv[])
 	cerr << "program: PanGenie - genotyping based on kmer-counting and known haplotype sequences." << endl;
 	cerr << "command: PanGenie-index - construct graph and determine unique kmers." << endl;
 	cerr << "author: Jana Ebler" << endl << endl;
-	cerr << "version: v3.0.0" << endl;
+	cerr << "version: v4.2.2" << endl;
 
 	string precomputed_prefix = "";
 

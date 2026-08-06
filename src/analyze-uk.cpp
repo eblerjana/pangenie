@@ -48,7 +48,7 @@ int main (int argc, char* argv[])
 	cerr << "program: PanGenie - genotyping based on kmer-counting and known haplotype sequences." << endl;
 	cerr << "command: Analyze-UK - Print matrix of unique kmers." << endl;
 	cerr << "author: Jana Ebler" << endl << endl;
-	cerr << "version: v4.0.0" << endl;
+	cerr << "version: v4.2.2" << endl;
 
 	string precomputed_uk = "";
 
