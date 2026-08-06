@@ -7,7 +7,7 @@ enable_testing()
 
 find_package(PkgConfig REQUIRED)
 find_package(ZLIB REQUIRED)
-#find_package(cereal REQUIRED)
+find_package(cereal REQUIRED)
 pkg_check_modules(JELLYFISH REQUIRED jellyfish-2.0)
 
 link_directories(${JELLYFISH_LIBRARY_DIRS} ${ZLIB_LIBRARY_DIRS} ${cereal_LIBRARY_DIRS})
@@ -15,6 +15,7 @@ link_directories(${JELLYFISH_LIBRARY_DIRS} ${ZLIB_LIBRARY_DIRS} ${cereal_LIBRARY
 include_directories(${JELLYFISH_INCLUDE_DIRS} ${ZLIB_INCLUDE_DIRS} ${cereal_INCLUDE_DIRS} ${CMAKE_BINARY_DIR}/src)
 add_compile_options(${JELLYFISH_CFLAGS_OTHER})
 
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-long-long -Wno-unknown-pragmas -O3 -I${ZLIB_INCLUDE_DIRS}")
 
 add_subdirectory(src)
