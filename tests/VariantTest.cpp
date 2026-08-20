@@ -9,8 +9,8 @@
 using namespace std;
 
 TEST_CASE("Variant testcase 1", "[Variant testcase 1]"){
-	Variant v1("AAA", "TAC", "chr1", 10, 14, {"ATGC", "ATT"}, {0,1});
-	Variant v2("GCT", "CCC", "chr1", 15, 16, {"A", "G"}, {1,0});
+	Variant v1("AAA", "TAC", "chr1", 10, 14, {"ATGC", "ATT"}, {0,1}, "ref");
+	Variant v2("GCT", "CCC", "chr1", 15, 16, {"A", "G"}, {1,0}, "ref");
 
 	REQUIRE(v1.nr_of_alleles() == 2);
 	REQUIRE(v2.nr_of_alleles() == 2);
@@ -43,34 +43,34 @@ TEST_CASE("Variant testcase 1", "[Variant testcase 1]"){
 }
 
 TEST_CASE("Variant operator==", "[Variant operator==]") {
-	Variant v1("AAA", "TAC", "chr1", 10, 13, {"ATG", "C"}, {0,1});
-	Variant v2("GCT", "TTT", "chr1", 10, 13, {"ATG", "C"}, {0,1});
+	Variant v1("AAA", "TAC", "chr1", 10, 13, {"ATG", "C"}, {0,1}, "ref");
+	Variant v2("GCT", "TTT", "chr1", 10, 13, {"ATG", "C"}, {0,1}, "ref");
 
 	// different flanks
 	REQUIRE(!(v1 == v2));
 	REQUIRE(v1 != v2);
 
-	Variant v3("AAA", "TAC", "chr1", 10, 13, {"ATG", "CG"}, {0,1});
+	Variant v3("AAA", "TAC", "chr1", 10, 13, {"ATG", "CG"}, {0,1}, "ref");
 	// different alleles
 	REQUIRE(!(v1 == v3));
 	REQUIRE(v1 != v3);
 
-	Variant v4("AAA", "TAC", "chr2", 10, 13, {"ATG", "CG"}, {0,1});
+	Variant v4("AAA", "TAC", "chr2", 10, 13, {"ATG", "CG"}, {0,1}, "ref");
 	// different chromosome
 	REQUIRE(!(v1 == v4));
 	REQUIRE(v1 != v4);
 
-	Variant v5("AAA", "TAC", "chr2", 10, 12, {"AT", "CG"}, {0,1});
+	Variant v5("AAA", "TAC", "chr2", 10, 12, {"AT", "CG"}, {0,1}, "ref");
 	// different positions
 	REQUIRE(!(v4 == v5));
 	REQUIRE(v4 != v5);
 
-	Variant v6("AAA", "TAC", "chr1", 10, 13, {"ATG", "C"}, {1,0});
+	Variant v6("AAA", "TAC", "chr1", 10, 13, {"ATG", "C"}, {1,0}, "ref");
 	// different paths
 	REQUIRE(!(v2 == v6));
 	REQUIRE(v2 != v6);
 
-	Variant v7("AAA", "TAC", "chr1", 10, 13, {"ATG", "C"}, {0,1});
+	Variant v7("AAA", "TAC", "chr1", 10, 13, {"ATG", "C"}, {0,1}, "ref");
 	REQUIRE( v1 == v7);
 	REQUIRE(! (v1 != v7));
 
@@ -83,32 +83,32 @@ TEST_CASE("Variant operator==", "[Variant operator==]") {
 
 TEST_CASE("Variant invalid1", "[Variant invalid1]"){
 	// flanking sequences of different sizes are not allowed
-	CHECK_THROWS(Variant ("AAA", "TTAA", "chr1", 10, 14, {"ATGC", "ATT"}, {0,1}));
+	CHECK_THROWS(Variant ("AAA", "TTAA", "chr1", 10, 14, {"ATGC", "ATT"}, {0,1}, "ref"));
 	// end position does not match reference allele's length
-	CHECK_THROWS(Variant ("AAA", "TAA", "chr1", 10, 11, {"ATGC", "ATT"}, {0,1}));
+	CHECK_THROWS(Variant ("AAA", "TAA", "chr1", 10, 11, {"ATGC", "ATT"}, {0,1}, "ref"));
 	// path allele index does not match number of alleles
-	CHECK_THROWS(Variant ("AAA", "TAA", "chr1", 10, 11, {"ATGC", "ATT"}, {0,2}));
+	CHECK_THROWS(Variant ("AAA", "TAA", "chr1", 10, 11, {"ATGC", "ATT"}, {0,2}, "ref"));
 	// start position larger than end position
-	CHECK_THROWS(Variant ("AAA", "TAA", "chr1", 14, 10, {"ATGC", "ATT"}, {0,1}));
+	CHECK_THROWS(Variant ("AAA", "TAA", "chr1", 14, 10, {"ATGC", "ATT"}, {0,1}, "ref"));
 }
 
 
 TEST_CASE("Variant combine_variants_invalid", "[Variant combine_variants_invalid]"){
-	Variant v1("AAA", "TAC", "chr1", 10, 14, {"ATGC", "ATT"}, {0,1});
-	Variant v2("TGCT", "CCCC", "chr1", 15, 16, {"A", "G"}, {1,0});
+	Variant v1("AAA", "TAC", "chr1", 10, 14, {"ATGC", "ATT"}, {0,1}, "ref");
+	Variant v2("TGCT", "CCCC", "chr1", 15, 16, {"A", "G"}, {1,0}, "ref");
 	// flanking sequences of different size
 	CHECK_THROWS(v1.combine_variants(v2));
 	REQUIRE(!v1.is_combined());
-	Variant v3("CCC", "TTT", "chr2", 17, 18, {"A","G"}, {1,0});
+	Variant v3("CCC", "TTT", "chr2", 17, 18, {"A","G"}, {1,0}, "ref");
 	// variants too far apart
 	CHECK_THROWS(v2.combine_variants(v3));
 	REQUIRE(!v2.is_combined());
 }
 
 TEST_CASE("Variant combine_variants", "[Variant combine_variants]") {
-	Variant v1 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,0,1,1});
-	Variant v2 ("AACT", "ACTG", "chr2", 7, 10, {"GAG", "ACC"}, {0,0,1,1});
-	Variant v3 ("GACT", "GGAA", "chr2", 13, 14, {"G", "GTC"}, {0,0,1,0});
+	Variant v1 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,0,1,1}, "ref");
+	Variant v2 ("AACT", "ACTG", "chr2", 7, 10, {"GAG", "ACC"}, {0,0,1,1}, "ref");
+	Variant v3 ("GACT", "GGAA", "chr2", 13, 14, {"G", "GTC"}, {0,0,1,0}, "ref");
 
 	v1.combine_variants(v2);
 	v1.combine_variants(v3);
@@ -128,10 +128,10 @@ TEST_CASE("Variant combine_variants", "[Variant combine_variants]") {
 }
 
 TEST_CASE("Variant separate_variants", "[Variant separate_variants]") {
-	Variant v1("AAA", "TAC", "chr1", 10, 14, {"ATGC", "ATT"}, {0,0,1});
-	Variant v2("GCT", "CCC", "chr1", 15, 16, {"A", "G"}, {0,1,0});
-	Variant v3("ACC", "GGC", "chr1", 18, 19, {"C", "CTA"}, {0,1,1});
-	Variant v4("AAA", "TAC", "chr1", 10, 14, {"ATGC", "ATT"}, {0,0,1});
+	Variant v1("AAA", "TAC", "chr1", 10, 14, {"ATGC", "ATT"}, {0,0,1}, "ref");
+	Variant v2("GCT", "CCC", "chr1", 15, 16, {"A", "G"}, {0,1,0}, "ref");
+	Variant v3("ACC", "GGC", "chr1", 18, 19, {"C", "CTA"}, {0,1,1}, "ref");
+	Variant v4("AAA", "TAC", "chr1", 10, 14, {"ATGC", "ATT"}, {0,0,1}, "ref");
 
 
 	// combine and sepatate 2 variants
@@ -167,11 +167,53 @@ TEST_CASE("Variant separate_variants", "[Variant separate_variants]") {
 	REQUIRE(single_variants[0] == v4);
 }
 
+TEST_CASE("Variant combine_ and separate_variants ref_id", "[Variant separate_variants_ref_id]") {
+	Variant v1("AAA", "TAC", "chr1", 10, 14, {"ATGC", "ATT"}, {0,0,1}, "ref1");
+	Variant v2("GCT", "CCC", "chr1", 15, 16, {"A", "G"}, {0,1,0}, "ref2");
+	Variant v3("ACC", "GGC", "chr1", 18, 19, {"C", "CTA"}, {0,1,1}, "ref3");
+	Variant v4("AAA", "TAC", "chr1", 10, 14, {"ATGC", "ATT"}, {0,0,1}, "ref1");
+
+
+	// combine and sepatate 2 variants
+	v1.combine_variants(v2);
+    REQUIRE(v1.get_ref_id() == "ref1:ref2");
+	vector<Variant> single_variants;
+	v1.separate_variants(&single_variants);
+	REQUIRE(single_variants.size() == 2);
+	REQUIRE(single_variants[0] == v4);
+	REQUIRE(single_variants[1] == v2);
+
+	// combine and separate 3 variants
+	v1.combine_variants(v3);
+    REQUIRE(v1.get_ref_id() == "ref1:ref2:ref3");
+	single_variants.clear();
+	v1.separate_variants(&single_variants);
+	REQUIRE(single_variants.size() == 3);
+	REQUIRE(single_variants[0] == v4);
+	REQUIRE(single_variants[1] == v2);
+	REQUIRE(single_variants[2] == v3);
+
+	// add flanking sequences and then separate
+	v1.add_flanking_sequence();
+	single_variants.clear();
+	v1.separate_variants(&single_variants);
+	REQUIRE(single_variants.size() == 3);
+	REQUIRE(single_variants[0] == v4);
+	REQUIRE(single_variants[1] == v2);
+	REQUIRE(single_variants[2] == v3);
+
+	// separate single variant
+	single_variants.clear();
+	v4.separate_variants(&single_variants);
+	REQUIRE(single_variants.size() == 1);
+	REQUIRE(single_variants[0] == v4);
+}
+
 TEST_CASE("Variant separate_variants_likelihoods", "Variant separate_variants_likelihoods") {
-	Variant v1 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,0,1,1});
-	Variant v2 ("AACT", "ACTG", "chr2", 7, 10, {"GAG", "ACC"}, {0,0,1,1});
-	Variant v3 ("GACT", "GGAA", "chr2", 13, 14, {"G", "GTC"}, {0,0,1,0});
-	Variant v4 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,0,1,1});
+	Variant v1 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,0,1,1}, "ref");
+	Variant v2 ("AACT", "ACTG", "chr2", 7, 10, {"GAG", "ACC"}, {0,0,1,1}, "ref");
+	Variant v3 ("GACT", "GGAA", "chr2", 13, 14, {"G", "GTC"}, {0,0,1,0}, "ref");
+	Variant v4 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,0,1,1}, "ref");
 
 	GenotypingResult g;
 	g.add_to_likelihood(0,0,0.05);
@@ -241,7 +283,7 @@ TEST_CASE("Variant separate_variants_likelihoods", "Variant separate_variants_li
 }
 
 TEST_CASE("Variant separate_variants_single", "[Variants separate_variants_single]") {
-	Variant v ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,0,1,1});
+	Variant v ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,0,1,1}, "ref");
 	GenotypingResult g;
 	g.add_to_likelihood(0,0,0.1);
 	g.add_to_likelihood(0,1,0.7);
@@ -293,7 +335,7 @@ TEST_CASE("Variant separate_variants_single", "[Variants separate_variants_singl
 }
 
 TEST_CASE("Variant separate_variants_single2", "[Variants separate_variants_single]") {
-	Variant v ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {1,1});
+	Variant v ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {1,1}, "ref");
 	GenotypingResult g;
 	g.add_to_likelihood(0,0,0.1);
 	g.add_to_likelihood(0,1,0.7);
@@ -342,7 +384,7 @@ TEST_CASE("Variant separate_variants_single2", "[Variants separate_variants_sing
 }
 
 TEST_CASE("Variant separate_variants_single3", "[Variants separate_variants_single2]") {
-	Variant v ("AAAAAAAAAAAGCCTTTTAACTACTGAAAG", "AAAAAAAAAAAAAAGCACAAGGAAGAAATT", "chr16", 45143, 45144, {"T", "TA"}, {0,0,1,0,0,0,0,0,0,0});
+	Variant v ("AAAAAAAAAAAGCCTTTTAACTACTGAAAG", "AAAAAAAAAAAAAAGCACAAGGAAGAAATT", "chr16", 45143, 45144, {"T", "TA"}, {0,0,1,0,0,0,0,0,0,0}, "ref");
 	vector<Variant> single_variants;
 	v.add_flanking_sequence();
 	v.separate_variants(&single_variants);
@@ -352,10 +394,10 @@ TEST_CASE("Variant separate_variants_single3", "[Variants separate_variants_sing
 }
 
 TEST_CASE("Variant uncovered_alleles", "[Variant uncovered_alleles]") {
-	Variant v1("AAA", "TCA", "chr1", 4, 5, {"A", "T", "G"}, {0,0});
-	Variant v2("AAT", "AAG", "chr1", 6, 7, {"C", "T"}, {0,0});
-	Variant v3("CAA", "CCC", "chr1", 9, 10, {"G", "A"}, {0,0});
-	Variant v4("AAA", "TCA", "chr1", 4, 5, {"A", "T", "G"}, {0,0});
+	Variant v1("AAA", "TCA", "chr1", 4, 5, {"A", "T", "G"}, {0,0}, "ref");
+	Variant v2("AAT", "AAG", "chr1", 6, 7, {"C", "T"}, {0,0}, "ref");
+	Variant v3("CAA", "CCC", "chr1", 9, 10, {"G", "A"}, {0,0}, "ref");
+	Variant v4("AAA", "TCA", "chr1", 4, 5, {"A", "T", "G"}, {0,0}, "ref");
 
 	REQUIRE(v1.nr_of_alleles() == 3);
 	REQUIRE(v2.nr_of_alleles() == 2);
@@ -382,29 +424,29 @@ TEST_CASE("Variant uncovered_alleles", "[Variant uncovered_alleles]") {
 }
 
 TEST_CASE("Variant uncovered_single", "[Variant uncovered_single]") {
-	Variant v1("AAA", "TTT", "chr1", 5, 6, {"A", "G", "T"}, {0,0,1,0});
-	Variant v2("AAA", "TTT", "chr1", 5, 6, {"A", "G", "T"}, {0,0,1,0});
+	Variant v1("AAA", "TTT", "chr1", 5, 6, {"A", "G", "T"}, {0,0,1,0}, "ref");
+	Variant v2("AAA", "TTT", "chr1", 5, 6, {"A", "G", "T"}, {0,0,1,0}, "ref");
 	vector<Variant> single_vars;
 	v1.separate_variants(&single_vars);
 	REQUIRE(single_vars[0] == v2);
 }
 
 TEST_CASE("Variant nr_missing_alleles", "[Variant nr_missing_alleles]") {
-	Variant v1("AAA", "TTT", "chr1", 5, 6, {"A", "GNN", "T"}, {0,1,1,2});
+	Variant v1("AAA", "TTT", "chr1", 5, 6, {"A", "GNN", "T"}, {0,1,1,2}, "ref");
 	REQUIRE(v1.nr_missing_alleles() == 2);
 
-	Variant v2("AAAN", "TTTN", "chr1", 5, 6, {"A", "G", "T"}, {0,0,1,0});
+	Variant v2("AAAN", "TTTN", "chr1", 5, 6, {"A", "G", "T"}, {0,0,1,0}, "ref");
 	REQUIRE(v2.nr_missing_alleles() == 0);
 	v2.add_flanking_sequence();
 	REQUIRE(v2.nr_missing_alleles() == 4);
 }
 
 TEST_CASE("Variant combine_combined", "[Variant combine_combined]") {
-	Variant v1("AAA", "TCA", "chr1", 4, 5, {"A", "T", "G"}, {0,0});
-	Variant v2("AAT", "AAG", "chr1", 6, 7, {"C", "T"}, {0,1});
-	Variant v3("CAA", "CCC", "chr1", 9, 10, {"G", "A"}, {0,0});
-	Variant v4("AAA", "TCA", "chr1", 4, 5, {"A", "T", "G"}, {0,0});
-	Variant v5("AAT", "AAG", "chr1", 6, 7, {"C", "T"}, {0,1});
+	Variant v1("AAA", "TCA", "chr1", 4, 5, {"A", "T", "G"}, {0,0}, "ref");
+	Variant v2("AAT", "AAG", "chr1", 6, 7, {"C", "T"}, {0,1}, "ref");
+	Variant v3("CAA", "CCC", "chr1", 9, 10, {"G", "A"}, {0,0}, "ref");
+	Variant v4("AAA", "TCA", "chr1", 4, 5, {"A", "T", "G"}, {0,0}, "ref");
+	Variant v5("AAT", "AAG", "chr1", 6, 7, {"C", "T"}, {0,1}, "ref");
 
 	// combine v2 and v3 first
 	v2.combine_variants(v3);
@@ -425,10 +467,10 @@ TEST_CASE("Variant combine_combined", "[Variant combine_combined]") {
 }
 
 TEST_CASE("Variant combine_combined2", "[Variant combine_combined]") {
-	Variant v1 ("AAA", "TGC", "chr1", 4, 5, {"A", "G"},  {0,0,0,0,0,0,1,0,0,0});
-	Variant v2 ("AAT", "CCG", "chr1", 6, 7, {"G", "C"},  {0,0,0,0,0,0,1,0,0,0});
-	Variant v3 ("GCC", "GGG", "chr1", 9, 10, {"G", "C"}, {0,0,0,0,0,0,0,1,0,0});
-	Variant v4 ("AAA", "TGC", "chr1", 4, 5, {"A", "G"},  {0,0,0,0,0,0,1,0,0,0});
+	Variant v1 ("AAA", "TGC", "chr1", 4, 5, {"A", "G"},  {0,0,0,0,0,0,1,0,0,0}, "ref");
+	Variant v2 ("AAT", "CCG", "chr1", 6, 7, {"G", "C"},  {0,0,0,0,0,0,1,0,0,0}, "ref");
+	Variant v3 ("GCC", "GGG", "chr1", 9, 10, {"G", "C"}, {0,0,0,0,0,0,0,1,0,0}, "ref");
+	Variant v4 ("AAA", "TGC", "chr1", 4, 5, {"A", "G"},  {0,0,0,0,0,0,1,0,0,0}, "ref");
 
 	v1.combine_variants(v2);
 	v1.combine_variants(v3);
@@ -488,7 +530,7 @@ TEST_CASE("Variant combine_combined2", "[Variant combine_combined]") {
 }
 
 TEST_CASE("Variant get_paths_of_allele", "[Variant get_paths_of_allele]") {
-	Variant v1("AAA", "TTA", "chr1", 10, 14, {"ATGC", "ATT", "TT"}, {0,1,2});
+	Variant v1("AAA", "TTA", "chr1", 10, 14, {"ATGC", "ATT", "TT"}, {0,1,2}, "ref");
 	vector<size_t> result;
 	v1.get_paths_of_allele(0, result);
 	REQUIRE(result == vector<size_t>({0}));
@@ -500,7 +542,7 @@ TEST_CASE("Variant get_paths_of_allele", "[Variant get_paths_of_allele]") {
 	REQUIRE(result == vector<size_t>({2}));
 	result.clear();
 
-	Variant v2("AAA", "TTA", "chr1", 10, 14, {"ATGC", "ATT"}, {0,1,0,1,1});
+	Variant v2("AAA", "TTA", "chr1", 10, 14, {"ATGC", "ATT"}, {0,1,0,1,1}, "ref");
 	v2.get_paths_of_allele(0, result);
 	REQUIRE(result == vector<size_t>({0,2}));
 	result.clear();
@@ -509,7 +551,7 @@ TEST_CASE("Variant get_paths_of_allele", "[Variant get_paths_of_allele]") {
 }
 
 TEST_CASE("Variant allele_frequency", "Variant allele_frequency") {
-	Variant v1("AAA", "TTA", "chr1", 10, 14, {"ATGC", "ATT", "TT"}, {0,1,2});
+	Variant v1("AAA", "TTA", "chr1", 10, 14, {"ATGC", "ATT", "TT"}, {0,1,2}, "ref");
 	REQUIRE ( doubles_equal(v1.allele_frequency(0), 1.0/3.0) );
 	REQUIRE ( doubles_equal(v1.allele_frequency(1), 1.0/3.0) );
 	REQUIRE ( doubles_equal(v1.allele_frequency(2), 1.0/3.0) );
@@ -517,13 +559,13 @@ TEST_CASE("Variant allele_frequency", "Variant allele_frequency") {
 	REQUIRE ( doubles_equal(v1.allele_frequency(1, true), 0.5) );
 	REQUIRE ( doubles_equal(v1.allele_frequency(2, true), 0.5) );
 
-	Variant v2("AAA", "TGC", "chr1", 4, 5, {"A", "G"}, {0,0,0,0,0,0,1,0,0,0});
+	Variant v2("AAA", "TGC", "chr1", 4, 5, {"A", "G"}, {0,0,0,0,0,0,1,0,0,0}, "ref");
 	REQUIRE ( doubles_equal(v2.allele_frequency(0), 0.9) );
 	REQUIRE ( doubles_equal(v2.allele_frequency(1), 0.1) );
 	REQUIRE ( doubles_equal(v2.allele_frequency(0, true), 8.0/9.0) );
 	REQUIRE ( doubles_equal(v2.allele_frequency(1, true), 1.0/9.0) );
 
-	Variant v3("AAA", "TGC", "chr1", 4, 5, {"A", "G", "C"}, {0,0,1,0,2,0,1,0,0,0});
+	Variant v3("AAA", "TGC", "chr1", 4, 5, {"A", "G", "C"}, {0,0,1,0,2,0,1,0,0,0}, "ref");
 	REQUIRE ( doubles_equal(v3.allele_frequency(0), 0.7) );
 	REQUIRE ( doubles_equal(v3.allele_frequency(1), 0.2) );
 	REQUIRE ( doubles_equal(v3.allele_frequency(2), 0.1) );
@@ -534,9 +576,9 @@ TEST_CASE("Variant allele_frequency", "Variant allele_frequency") {
 
 TEST_CASE("Variant all_allele_frequencies", "Variant all_allele_frequencies") {
 
-	vector<Variant> v = {	Variant ("AAA", "TTA", "chr1", 10, 14, {"ATGC", "ATT", "TT"}, {0,1,2}),
-						Variant("AAA", "TGC", "chr1", 4, 5, {"A", "G"}, {0,0,0,0,0,0,1,0,0,0}),
-						Variant("AAA", "TGC", "chr1", 4, 5, {"A", "G", "C"}, {0,0,1,0,2,0,1,0,0,0})
+	vector<Variant> v = {	Variant ("AAA", "TTA", "chr1", 10, 14, {"ATGC", "ATT", "TT"}, {0,1,2}, "ref"),
+						Variant("AAA", "TGC", "chr1", 4, 5, {"A", "G"}, {0,0,0,0,0,0,1,0,0,0}, "ref"),
+						Variant("AAA", "TGC", "chr1", 4, 5, {"A", "G", "C"}, {0,0,1,0,2,0,1,0,0,0}, "ref")
 					};
 	vector<vector<double>> expected_all = { {1.0/3.0, 1.0/3.0, 1.0/3.0}, {0.9, 0.1}, {0.7, 0.2, 0.1} };
 	vector<vector<double>> expected_ignore_ref = { {0.0, 0.5, 0.5}, {8.0/9.0, 1.0/9.0}, {6.0/9.0, 2.0/9.0, 1.0/9.0} };
@@ -557,9 +599,9 @@ TEST_CASE("Variant all_allele_frequencies", "Variant all_allele_frequencies") {
 }
 
 TEST_CASE("Variant separate_variants_likelihoods_uncovered", "Variant separate_variants_likelihoods_uncovered") {
-	Variant v1 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,1}); //, "VAR1");
+	Variant v1 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,1}, "ref"); //, "VAR1");
 	// second allele is not covered by any path
-	Variant v2 ("AACT", "ACTG", "chr2", 7, 8, {"G", "C", "T"}, {0,2}); //, "VAR2");
+	Variant v2 ("AACT", "ACTG", "chr2", 7, 8, {"G", "C", "T"}, {0,2}, "ref"); //, "VAR2");
 
 	GenotypingResult g;
 	g.add_to_likelihood(0,0,0.05);
@@ -627,7 +669,7 @@ TEST_CASE("Variant separate_variants_likelihoods_uncovered", "Variant separate_v
 }
 
 TEST_CASE("Variant separate_variants_likelihoods_single_uncovered", "[Variant separate_variants_likelihoods_single_uncovered]") {
-	Variant v ("ATGA", "CTGA", "chr1", 7, 8, {"A", "T"}, {1,1});
+	Variant v ("ATGA", "CTGA", "chr1", 7, 8, {"A", "T"}, {1,1}, "ref");
 	GenotypingResult g;
 	g.add_to_likelihood(1,1,1.0);
 	g.add_first_haplotype_allele(1);
@@ -662,8 +704,8 @@ TEST_CASE("Variant separate_variants_likelihoods_single_uncovered", "[Variant se
 }
 
 TEST_CASE("Variant get_id", "[Variant get_id]") {
-	Variant v1 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,1}); //, "VAR1");
-	Variant v2 ("AACT", "ACTG", "chr2", 7, 8, {"G", "C", "T"}, {0,2}); //, "VAR2");
+	Variant v1 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,1}, "ref"); //, "VAR1");
+	Variant v2 ("AACT", "ACTG", "chr2", 7, 8, {"G", "C", "T"}, {0,2}, "ref"); //, "VAR2");
 
 	REQUIRE(v1.get_id() == ".");
 	REQUIRE(v2.get_id() == ".");
@@ -678,9 +720,9 @@ TEST_CASE("Variant get_id", "[Variant get_id]") {
 }
 
 TEST_CASE("Variant get_id2", "[Variant get_id2]") {
-	Variant v1 ("AAA", "TGC", "chr1", 4, 5, {"A", "G"}, {0,0,0,0,0,0,1,0,0,0}); //, "VAR1");
-	Variant v2 ("AAT", "CCG", "chr1", 6, 7, {"G", "C"},  {0,0,0,0,0,0,1,0,0,0}); //, ".");
-	Variant v3 ("GCC", "GGG", "chr1", 9, 10, {"G", "C"}, {0,0,0,0,0,0,0,1,0,0}); //, "VAR2;VAR3");
+	Variant v1 ("AAA", "TGC", "chr1", 4, 5, {"A", "G"}, {0,0,0,0,0,0,1,0,0,0}, "ref"); //, "VAR1");
+	Variant v2 ("AAT", "CCG", "chr1", 6, 7, {"G", "C"},  {0,0,0,0,0,0,1,0,0,0}, "ref"); //, ".");
+	Variant v3 ("GCC", "GGG", "chr1", 9, 10, {"G", "C"}, {0,0,0,0,0,0,0,1,0,0}, "ref"); //, "VAR2;VAR3");
 
 	REQUIRE(v1.get_id() == ".");
 	REQUIRE(v2.get_id() == ".");
@@ -698,7 +740,7 @@ TEST_CASE("Variant get_id2", "[Variant get_id2]") {
 }
 
 TEST_CASE("Variant is_undefined_allele", "[Variant is_undefined_allele]"){
-	Variant v1("AAN", "TAC", "chr1", 10, 14, {"ATGC", "ATT"}, {0,1});
+	Variant v1("AAN", "TAC", "chr1", 10, 14, {"ATGC", "ATT"}, {0,1}, "ref");
 
 	REQUIRE(!v1.is_undefined_allele(0));
 	REQUIRE(!v1.is_undefined_allele(1));
@@ -707,7 +749,7 @@ TEST_CASE("Variant is_undefined_allele", "[Variant is_undefined_allele]"){
 	REQUIRE(!v1.is_undefined_allele(0));
 	REQUIRE(!v1.is_undefined_allele(1));
 
-	Variant v2("GCT", "CCC", "chr1", 15, 17, {"AN", "G"}, {1,0});
+	Variant v2("GCT", "CCC", "chr1", 15, 17, {"AN", "G"}, {1,0}, "ref");
 	REQUIRE(v2.is_undefined_allele(0));
 	REQUIRE(!v2.is_undefined_allele(1));
 
@@ -717,9 +759,9 @@ TEST_CASE("Variant is_undefined_allele", "[Variant is_undefined_allele]"){
 }
 
 TEST_CASE("Variant combine_variants_undefined_flanks", "[Variant combine_variants_undefined_flanks]") {
-	Variant v1 ("ATGA", "CNGA", "chr2", 4, 5, {"A", "T"}, {0,0,1,1});
-	Variant v2 ("AACN", "ACTG", "chr2", 7, 10, {"GAG", "ACC"}, {0,0,1,1});
-	Variant v3 ("GACT", "GGAA", "chr2", 13, 14, {"G", "GTC"}, {0,0,1,0});
+	Variant v1 ("ATGA", "CNGA", "chr2", 4, 5, {"A", "T"}, {0,0,1,1}, "ref");
+	Variant v2 ("AACN", "ACTG", "chr2", 7, 10, {"GAG", "ACC"}, {0,0,1,1}, "ref");
+	Variant v3 ("GACT", "GGAA", "chr2", 13, 14, {"G", "GTC"}, {0,0,1,0}, "ref");
 
 	v1.combine_variants(v2);
 	v1.combine_variants(v3);
@@ -758,8 +800,8 @@ TEST_CASE("Variant combine_variants_undefined_flanks", "[Variant combine_variant
 }
 
 TEST_CASE("Variant combine_variants_undefined_alleles", "[Variant combine_variants_undefined_flanks]") {
-	Variant v1 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,0,1,1});
-	Variant v2 ("AACT", "ACTG", "chr2", 7, 10, {"GNG", "ACC"}, {0,0,1,1});
+	Variant v1 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,0,1,1}, "ref");
+	Variant v2 ("AACT", "ACTG", "chr2", 7, 10, {"GNG", "ACC"}, {0,0,1,1}, "ref");
 
 	v1.combine_variants(v2);
 	REQUIRE(v1.nr_of_alleles() == 2);
@@ -781,10 +823,10 @@ TEST_CASE("Variant combine_variants_undefined_alleles", "[Variant combine_varian
 
 TEST_CASE("Variant separate_variants_identical", "[Variant separate_variants_identical]") {
 
-	Variant v1("AAA", "TAC", "chr1", 10, 14, {"ATGC", "ATGC"}, {0,0,1});
-	Variant v2("GCT", "CCN", "chr1", 15, 16, {"A", "A"}, {0,1,0});
-	Variant v3("ACC", "GGC", "chr1", 18, 19, {"N", "N"}, {0,1,1});
-	Variant v4("AAA", "TAC", "chr1", 10, 14, {"ATGC", "ATGC"}, {0,0,1});
+	Variant v1("AAA", "TAC", "chr1", 10, 14, {"ATGC", "ATGC"}, {0,0,1}, "ref");
+	Variant v2("GCT", "CCN", "chr1", 15, 16, {"A", "A"}, {0,1,0}, "ref");
+	Variant v3("ACC", "GGC", "chr1", 18, 19, {"N", "N"}, {0,1,1}, "ref");
+	Variant v4("AAA", "TAC", "chr1", 10, 14, {"ATGC", "ATGC"}, {0,0,1}, "ref");
 
 
 	// combine and sepatate 2 variants
@@ -822,10 +864,10 @@ TEST_CASE("Variant separate_variants_identical", "[Variant separate_variants_ide
 
 
 TEST_CASE("Variant separate_variants_panel", "Variant separate_variants_panel") {
-	Variant v1 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"},      {0,0,1,1});
-	Variant v2 ("AACT", "ACTG", "chr2", 7, 10, {"GAG", "ACC"}, {0,1,1,1});
-	Variant v3 ("GACT", "GGAA", "chr2", 13, 14, {"G", "GTC"},  {0,0,1,0});
-	Variant v4 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,0,1,1});
+	Variant v1 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"},      {0,0,1,1}, "ref");
+	Variant v2 ("AACT", "ACTG", "chr2", 7, 10, {"GAG", "ACC"}, {0,1,1,1}, "ref");
+	Variant v3 ("GACT", "GGAA", "chr2", 13, 14, {"G", "GTC"},  {0,0,1,0}, "ref");
+	Variant v4 ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,0,1,1}, "ref");
 
 	v1.combine_variants(v2);
 	v1.combine_variants(v3);
@@ -852,7 +894,7 @@ TEST_CASE("Variant separate_variants_panel", "Variant separate_variants_panel") 
 
 
 TEST_CASE("Variant separate_variants_panel_single", "[Variant separate_variants_panel_single]") {
-	Variant v ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,0,1,1});
+	Variant v ("ATGA", "CTGA", "chr2", 4, 5, {"A", "T"}, {0,0,1,1}, "ref");
 
 	vector<unsigned short> path_to_allele = {0,1,1,0,1,0,0,1,0,1,1,1,0};
 	SampledPanel sampled_panel(path_to_allele, 13);
@@ -868,8 +910,8 @@ TEST_CASE("Variant separate_variants_panel_single", "[Variant separate_variants_
 }
 
 TEST_CASE("Variant separate_variants_panel2", "[Variant separate_variants_panel2]") {
-	Variant v1 ("AAAA", "CCCC", "chr1", 16636, 16637, {"T", "TA", "TAAA", "NNN"}, {0,1,1,3,2,3});
-	Variant v2 ("AAAA", "CCCC", "chr1", 16638, 16639, {"A", "T", "NN", "NNN"},    {2,1,2,3,0,1});
+	Variant v1 ("AAAA", "CCCC", "chr1", 16636, 16637, {"T", "TA", "TAAA", "NNN"}, {0,1,1,3,2,3}, "ref");
+	Variant v2 ("AAAA", "CCCC", "chr1", 16638, 16639, {"A", "T", "NN", "NNN"},    {2,1,2,3,0,1}, "ref");
 
 	v1.combine_variants(v2);
 

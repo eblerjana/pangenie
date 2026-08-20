@@ -363,6 +363,40 @@ TEST_CASE("GraphBuilder variant_ids2", "[GraphBuilder variant_ids2]") {
 	graph.at("chrA")->write_genotypes("../tests/data/small1-ids-genotypes.vcf", genotypes, true, "sample");
 }
 
+TEST_CASE("GraphBuilder ref_ids", "[GraphBuilder ref_ids]") {
+	string vcf = "../tests/data/small1-ref-ids.vcf";
+	string fasta = "../tests/data/small1.fa";
+
+	map<string, shared_ptr<Graph>> graph;
+	GraphBuilder v(vcf, fasta, graph, "../tests/data/empty-segments.fa", 10, true);
+	vector<GenotypingResult> genotypes(2);
+	REQUIRE(graph.size() == 1);
+	graph.at("chrA")->write_genotypes("../tests/data/small1-ref-ids-genotypes.vcf", genotypes, true, "sample");
+
+    //Read the file and make sure the RD field was written
+	ifstream output_vcf("../tests/data/small1-ref-ids-genotypes.vcf");
+    std::string line;
+	while (getline(output_vcf, line)) {
+		vector<string> tokens;
+		if (line.size() == 0) continue;
+		if (line[0] == '#') {
+			// skip VCF header lines
+			continue;
+		}
+	
+		// split line by tabs
+		istringstream iss(line);
+		string token;
+		while(getline(iss, token, '\t'))
+			tokens.push_back(token);
+        REQUIRE(tokens.size() == 10);
+
+        string info = tokens.at(7);
+        REQUIRE(info.find("RD=ref") != string::npos);
+
+	}
+}
+
 TEST_CASE("GraphBuilder variant_ids3", "[GraphBuilder variant_ids3]") {
 
 	Graph graph;
@@ -439,7 +473,7 @@ TEST_CASE("GraphBuilder unknown_alleles", "[GraphBuilder unknown_alleles]") {
 
 TEST_CASE("GraphBuilder unknown_alleles2", "[GraphBuilder unknown_alleles2]") {
 	vector<string> alleles = {"G", "A", "C", "AAA"};
-	shared_ptr<Variant> v1 (new Variant ("AAAA", "TTTT", "chr1", 10, 11, {"G", "AAA", "CN", "C", "N", "A"}, {0,1,2}));
+	shared_ptr<Variant> v1 (new Variant ("AAAA", "TTTT", "chr1", 10, 11, {"G", "AAA", "CN", "C", "N", "A"}, {0,1,2}, "ref"));
 	Graph g;
 	vector<shared_ptr<Variant>> cluster = {v1};
 	vector<vector<string>> variant_ids = { {"var1", "var2", "var3"} };
