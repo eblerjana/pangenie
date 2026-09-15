@@ -130,3 +130,12 @@ We also provide the option of running  ``PanGenie`` without running the preproce
 As mentioned before, especially when genotyping more than one sample, it is beneficial to run both steps separately, since the preprocessing needs to be run only once for all samples, while the genotyping step needs to be run separately on each sample. Running PanGenie with a single command works as follows::
 
  PanGenie -i <reads.fa/fq> -r <reference.fa> -v <bubbles.vcf> -s <sample-name> -j <nr threads kmer-counting> -t <nr threads genotyping>
+
+
+----------------------------
+Using compressed read data
+----------------------------
+
+PanGenie expects uncompressed FASTA/FASTQ format for reads (``-i`` option), however, it can also read from ``stdin``. So for compressed data, you can use ``-i <(gunzip -c reads.fq.gz)`` in case of a single FASTA/FASTQ file or ``-i <(zcat sample.R1.fq.gz sample.R2.fq.gz)`` if you have multiple files.
+
+
