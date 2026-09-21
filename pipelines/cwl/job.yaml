@@ -1,0 +1,18 @@
+
+fastq:
+  class: File
+  path: HG002.fastq
+
+reference:
+  class: File
+  path: chm13v2.0_maskedY_rCRS.fa
+
+vcf:
+  class: File
+  path: HG002_out_mc_filtered_ids.vcf
+
+sample_id: HG002
+threads_kmer: 24
+threads_genotyping: 24
+
+output_prefix: HG002
