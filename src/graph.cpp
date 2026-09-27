@@ -139,6 +139,7 @@ void Graph::write_genotypes(string filename, const vector<GenotypingResult>& gen
 		genotyping_outfile << "##INFO=<ID=UK,Number=1,Type=Integer,Description=\"Total number of unique kmers.\">" << endl;
 		genotyping_outfile << "##INFO=<ID=AK,Number=R,Type=Integer,Description=\"Number of unique kmers per allele. Will be -1 for alleles not covered by any input haplotype path\">" << endl;
 		genotyping_outfile << "##INFO=<ID=MA,Number=1,Type=Integer,Description=\"Number of alleles missing in panel haplotypes.\">" << endl;
+		genotyping_outfile << "##INFO=<ID=RD,Number=1,Type=String,Description=\"Variant ID of reference.\">" << endl;
 		genotyping_outfile << "##INFO=<ID=ID,Number=A,Type=String,Description=\"Variant IDs.\">" << endl;
 		genotyping_outfile << "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">" << endl;
 		genotyping_outfile << "##FORMAT=<ID=GQ,Number=1,Type=Integer,Description=\"Genotype quality: phred scaled probability that the genotype is wrong.\">" << endl;
@@ -238,6 +239,7 @@ void Graph::write_genotypes(string filename, const vector<GenotypingResult>& gen
 			info << ";MA=" << nr_missing;
 	
 			// if IDs were given in input, write them to output as well
+			if (v.ref_id != ".") info << ";RD=" << v.ref_id;
 			if (!this->variant_ids[counter].empty()) info << ";ID=" << get_ids(alt_alleles, counter, false);
 			genotyping_outfile << info.str() << "\t"; // INFO
 			genotyping_outfile << "GT:GQ:GL:KC" << "\t"; // FORMAT
